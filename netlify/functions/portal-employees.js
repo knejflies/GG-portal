@@ -63,6 +63,10 @@ function employeeCodeNumber(code) {
   return match ? Number(match[1]) : 0;
 }
 
+function normalizePhone(value) {
+  return String(value || "").replace(/\D/g, "");
+}
+
 async function nextEmployeeCode() {
   const rows = await supabase("green_grin_employees?select=employee_code&employee_code=not.is.null&order=employee_code.desc&limit=1");
   let counters = [];
@@ -146,12 +150,12 @@ exports.handler = async (event) => {
         employee_code: existing?.[0]?.employee_code || await nextEmployeeCode(),
         full_name: body.full_name || "",
         email,
-        phone: body.phone || "",
+        phone: normalizePhone(body.phone),
         status: "Pending"
       };
       if (body.requested_pin) employee.employee_pin = body.requested_pin;
-      if (!employee.full_name || !employee.email) {
-        return json(400, { error: "Employee name and email are required." });
+      if (!employee.full_name || !employee.email || employee.phone.length < 10) {
+        return json(400, { error: "Employee name, email, and a valid phone number are required." });
       }
       const rows = await supabase("green_grin_employees?on_conflict=email", {
         method: "POST",

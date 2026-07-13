@@ -140,6 +140,7 @@ async function ensureCustomer(user) {
     customer_code: linkedCode,
     email: user.email || "",
     full_name: user.user_metadata?.name || user.email?.split("@")[0] || "",
+    phone: normalizePhone(existingCustomer?.phone || user.user_metadata?.phone),
     billing_status: existingCustomer?.billing_status || "Not connected"
   };
   const profile = {
@@ -227,9 +228,13 @@ exports.handler = async (event) => {
       const body = JSON.parse(event.body || "{}");
 
       if (body.profile) {
+        const normalizedPhone = normalizePhone(body.profile.phone);
+        if (normalizedPhone.length < 10) {
+          return json(400, { error: "A valid phone number is required." });
+        }
         const profileUpdate = {
           full_name: body.profile.full_name || "",
-          phone: normalizePhone(body.profile.phone),
+          phone: normalizedPhone,
           billing_plan: body.profile.billing_plan || null
         };
         if (Object.prototype.hasOwnProperty.call(body.profile, "text_cleanup_reminders")) {

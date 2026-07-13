@@ -947,26 +947,26 @@
       }
     }
 
-    /* Premium portal shell */
+    /* Portal shell */
     :root {
       --night: #07110c;
       --night-2: #0d1f14;
-      --copper: #b95516;
-      --ember: #ff8a1f;
+      --copper: #c8d1c4;
+      --ember: #d8decf;
       --lime: #8dec55;
       --glass: rgba(21, 34, 25, 0.76);
       --glass-strong: rgba(12, 19, 15, 0.9);
       --glass-line: rgba(205, 255, 198, 0.14);
       --glow-green: 0 0 34px rgba(120, 198, 83, 0.25);
-      --glow-ember: 0 0 42px rgba(255, 138, 31, 0.22);
+      --glow-ember: 0 0 42px rgba(216, 222, 207, 0.22);
     }
 
     body {
       min-height: 100vh;
       background:
         radial-gradient(circle at 12% 6%, rgba(120, 198, 83, 0.18), transparent 28rem),
-        radial-gradient(circle at 88% 12%, rgba(255, 138, 31, 0.2), transparent 26rem),
-        linear-gradient(145deg, #061009 0%, #112315 44%, #2a1005 100%);
+        radial-gradient(circle at 88% 12%, rgba(216, 222, 207, 0.2), transparent 26rem),
+        linear-gradient(145deg, #061009 0%, #112315 44%, #04140c 100%);
       color: #edf7ea;
     }
 
@@ -1012,8 +1012,8 @@
     }
 
     .button.secondary {
-      background: linear-gradient(180deg, rgba(255, 138, 31, 0.95), rgba(176, 78, 18, 0.95));
-      color: #fff9f1;
+      background: linear-gradient(180deg, rgba(216, 222, 207, 0.95), rgba(165, 175, 160, 0.95));
+      color: #f5f7ef;
       border-color: rgba(255, 192, 115, 0.35);
       box-shadow: var(--glow-ember);
     }
@@ -1028,7 +1028,7 @@
     .hero {
       padding: 30px 0 22px;
       background:
-        linear-gradient(120deg, rgba(8, 17, 11, 0.84), rgba(48, 17, 4, 0.5)),
+        linear-gradient(120deg, rgba(8, 17, 11, 0.84), rgba(4, 29, 17, 0.5)),
         url("../assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center 42% / cover;
       border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     }
@@ -1041,7 +1041,7 @@
       border-radius: 18px;
       background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.035)),
-        radial-gradient(circle at 78% 22%, rgba(255, 138, 31, 0.32), transparent 20rem),
+        radial-gradient(circle at 78% 22%, rgba(216, 222, 207, 0.32), transparent 20rem),
         rgba(14, 23, 17, 0.74);
       box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
       padding: clamp(20px, 4vw, 34px);
@@ -1068,7 +1068,7 @@
       gap: 10px;
       min-height: 150px;
       background:
-        linear-gradient(180deg, rgba(255, 138, 31, 0.16), rgba(120, 198, 83, 0.08)),
+        linear-gradient(180deg, rgba(216, 222, 207, 0.16), rgba(120, 198, 83, 0.08)),
         rgba(255, 255, 255, 0.07);
       border-color: rgba(255, 255, 255, 0.17);
       box-shadow: var(--glow-ember);
@@ -1220,7 +1220,7 @@
       min-height: 120px;
       border-radius: 16px;
       background:
-        radial-gradient(circle at 80% 0%, rgba(255, 138, 31, 0.14), transparent 9rem),
+        radial-gradient(circle at 80% 0%, rgba(216, 222, 207, 0.14), transparent 9rem),
         rgba(12, 23, 15, 0.68);
     }
 
@@ -1229,10 +1229,10 @@
     }
 
     .notification-bar {
-      border-color: rgba(255, 138, 31, 0.38);
+      border-color: rgba(216, 222, 207, 0.38);
       background:
-        radial-gradient(circle at 0% 50%, rgba(255, 138, 31, 0.24), transparent 18rem),
-        rgba(26, 17, 10, 0.76);
+        radial-gradient(circle at 0% 50%, rgba(216, 222, 207, 0.24), transparent 18rem),
+        rgba(4, 25, 15, 0.76);
       box-shadow: var(--glow-ember);
     }
 
@@ -1243,9 +1243,9 @@
     }
 
     .badge.warn {
-      background: rgba(255, 138, 31, 0.18);
-      color: #ffe1bd;
-      border-color: rgba(255, 138, 31, 0.26);
+      background: rgba(216, 222, 207, 0.18);
+      color: #f0f5ec;
+      border-color: rgba(216, 222, 207, 0.26);
     }
 
     .badge.dark {
@@ -1287,7 +1287,7 @@
     .error {
       background: rgba(255, 107, 31, 0.14);
       color: #ffd9c2;
-      border-left-color: #ff7a2d;
+      border-left-color: #f47b45;
     }
 
     .job-toggle,
@@ -1330,7 +1330,7 @@
       body {
         background:
           radial-gradient(circle at 50% 0%, rgba(120, 198, 83, 0.16), transparent 20rem),
-          linear-gradient(160deg, #061009 0%, #102315 52%, #230e05 100%);
+          linear-gradient(160deg, #061009 0%, #102315 52%, #04140c 100%);
       }
 
       .wrap {
@@ -1438,6 +1438,577 @@
         font-size: clamp(1.9rem, 11vw, 2.6rem);
       }
     }
+
+    /* Green Grin signature theme */
+    :root {
+      --night: #020c07;
+      --night-2: #082016;
+      --copper: #d8decf;
+      --ember: #c8d1c4;
+      --lime: #9adf35;
+      --electric-leaf: #b6f24d;
+      --forest-glass: rgba(7, 31, 20, 0.82);
+      --forest-glass-strong: rgba(3, 18, 11, 0.94);
+      --pearl: #f5f7ef;
+      --pearl-muted: #c6d0c3;
+      --glass: rgba(7, 27, 18, 0.8);
+      --glass-strong: rgba(3, 16, 10, 0.94);
+      --glass-line: rgba(200, 242, 185, 0.16);
+      --glow-green: 0 0 32px rgba(154, 223, 53, 0.2);
+      --glow-ember: 0 0 30px rgba(216, 222, 207, 0.12);
+      --scene-x: 0px;
+      --scene-y: 0px;
+      --grid-x: 0px;
+      --grid-y: 0px;
+      --shine-x: 50%;
+    }
+
+    body {
+      background:
+        linear-gradient(112deg, transparent 0%, rgba(255, 255, 255, 0.025) 44%, rgba(182, 242, 77, 0.08) 50%, transparent 58%),
+        linear-gradient(148deg, #020c07 0%, #0a2a1a 48%, #04140c 100%);
+      background-size: 220% 100%, 100% 100%;
+      background-position: var(--shine-x) 0, center;
+      color: var(--pearl);
+    }
+
+    body::before {
+      opacity: 0.58;
+      background:
+        linear-gradient(rgba(217, 243, 210, 0.032) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(217, 243, 210, 0.024) 1px, transparent 1px);
+      background-size: 42px 42px;
+      transform: translate3d(var(--grid-x), var(--grid-y), 0) scale(1.04);
+      transition: transform 180ms ease-out;
+    }
+
+    header {
+      background: rgba(3, 20, 12, 0.88);
+      border-bottom-color: rgba(191, 239, 173, 0.14);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+    }
+
+    .account-pill {
+      background: rgba(154, 223, 53, 0.12);
+      border-color: rgba(182, 242, 77, 0.28);
+      color: #e8ffdc;
+    }
+
+    .button {
+      border-color: rgba(208, 255, 183, 0.28);
+      background: linear-gradient(180deg, var(--electric-leaf) 0%, #78bd27 100%);
+      color: #041109;
+      box-shadow: 0 12px 28px rgba(92, 173, 39, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    }
+
+    .button:hover {
+      filter: brightness(1.07);
+      box-shadow: 0 16px 34px rgba(108, 203, 47, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    .button.secondary {
+      background: linear-gradient(180deg, #f5f7ef 0%, #cbd4c7 100%);
+      color: #082016;
+      border-color: rgba(255, 255, 255, 0.42);
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.2), inset 0 1px 0 #ffffff;
+    }
+
+    .button.ghost {
+      background: rgba(239, 247, 235, 0.06);
+      color: #eff9eb;
+      border-color: rgba(219, 240, 211, 0.16);
+    }
+
+    .hero {
+      background:
+        linear-gradient(112deg, rgba(2, 13, 8, 0.93), rgba(5, 36, 21, 0.66)),
+        url("../assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
+      border-bottom-color: rgba(201, 239, 187, 0.12);
+      transition: background-position 160ms ease-out;
+    }
+
+    .hero-grid {
+      border-color: rgba(217, 248, 205, 0.18);
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.018)),
+        linear-gradient(110deg, rgba(5, 30, 18, 0.92), rgba(10, 54, 31, 0.68));
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    h1 {
+      color: var(--electric-leaf);
+    }
+
+    .portal-card {
+      background:
+        linear-gradient(145deg, rgba(182, 242, 77, 0.13), rgba(245, 247, 239, 0.04)),
+        rgba(3, 24, 14, 0.78);
+      border-color: rgba(218, 247, 207, 0.2);
+      box-shadow: var(--glow-green);
+    }
+
+    .portal-card span {
+      color: rgba(233, 244, 228, 0.76);
+    }
+
+    .auth-card,
+    .tabs,
+    .card,
+    .notification-bar,
+    .metric,
+    .step,
+    .job,
+    .invoice,
+    .message,
+    .property-note,
+    .plan,
+    .paid-invoice-archive {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+        var(--forest-glass);
+      border-color: var(--glass-line);
+      box-shadow: 0 22px 58px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.055);
+    }
+
+    .tabs {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.015)),
+        var(--forest-glass-strong);
+    }
+
+    .tab {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025) 44%, rgba(2, 17, 10, 0.78)),
+        rgba(7, 35, 21, 0.9);
+      border-color: rgba(222, 246, 214, 0.14);
+    }
+
+    .tab::after {
+      background: linear-gradient(var(--electric-leaf), #d8decf);
+    }
+
+    .tab.active {
+      background:
+        linear-gradient(110deg, rgba(182, 242, 77, 0.25), rgba(255, 255, 255, 0.09)),
+        rgba(9, 49, 28, 0.94);
+      border-color: rgba(182, 242, 77, 0.52);
+      box-shadow: var(--glow-green), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .metric {
+      background:
+        linear-gradient(135deg, rgba(182, 242, 77, 0.08), transparent 58%),
+        rgba(4, 26, 15, 0.74);
+    }
+
+    .notification-bar {
+      border-color: rgba(191, 239, 173, 0.24);
+      background:
+        linear-gradient(95deg, rgba(154, 223, 53, 0.13), rgba(245, 247, 239, 0.03)),
+        rgba(4, 25, 15, 0.84);
+      box-shadow: 0 18px 44px rgba(0, 0, 0, 0.25);
+    }
+
+    .badge.warn {
+      background: rgba(223, 231, 216, 0.12);
+      color: #f0f5ec;
+      border-color: rgba(223, 231, 216, 0.22);
+    }
+
+    select option {
+      background: #071d12;
+    }
+
+    .error {
+      background: rgba(194, 65, 12, 0.18);
+      color: #ffd9c7;
+      border-left-color: #f47b45;
+    }
+
+    .job-toggle[aria-expanded="true"],
+    .paid-invoice-archive[open] summary::after {
+      background: linear-gradient(180deg, var(--electric-leaf), #78bd27);
+      color: #041109;
+    }
+
+    .admin-job.collapsed-job,
+    .customer-card {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.018)),
+        rgba(4, 27, 16, 0.82);
+      border-color: rgba(182, 242, 77, 0.18);
+    }
+
+    .setup {
+      background: rgba(216, 222, 207, 0.07);
+      border-color: rgba(216, 222, 207, 0.24);
+    }
+
+    .staff-signin {
+      padding-bottom: 22px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid rgba(220, 242, 211, 0.14);
+    }
+
+    .staff-request h3 {
+      margin-bottom: 6px;
+      color: var(--pearl);
+      font-size: 1.12rem;
+    }
+
+    .staff-request > p {
+      margin-bottom: 16px;
+      color: rgba(230, 241, 225, 0.68);
+    }
+
+    @media (max-width: 900px) {
+      body {
+        background:
+          linear-gradient(120deg, transparent 0%, rgba(182, 242, 77, 0.06) 50%, transparent 100%),
+          linear-gradient(160deg, #020c07 0%, #0a291a 52%, #04140c 100%);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body,
+      body::before,
+      .hero {
+        transition: none;
+      }
+    }
+
+    /* Green Grin Black Label finish */
+    :root {
+      --obsidian: #020604;
+      --carbon: #070d09;
+      --racing-green: #06351f;
+      --emerald: #0a7541;
+      --chrome: #e8eee6;
+      --chrome-mid: #9ba99d;
+      --role-accent: #b6f24d;
+      --role-accent-rgb: 182, 242, 77;
+      --tilt-x: 0deg;
+      --tilt-y: 0deg;
+      --radius: 8px;
+      --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    body.admin-site {
+      --role-accent: #c7ff5e;
+      --role-accent-rgb: 199, 255, 94;
+    }
+
+    body.employee-site {
+      --role-accent: #64e9a8;
+      --role-accent-rgb: 100, 233, 168;
+    }
+
+    body.customer-site {
+      --role-accent: #b6f24d;
+      --role-accent-rgb: 182, 242, 77;
+    }
+
+    * {
+      scrollbar-color: rgba(var(--role-accent-rgb), 0.55) #050c08;
+    }
+
+    body {
+      font-family: "Segoe UI Variable Display", Aptos, "Segoe UI", Arial, sans-serif;
+      background:
+        repeating-linear-gradient(116deg, rgba(255, 255, 255, 0.016) 0 1px, transparent 1px 22px),
+        linear-gradient(112deg, transparent 0%, rgba(255, 255, 255, 0.035) 44%, rgba(var(--role-accent-rgb), 0.1) 50%, transparent 58%),
+        linear-gradient(146deg, var(--obsidian) 0%, #071a10 40%, #092c1a 68%, #020805 100%);
+      background-size: auto, 230% 100%, 100% 100%;
+      background-position: center, var(--shine-x) 0, center;
+    }
+
+    body::before {
+      background:
+        linear-gradient(rgba(222, 242, 217, 0.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(222, 242, 217, 0.02) 1px, transparent 1px);
+      background-size: 46px 46px;
+      opacity: 0.72;
+    }
+
+    header {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 45%),
+        rgba(2, 10, 6, 0.94);
+      border-bottom: 1px solid rgba(220, 238, 216, 0.12);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.52), inset 0 -1px 0 rgba(var(--role-accent-rgb), 0.08);
+      backdrop-filter: blur(22px) saturate(130%);
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 -1px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 4%, var(--chrome-mid) 28%, var(--role-accent) 50%, var(--chrome) 72%, transparent 96%);
+      opacity: 0.62;
+      pointer-events: none;
+    }
+
+    .nav {
+      min-height: 76px;
+    }
+
+    .brand img {
+      width: 188px;
+      filter: drop-shadow(0 16px 28px rgba(0, 0, 0, 0.48)) drop-shadow(0 0 16px rgba(var(--role-accent-rgb), 0.08));
+    }
+
+    .account-pill,
+    .button,
+    input,
+    select,
+    textarea,
+    .tab,
+    .badge,
+    .job-toggle {
+      border-radius: 6px;
+    }
+
+    .account-pill {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent),
+        rgba(var(--role-accent-rgb), 0.1);
+      border-color: rgba(var(--role-accent-rgb), 0.3);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .hero {
+      padding: 38px 0 28px;
+      background:
+        linear-gradient(104deg, rgba(1, 7, 4, 0.97) 5%, rgba(2, 24, 13, 0.82) 48%, rgba(3, 36, 19, 0.58) 100%),
+        url("../assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
+    }
+
+    .hero-grid {
+      position: relative;
+      min-height: 244px;
+      border-radius: 8px;
+      border: 1px solid rgba(230, 243, 226, 0.19);
+      background:
+        linear-gradient(130deg, rgba(255, 255, 255, 0.11), transparent 28%),
+        linear-gradient(112deg, rgba(2, 10, 6, 0.94), rgba(6, 53, 31, 0.7));
+      box-shadow:
+        0 36px 100px rgba(0, 0, 0, 0.58),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
+        inset 0 -1px 0 rgba(var(--role-accent-rgb), 0.1);
+      transform: perspective(1200px) rotateX(var(--tilt-y)) rotateY(var(--tilt-x));
+      transform-style: preserve-3d;
+      transition: transform 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+    }
+
+    .hero-grid::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--chrome-mid), var(--role-accent), var(--chrome), transparent);
+      opacity: 0.72;
+    }
+
+    .hero-grid:hover {
+      border-color: rgba(var(--role-accent-rgb), 0.34);
+      box-shadow:
+        0 42px 110px rgba(0, 0, 0, 0.64),
+        0 0 40px rgba(var(--role-accent-rgb), 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    h1 {
+      color: var(--role-accent);
+      background: linear-gradient(180deg, #f8fff2 0%, var(--role-accent) 50%, #7fbd2c 100%);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: none;
+      filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.46));
+    }
+
+    .portal-card {
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.09), transparent 36%),
+        linear-gradient(160deg, rgba(var(--role-accent-rgb), 0.13), rgba(2, 14, 8, 0.92));
+      border-color: rgba(var(--role-accent-rgb), 0.28);
+      box-shadow: 18px 20px 48px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.11);
+      transform: translateZ(14px);
+    }
+
+    .portal-card img {
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.42), 0 0 22px rgba(var(--role-accent-rgb), 0.12);
+    }
+
+    .auth-card,
+    .tabs,
+    .card,
+    .notification-bar,
+    .metric,
+    .step,
+    .job,
+    .invoice,
+    .message,
+    .property-note,
+    .plan,
+    .paid-invoice-archive,
+    .admin-job.collapsed-job,
+    .customer-card {
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.065), transparent 34%),
+        linear-gradient(180deg, rgba(10, 36, 23, 0.92), rgba(3, 14, 8, 0.96));
+      border-color: rgba(210, 232, 204, 0.14);
+      box-shadow:
+        0 20px 52px rgba(0, 0, 0, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.075),
+        inset 0 -1px 0 rgba(var(--role-accent-rgb), 0.055);
+    }
+
+    .card,
+    .job,
+    .invoice,
+    .message,
+    .metric,
+    .customer-card {
+      transition: transform 170ms ease, border-color 170ms ease, box-shadow 170ms ease;
+    }
+
+    .card:hover,
+    .job:hover,
+    .invoice:hover,
+    .message:hover,
+    .metric:hover,
+    .customer-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(var(--role-accent-rgb), 0.27);
+      box-shadow:
+        0 26px 66px rgba(0, 0, 0, 0.48),
+        0 0 28px rgba(var(--role-accent-rgb), 0.055),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .tabs {
+      border: 1px solid rgba(223, 237, 219, 0.14);
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05), transparent 24%),
+        rgba(1, 9, 5, 0.95);
+      box-shadow: 0 24px 68px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .tabs::before {
+      color: var(--chrome-mid);
+    }
+
+    .tab {
+      border-color: rgba(218, 233, 213, 0.11);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 42%),
+        rgba(6, 24, 15, 0.9);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .tab:hover {
+      border-color: rgba(var(--role-accent-rgb), 0.28);
+      background-color: rgba(10, 50, 29, 0.9);
+      transform: translateX(2px);
+    }
+
+    .tab.active {
+      background:
+        linear-gradient(110deg, rgba(var(--role-accent-rgb), 0.24), rgba(255, 255, 255, 0.055)),
+        #092819;
+      border-color: rgba(var(--role-accent-rgb), 0.58);
+      color: #ffffff;
+      box-shadow:
+        0 12px 26px rgba(0, 0, 0, 0.3),
+        0 0 24px rgba(var(--role-accent-rgb), 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .tab::after {
+      width: 2px;
+      background: linear-gradient(var(--chrome), var(--role-accent));
+    }
+
+    input,
+    select,
+    textarea {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent),
+        rgba(1, 10, 6, 0.82);
+      border-color: rgba(211, 230, 205, 0.16);
+      box-shadow: inset 0 2px 7px rgba(0, 0, 0, 0.32), 0 1px 0 rgba(255, 255, 255, 0.025);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(var(--role-accent-rgb), 0.74);
+      box-shadow: 0 0 0 3px rgba(var(--role-accent-rgb), 0.12), 0 0 28px rgba(var(--role-accent-rgb), 0.09);
+    }
+
+    .button {
+      border-radius: 6px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.28), transparent 38%),
+        linear-gradient(180deg, var(--role-accent), #6eab27);
+      border-color: rgba(229, 255, 206, 0.4);
+      box-shadow: 0 14px 30px rgba(40, 109, 19, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+    }
+
+    .button.secondary {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.65), transparent 38%),
+        linear-gradient(180deg, var(--chrome), var(--chrome-mid));
+      color: #06140c;
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .button.ghost {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.065), transparent),
+        rgba(4, 19, 11, 0.88);
+      color: var(--chrome);
+      border-color: rgba(220, 235, 216, 0.17);
+    }
+
+    .metric strong,
+    .price {
+      color: var(--role-accent);
+      text-shadow: 0 0 20px rgba(var(--role-accent-rgb), 0.16);
+    }
+
+    .notification-bar {
+      border-color: rgba(var(--role-accent-rgb), 0.25);
+      background:
+        linear-gradient(95deg, rgba(var(--role-accent-rgb), 0.15), transparent 38%),
+        linear-gradient(180deg, #0a2919, #041109);
+    }
+
+    @media (max-width: 900px) {
+      .nav {
+        min-height: 66px;
+      }
+
+      .hero-grid {
+        transform: none;
+      }
+
+      .tab:hover,
+      .card:hover,
+      .job:hover,
+      .invoice:hover,
+      .message:hover,
+      .metric:hover,
+      .customer-card:hover {
+        transform: none;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1449,7 +2020,7 @@
       <div class="nav-actions">
         <span id="account-pill" class="account-pill">Signed in</span>
         <button id="sign-out" class="button ghost" type="button" hidden>Sign Out</button>
-        <a class="button ghost" href="https://greengrinlawns.com/">Main Site</a>
+        <a class="button ghost" href="/">Main Site</a>
       </div>
     </div>
   </header>
@@ -1481,6 +2052,10 @@
             <label for="auth-password">Password</label>
             <input id="auth-password" type="password" required minlength="6" placeholder="At least 6 characters" />
           </div>
+          <div>
+            <label for="auth-phone">Phone <span class="muted">(required for new accounts)</span></label>
+            <input id="auth-phone" type="tel" autocomplete="tel" placeholder="(208) 555-0199" />
+          </div>
           <div class="two">
             <button class="button" type="submit" data-auth-action="signin">Sign In</button>
             <button class="button ghost" type="submit" data-auth-action="signup">Create Account</button>
@@ -1503,35 +2078,41 @@
       </div>
 
       <div class="auth-card staff-login-card">
-        <h2>Staff access</h2>
-        <form id="employee-request-form">
-          <div class="two">
+        <div class="staff-signin">
+          <h2>Employee sign in</h2>
+          <form id="staff-login-form">
             <div>
-              <label for="employee-name">Name</label>
-              <input id="employee-name" required placeholder="Employee name" />
+              <label for="staff-pin">Employee PIN</label>
+              <input id="staff-pin" type="password" required inputmode="numeric" autocomplete="current-password" placeholder="Enter your employee PIN" />
+            </div>
+            <button class="button" type="submit">Open Employee Portal</button>
+          </form>
+        </div>
+        <div class="staff-request">
+          <h3>Need employee access?</h3>
+          <p>Send a request to the owner. You can use your PIN after it is approved.</p>
+          <form id="employee-request-form">
+            <div class="two">
+              <div>
+                <label for="employee-name">Name</label>
+                <input id="employee-name" required autocomplete="name" placeholder="Employee name" />
+              </div>
+              <div>
+                <label for="employee-phone">Phone</label>
+                <input id="employee-phone" required type="tel" autocomplete="tel" placeholder="(208) 555-0199" />
+              </div>
             </div>
             <div>
-              <label for="employee-phone">Phone</label>
-              <input id="employee-phone" placeholder="Optional" />
+              <label for="employee-request-email">Email</label>
+              <input id="employee-request-email" type="email" required autocomplete="email" placeholder="employee@example.com" />
             </div>
-          </div>
-          <div>
-            <label for="employee-request-email">Email</label>
-            <input id="employee-request-email" type="email" required placeholder="employee@example.com" />
-          </div>
-          <div>
-            <label for="employee-request-pin">Requested PIN</label>
-            <input id="employee-request-pin" type="password" placeholder="PIN you want to use" />
-          </div>
-          <button class="button" type="submit">Request Employee Access</button>
-        </form>
-        <form id="staff-login-form">
-          <div>
-            <label for="staff-pin">Employee PIN</label>
-            <input id="staff-pin" type="password" placeholder="PIN from owner" />
-          </div>
-          <button class="button ghost" type="submit">Use Employee PIN</button>
-        </form>
+            <div>
+              <label for="employee-request-pin">Requested PIN</label>
+              <input id="employee-request-pin" type="password" required inputmode="numeric" placeholder="PIN you want to use" />
+            </div>
+            <button class="button secondary" type="submit">Request Employee Access</button>
+          </form>
+        </div>
         <div id="staff-login-result" aria-live="polite"></div>
       </div>
       </div>
@@ -2860,10 +3441,17 @@
       saveValue(sessionKeys.employeeLogin, "");
       const email = $("#auth-email").value.trim();
       const password = $("#auth-password").value;
+      const phone = $("#auth-phone").value.replace(/\D/g, "");
       const action = event.submitter?.dataset.authAction || "signin";
       $("#auth-result").innerHTML = notice(action === "signup" ? "Creating account..." : "Signing in...");
       if (!supabaseClient) {
         $("#auth-result").innerHTML = notice("Sign in is temporarily unavailable.", true);
+        return;
+      }
+
+      if (action === "signup" && phone.length < 10) {
+        $("#auth-result").innerHTML = notice("Enter a valid phone number to create an account.", true);
+        $("#auth-phone").focus();
         return;
       }
 
@@ -2872,7 +3460,10 @@
           ? await supabaseClient.auth.signUp({
               email,
               password,
-              options: { emailRedirectTo: window.location.href.split("#")[0] }
+              options: {
+                emailRedirectTo: window.location.href.split("#")[0],
+                data: { phone }
+              }
             })
           : await supabaseClient.auth.signInWithPassword({ email, password });
 
@@ -4820,12 +5411,33 @@
       });
     }
 
+    function enablePortalMotion() {
+      if (!window.matchMedia("(pointer: fine)").matches || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      let frame = 0;
+      window.addEventListener("pointermove", (event) => {
+        if (frame) return;
+        frame = window.requestAnimationFrame(() => {
+          const x = event.clientX / window.innerWidth;
+          const y = event.clientY / window.innerHeight;
+          document.documentElement.style.setProperty("--scene-x", `${(x - 0.5) * 16}px`);
+          document.documentElement.style.setProperty("--scene-y", `${(y - 0.5) * 10}px`);
+          document.documentElement.style.setProperty("--grid-x", `${(x - 0.5) * -8}px`);
+          document.documentElement.style.setProperty("--grid-y", `${(y - 0.5) * -8}px`);
+          document.documentElement.style.setProperty("--shine-x", `${Math.round(x * 100)}%`);
+          document.documentElement.style.setProperty("--tilt-x", `${(x - 0.5) * 1.3}deg`);
+          document.documentElement.style.setProperty("--tilt-y", `${(y - 0.5) * -0.9}deg`);
+          frame = 0;
+        });
+      }, { passive: true });
+    }
+
     applyPortalMode();
     updateRollingClock();
     calculateBid();
     clearExpenseForm();
     clearMileageForm();
     setExpenseView("receipts");
+    enablePortalMotion();
     window.setInterval(updateRollingClock, 1000);
     loadSupabaseAuth();
   </script>
