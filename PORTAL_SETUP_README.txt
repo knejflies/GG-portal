@@ -24,6 +24,9 @@ WHAT WORKS AFTER SETUP
 - Admin can send a monthly invoice from the customer's monthly service number.
 - Employees can request access.
 - Admin can approve/deactivate/delete employees, set PINs, and set hourly rates.
+- Admin can grant Marketer access and assign an entire subdivision to a marketer.
+- Marketers can save each house from their phone location and record card left, interested, or not interested.
+- Interested marketing leads require a name and phone number and appear in Admin -> Marketing.
 - Employees can see assigned jobs and click Done.
 - Employees can clock in/out.
 - Admin can view time clock totals and pay totals by day/week/month.
@@ -38,7 +41,7 @@ SUPABASE SETUP
 1. Open Supabase.
 2. Go to SQL Editor.
 3. Paste and run portal-setup.sql.
-4. If you already ran setup before, run portal-setup.sql again. It safely adds the new notification table.
+4. If you already ran setup before, run portal-setup.sql again. It safely adds the latest portal tables and columns.
 5. Go to Project Settings -> API.
 6. Copy:
    - Project URL
@@ -69,6 +72,14 @@ Do not share the service_role key, private notification key, OpenAI API key, or 
 The SUPABASE_ANON_KEY and GREEN_GRIN_VAPID_PUBLIC_KEY are okay to expose.
 
 OPENAI_RECEIPT_MODEL is optional. Leave it out unless you are intentionally changing the receipt scanner model.
+GREEN_GRIN_GEOCODER_URL is optional. Leave it out to use the default OpenStreetMap address lookup.
+
+MARKETING ROUTES
+1. In Admin -> Employees, approve the employee and click Make Marketer.
+2. Open Admin -> Marketing and assign that marketer a subdivision and city.
+3. The employee opens Employee -> Marketing Route on their phone.
+4. At each house, the employee taps I'm At A House, then chooses Card Left, Interested, or Not Interested.
+5. Interested names and phone numbers appear in Admin -> Marketing.
 
 APP NOTIFICATION SETUP
 1. Upload/deploy this site to Netlify.

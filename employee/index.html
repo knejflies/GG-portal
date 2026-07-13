@@ -282,7 +282,7 @@
       display: block;
     }
 
-    .employee-mode #portal-app .tabs .tab:not([data-tab="employee-work"]),
+    .employee-mode #portal-app .tabs .tab:not([data-tab="employee-work"]):not([data-tab="marketing"]),
     .employee-mode .owner-only {
       display: none;
     }
@@ -352,6 +352,11 @@
     body.employee-site .customer-only,
     body.customer-site .owner-only,
     body.customer-site .employee-only {
+      display: none !important;
+    }
+
+    .tab[hidden],
+    .panel[hidden] {
       display: none !important;
     }
 
@@ -1990,6 +1995,124 @@
         linear-gradient(180deg, #0a2919, #041109);
     }
 
+    .marketing-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.08fr) minmax(320px, 0.92fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .marketing-toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+      margin: 14px 0;
+    }
+
+    #marketing-map {
+      width: 100%;
+      height: clamp(340px, 58vh, 570px);
+      border: 1px solid rgba(var(--role-accent-rgb), 0.34);
+      border-radius: 8px;
+      background: #0a1c12;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 18px 44px rgba(0, 0, 0, 0.34);
+      overflow: hidden;
+    }
+
+    #marketing-map .leaflet-control-attribution {
+      color: #26352c;
+      font-size: 10px;
+    }
+
+    .marketing-list,
+    .marketing-route-list {
+      display: grid;
+      gap: 10px;
+      max-height: 680px;
+      overflow: auto;
+      padding-right: 3px;
+    }
+
+    .marketing-lead,
+    .marketing-route {
+      border: 1px solid rgba(210, 232, 204, 0.14);
+      border-radius: 8px;
+      background: rgba(2, 15, 8, 0.72);
+      padding: 13px;
+    }
+
+    .marketing-lead-head,
+    .marketing-route-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .marketing-lead p,
+    .marketing-route p {
+      margin: 4px 0 0;
+    }
+
+    .marketing-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 7px;
+      margin-top: 11px;
+    }
+
+    .marketing-actions .button {
+      min-height: 42px;
+      padding: 8px;
+      font-size: 0.82rem;
+    }
+
+    .interest-form {
+      display: grid;
+      gap: 9px;
+      margin-top: 11px;
+      padding-top: 11px;
+      border-top: 1px solid rgba(210, 232, 204, 0.12);
+    }
+
+    .interest-form[hidden] {
+      display: none !important;
+    }
+
+    .marketing-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .marketing-summary span {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      padding: 9px;
+      border: 1px solid rgba(210, 232, 204, 0.12);
+      border-radius: 6px;
+      background: rgba(var(--role-accent-rgb), 0.07);
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .marketing-summary strong {
+      color: var(--chrome);
+      font-size: 1.12rem;
+    }
+
+    .marketing-empty-map {
+      display: grid;
+      place-items: center;
+      min-height: 340px;
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+    }
+
     @media (max-width: 900px) {
       .nav {
         min-height: 66px;
@@ -2007,6 +2130,28 @@
       .metric:hover,
       .customer-card:hover {
         transform: none;
+      }
+
+      .marketing-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .marketing-list,
+      .marketing-route-list {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .marketing-toolbar,
+      .marketing-actions,
+      .marketing-summary {
+        grid-template-columns: 1fr;
+      }
+
+      #marketing-map {
+        height: 48vh;
+        min-height: 320px;
       }
     }
   </style>
@@ -2130,10 +2275,12 @@
       <button class="tab owner-only" data-tab="owner" type="button">Jobs</button>
       <button class="tab owner-only" data-tab="bids" type="button">Bid Calculator</button>
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
+      <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
       <button class="tab owner-only" data-tab="invoices" type="button">Invoices</button>
       <button class="tab owner-only" data-tab="expenses" type="button">Expenses</button>
       <button class="tab owner-only" data-tab="activity" type="button">Activity</button>
       <button class="tab employee-only" data-tab="employee-work" type="button">My Jobs</button>
+      <button id="marketing-tab" class="tab employee-only" data-tab="marketing" type="button" hidden>Marketing Route</button>
     </div>
     <div class="portal-content">
       <div class="notification-bar">
@@ -2527,6 +2674,86 @@
       </div>
     </section>
 
+    <section id="marketing" class="panel employee-only" hidden>
+      <div class="marketing-grid">
+        <div class="card">
+          <div class="job-head">
+            <div>
+              <h2>Marketing route</h2>
+              <p class="muted">Choose your assigned subdivision, then save each house while you are standing there.</p>
+            </div>
+            <span id="marketing-route-badge" class="badge">No route</span>
+          </div>
+          <div class="marketing-toolbar">
+            <div>
+              <label for="marketing-route-select">Assigned subdivision</label>
+              <select id="marketing-route-select">
+                <option value="">No route assigned</option>
+              </select>
+            </div>
+            <button id="marketing-current-house" class="button" type="button">I'm At A House</button>
+          </div>
+          <div>
+            <label for="marketing-manual-address">Address correction <span class="muted">(optional)</span></label>
+            <input id="marketing-manual-address" autocomplete="street-address" placeholder="Only use if the phone locates the wrong house" />
+          </div>
+          <div id="marketing-result" class="status-box" aria-live="polite"></div>
+          <div id="marketing-map" aria-label="Assigned subdivision marketing map"></div>
+        </div>
+        <div class="card">
+          <h2>House results</h2>
+          <div id="marketing-summary" class="marketing-summary"></div>
+          <div id="marketing-lead-list" class="marketing-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="marketing-admin" class="panel">
+      <div class="marketing-grid">
+        <div class="card owner-only">
+          <h2>Assign a subdivision</h2>
+          <form id="marketing-route-form">
+            <div class="two">
+              <div>
+                <label for="marketing-subdivision">Subdivision</label>
+                <input id="marketing-subdivision" required placeholder="Example: Windsor Creek" />
+              </div>
+              <div>
+                <label for="marketing-employee-select">Marketer</label>
+                <select id="marketing-employee-select" required>
+                  <option value="">Choose marketer</option>
+                </select>
+              </div>
+            </div>
+            <div class="two">
+              <div>
+                <label for="marketing-city">City</label>
+                <input id="marketing-city" required placeholder="Caldwell" />
+              </div>
+              <div>
+                <label for="marketing-state">State</label>
+                <input id="marketing-state" required maxlength="2" value="ID" />
+              </div>
+            </div>
+            <div>
+              <label for="marketing-notes">Route notes</label>
+              <textarea id="marketing-notes" placeholder="Meeting point, streets to cover, or instructions"></textarea>
+            </div>
+            <button class="button" type="submit">Assign Subdivision</button>
+          </form>
+          <div id="marketing-admin-result" class="status-box" aria-live="polite"></div>
+        </div>
+        <div class="card owner-only">
+          <h2>Routes and results</h2>
+          <div class="admin-actions">
+            <button id="load-marketing-admin" class="button secondary" type="button">Refresh Routes</button>
+          </div>
+          <div id="marketing-admin-summary" class="marketing-summary"></div>
+          <div id="marketing-admin-list" class="marketing-route-list"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="bids" class="panel">
       <div class="grid">
         <div class="card owner-only">
@@ -2881,6 +3108,14 @@
     let latestBid = null;
     let expenseRows = [];
     let employeeDirectory = [];
+    let activeEmployeeProfile = null;
+    let marketingRoutes = [];
+    let marketingLeads = [];
+    let marketingAdminRoutes = [];
+    let marketingAdminLeads = [];
+    let marketingMap = null;
+    let marketingMarkerLayer = null;
+    let leafletPromise = null;
     let adminSessionPin = "";
     let portalConfig = {};
     const sessionKeys = {
@@ -2971,9 +3206,9 @@
       if (mode === "employee") {
         document.title = "Employee Portal | Green Grin Lawn & Landscape";
         $("#portal-title").textContent = "Employee Portal";
-        $("#portal-subtitle").textContent = "Crew access for assigned jobs and Done updates.";
+        $("#portal-subtitle").textContent = "Crew access for assigned jobs, time, and marketing routes.";
         if (portalCardTitle) portalCardTitle.textContent = "Crew Board";
-        if (portalCardCopy) portalCardCopy.textContent = "Assigned work, time clock, route notes, and job completion.";
+        if (portalCardCopy) portalCardCopy.textContent = "Assigned work, time clock, subdivision routes, and job completion.";
         $("#team-access").hidden = false;
       }
     }
@@ -3237,9 +3472,20 @@
       if (activeAccount.id !== "owner" && activeAccount.id !== "employee") loadAccountData();
     }
 
+    function configureMarketingAccess(employee) {
+      activeEmployeeProfile = employee || null;
+      const enabled = Boolean(employee?.is_marketer && employee?.status === "Active");
+      const tab = $("#marketing-tab");
+      const panel = $("#marketing");
+      if (tab) tab.hidden = !enabled;
+      if (panel) panel.hidden = !enabled;
+      if (!enabled && panel?.classList.contains("active")) openTab("employee-work");
+    }
+
     async function setEmployeeSignedIn(employee, remember = true) {
       if (remember) saveValue(sessionKeys.employeeLogin, "auth");
       setSignedIn({ id: "employee", email: `Welcome, ${employee.full_name || employee.email || "Employee"}` });
+      configureMarketingAccess(employee);
       $("#employee-welcome").textContent = `Welcome, ${employee.full_name || employee.email || "Employee"}.`;
       openTab("employee-work");
       await loadEmployeeJobs();
@@ -3272,6 +3518,7 @@
         saveValue(sessionKeys.employeeLogin, "pin");
       }
       setSignedIn({ id: "employee", email: `Welcome, ${employeeName}` });
+      configureMarketingAccess(data.employee);
       $("#employee-welcome").textContent = `Welcome, ${employeeName}.`;
       $("#employee-pin").value = pin;
       openTab("employee-work");
@@ -3284,6 +3531,9 @@
     function setSignedOut(options = {}) {
       const shouldClearSaved = options.clearSaved !== false;
       activeAccount = null;
+      configureMarketingAccess(null);
+      marketingRoutes = [];
+      marketingLeads = [];
       adminSessionPin = "";
       if (shouldClearSaved) clearSavedPortalSessions();
       document.body.classList.remove("employee-mode");
@@ -3409,6 +3659,8 @@
         }
         if (button.dataset.tab === "expenses") loadExpenses();
         if (button.dataset.tab === "customers") loadCustomers();
+        if (button.dataset.tab === "marketing") loadMarketingWorkspace();
+        if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
       });
     });
 
@@ -4327,6 +4579,16 @@
       }).join("");
     }
 
+    function renderMarketingEmployeeOptions() {
+      const select = $("#marketing-employee-select");
+      if (!select) return;
+      const marketers = employeeDirectory.filter((employee) => employee.status === "Active" && employee.is_marketer);
+      select.innerHTML = `<option value="">Choose marketer</option>` + marketers.map((employee) => {
+        const label = `${employee.employee_code ? `${employee.employee_code} - ` : ""}${employee.full_name || employee.email}`;
+        return `<option value="${cleanText(employee.id)}">${cleanText(label)}</option>`;
+      }).join("");
+    }
+
     function jobCard(job, admin = false) {
       const scheduled = scheduleLine(job);
       const reminderTime = job.cleanup_reminder_time ? String(job.cleanup_reminder_time).slice(0, 5) : "08:00";
@@ -4411,6 +4673,7 @@
           <p class="muted">${employee.email}</p>
           <p class="muted">${employee.phone || ""}</p>
           <p class="muted">Hourly rate: ${employee.hourly_rate ? money(employee.hourly_rate) : "Not set"}</p>
+          <p class="muted">Marketing access: ${employee.is_marketer ? "Marketer" : "Crew only"}</p>
           <div class="two" style="margin-top: 12px;">
             <input class="employee-pin-input" type="password" value="${employee.employee_pin || ""}" placeholder="Set employee PIN" />
             <button class="button small" data-employee-pin="1" type="button">Save PIN</button>
@@ -4420,6 +4683,7 @@
           <div class="admin-actions">
             <button class="button small secondary" data-employee-status="Active" type="button">Approve / Reactivate</button>
             <button class="button small ghost" data-employee-status="Inactive" type="button">Deactivate</button>
+            <button class="button small ${employee.is_marketer ? "ghost" : "secondary"}" data-employee-marketer="${employee.is_marketer ? "false" : "true"}" type="button">${employee.is_marketer ? "Remove Marketer" : "Make Marketer"}</button>
             <button class="button small ghost" data-employee-delete="1" type="button">Delete Employee</button>
           </div>
         </div>
@@ -4550,6 +4814,335 @@
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Something went wrong.");
       return data;
+    }
+
+    function marketingHeaders() {
+      return employeeTimeHeaders();
+    }
+
+    function marketingStatusColor(status) {
+      if (status === "Interested") return "#76d650";
+      if (status === "Contacted & Card") return "#d8e6cc";
+      if (status === "Not Interested") return "#bb6d5e";
+      return "#a9b5ad";
+    }
+
+    function marketingRouteLabel(route) {
+      return `${route.subdivision_name || "Subdivision"}, ${route.city || ""}${route.state ? `, ${route.state}` : ""}`;
+    }
+
+    function marketingStats(leads = []) {
+      return {
+        total: leads.length,
+        cards: leads.filter((lead) => lead.status === "Contacted & Card").length,
+        interested: leads.filter((lead) => lead.status === "Interested").length,
+        declined: leads.filter((lead) => lead.status === "Not Interested").length
+      };
+    }
+
+    function marketingSummaryMarkup(leads = []) {
+      const stats = marketingStats(leads);
+      return `
+        <span><strong>${stats.total}</strong>Houses</span>
+        <span><strong>${stats.cards}</strong>Cards</span>
+        <span><strong>${stats.interested}</strong>Interested</span>
+        <span><strong>${stats.declined}</strong>Not interested</span>
+      `;
+    }
+
+    function ensureLeaflet() {
+      if (window.L) return Promise.resolve(window.L);
+      if (leafletPromise) return leafletPromise;
+      leafletPromise = new Promise((resolve, reject) => {
+        if (!document.querySelector('link[data-green-grin-leaflet]')) {
+          const stylesheet = document.createElement("link");
+          stylesheet.rel = "stylesheet";
+          stylesheet.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+          stylesheet.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
+          stylesheet.crossOrigin = "";
+          stylesheet.dataset.greenGrinLeaflet = "1";
+          document.head.appendChild(stylesheet);
+        }
+        const existing = document.querySelector("script[data-green-grin-leaflet]");
+        if (existing) {
+          existing.addEventListener("load", () => resolve(window.L), { once: true });
+          existing.addEventListener("error", () => reject(new Error("The route map could not load.")), { once: true });
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+        script.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
+        script.crossOrigin = "";
+        script.dataset.greenGrinLeaflet = "1";
+        script.addEventListener("load", () => resolve(window.L), { once: true });
+        script.addEventListener("error", () => reject(new Error("The route map could not load.")), { once: true });
+        document.head.appendChild(script);
+      });
+      return leafletPromise;
+    }
+
+    async function initMarketingMap() {
+      const container = $("#marketing-map");
+      if (!container || $("#marketing")?.hidden) return;
+      await ensureLeaflet();
+      if (!marketingMap) {
+        marketingMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 13);
+        window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(marketingMap);
+        marketingMarkerLayer = window.L.layerGroup().addTo(marketingMap);
+      }
+      window.setTimeout(() => marketingMap.invalidateSize(), 60);
+      renderMarketingMap();
+    }
+
+    function selectedMarketingRoute() {
+      const routeId = $("#marketing-route-select")?.value || "";
+      return marketingRoutes.find((route) => route.id === routeId) || null;
+    }
+
+    function selectedMarketingLeads() {
+      const route = selectedMarketingRoute();
+      return route ? marketingLeads.filter((lead) => lead.route_id === route.id) : [];
+    }
+
+    function renderMarketingMap() {
+      if (!marketingMap || !marketingMarkerLayer) return;
+      marketingMarkerLayer.clearLayers();
+      const leads = selectedMarketingLeads();
+      const bounds = [];
+      leads.forEach((lead) => {
+        const latitude = Number(lead.latitude);
+        const longitude = Number(lead.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+        const point = [latitude, longitude];
+        bounds.push(point);
+        window.L.circleMarker(point, {
+          radius: 8,
+          color: "#f4f8ef",
+          weight: 2,
+          fillColor: marketingStatusColor(lead.status),
+          fillOpacity: 0.92
+        })
+          .bindPopup(`<strong>${cleanText(lead.address)}</strong><br>${cleanText(lead.status || "New")}`)
+          .addTo(marketingMarkerLayer);
+      });
+      if (bounds.length) marketingMap.fitBounds(bounds, { padding: [34, 34], maxZoom: 18 });
+    }
+
+    function renderMarketingRouteSelect() {
+      const select = $("#marketing-route-select");
+      if (!select) return;
+      const previous = select.value;
+      select.innerHTML = marketingRoutes.length
+        ? marketingRoutes.map((route) => `<option value="${cleanText(route.id)}">${cleanText(marketingRouteLabel(route))}</option>`).join("")
+        : '<option value="">No route assigned</option>';
+      if (marketingRoutes.some((route) => route.id === previous)) select.value = previous;
+      const route = selectedMarketingRoute();
+      $("#marketing-route-badge").textContent = route ? route.subdivision_name : "No route";
+    }
+
+    function marketingLeadCard(lead) {
+      const status = lead.status || "New";
+      const when = lead.contacted_at || lead.created_at;
+      return `
+        <div class="marketing-lead" data-lead-id="${cleanText(lead.id)}">
+          <div class="marketing-lead-head">
+            <strong>${cleanText(lead.address)}</strong>
+            <span class="badge">${cleanText(status)}</span>
+          </div>
+          ${when ? `<p class="muted">${cleanText(new Date(when).toLocaleString())}</p>` : ""}
+          ${lead.prospect_name ? `<p>${cleanText(lead.prospect_name)} - <a href="tel:${cleanText(lead.phone || "")}">${cleanText(lead.phone || "")}</a></p>` : ""}
+          ${lead.email ? `<p class="muted">${cleanText(lead.email)}</p>` : ""}
+          ${lead.notes ? `<p class="muted">${cleanText(lead.notes)}</p>` : ""}
+          <div class="marketing-actions">
+            <button class="button ghost" data-marketing-status="Contacted & Card" type="button">Card Left</button>
+            <button class="button secondary" data-marketing-interest="1" type="button">Interested</button>
+            <button class="button ghost" data-marketing-status="Not Interested" type="button">Not Interested</button>
+          </div>
+          <div class="interest-form" hidden>
+            <div class="two">
+              <div>
+                <label>Name</label>
+                <input class="marketing-prospect-name" value="${cleanText(lead.prospect_name || "")}" placeholder="Customer name" />
+              </div>
+              <div>
+                <label>Phone</label>
+                <input class="marketing-prospect-phone" type="tel" required value="${cleanText(lead.phone || "")}" placeholder="(208) 555-0199" />
+              </div>
+            </div>
+            <div class="two">
+              <div>
+                <label>Email <span class="muted">(optional)</span></label>
+                <input class="marketing-prospect-email" type="email" value="${cleanText(lead.email || "")}" placeholder="name@example.com" />
+              </div>
+              <div>
+                <label>Notes <span class="muted">(optional)</span></label>
+                <input class="marketing-prospect-notes" value="${cleanText(lead.notes || "")}" placeholder="Best time to call" />
+              </div>
+            </div>
+            <button class="button" data-marketing-save-interest="1" type="button">Save Interested Lead</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMarketingWorkspace() {
+      const route = selectedMarketingRoute();
+      const leads = selectedMarketingLeads();
+      $("#marketing-route-badge").textContent = route ? route.subdivision_name : "No route";
+      $("#marketing-summary").innerHTML = marketingSummaryMarkup(leads);
+      $("#marketing-lead-list").innerHTML = route
+        ? (leads.length ? leads.map((lead) => marketingLeadCard(lead)).join("") : notice("No houses saved in this subdivision yet."))
+        : notice("No active subdivision is assigned to you.");
+      renderMarketingMap();
+    }
+
+    async function loadMarketingWorkspace() {
+      $("#marketing-result").innerHTML = notice("Loading your subdivision...");
+      try {
+        const data = await requestJson("portal-marketing", { headers: marketingHeaders() });
+        configureMarketingAccess(data.employee);
+        marketingRoutes = data.routes || [];
+        marketingLeads = data.leads || [];
+        renderMarketingRouteSelect();
+        renderMarketingWorkspace();
+        await initMarketingMap();
+        $("#marketing-result").innerHTML = marketingRoutes.length ? "" : notice("The owner has not assigned an active subdivision yet.");
+      } catch (error) {
+        $("#marketing-result").innerHTML = notice(error.message, true);
+      }
+    }
+
+    function currentPosition() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error("This phone does not provide location access."));
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(resolve, () => {
+          reject(new Error("Location access is needed to save the current house. Allow location for this site, then try again."));
+        }, {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 5000
+        });
+      });
+    }
+
+    async function captureMarketingHouse() {
+      const route = selectedMarketingRoute();
+      const button = $("#marketing-current-house");
+      if (!route) {
+        $("#marketing-result").innerHTML = notice("Choose an assigned subdivision first.", true);
+        return;
+      }
+      button.disabled = true;
+      $("#marketing-result").innerHTML = notice("Finding this house...");
+      try {
+        const position = await currentPosition();
+        const data = await requestJson("portal-marketing", {
+          method: "POST",
+          headers: marketingHeaders(),
+          body: JSON.stringify({
+            action: "capture-house",
+            route_id: route.id,
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            manual_address: $("#marketing-manual-address").value.trim()
+          })
+        });
+        $("#marketing-manual-address").value = "";
+        await loadMarketingWorkspace();
+        $("#marketing-result").innerHTML = notice(data.duplicate ? "That house is already on this route." : "House saved. Choose the result below.");
+      } catch (error) {
+        $("#marketing-result").innerHTML = notice(error.message, true);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function updateMarketingLead(card, status) {
+      const id = card.dataset.leadId;
+      const interested = status === "Interested";
+      const payload = {
+        action: "update-lead",
+        id,
+        status,
+        prospect_name: interested ? card.querySelector(".marketing-prospect-name")?.value || "" : "",
+        phone: interested ? card.querySelector(".marketing-prospect-phone")?.value || "" : "",
+        email: interested ? card.querySelector(".marketing-prospect-email")?.value || "" : "",
+        notes: interested ? card.querySelector(".marketing-prospect-notes")?.value || "" : ""
+      };
+      $("#marketing-result").innerHTML = notice("Saving house result...");
+      try {
+        await requestJson("portal-marketing", {
+          method: "PATCH",
+          headers: marketingHeaders(),
+          body: JSON.stringify(payload)
+        });
+        await loadMarketingWorkspace();
+        $("#marketing-result").innerHTML = notice(interested ? "Interested lead saved." : "House result saved.");
+      } catch (error) {
+        $("#marketing-result").innerHTML = notice(error.message, true);
+      }
+    }
+
+    function marketingAdminRouteCard(route) {
+      const leads = marketingAdminLeads.filter((lead) => lead.route_id === route.id);
+      const stats = marketingStats(leads);
+      const interested = leads.filter((lead) => lead.status === "Interested");
+      return `
+        <div class="marketing-route" data-route-id="${cleanText(route.id)}">
+          <div class="marketing-route-head">
+            <div>
+              <strong>${cleanText(route.subdivision_name)}</strong>
+              <p class="muted">${cleanText(route.city)}, ${cleanText(route.state)} - ${cleanText(route.assigned_employee_name || "Unassigned")}</p>
+            </div>
+            <span class="badge">${cleanText(route.status)}</span>
+          </div>
+          ${route.notes ? `<p class="muted">${cleanText(route.notes)}</p>` : ""}
+          <div class="marketing-summary">${marketingSummaryMarkup(leads)}</div>
+          ${interested.length ? interested.map((lead) => `
+            <div class="message">
+              <strong>${cleanText(lead.prospect_name || "Interested lead")}</strong>
+              <p>${cleanText(lead.address)}</p>
+              <p><a href="tel:${cleanText(lead.phone || "")}">${cleanText(lead.phone || "")}</a>${lead.email ? ` - ${cleanText(lead.email)}` : ""}</p>
+            </div>
+          `).join("") : ""}
+          <div class="admin-actions">
+            <button class="button small secondary" data-route-status="${route.status === "Active" ? "Complete" : "Active"}" type="button">${route.status === "Active" ? "Complete Route" : "Reopen Route"}</button>
+            <button class="button small ghost" data-route-delete="1" type="button">Delete Route</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMarketingAdmin() {
+      const allStats = marketingStats(marketingAdminLeads);
+      $("#marketing-admin-summary").innerHTML = marketingSummaryMarkup(marketingAdminLeads);
+      $("#marketing-admin-list").innerHTML = marketingAdminRoutes.length
+        ? marketingAdminRoutes.map((route) => marketingAdminRouteCard(route)).join("")
+        : notice("No subdivision routes yet.");
+      if (!allStats.total && marketingAdminRoutes.length) {
+        $("#marketing-admin-result").innerHTML = notice("Routes are assigned. House results will appear here as marketers walk them.");
+      }
+    }
+
+    async function loadMarketingAdmin() {
+      if (!adminPin()) return;
+      $("#marketing-admin-list").innerHTML = notice("Loading routes...");
+      try {
+        if (!employeeDirectory.length) await loadEmployees();
+        renderMarketingEmployeeOptions();
+        const data = await requestJson("portal-marketing?admin=1", { headers: adminHeaders() });
+        marketingAdminRoutes = data.routes || [];
+        marketingAdminLeads = data.leads || [];
+        renderMarketingAdmin();
+      } catch (error) {
+        $("#marketing-admin-list").innerHTML = notice(error.message, true);
+      }
     }
 
     $("#request-form").addEventListener("submit", async (event) => {
@@ -5170,6 +5763,7 @@
         const headers = pin ? { "x-employee-pin": pin } : {};
         const data = await requestJson("portal-jobs?employee=1", { headers });
         if (data.employee) {
+          configureMarketingAccess(data.employee);
           const employeeName = data.employee.full_name || data.employee.email || "Employee";
           $("#employee-welcome").textContent = `Welcome, ${employeeName}.`;
           $("#account-pill").textContent = `Welcome, ${employeeName}`;
@@ -5244,6 +5838,7 @@
         const active = employeeDirectory.filter((employee) => employee.status === "Active");
         if ($("#owner_job_employee")) $("#owner_job_employee").innerHTML = employeeOptions("");
         renderTimeReportEmployeeOptions();
+        renderMarketingEmployeeOptions();
         $("#employee-pending-result").innerHTML = pending.length
           ? pending.map((employee) => employeeAccessCard(employee)).join("")
           : notice("No pending employee requests.");
@@ -5368,7 +5963,7 @@
     });
 
     async function handleEmployeeAdminClick(event) {
-      const button = event.target.closest("button[data-employee-status], button[data-employee-pin], button[data-employee-rate], button[data-employee-delete]");
+      const button = event.target.closest("button[data-employee-status], button[data-employee-pin], button[data-employee-rate], button[data-employee-marketer], button[data-employee-delete]");
       if (!button) return;
       const card = button.closest(".job");
       const id = card.dataset.id;
@@ -5386,7 +5981,9 @@
             ? { id, employee_pin: card.querySelector(".employee-pin-input")?.value || "" }
             : button.dataset.employeeRate
               ? { id, hourly_rate: card.querySelector(".employee-rate-input")?.value || null }
-              : { id, status: button.dataset.employeeStatus };
+              : Object.prototype.hasOwnProperty.call(button.dataset, "employeeMarketer")
+                ? { id, is_marketer: button.dataset.employeeMarketer === "true" }
+                : { id, status: button.dataset.employeeStatus };
           await requestJson("portal-employees", {
             method: "PATCH",
             headers: adminHeaders(),
@@ -5395,6 +5992,7 @@
         }
         await loadEmployees();
         if (activeAccount?.id === "owner") await loadAdminJobs();
+        if ($("#marketing-admin")?.classList.contains("active")) await loadMarketingAdmin();
       } catch (error) {
         alert(error.message);
       } finally {
@@ -5404,6 +6002,94 @@
 
     $("#employees-result").addEventListener("click", handleEmployeeAdminClick);
     $("#employee-pending-result").addEventListener("click", handleEmployeeAdminClick);
+
+    $("#marketing-route-select").addEventListener("change", () => {
+      renderMarketingWorkspace();
+      if (marketingMap) window.setTimeout(() => marketingMap.invalidateSize(), 30);
+    });
+
+    $("#marketing-current-house").addEventListener("click", captureMarketingHouse);
+
+    $("#marketing-lead-list").addEventListener("click", async (event) => {
+      const card = event.target.closest(".marketing-lead");
+      if (!card) return;
+      const interestButton = event.target.closest("button[data-marketing-interest]");
+      if (interestButton) {
+        const form = card.querySelector(".interest-form");
+        form.hidden = !form.hidden;
+        if (!form.hidden) card.querySelector(".marketing-prospect-name")?.focus();
+        return;
+      }
+      const statusButton = event.target.closest("button[data-marketing-status]");
+      if (statusButton) {
+        statusButton.disabled = true;
+        await updateMarketingLead(card, statusButton.dataset.marketingStatus);
+        return;
+      }
+      const saveButton = event.target.closest("button[data-marketing-save-interest]");
+      if (saveButton) {
+        saveButton.disabled = true;
+        await updateMarketingLead(card, "Interested");
+      }
+    });
+
+    $("#marketing-route-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      $("#marketing-admin-result").innerHTML = notice("Assigning subdivision...");
+      try {
+        await requestJson("portal-marketing", {
+          method: "POST",
+          headers: adminHeaders(),
+          body: JSON.stringify({
+            action: "create-route",
+            subdivision_name: $("#marketing-subdivision").value,
+            city: $("#marketing-city").value,
+            state: $("#marketing-state").value || "ID",
+            notes: $("#marketing-notes").value,
+            assigned_employee_id: $("#marketing-employee-select").value
+          })
+        });
+        form.reset();
+        $("#marketing-state").value = "ID";
+        renderMarketingEmployeeOptions();
+        await loadMarketingAdmin();
+        $("#marketing-admin-result").innerHTML = notice("Subdivision assigned.");
+      } catch (error) {
+        $("#marketing-admin-result").innerHTML = notice(error.message, true);
+      }
+    });
+
+    $("#load-marketing-admin").addEventListener("click", loadMarketingAdmin);
+
+    $("#marketing-admin-list").addEventListener("click", async (event) => {
+      const card = event.target.closest(".marketing-route");
+      const button = event.target.closest("button[data-route-status], button[data-route-delete]");
+      if (!card || !button) return;
+      const id = card.dataset.routeId;
+      button.disabled = true;
+      try {
+        if (button.dataset.routeDelete) {
+          if (!confirm("Delete this subdivision route and every saved house result? This cannot be undone.")) return;
+          await requestJson("portal-marketing", {
+            method: "DELETE",
+            headers: adminHeaders(),
+            body: JSON.stringify({ id })
+          });
+        } else {
+          await requestJson("portal-marketing", {
+            method: "PATCH",
+            headers: adminHeaders(),
+            body: JSON.stringify({ action: "route-status", id, status: button.dataset.routeStatus })
+          });
+        }
+        await loadMarketingAdmin();
+      } catch (error) {
+        $("#marketing-admin-result").innerHTML = notice(error.message, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

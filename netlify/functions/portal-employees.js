@@ -193,6 +193,9 @@ exports.handler = async (event) => {
         const hourlyRate = Number(body.hourly_rate);
         update.hourly_rate = Number.isFinite(hourlyRate) ? hourlyRate : null;
       }
+      if (Object.prototype.hasOwnProperty.call(body, "is_marketer")) {
+        update.is_marketer = Boolean(body.is_marketer);
+      }
       if (!Object.keys(update).length) return json(400, { error: "Nothing to update." });
       const rows = await supabase(`green_grin_employees?id=eq.${encodeURIComponent(body.id)}`, {
         method: "PATCH",
@@ -217,6 +220,9 @@ exports.handler = async (event) => {
   } catch (error) {
     if (error.message.includes("employee_pin") && error.message.includes("schema cache")) {
       return json(500, { error: "Employee PIN column is not ready in Supabase yet. Run portal-setup.sql again, then wait about 30 seconds and try again." });
+    }
+    if (error.message.includes("is_marketer") && error.message.includes("schema cache")) {
+      return json(500, { error: "Marketing access is not ready in Supabase yet. Run the latest portal-setup.sql, wait about 30 seconds, and try again." });
     }
     return json(500, { error: error.message });
   }

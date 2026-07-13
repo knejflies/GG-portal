@@ -81,6 +81,7 @@ create table if not exists public.green_grin_employees (
   status text not null default 'Pending',
   employee_pin text,
   hourly_rate numeric(10, 2),
+  is_marketer boolean not null default false,
   role text not null default 'Crew'
 );
 
@@ -95,6 +96,39 @@ alter table public.green_grin_employees
 
 alter table public.green_grin_employees
   add column if not exists hourly_rate numeric(10, 2);
+
+alter table public.green_grin_employees
+  add column if not exists is_marketer boolean not null default false;
+
+create table if not exists public.green_grin_marketing_routes (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  subdivision_name text not null,
+  city text not null,
+  state text not null default 'ID',
+  notes text,
+  assigned_employee_id uuid not null references public.green_grin_employees(id) on delete cascade,
+  assigned_employee_name text,
+  status text not null default 'Active'
+);
+
+create table if not exists public.green_grin_marketing_leads (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  contacted_at timestamptz,
+  route_id uuid not null references public.green_grin_marketing_routes(id) on delete cascade,
+  assigned_employee_id uuid not null references public.green_grin_employees(id) on delete cascade,
+  address text not null,
+  latitude double precision not null,
+  longitude double precision not null,
+  status text not null default 'New',
+  prospect_name text,
+  phone text,
+  email text,
+  notes text
+);
 
 create table if not exists public.green_grin_time_entries (
   id uuid primary key default gen_random_uuid(),
@@ -249,6 +283,8 @@ alter table public.green_grin_expenses
   add column if not exists active boolean not null default true;
 
 alter table public.green_grin_expenses enable row level security;
+alter table public.green_grin_marketing_routes enable row level security;
+alter table public.green_grin_marketing_leads enable row level security;
 
 create index if not exists green_grin_jobs_assigned_employee_idx
   on public.green_grin_jobs(assigned_employee_id);
@@ -316,6 +352,24 @@ create index if not exists green_grin_expenses_active_idx
 
 create index if not exists green_grin_expenses_type_idx
   on public.green_grin_expenses(expense_type);
+
+create index if not exists green_grin_marketing_routes_employee_idx
+  on public.green_grin_marketing_routes(assigned_employee_id);
+
+create index if not exists green_grin_marketing_routes_status_idx
+  on public.green_grin_marketing_routes(status);
+
+create index if not exists green_grin_marketing_leads_route_idx
+  on public.green_grin_marketing_leads(route_id);
+
+create index if not exists green_grin_marketing_leads_employee_idx
+  on public.green_grin_marketing_leads(assigned_employee_id);
+
+create index if not exists green_grin_marketing_leads_status_idx
+  on public.green_grin_marketing_leads(status);
+
+create index if not exists green_grin_marketing_leads_created_at_idx
+  on public.green_grin_marketing_leads(created_at desc);
 
 create table if not exists public.green_grin_push_subscriptions (
   id uuid primary key default gen_random_uuid(),
