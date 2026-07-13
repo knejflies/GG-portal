@@ -356,7 +356,8 @@
     }
 
     .tab[hidden],
-    .panel[hidden] {
+    .panel[hidden],
+    [hidden] {
       display: none !important;
     }
 
@@ -2020,7 +2021,27 @@
       overflow: hidden;
     }
 
-    #marketing-map .leaflet-control-attribution {
+    .marketing-planner {
+      display: grid;
+      gap: 10px;
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(210, 232, 204, 0.14);
+    }
+
+    #marketing-admin-map {
+      width: 100%;
+      height: 440px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.34);
+      border-radius: 8px;
+      background: #0a1c12;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 18px 44px rgba(0, 0, 0, 0.34);
+      overflow: hidden;
+      cursor: crosshair;
+    }
+
+    #marketing-map .leaflet-control-attribution,
+    #marketing-admin-map .leaflet-control-attribution {
       color: #26352c;
       font-size: 10px;
     }
@@ -2053,6 +2074,37 @@
     .marketing-lead p,
     .marketing-route p {
       margin: 4px 0 0;
+    }
+
+    .marketing-houses {
+      margin-top: 12px;
+      border-top: 1px solid rgba(210, 232, 204, 0.12);
+      border-bottom: 1px solid rgba(210, 232, 204, 0.12);
+    }
+
+    .marketing-houses summary {
+      cursor: pointer;
+      color: var(--chrome);
+      font-weight: 900;
+      padding: 12px 2px;
+    }
+
+    .marketing-house-row {
+      display: grid;
+      gap: 9px;
+      padding: 12px 2px;
+      border-top: 1px solid rgba(210, 232, 204, 0.09);
+    }
+
+    .marketing-house-contact {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .marketing-house-row input {
+      min-height: 40px;
+      padding: 9px 10px;
     }
 
     .marketing-actions {
@@ -2145,13 +2197,21 @@
     @media (max-width: 640px) {
       .marketing-toolbar,
       .marketing-actions,
-      .marketing-summary {
+      .marketing-house-contact {
         grid-template-columns: 1fr;
+      }
+
+      .marketing-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
       }
 
       #marketing-map {
         height: 48vh;
         min-height: 320px;
+      }
+
+      #marketing-admin-map {
+        height: 360px;
       }
     }
   </style>
@@ -2711,8 +2771,9 @@
     <section id="marketing-admin" class="panel">
       <div class="marketing-grid">
         <div class="card owner-only">
-          <h2>Assign a subdivision</h2>
+          <h2 id="marketing-route-form-title">Assign a subdivision</h2>
           <form id="marketing-route-form">
+            <input id="marketing-route-id" type="hidden" />
             <div class="two">
               <div>
                 <label for="marketing-subdivision">Subdivision</label>
@@ -2739,9 +2800,24 @@
               <label for="marketing-notes">Route notes</label>
               <textarea id="marketing-notes" placeholder="Meeting point, streets to cover, or instructions"></textarea>
             </div>
-            <button class="button" type="submit">Assign Subdivision</button>
+            <div class="admin-actions">
+              <button id="marketing-route-submit" class="button" type="submit">Assign Subdivision</button>
+              <button id="marketing-route-cancel" class="button ghost" type="button" hidden>Cancel Edit</button>
+            </div>
           </form>
           <div id="marketing-admin-result" class="status-box" aria-live="polite"></div>
+          <div class="marketing-planner">
+            <div class="job-head">
+              <h3>Plan Houses</h3>
+              <button id="marketing-admin-locate" class="button small ghost" type="button">Center On Me</button>
+            </div>
+            <label for="marketing-plan-route-select">Route to plan</label>
+            <select id="marketing-plan-route-select">
+              <option value="">Choose route</option>
+            </select>
+            <div id="marketing-admin-map" aria-label="Map for selecting houses on a subdivision route"></div>
+            <div id="marketing-plan-result" class="status-box" aria-live="polite"></div>
+          </div>
         </div>
         <div class="card owner-only">
           <h2>Routes and results</h2>
@@ -3115,6 +3191,10 @@
     let marketingAdminLeads = [];
     let marketingMap = null;
     let marketingMarkerLayer = null;
+    let marketingAdminMap = null;
+    let marketingAdminMarkerLayer = null;
+    let marketingAdminAddingHouse = false;
+    let marketingLastHouseClickAt = 0;
     let leafletPromise = null;
     let adminSessionPin = "";
     let portalConfig = {};
@@ -4923,7 +5003,8 @@
           color: "#f4f8ef",
           weight: 2,
           fillColor: marketingStatusColor(lead.status),
-          fillOpacity: 0.92
+          fillOpacity: 0.92,
+          bubblingMouseEvents: false
         })
           .bindPopup(`<strong>${cleanText(lead.address)}</strong><br>${cleanText(lead.status || "New")}`)
           .addTo(marketingMarkerLayer);
@@ -5055,7 +5136,12 @@
         });
         $("#marketing-manual-address").value = "";
         await loadMarketingWorkspace();
-        $("#marketing-result").innerHTML = notice(data.duplicate ? "That house is already on this route." : "House saved. Choose the result below.");
+        const feedback = data.matched
+          ? `Matched the nearest planned house: ${cleanText(data.lead?.address || "House")}.`
+          : data.duplicate
+            ? "That house is already on this route."
+            : "House saved. Choose the result below.";
+        $("#marketing-result").innerHTML = notice(feedback);
       } catch (error) {
         $("#marketing-result").innerHTML = notice(error.message, true);
       } finally {
@@ -5089,10 +5175,30 @@
       }
     }
 
+    function marketingAdminHouseRow(lead) {
+      return `
+        <div class="marketing-house-row" data-house-id="${cleanText(lead.id)}">
+          <div class="marketing-lead-head">
+            <div>
+              <strong>${cleanText(lead.address)}</strong>
+              <p class="muted">${cleanText(lead.status || "New")}</p>
+            </div>
+            <span class="badge">${cleanText(lead.status || "New")}</span>
+          </div>
+          <div class="marketing-house-contact">
+            <input class="marketing-house-name" value="${cleanText(lead.prospect_name || "")}" aria-label="Contact name for ${cleanText(lead.address)}" placeholder="Contact name" />
+            <input class="marketing-house-phone" type="tel" value="${cleanText(lead.phone || "")}" aria-label="Contact phone for ${cleanText(lead.address)}" placeholder="Contact phone" />
+          </div>
+          <div class="admin-actions">
+            <button class="button small secondary" data-house-save="1" type="button">Save Contact</button>
+            <button class="button small ghost" data-house-delete="1" type="button">Delete House</button>
+          </div>
+        </div>
+      `;
+    }
+
     function marketingAdminRouteCard(route) {
       const leads = marketingAdminLeads.filter((lead) => lead.route_id === route.id);
-      const stats = marketingStats(leads);
-      const interested = leads.filter((lead) => lead.status === "Interested");
       return `
         <div class="marketing-route" data-route-id="${cleanText(route.id)}">
           <div class="marketing-route-head">
@@ -5104,19 +5210,135 @@
           </div>
           ${route.notes ? `<p class="muted">${cleanText(route.notes)}</p>` : ""}
           <div class="marketing-summary">${marketingSummaryMarkup(leads)}</div>
-          ${interested.length ? interested.map((lead) => `
-            <div class="message">
-              <strong>${cleanText(lead.prospect_name || "Interested lead")}</strong>
-              <p>${cleanText(lead.address)}</p>
-              <p><a href="tel:${cleanText(lead.phone || "")}">${cleanText(lead.phone || "")}</a>${lead.email ? ` - ${cleanText(lead.email)}` : ""}</p>
-            </div>
-          `).join("") : ""}
+          <details class="marketing-houses">
+            <summary>Houses (${leads.length})</summary>
+            ${leads.length ? leads.map((lead) => marketingAdminHouseRow(lead)).join("") : notice("No houses planned yet.")}
+          </details>
           <div class="admin-actions">
+            <button class="button small ghost" data-route-edit="1" type="button">Edit Route</button>
             <button class="button small secondary" data-route-status="${route.status === "Active" ? "Complete" : "Active"}" type="button">${route.status === "Active" ? "Complete Route" : "Reopen Route"}</button>
             <button class="button small ghost" data-route-delete="1" type="button">Delete Route</button>
           </div>
         </div>
       `;
+    }
+
+    function clearMarketingRouteForm() {
+      const form = $("#marketing-route-form");
+      form.reset();
+      $("#marketing-route-id").value = "";
+      $("#marketing-state").value = "ID";
+      $("#marketing-route-form-title").textContent = "Assign a subdivision";
+      $("#marketing-route-submit").textContent = "Assign Subdivision";
+      $("#marketing-route-cancel").hidden = true;
+      renderMarketingEmployeeOptions();
+    }
+
+    function editMarketingRoute(route) {
+      renderMarketingEmployeeOptions();
+      $("#marketing-route-id").value = route.id;
+      $("#marketing-subdivision").value = route.subdivision_name || "";
+      $("#marketing-city").value = route.city || "";
+      $("#marketing-state").value = route.state || "ID";
+      $("#marketing-notes").value = route.notes || "";
+      $("#marketing-employee-select").value = route.assigned_employee_id || "";
+      $("#marketing-route-form-title").textContent = "Edit subdivision route";
+      $("#marketing-route-submit").textContent = "Save Route";
+      $("#marketing-route-cancel").hidden = false;
+      $("#marketing-route-form").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function renderMarketingPlanRouteOptions() {
+      const select = $("#marketing-plan-route-select");
+      if (!select) return;
+      const previous = select.value;
+      select.innerHTML = `<option value="">Choose route</option>` + marketingAdminRoutes.map((route) =>
+        `<option value="${cleanText(route.id)}">${cleanText(marketingRouteLabel(route))}</option>`
+      ).join("");
+      if (marketingAdminRoutes.some((route) => route.id === previous)) select.value = previous;
+      else if (marketingAdminRoutes.length === 1) select.value = marketingAdminRoutes[0].id;
+    }
+
+    function selectedMarketingPlanRoute() {
+      const routeId = $("#marketing-plan-route-select")?.value || "";
+      return marketingAdminRoutes.find((route) => route.id === routeId) || null;
+    }
+
+    function renderMarketingAdminMap(fit = false) {
+      if (!marketingAdminMap || !marketingAdminMarkerLayer) return;
+      marketingAdminMarkerLayer.clearLayers();
+      const route = selectedMarketingPlanRoute();
+      const leads = route ? marketingAdminLeads.filter((lead) => lead.route_id === route.id) : [];
+      const bounds = [];
+      leads.forEach((lead) => {
+        const latitude = Number(lead.latitude);
+        const longitude = Number(lead.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+        const point = [latitude, longitude];
+        bounds.push(point);
+        window.L.circleMarker(point, {
+          radius: 7,
+          color: "#f4f8ef",
+          weight: 2,
+          fillColor: marketingStatusColor(lead.status),
+          fillOpacity: 0.92,
+          bubblingMouseEvents: false
+        })
+          .bindPopup(`<strong>${cleanText(lead.address)}</strong><br>${cleanText(lead.status || "New")}`)
+          .addTo(marketingAdminMarkerLayer);
+      });
+      if (fit && bounds.length) marketingAdminMap.fitBounds(bounds, { padding: [32, 32], maxZoom: 19 });
+    }
+
+    async function initMarketingAdminMap() {
+      const container = $("#marketing-admin-map");
+      if (!container) return;
+      await ensureLeaflet();
+      if (!marketingAdminMap) {
+        marketingAdminMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 13);
+        window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(marketingAdminMap);
+        marketingAdminMarkerLayer = window.L.layerGroup().addTo(marketingAdminMap);
+        marketingAdminMap.on("click", (event) => addPlannedMarketingHouse(event.latlng));
+      }
+      window.setTimeout(() => marketingAdminMap.invalidateSize(), 60);
+      renderMarketingAdminMap(true);
+    }
+
+    async function addPlannedMarketingHouse(point) {
+      const now = Date.now();
+      if (marketingAdminAddingHouse || now - marketingLastHouseClickAt < 1100) {
+        $("#marketing-plan-result").innerHTML = notice("Finish saving the current house before adding another.");
+        return;
+      }
+      const route = selectedMarketingPlanRoute();
+      if (!route) {
+        $("#marketing-plan-result").innerHTML = notice("Choose a route before adding houses.", true);
+        return;
+      }
+      marketingAdminAddingHouse = true;
+      marketingLastHouseClickAt = now;
+      $("#marketing-plan-result").innerHTML = notice("Adding house...");
+      try {
+        const data = await requestJson("portal-marketing", {
+          method: "POST",
+          headers: adminHeaders(),
+          body: JSON.stringify({
+            action: "add-house",
+            route_id: route.id,
+            latitude: point.lat,
+            longitude: point.lng
+          })
+        });
+        await loadMarketingAdmin();
+        $("#marketing-plan-result").innerHTML = notice(data.duplicate ? "That house is already planned." : `House added: ${cleanText(data.lead?.address || "Saved house")}.`);
+      } catch (error) {
+        $("#marketing-plan-result").innerHTML = notice(error.message, true);
+      } finally {
+        marketingAdminAddingHouse = false;
+      }
     }
 
     function renderMarketingAdmin() {
@@ -5139,7 +5361,9 @@
         const data = await requestJson("portal-marketing?admin=1", { headers: adminHeaders() });
         marketingAdminRoutes = data.routes || [];
         marketingAdminLeads = data.leads || [];
+        renderMarketingPlanRouteOptions();
         renderMarketingAdmin();
+        await initMarketingAdminMap();
       } catch (error) {
         $("#marketing-admin-list").innerHTML = notice(error.message, true);
       }
@@ -6036,13 +6260,15 @@
     $("#marketing-route-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = event.currentTarget;
-      $("#marketing-admin-result").innerHTML = notice("Assigning subdivision...");
+      const routeId = $("#marketing-route-id").value;
+      $("#marketing-admin-result").innerHTML = notice(routeId ? "Saving route..." : "Assigning subdivision...");
       try {
         await requestJson("portal-marketing", {
-          method: "POST",
+          method: routeId ? "PATCH" : "POST",
           headers: adminHeaders(),
           body: JSON.stringify({
-            action: "create-route",
+            action: routeId ? "update-route" : "create-route",
+            id: routeId || undefined,
             subdivision_name: $("#marketing-subdivision").value,
             city: $("#marketing-city").value,
             state: $("#marketing-state").value || "ID",
@@ -6050,26 +6276,62 @@
             assigned_employee_id: $("#marketing-employee-select").value
           })
         });
-        form.reset();
-        $("#marketing-state").value = "ID";
-        renderMarketingEmployeeOptions();
+        clearMarketingRouteForm();
         await loadMarketingAdmin();
-        $("#marketing-admin-result").innerHTML = notice("Subdivision assigned.");
+        $("#marketing-admin-result").innerHTML = notice(routeId ? "Route updated." : "Subdivision assigned.");
       } catch (error) {
         $("#marketing-admin-result").innerHTML = notice(error.message, true);
       }
     });
 
+    $("#marketing-route-cancel").addEventListener("click", clearMarketingRouteForm);
     $("#load-marketing-admin").addEventListener("click", loadMarketingAdmin);
+    $("#marketing-plan-route-select").addEventListener("change", () => renderMarketingAdminMap(true));
+    $("#marketing-admin-locate").addEventListener("click", async () => {
+      $("#marketing-plan-result").innerHTML = notice("Finding your location...");
+      try {
+        const position = await currentPosition();
+        marketingAdminMap?.setView([position.coords.latitude, position.coords.longitude], 18);
+        $("#marketing-plan-result").innerHTML = "";
+      } catch (error) {
+        $("#marketing-plan-result").innerHTML = notice(error.message, true);
+      }
+    });
 
     $("#marketing-admin-list").addEventListener("click", async (event) => {
       const card = event.target.closest(".marketing-route");
-      const button = event.target.closest("button[data-route-status], button[data-route-delete]");
+      const house = event.target.closest(".marketing-house-row");
+      const button = event.target.closest("button[data-route-edit], button[data-route-status], button[data-route-delete], button[data-house-save], button[data-house-delete]");
       if (!card || !button) return;
+      if (button.dataset.routeEdit) {
+        const route = marketingAdminRoutes.find((item) => item.id === card.dataset.routeId);
+        if (route) editMarketingRoute(route);
+        return;
+      }
       const id = card.dataset.routeId;
       button.disabled = true;
       try {
-        if (button.dataset.routeDelete) {
+        if (button.dataset.houseSave && house) {
+          await requestJson("portal-marketing", {
+            method: "PATCH",
+            headers: adminHeaders(),
+            body: JSON.stringify({
+              action: "update-house",
+              id: house.dataset.houseId,
+              prospect_name: house.querySelector(".marketing-house-name")?.value || "",
+              phone: house.querySelector(".marketing-house-phone")?.value || ""
+            })
+          });
+          $("#marketing-admin-result").innerHTML = notice("House contact saved.");
+        } else if (button.dataset.houseDelete && house) {
+          if (!confirm("Delete this saved house from the route? This cannot be undone.")) return;
+          await requestJson("portal-marketing", {
+            method: "DELETE",
+            headers: adminHeaders(),
+            body: JSON.stringify({ action: "delete-house", id: house.dataset.houseId })
+          });
+          $("#marketing-admin-result").innerHTML = notice("House deleted.");
+        } else if (button.dataset.routeDelete) {
           if (!confirm("Delete this subdivision route and every saved house result? This cannot be undone.")) return;
           await requestJson("portal-marketing", {
             method: "DELETE",

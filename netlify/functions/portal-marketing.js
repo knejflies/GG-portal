@@ -3,6 +3,7 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const GEOCODER_URL = (process.env.GREEN_GRIN_GEOCODER_URL || "https://nominatim.openstreetmap.org").replace(/\/$/, "");
+const { sendPushToTarget } = require("./push-helper");
 
 const headers = {
   "Content-Type": "application/json",
@@ -189,6 +190,35 @@ exports.handler = async (event) => {
         return json(200, { route: rows?.[0] });
       }
 
+      if (body.action === "add-house") {
+        const adminError = requireAdmin(event);
+        if (adminError) return json(401, { error: adminError });
+        const latitude = validCoordinate(body.latitude, -90, 90);
+        const longitude = validCoordinate(body.longitude, -180, 180);
+        if (!body.route_id || latitude === null || longitude === null) {
+          return json(400, { error: "Choose a route and click a valid house location." });
+        }
+        const routeRows = await supabase(`green_grin_marketing_routes?select=*&id=eq.${encodeURIComponent(body.route_id)}&limit=1`);
+        const route = routeRows?.[0];
+        if (!route) return json(404, { error: "That subdivision route was not found." });
+        const recent = await supabase(`green_grin_marketing_leads?select=*&route_id=eq.${encodeURIComponent(route.id)}&order=created_at.desc&limit=1000`);
+        const duplicate = recent.find((lead) => distanceMeters({ latitude, longitude }, lead) < 12);
+        if (duplicate) return json(200, { lead: duplicate, duplicate: true });
+        const address = String(body.manual_address || "").trim() || await reverseGeocode(latitude, longitude);
+        const rows = await supabase("green_grin_marketing_leads", {
+          method: "POST",
+          body: JSON.stringify({
+            route_id: route.id,
+            assigned_employee_id: route.assigned_employee_id,
+            address,
+            latitude,
+            longitude,
+            status: "New"
+          })
+        });
+        return json(200, { lead: rows?.[0], duplicate: false });
+      }
+
       if (body.action === "capture-house") {
         const employee = await activeEmployee(event);
         if (!employee) return json(401, { error: "Employee access was not found. Sign in or use your employee PIN." });
@@ -201,9 +231,19 @@ exports.handler = async (event) => {
         const route = await assignedRoute(body.route_id, employee.id);
         if (!route) return json(403, { error: "That subdivision is not assigned to this employee." });
 
-        const recent = await supabase(`green_grin_marketing_leads?select=*&route_id=eq.${encodeURIComponent(route.id)}&order=created_at.desc&limit=250`);
+        const recent = await supabase(`green_grin_marketing_leads?select=*&route_id=eq.${encodeURIComponent(route.id)}&order=created_at.desc&limit=1000`);
+        const planned = recent
+          .filter((lead) => lead.status === "New")
+          .map((lead) => ({ lead, distance: distanceMeters({ latitude, longitude }, lead) }))
+          .sort((a, b) => a.distance - b.distance);
+        if (planned[0]?.distance <= 60) {
+          return json(200, { lead: planned[0].lead, matched: true, distance: Math.round(planned[0].distance) });
+        }
         const duplicate = recent.find((lead) => distanceMeters({ latitude, longitude }, lead) < 12);
         if (duplicate) return json(200, { lead: duplicate, duplicate: true });
+        if (planned.length) {
+          return json(409, { error: `No planned house is close enough. The nearest unvisited house is about ${Math.round(planned[0].distance)} meters away.` });
+        }
 
         const manualAddress = String(body.manual_address || "").trim();
         const address = manualAddress || await reverseGeocode(latitude, longitude);
@@ -226,6 +266,34 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "PATCH") {
       const body = JSON.parse(event.body || "{}");
+      if (body.action === "update-route") {
+        const adminError = requireAdmin(event);
+        if (adminError) return json(401, { error: adminError });
+        if (!body.id || !body.subdivision_name || !body.city || !body.assigned_employee_id) {
+          return json(400, { error: "Route id, subdivision, city, and marketer are required." });
+        }
+        const employeeRows = await supabase(`green_grin_employees?select=*&id=eq.${encodeURIComponent(body.assigned_employee_id)}&status=eq.Active&limit=1`);
+        const employee = employeeRows?.[0];
+        if (!employee?.is_marketer) return json(400, { error: "Choose an active employee with Marketer access." });
+        const rows = await supabase(`green_grin_marketing_routes?id=eq.${encodeURIComponent(body.id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            subdivision_name: String(body.subdivision_name).trim(),
+            city: String(body.city).trim(),
+            state: String(body.state || "ID").trim().toUpperCase(),
+            notes: String(body.notes || "").trim(),
+            assigned_employee_id: employee.id,
+            assigned_employee_name: employee.full_name || employee.email,
+            updated_at: new Date().toISOString()
+          })
+        });
+        await supabase(`green_grin_marketing_leads?route_id=eq.${encodeURIComponent(body.id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ assigned_employee_id: employee.id, updated_at: new Date().toISOString() })
+        });
+        return json(200, { route: rows?.[0] });
+      }
+
       if (body.action === "route-status") {
         const adminError = requireAdmin(event);
         if (adminError) return json(401, { error: adminError });
@@ -262,7 +330,38 @@ exports.handler = async (event) => {
             updated_at: new Date().toISOString()
           })
         });
-        return json(200, { lead: rows?.[0] });
+        let push = null;
+        if (body.status === "Interested" && existing[0].status !== "Interested") {
+          const routeRows = await supabase(`green_grin_marketing_routes?select=subdivision_name&id=eq.${encodeURIComponent(existing[0].route_id)}&limit=1`).catch(() => []);
+          const subdivision = routeRows?.[0]?.subdivision_name || "marketing route";
+          push = await sendPushToTarget(supabase, { owner_type: "admin" }, {
+            title: "New interested lawn lead",
+            body: `${prospectName} - ${phone} - ${existing[0].address} (${subdivision})`,
+            url: "/admin/",
+            tag: `green-grin-interested-${body.id}-${Date.now()}`
+          });
+        }
+        return json(200, { lead: rows?.[0], push });
+      }
+
+      if (body.action === "update-house") {
+        const adminError = requireAdmin(event);
+        if (adminError) return json(401, { error: adminError });
+        const phone = normalizePhone(body.phone);
+        const prospectName = String(body.prospect_name || "").trim();
+        if (!body.id || !prospectName || phone.length < 10) {
+          return json(400, { error: "House contact name and a valid phone number are required." });
+        }
+        const rows = await supabase(`green_grin_marketing_leads?id=eq.${encodeURIComponent(body.id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            prospect_name: prospectName,
+            phone,
+            updated_at: new Date().toISOString()
+          })
+        });
+        if (!rows?.[0]) return json(404, { error: "That saved house was not found." });
+        return json(200, { lead: rows[0] });
       }
 
       return json(400, { error: "Unknown marketing action." });
@@ -272,8 +371,12 @@ exports.handler = async (event) => {
       const adminError = requireAdmin(event);
       if (adminError) return json(401, { error: adminError });
       const body = JSON.parse(event.body || "{}");
-      if (!body.id) return json(400, { error: "Route id is required." });
-      await supabase(`green_grin_marketing_routes?id=eq.${encodeURIComponent(body.id)}`, { method: "DELETE" });
+      if (!body.id) return json(400, { error: "A route or house id is required." });
+      if (body.action === "delete-house") {
+        await supabase(`green_grin_marketing_leads?id=eq.${encodeURIComponent(body.id)}`, { method: "DELETE" });
+      } else {
+        await supabase(`green_grin_marketing_routes?id=eq.${encodeURIComponent(body.id)}`, { method: "DELETE" });
+      }
       return json(200, { ok: true });
     }
 

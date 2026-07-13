@@ -25,7 +25,10 @@ WHAT WORKS AFTER SETUP
 - Employees can request access.
 - Admin can approve/deactivate/delete employees, set PINs, and set hourly rates.
 - Admin can grant Marketer access and assign an entire subdivision to a marketer.
+- Admin can edit subdivision routes, click houses onto a route map, save contact names and phone numbers, and delete individual houses.
 - Marketers can save each house from their phone location and record card left, interested, or not interested.
+- Employee location taps match the nearest unvisited house planned by the owner.
+- Marking a house Interested immediately sends an app notification to registered admin devices.
 - Interested marketing leads require a name and phone number and appear in Admin -> Marketing.
 - Employees can see assigned jobs and click Done.
 - Employees can clock in/out.
@@ -77,9 +80,11 @@ GREEN_GRIN_GEOCODER_URL is optional. Leave it out to use the default OpenStreetM
 MARKETING ROUTES
 1. In Admin -> Employees, approve the employee and click Make Marketer.
 2. Open Admin -> Marketing and assign that marketer a subdivision and city.
-3. The employee opens Employee -> Marketing Route on their phone.
-4. At each house, the employee taps I'm At A House, then chooses Card Left, Interested, or Not Interested.
-5. Interested names and phone numbers appear in Admin -> Marketing.
+3. Choose the route under Plan Houses and click each house on the map.
+4. The employee opens Employee -> Marketing Route on their phone.
+5. At each house, the employee taps I'm At A House. GPS matches the nearest unvisited planned house.
+6. The employee chooses Card Left, Interested, or Not Interested.
+7. Admin can edit names and phone numbers or delete a house under the route's Houses list.
 
 APP NOTIFICATION SETUP
 1. Upload/deploy this site to Netlify.
