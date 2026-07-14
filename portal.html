@@ -2046,6 +2046,32 @@
       font-size: 10px;
     }
 
+    #marketing-map .leaflet-control-layers,
+    #marketing-admin-map .leaflet-control-layers {
+      border: 1px solid rgba(7, 49, 27, 0.22);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.96);
+      color: #082818;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.22);
+    }
+
+    #marketing-map .leaflet-control-layers label,
+    #marketing-admin-map .leaflet-control-layers label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    #marketing-map .leaflet-control-layers input,
+    #marketing-admin-map .leaflet-control-layers input {
+      width: auto;
+      margin: 0;
+      accent-color: #67c447;
+    }
+
     .marketing-list,
     .marketing-route-list {
       display: grid;
@@ -4961,16 +4987,31 @@
       return leafletPromise;
     }
 
+    function addMarketingBasemapControl(map, defaultStyle = "street") {
+      const streets = window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        subdomains: "abcd",
+        maxZoom: 20,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+      });
+      const satellite = window.L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+        maxZoom: 20,
+        attribution: 'Imagery &copy; <a href="https://www.esri.com/">Esri</a>'
+      });
+      const activeLayer = defaultStyle === "satellite" ? satellite : streets;
+      activeLayer.addTo(map);
+      window.L.control.layers({ Street: streets, Satellite: satellite }, null, {
+        collapsed: false,
+        position: "topright"
+      }).addTo(map);
+    }
+
     async function initMarketingMap() {
       const container = $("#marketing-map");
       if (!container || $("#marketing")?.hidden) return;
       await ensureLeaflet();
       if (!marketingMap) {
         marketingMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 13);
-        window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(marketingMap);
+        addMarketingBasemapControl(marketingMap, "street");
         marketingMarkerLayer = window.L.layerGroup().addTo(marketingMap);
       }
       window.setTimeout(() => marketingMap.invalidateSize(), 60);
@@ -5296,10 +5337,7 @@
       await ensureLeaflet();
       if (!marketingAdminMap) {
         marketingAdminMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 13);
-        window.L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(marketingAdminMap);
+        addMarketingBasemapControl(marketingAdminMap, "satellite");
         marketingAdminMarkerLayer = window.L.layerGroup().addTo(marketingAdminMap);
         marketingAdminMap.on("click", (event) => addPlannedMarketingHouse(event.latlng));
       }
