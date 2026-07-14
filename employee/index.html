@@ -2072,6 +2072,37 @@
       accent-color: #67c447;
     }
 
+    #marketing-admin-map:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .marketing-fullscreen-control {
+      margin-top: 8px !important;
+    }
+
+    .marketing-fullscreen-button {
+      min-width: 94px;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid rgba(7, 49, 27, 0.24);
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.97);
+      color: #082818;
+      font: 800 12px/1 Arial, sans-serif;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+    }
+
+    .marketing-fullscreen-button:hover,
+    .marketing-fullscreen-button:focus-visible {
+      background: #ecf8e7;
+      outline: 2px solid #67c447;
+      outline-offset: 1px;
+    }
+
     .marketing-list,
     .marketing-route-list {
       display: grid;
@@ -5005,6 +5036,40 @@
       }).addTo(map);
     }
 
+    function addMarketingFullscreenControl(map, container) {
+      if (!container?.requestFullscreen || !document.exitFullscreen) return;
+      const FullscreenControl = window.L.Control.extend({
+        options: { position: "topleft" },
+        onAdd() {
+          const control = window.L.DomUtil.create("div", "leaflet-control marketing-fullscreen-control");
+          const button = window.L.DomUtil.create("button", "marketing-fullscreen-button", control);
+          button.type = "button";
+          button.textContent = "Full Screen";
+          button.title = "Open the house planning map full screen";
+          button.setAttribute("aria-label", button.title);
+          window.L.DomEvent.disableClickPropagation(control);
+          window.L.DomEvent.disableScrollPropagation(control);
+          window.L.DomEvent.on(button, "click", async () => {
+            try {
+              if (document.fullscreenElement === container) await document.exitFullscreen();
+              else await container.requestFullscreen();
+            } catch (error) {
+              $("#marketing-plan-result").innerHTML = notice("Full screen could not open in this browser.", true);
+            }
+          });
+          document.addEventListener("fullscreenchange", () => {
+            const active = document.fullscreenElement === container;
+            button.textContent = active ? "Exit Full Screen" : "Full Screen";
+            button.title = active ? "Exit the full screen map" : "Open the house planning map full screen";
+            button.setAttribute("aria-label", button.title);
+            window.setTimeout(() => map.invalidateSize(), 80);
+          });
+          return control;
+        }
+      });
+      new FullscreenControl().addTo(map);
+    }
+
     async function initMarketingMap() {
       const container = $("#marketing-map");
       if (!container || $("#marketing")?.hidden) return;
@@ -5338,6 +5403,7 @@
       if (!marketingAdminMap) {
         marketingAdminMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 13);
         addMarketingBasemapControl(marketingAdminMap, "satellite");
+        addMarketingFullscreenControl(marketingAdminMap, container);
         marketingAdminMarkerLayer = window.L.layerGroup().addTo(marketingAdminMap);
         marketingAdminMap.on("click", (event) => addPlannedMarketingHouse(event.latlng));
       }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "green-grin-app-v24";
+const CACHE_NAME = "green-grin-app-v25";
 const APP_SHELL = [
   "/",
   "/index.html",
