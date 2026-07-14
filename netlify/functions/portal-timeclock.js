@@ -176,6 +176,7 @@ exports.handler = async (event) => {
 
       const employee = await activeEmployee(event) || await activeEmployeeByPin(event);
       if (!employee) return json(401, { error: "Employee access was not found. Sign in or use the PIN the owner set for you." });
+      if (employee.is_subcontractor) return json(403, { error: "The time clock is not available for subcontractors." });
       const { unit, count } = cleanPeriod(params.get("unit"), params.get("count"));
       return json(200, { employee, ...(await employeeStatus(employee, unit, count)) });
     }
@@ -184,6 +185,7 @@ exports.handler = async (event) => {
       const body = JSON.parse(event.body || "{}");
       const employee = await activeEmployee(event) || await activeEmployeeByPin(event);
       if (!employee) return json(401, { error: "Employee access was not found. Sign in or use the PIN the owner set for you." });
+      if (employee.is_subcontractor) return json(403, { error: "The time clock is not available for subcontractors." });
       const status = await employeeStatus(employee);
 
       if (body.action === "clock-in") {

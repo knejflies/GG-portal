@@ -37,8 +37,10 @@ WHAT WORKS AFTER SETUP
 - Employees can see assigned jobs grouped by daily route and click Arrived or Done.
 - Arrived and Done send app notifications to the customer and are recorded in the activity log.
 - Employees can clock in/out.
+- Subcontractors do not see or use the employee time clock.
 - Admin can view time clock totals and pay totals by day/week/month.
 - Customers, admin, and employees can enable app notifications on their device.
+- iPhone and Android visitors receive an in-site prompt to install the current portal as an app.
 - Morning cleanup reminders send through app notifications only.
 - Done notices send through app notifications only.
 - Sent invoices send through app notifications only.

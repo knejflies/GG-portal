@@ -2283,6 +2283,74 @@
       padding: 24px;
     }
 
+    .install-prompt {
+      position: fixed;
+      left: 50%;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      z-index: 120;
+      width: min(720px, calc(100% - 28px));
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border: 1px solid rgba(145, 236, 87, 0.42);
+      border-radius: 8px;
+      background: rgba(4, 22, 13, 0.97);
+      color: var(--chrome);
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.5), 0 0 32px rgba(115, 215, 70, 0.12);
+      backdrop-filter: blur(18px);
+      transform: translateX(-50%);
+    }
+
+    .install-prompt[hidden] {
+      display: none !important;
+    }
+
+    .install-prompt img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      border-radius: 8px;
+      background: #ffffff;
+    }
+
+    .install-prompt strong {
+      display: block;
+      color: var(--lime);
+      font-size: 1rem;
+    }
+
+    .install-prompt p {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .install-prompt-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .install-prompt .button {
+      min-height: 42px;
+      padding: 9px 13px;
+    }
+
+    .install-close {
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(210, 232, 204, 0.18);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--chrome);
+      cursor: pointer;
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
     @media (max-width: 900px) {
       .nav {
         min-height: 66px;
@@ -2313,6 +2381,16 @@
     }
 
     @media (max-width: 640px) {
+      .install-prompt {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .install-prompt-actions {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: 1fr auto;
+      }
+
       .marketing-toolbar,
       .marketing-actions,
       .marketing-house-contact {
@@ -2347,6 +2425,18 @@
       </div>
     </div>
   </header>
+
+  <aside id="install-prompt" class="install-prompt" role="dialog" aria-labelledby="install-title" aria-describedby="install-copy" hidden>
+    <img src="../assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
+    <div>
+      <strong id="install-title">Install Green Grin</strong>
+      <p id="install-copy">Add this portal to your Home Screen.</p>
+    </div>
+    <div class="install-prompt-actions">
+      <button id="install-app" class="button small" type="button">Install App</button>
+      <button id="dismiss-install" class="install-close" type="button" aria-label="Close install prompt">&times;</button>
+    </div>
+  </aside>
 
   <section class="hero">
     <div class="wrap hero-grid">
@@ -2793,7 +2883,7 @@
 
     <section id="employee-work" class="panel">
       <div class="grid">
-        <div class="card">
+        <div id="employee-timeclock-card" class="card">
           <h2>Time clock</h2>
           <div id="rolling-clock" class="live-clock">--:--:--</div>
           <p id="timeclock-status" class="muted">Load your time clock or clock in to start tracking hours.</p>
@@ -3337,6 +3427,7 @@
     let marketingAdminAddingHouse = false;
     let marketingLastHouseClickAt = 0;
     let leafletPromise = null;
+    let deferredInstallPrompt = null;
     let adminSessionPin = "";
     let portalConfig = {};
     const sessionKeys = {
@@ -3696,6 +3787,8 @@
     function configureMarketingAccess(employee) {
       activeEmployeeProfile = employee || null;
       const enabled = Boolean(employee?.is_marketer && employee?.status === "Active");
+      const timeClockCard = $("#employee-timeclock-card");
+      if (timeClockCard) timeClockCard.hidden = Boolean(employee?.is_subcontractor);
       const tab = $("#marketing-tab");
       const panel = $("#marketing");
       if (tab) tab.hidden = !enabled;
@@ -3710,7 +3803,7 @@
       $("#employee-welcome").textContent = `Welcome, ${employee.full_name || employee.email || "Employee"}.`;
       openTab("employee-work");
       await loadEmployeeJobs();
-      await loadTimeClock();
+      if (!employee.is_subcontractor) await loadTimeClock();
     }
 
     async function setOwnerSignedIn(pin, remember = true) {
@@ -3746,10 +3839,8 @@
       $("#employee-welcome").textContent = `Welcome, ${employeeName}.`;
       $("#employee-pin").value = pin;
       openTab("employee-work");
-      $("#employee-result").innerHTML = data.jobs.length
-        ? data.jobs.map((job) => employeeJobCard(job)).join("")
-        : notice("No employee jobs ready.");
-      await loadTimeClock();
+      $("#employee-result").innerHTML = renderEmployeeJobs(data);
+      if (!data.employee?.is_subcontractor) await loadTimeClock();
     }
 
     function setSignedOut(options = {}) {
@@ -6311,6 +6402,7 @@
     }
 
     async function loadTimeClock() {
+      if (activeEmployeeProfile?.is_subcontractor) return;
       $("#timeclock-result").innerHTML = notice("Loading time clock...");
       try {
         const count = $("#timeclock-count").value || 1;
@@ -6323,6 +6415,7 @@
     }
 
     async function punchTimeClock(action) {
+      if (activeEmployeeProfile?.is_subcontractor) return;
       $("#timeclock-result").innerHTML = notice(action === "clock-in" ? "Clocking in..." : "Clocking out...");
       try {
         const data = await requestJson("portal-timeclock", {
@@ -6725,6 +6818,71 @@
       });
     }
 
+    function installedAsApp() {
+      return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    }
+
+    function installPlatform() {
+      const userAgent = navigator.userAgent || "";
+      const ios = /iPad|iPhone|iPod/.test(userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (ios) return "ios";
+      if (/Android/i.test(userAgent)) return "android";
+      return "";
+    }
+
+    function installPortalName() {
+      const mode = portalMode();
+      if (mode === "admin") return "Green Grin Admin";
+      if (mode === "employee") return "Green Grin Employee";
+      return "Green Grin Customer Portal";
+    }
+
+    function hideInstallPrompt() {
+      $("#install-prompt").hidden = true;
+    }
+
+    function showInstallPrompt(platform = installPlatform()) {
+      if (!platform || installedAsApp()) return;
+      const appName = installPortalName();
+      $("#install-title").textContent = `Install ${appName}`;
+      if (platform === "ios") {
+        $("#install-copy").textContent = "In Safari, tap Share, choose Add to Home Screen, turn on Open as Web App, then tap Add.";
+        $("#install-app").textContent = "Got It";
+      } else if (deferredInstallPrompt) {
+        $("#install-copy").textContent = "Install this portal on your phone for quick access and app notifications.";
+        $("#install-app").textContent = "Install App";
+      } else {
+        $("#install-copy").textContent = "In Chrome, open the menu, choose Add to Home screen, then tap Install.";
+        $("#install-app").textContent = "Got It";
+      }
+      $("#install-prompt").hidden = false;
+    }
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      showInstallPrompt("android");
+    });
+
+    window.addEventListener("appinstalled", () => {
+      deferredInstallPrompt = null;
+      hideInstallPrompt();
+    });
+
+    $("#install-app").addEventListener("click", async () => {
+      if (!deferredInstallPrompt) {
+        hideInstallPrompt();
+        return;
+      }
+      const prompt = deferredInstallPrompt;
+      deferredInstallPrompt = null;
+      await prompt.prompt();
+      await prompt.userChoice.catch(() => null);
+      hideInstallPrompt();
+    });
+
+    $("#dismiss-install").addEventListener("click", hideInstallPrompt);
+
     function enablePortalMotion() {
       if (!window.matchMedia("(pointer: fine)").matches || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
       let frame = 0;
@@ -6753,6 +6911,7 @@
     setExpenseView("receipts");
     $("#daily-route-date").value = todayInputDate();
     renderDailyRouteBuilder();
+    window.setTimeout(() => showInstallPrompt(), 900);
     enablePortalMotion();
     window.setInterval(updateRollingClock, 1000);
     loadSupabaseAuth();
