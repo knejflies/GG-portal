@@ -75,8 +75,8 @@ async function employeePinForEvent(event) {
   return rows?.[0] || null;
 }
 
-async function employeeDoneActor(event, template) {
-  if (template !== "completed") return null;
+async function employeeMessageActor(event, template) {
+  if (!["arrived", "completed"].includes(template)) return null;
   return await employeeAccountForEvent(event) || await employeePinForEvent(event);
 }
 
@@ -95,12 +95,16 @@ function messageFor(template, job) {
   if (template === "completed") {
     return `Hi${name}, Green Grin finished your yard today. Thanks for choosing us.`;
   }
+  if (template === "arrived") {
+    return `Hi${name}, Green Grin has arrived for your ${service} and is starting work.`;
+  }
   return `Hi${name}, Green Grin has an update about your ${service}.`;
 }
 
 function pushTitle(template) {
   if (template === "objects") return "Yard cleanup reminder";
   if (template === "completed") return "Service completed";
+  if (template === "arrived") return "Green Grin has arrived";
   return "Green Grin update";
 }
 
@@ -160,7 +164,7 @@ exports.handler = async (event) => {
 
     const body = JSON.parse(event.body || "{}");
     if (!body.id || !body.template) return json(400, { error: "Job id and template are required." });
-    const employeeActor = await employeeDoneActor(event, body.template);
+    const employeeActor = await employeeMessageActor(event, body.template);
     const adminError = employeeActor ? null : requireAdmin(event);
     if (adminError) return json(401, { error: adminError });
 
@@ -169,6 +173,11 @@ exports.handler = async (event) => {
     const job = jobs?.[0];
     if (!job) return json(404, { error: "Job not found." });
     if (body.template === "arriving") return json(400, { error: "On-the-way messages are turned off." });
+    if (employeeActor && job.assigned_employee_id !== employeeActor.id) {
+      const routeDate = String(body.route_date || new Date().toISOString().slice(0, 10));
+      const routeRows = await supabase(`green_grin_daily_route_assignments?select=id&job_id=eq.${id}&assigned_employee_id=eq.${encodeURIComponent(employeeActor.id)}&route_date=eq.${encodeURIComponent(routeDate)}&limit=1`);
+      if (!routeRows?.length) return json(403, { error: "This job is not assigned to your route for that date." });
+    }
 
     const message = messageFor(body.template, job);
     const status = body.template === "completed" && !job.recurring_weekly ? "Completed" : job.status;

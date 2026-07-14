@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const SUBCONTRACTOR_SERVICES = ["Aeration", "Shrubs", "Snow"];
 
 const headers = {
   "Content-Type": "application/json",
@@ -196,6 +197,13 @@ exports.handler = async (event) => {
       if (Object.prototype.hasOwnProperty.call(body, "is_marketer")) {
         update.is_marketer = Boolean(body.is_marketer);
       }
+      if (Object.prototype.hasOwnProperty.call(body, "is_subcontractor")) {
+        update.is_subcontractor = Boolean(body.is_subcontractor);
+      }
+      if (Object.prototype.hasOwnProperty.call(body, "subcontractor_services")) {
+        const requested = Array.isArray(body.subcontractor_services) ? body.subcontractor_services : [];
+        update.subcontractor_services = [...new Set(requested.filter((service) => SUBCONTRACTOR_SERVICES.includes(service)))];
+      }
       if (!Object.keys(update).length) return json(400, { error: "Nothing to update." });
       const rows = await supabase(`green_grin_employees?id=eq.${encodeURIComponent(body.id)}`, {
         method: "PATCH",
@@ -223,6 +231,9 @@ exports.handler = async (event) => {
     }
     if (error.message.includes("is_marketer") && error.message.includes("schema cache")) {
       return json(500, { error: "Marketing access is not ready in Supabase yet. Run the latest portal-setup.sql, wait about 30 seconds, and try again." });
+    }
+    if ((error.message.includes("is_subcontractor") || error.message.includes("subcontractor_services")) && error.message.includes("schema cache")) {
+      return json(500, { error: "Subcontractor fields are not ready in Supabase yet. Run the latest portal-setup.sql, wait about 30 seconds, and try again." });
     }
     return json(500, { error: error.message });
   }

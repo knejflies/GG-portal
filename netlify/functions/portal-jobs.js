@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { sendPushToTarget } = require("./push-helper");
 
 const headers = {
   "Content-Type": "application/json",
@@ -162,6 +163,21 @@ async function syncCustomerPlan(customerUserId, job) {
   });
 }
 
+async function sendDailyRoutePush(employee, routeDate, jobCount) {
+  try {
+    return await sendPushToTarget(supabase, { employee_id: employee.id }, {
+      title: jobCount ? "Daily route assigned" : "Daily route cleared",
+      body: jobCount
+        ? `${jobCount} ${jobCount === 1 ? "job" : "jobs"} assigned for ${routeDate}. Open My Jobs to view the route.`
+        : `Your assigned route for ${routeDate} was cleared.`,
+      url: "/employee/",
+      tag: `green-grin-daily-route-${employee.id}-${routeDate}-${Date.now()}`
+    });
+  } catch (error) {
+    return { enabled: true, sent: 0, failed: 1, total: 0, errors: [{ reason: error.message }] };
+  }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
 
@@ -220,15 +236,18 @@ exports.handler = async (event) => {
       if (params.get("admin") === "1") {
         const adminError = requireAdmin(event);
         if (adminError) return json(401, { error: adminError });
-        const jobs = await supabase("green_grin_jobs?select=*&order=created_at.desc&limit=80");
-        return json(200, { jobs });
+        const jobs = await supabase("green_grin_jobs?select=*&order=created_at.desc&limit=500");
+        const dailyRoutes = await supabase("green_grin_daily_route_assignments?select=*&order=route_date.asc&limit=1000").catch(() => []);
+        return json(200, { jobs, daily_routes: dailyRoutes });
       }
 
       if (params.get("employee") === "1") {
         const employee = await activeEmployee(event) || await activeEmployeeByPin(event);
         if (!employee) return json(401, { error: "Employee access was not found. Sign in or use the PIN the owner set for you." });
-        const jobs = await supabase(`green_grin_jobs?select=id,customer_code,customer_name,address,service_type,scheduled_date,recurring_weekly,schedule_start_date,schedule_end_date,status,notes,assigned_employee_id,assigned_employee_name&assigned_employee_id=eq.${encodeURIComponent(employee.id)}&status=neq.Completed&order=scheduled_date.asc.nullslast&limit=80`);
-        return json(200, { employee, jobs });
+        const jobs = await supabase(`green_grin_jobs?select=id,customer_code,customer_name,address,service_type,scheduled_date,recurring_weekly,schedule_start_date,schedule_end_date,status,notes,last_message_template,last_message_sent_at,assigned_employee_id,assigned_employee_name&assigned_employee_id=eq.${encodeURIComponent(employee.id)}&status=neq.Completed&order=scheduled_date.asc.nullslast&limit=200`);
+        const today = new Date().toISOString().slice(0, 10);
+        const dailyRoutes = await supabase(`green_grin_daily_route_assignments?select=id,route_date,job_id,assigned_employee_id,assigned_employee_name,green_grin_jobs(id,customer_code,customer_name,address,service_type,scheduled_date,recurring_weekly,schedule_start_date,schedule_end_date,status,notes,last_message_template,last_message_sent_at)&assigned_employee_id=eq.${encodeURIComponent(employee.id)}&route_date=gte.${today}&order=route_date.asc&limit=200`).catch(() => []);
+        return json(200, { employee, jobs, daily_routes: dailyRoutes });
       }
 
       const phone = params.get("phone");
@@ -242,6 +261,39 @@ exports.handler = async (event) => {
       const adminError = requireAdmin(event);
       if (adminError) return json(401, { error: adminError });
       const body = JSON.parse(event.body || "{}");
+      if (body.action === "assign-daily-route") {
+        const routeDate = String(body.route_date || "");
+        const employeeId = String(body.assigned_employee_id || "");
+        const requestedJobIds = Array.isArray(body.job_ids) ? [...new Set(body.job_ids.map(String))] : [];
+        const validUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(routeDate) || !validUuid.test(employeeId)) {
+          return json(400, { error: "A valid route date and employee are required." });
+        }
+        if (requestedJobIds.length > 100 || requestedJobIds.some((id) => !validUuid.test(id))) {
+          return json(400, { error: "Daily routes can contain up to 100 valid jobs." });
+        }
+        const employees = await supabase(`green_grin_employees?select=*&id=eq.${encodeURIComponent(employeeId)}&status=eq.Active&limit=1`);
+        const employee = employees?.[0];
+        if (!employee) return json(404, { error: "That active employee was not found." });
+
+        await supabase(`green_grin_daily_route_assignments?route_date=eq.${routeDate}&assigned_employee_id=eq.${encodeURIComponent(employee.id)}`, { method: "DELETE" });
+        if (requestedJobIds.length) {
+          const assignments = requestedJobIds.map((jobId) => ({
+            route_date: routeDate,
+            job_id: jobId,
+            assigned_employee_id: employee.id,
+            assigned_employee_name: employee.full_name || employee.email
+          }));
+          await supabase("green_grin_daily_route_assignments?on_conflict=route_date,job_id", {
+            method: "POST",
+            headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+            body: JSON.stringify(assignments)
+          });
+        }
+        const dailyRoutes = await supabase(`green_grin_daily_route_assignments?select=*&route_date=eq.${routeDate}&assigned_employee_id=eq.${encodeURIComponent(employee.id)}&order=created_at.asc`);
+        const push = await sendDailyRoutePush(employee, routeDate, requestedJobIds.length);
+        return json(200, { employee, daily_routes: dailyRoutes, push });
+      }
       if (!body.id) return json(400, { error: "Job id is required." });
 
       const update = {
@@ -280,6 +332,9 @@ exports.handler = async (event) => {
 
     return json(405, { error: "Method not allowed." });
   } catch (error) {
+    if (error.message.includes("green_grin_daily_route_assignments") || (error.message.includes("route_date") && error.message.includes("schema cache"))) {
+      return json(500, { error: "Daily routes are not ready in Supabase yet. Run the latest portal-setup.sql, wait about 30 seconds, and try again." });
+    }
     return json(500, { error: error.message });
   }
 };

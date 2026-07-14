@@ -24,6 +24,9 @@ WHAT WORKS AFTER SETUP
 - Admin can send a monthly invoice from the customer's monthly service number.
 - Employees can request access.
 - Admin can approve/deactivate/delete employees, set PINs, and set hourly rates.
+- Admin can mark an employee as a subcontractor and select Aeration, Shrubs, and Snow categories.
+- Admin can build a dated daily route without changing a customer's recurring weekly schedule.
+- Saving a daily route sends an app notification to that employee or subcontractor.
 - Admin can grant Marketer access and assign an entire subdivision to a marketer.
 - Admin can edit subdivision routes, click houses onto a satellite planning map, switch between current street and satellite views, open the planning map full screen on a computer, save contact names and phone numbers, and delete individual houses.
 - Employees with notifications enabled receive an app alert when a new marketing route is assigned or an existing route is reassigned to them.
@@ -31,7 +34,8 @@ WHAT WORKS AFTER SETUP
 - Employee location taps match the nearest unvisited house planned by the owner.
 - Marking a house Interested immediately sends an app notification to registered admin devices.
 - Interested marketing leads require a name and phone number and appear in Admin -> Marketing.
-- Employees can see assigned jobs and click Done.
+- Employees can see assigned jobs grouped by daily route and click Arrived or Done.
+- Arrived and Done send app notifications to the customer and are recorded in the activity log.
 - Employees can clock in/out.
 - Admin can view time clock totals and pay totals by day/week/month.
 - Customers, admin, and employees can enable app notifications on their device.
@@ -86,6 +90,13 @@ MARKETING ROUTES
 5. At each house, the employee taps I'm At A House. GPS matches the nearest unvisited planned house.
 6. The employee chooses Card Left, Interested, or Not Interested.
 7. Admin can edit names and phone numbers or delete a house under the route's Houses list.
+
+SUBCONTRACTORS AND DAILY ROUTES
+1. In Admin -> Employees, approve the worker and click Make Subcontractor.
+2. Select Aeration, Shrubs, and/or Snow, then click Save Subcontractor Categories.
+3. Open Admin -> Jobs and choose the date and employee under Daily Route Builder.
+4. Check the jobs for that date and click Save Daily Route.
+5. The employee receives an app notification and sees the dated route under My Jobs.
 
 APP NOTIFICATION SETUP
 1. Upload/deploy this site to Netlify.

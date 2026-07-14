@@ -762,6 +762,54 @@
       margin-top: 14px;
     }
 
+    .daily-route-builder {
+      grid-column: 1 / -1;
+    }
+
+    .daily-route-job-list,
+    .subcontractor-services {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .daily-route-choice {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 50px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--white);
+    }
+
+    .daily-route-choice input,
+    .subcontractor-services input {
+      width: 18px;
+      min-height: 18px;
+      accent-color: var(--leaf-dark);
+    }
+
+    .daily-route-choice small {
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .subcontractor-services {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .subcontractor-services .check {
+      align-items: center;
+      min-height: 44px;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
     .small {
       min-height: 38px;
       padding: 8px 11px;
@@ -941,6 +989,19 @@
       body.admin-site .row-actions .button,
       body.employee-site .row-actions .button {
         width: 100%;
+      }
+
+      .subcontractor-services,
+      .daily-route-choice {
+        grid-template-columns: 1fr;
+      }
+
+      .daily-route-choice input {
+        width: 20px;
+      }
+
+      .daily-route-choice small {
+        text-align: left;
       }
 
       body.admin-site .job-head,
@@ -2706,6 +2767,27 @@
           <h2>Jobs</h2>
           <div id="admin-result" class="status-box" aria-live="polite"></div>
         </div>
+        <div class="card owner-only daily-route-builder">
+          <h2>Daily Route Builder</h2>
+          <div class="two">
+            <div>
+              <label for="daily-route-date">Route date</label>
+              <input id="daily-route-date" type="date" />
+            </div>
+            <div>
+              <label for="daily-route-employee">Employee or subcontractor</label>
+              <select id="daily-route-employee">
+                <option value="">Choose employee</option>
+              </select>
+            </div>
+          </div>
+          <div class="admin-actions">
+            <button id="load-daily-route" class="button ghost" type="button">Load Date</button>
+            <button id="save-daily-route" class="button secondary" type="button">Save Daily Route</button>
+          </div>
+          <div id="daily-route-job-list" class="daily-route-job-list" aria-live="polite"></div>
+          <div id="daily-route-result" aria-live="polite"></div>
+        </div>
       </div>
     </section>
 
@@ -3241,6 +3323,8 @@
     let latestBid = null;
     let expenseRows = [];
     let employeeDirectory = [];
+    let adminJobRows = [];
+    let adminDailyRouteRows = [];
     let activeEmployeeProfile = null;
     let marketingRoutes = [];
     let marketingLeads = [];
@@ -3636,9 +3720,12 @@
       setSignedIn({ id: "owner", email: "Owner" });
       openTab("owner");
       await loadEmployees();
-      $("#admin-result").innerHTML = jobsData.jobs.length
-        ? jobsData.jobs.map((job) => jobCard(job, true)).join("")
+      adminJobRows = jobsData.jobs || [];
+      adminDailyRouteRows = jobsData.daily_routes || [];
+      $("#admin-result").innerHTML = adminJobRows.length
+        ? adminJobRows.map((job) => jobCard(job, true)).join("")
         : notice("No jobs yet.");
+      renderDailyRouteBuilder();
       await loadCustomers();
       await loadInvoiceCustomers();
       await loadInvoices();
@@ -4080,7 +4167,13 @@
 
     function customerMessageCard(log) {
       const sent = log.created_at ? new Date(log.created_at).toLocaleString() : "";
-      const title = log.template === "completed" ? "Service completed" : log.template === "broadcast" ? "Customer broadcast" : "Cleanup reminder";
+      const title = log.template === "completed"
+        ? "Service completed"
+        : log.template === "arrived"
+          ? "Crew arrived"
+          : log.template === "broadcast"
+            ? "Customer broadcast"
+            : "Cleanup reminder";
       return `
         <div class="message">
           <div class="message-head"><strong>${title}</strong><span class="badge">${cleanText(log.actor_type || "Green Grin")}</span></div>
@@ -4711,9 +4804,75 @@
       const activeEmployees = employeeDirectory.filter((employee) => employee.status === "Active");
       return `<option value="">Unassigned</option>` + activeEmployees.map((employee) => {
         const selected = employee.id === selectedId ? " selected" : "";
-        const label = `${employee.employee_code ? `${employee.employee_code} - ` : ""}${employee.full_name || employee.email}`;
+        const role = employee.is_subcontractor ? " - Subcontractor" : "";
+        const label = `${employee.employee_code ? `${employee.employee_code} - ` : ""}${employee.full_name || employee.email}${role}`;
         return `<option value="${employee.id}" data-name="${cleanText(employee.full_name || employee.email || "")}"${selected}>${cleanText(label)}</option>`;
       }).join("");
+    }
+
+    function subcontractorServices(employee) {
+      return Array.isArray(employee?.subcontractor_services) ? employee.subcontractor_services : [];
+    }
+
+    function renderDailyRouteEmployeeOptions() {
+      const select = $("#daily-route-employee");
+      if (!select) return;
+      const previous = select.value;
+      const employees = employeeDirectory.filter((employee) => employee.status === "Active");
+      select.innerHTML = '<option value="">Choose employee</option>' + employees.map((employee) => {
+        const services = subcontractorServices(employee);
+        const role = employee.is_subcontractor ? ` - Sub: ${services.length ? services.join(" / ") : "General"}` : "";
+        const label = `${employee.employee_code ? `${employee.employee_code} - ` : ""}${employee.full_name || employee.email}${role}`;
+        return `<option value="${cleanText(employee.id)}">${cleanText(label)}</option>`;
+      }).join("");
+      if (employees.some((employee) => employee.id === previous)) select.value = previous;
+    }
+
+    function jobDateKey(value) {
+      return String(value || "").split("T")[0];
+    }
+
+    function jobRunsOnDate(job, routeDate) {
+      const start = jobDateKey(job.schedule_start_date || job.scheduled_date);
+      if (!start || !routeDate) return false;
+      if (!job.recurring_weekly) return start === routeDate;
+      const end = jobDateKey(job.schedule_end_date);
+      const routeTime = new Date(`${routeDate}T12:00:00`).getTime();
+      const startTime = new Date(`${start}T12:00:00`).getTime();
+      const endTime = end ? new Date(`${end}T12:00:00`).getTime() : Number.POSITIVE_INFINITY;
+      if (!Number.isFinite(routeTime) || routeTime < startTime || routeTime > endTime) return false;
+      return Math.round((routeTime - startTime) / 86400000) % 7 === 0;
+    }
+
+    function renderDailyRouteBuilder() {
+      const list = $("#daily-route-job-list");
+      if (!list) return;
+      const routeDate = $("#daily-route-date")?.value || "";
+      const employeeId = $("#daily-route-employee")?.value || "";
+      if (!routeDate) {
+        list.innerHTML = notice("Choose a route date.");
+        return;
+      }
+      const dateAssignments = adminDailyRouteRows.filter((row) => jobDateKey(row.route_date) === routeDate);
+      const assignedJobIds = new Set(dateAssignments.filter((row) => row.assigned_employee_id === employeeId).map((row) => row.job_id));
+      const visibleJobIds = new Set(assignedJobIds);
+      const candidates = adminJobRows.filter((job) => job.status !== "Completed" && (jobRunsOnDate(job, routeDate) || visibleJobIds.has(job.id)));
+      list.innerHTML = candidates.length
+        ? candidates.map((job) => {
+            const existing = dateAssignments.find((row) => row.job_id === job.id);
+            const checked = assignedJobIds.has(job.id) ? " checked" : "";
+            const assignee = existing && existing.assigned_employee_id !== employeeId
+              ? `Currently: ${existing.assigned_employee_name || "another employee"}`
+              : scheduleLine(job);
+            return `
+              <label class="daily-route-choice">
+                <input class="daily-route-job-checkbox" type="checkbox" value="${cleanText(job.id)}"${checked} />
+                <span><strong>${cleanText(job.customer_name || "Customer")}</strong><br><span class="muted">${cleanText(job.address || job.service_type || "Service")}</span></span>
+                <small>${cleanText(assignee)}</small>
+              </label>
+            `;
+          }).join("")
+        : notice("No scheduled jobs fall on this date.");
     }
 
     function renderMarketingEmployeeOptions() {
@@ -4770,6 +4929,7 @@
             </div>
             <div class="admin-actions job-collapse" hidden>
               <button class="button small ghost" data-action="schedule" type="button">Save Schedule</button>
+              <button class="button small secondary" data-action="arrived" type="button">Notify: Arrived</button>
               <button class="button small secondary" data-action="completed" type="button">Notify: Done</button>
               <button class="button small ghost" data-action="delete-job" type="button">Delete Job</button>
               <button class="button small ghost" data-customer-action="deactivate" type="button">Deactivate Customer</button>
@@ -4780,19 +4940,22 @@
       `;
     }
 
-    function employeeJobCard(job) {
+    function employeeJobCard(job, routeDate = "") {
       const scheduled = scheduleLine(job);
+      const serviceDate = routeDate || todayInputDate();
+      const arrivalSent = job.last_message_template === "arrived" && jobDateKey(job.last_message_sent_at) === serviceDate;
       return `
-        <div class="job" data-id="${job.id}">
+        <div class="job" data-id="${job.id}" data-route-date="${cleanText(routeDate)}">
           <div class="job-head">
             <strong>${job.customer_name || "Customer"}</strong>
-            <span class="badge">${job.customer_code || job.status || "Scheduled"}</span>
+            <span class="badge">${cleanText(routeDate ? displayScheduleDate(routeDate) : job.customer_code || job.status || "Scheduled")}</span>
           </div>
           <p class="muted">Status: ${job.status || "Scheduled"}</p>
           <p class="muted">${job.service_type || "Service"} - ${scheduled}</p>
           <p>${job.address || ""}</p>
           <p class="muted">${job.notes || ""}</p>
           <div class="admin-actions">
+            <button class="button small ghost" data-employee-action="arrived" type="button"${arrivalSent ? " disabled" : ""}>${arrivalSent ? "Arrival Sent" : "Arrived"}</button>
             <button class="button small secondary" data-employee-action="completed" type="button">Done</button>
           </div>
         </div>
@@ -4800,6 +4963,7 @@
     }
 
     function employeeAccessCard(employee) {
+      const services = subcontractorServices(employee);
       return `
         <div class="job" data-id="${employee.id}">
           <div class="job-head">
@@ -4811,16 +4975,26 @@
           <p class="muted">${employee.phone || ""}</p>
           <p class="muted">Hourly rate: ${employee.hourly_rate ? money(employee.hourly_rate) : "Not set"}</p>
           <p class="muted">Marketing access: ${employee.is_marketer ? "Marketer" : "Crew only"}</p>
+          <p class="muted">Work type: ${employee.is_subcontractor ? `Subcontractor${services.length ? ` - ${cleanText(services.join(", "))}` : ""}` : "Employee"}</p>
           <div class="two" style="margin-top: 12px;">
             <input class="employee-pin-input" type="password" value="${employee.employee_pin || ""}" placeholder="Set employee PIN" />
             <button class="button small" data-employee-pin="1" type="button">Save PIN</button>
             <input class="employee-rate-input" type="number" min="0" step="0.01" value="${employee.hourly_rate || ""}" placeholder="Hourly rate" />
             <button class="button small" data-employee-rate="1" type="button">Save Rate</button>
           </div>
+          ${employee.is_subcontractor ? `
+            <div class="subcontractor-services" aria-label="Subcontractor service categories">
+              ${["Aeration", "Shrubs", "Snow"].map((service) => `
+                <label class="check"><input class="employee-sub-service" type="checkbox" value="${service}"${services.includes(service) ? " checked" : ""} /><span>${service}</span></label>
+              `).join("")}
+            </div>
+            <button class="button small secondary" data-employee-sub-services="1" type="button">Save Subcontractor Categories</button>
+          ` : ""}
           <div class="admin-actions">
             <button class="button small secondary" data-employee-status="Active" type="button">Approve / Reactivate</button>
             <button class="button small ghost" data-employee-status="Inactive" type="button">Deactivate</button>
             <button class="button small ${employee.is_marketer ? "ghost" : "secondary"}" data-employee-marketer="${employee.is_marketer ? "false" : "true"}" type="button">${employee.is_marketer ? "Remove Marketer" : "Make Marketer"}</button>
+            <button class="button small ${employee.is_subcontractor ? "ghost" : "secondary"}" data-employee-subcontractor="${employee.is_subcontractor ? "false" : "true"}" type="button">${employee.is_subcontractor ? "Remove Subcontractor" : "Make Subcontractor"}</button>
             <button class="button small ghost" data-employee-delete="1" type="button">Delete Employee</button>
           </div>
         </div>
@@ -4922,7 +5096,13 @@
       const when = log.created_at ? new Date(log.created_at).toLocaleString() : "";
       const job = log.green_grin_jobs || {};
       const actor = log.actor_name || log.actor_type || "System";
-      const action = log.template === "completed" ? "clicked Done / sent complete notification" : log.template === "broadcast" ? "sent customer broadcast" : `sent ${log.template} notification`;
+      const action = log.template === "completed"
+        ? "clicked Done / sent complete notification"
+        : log.template === "arrived"
+          ? "clicked Arrived / sent arrival notification"
+          : log.template === "broadcast"
+            ? "sent customer broadcast"
+            : `sent ${log.template} notification`;
       return `
         <div class="message">
           <div class="message-head">
@@ -6076,12 +6256,38 @@
       $("#admin-result").innerHTML = notice("Loading jobs...");
       try {
         const data = await requestJson("portal-jobs?admin=1", { headers: adminHeaders() });
-        $("#admin-result").innerHTML = data.jobs.length
-          ? data.jobs.map((job) => jobCard(job, true)).join("")
+        adminJobRows = data.jobs || [];
+        adminDailyRouteRows = data.daily_routes || [];
+        $("#admin-result").innerHTML = adminJobRows.length
+          ? adminJobRows.map((job) => jobCard(job, true)).join("")
           : notice("No jobs yet.");
+        renderDailyRouteBuilder();
       } catch (error) {
         $("#admin-result").innerHTML = notice(error.message, true);
+        $("#daily-route-job-list").innerHTML = notice(error.message, true);
       }
+    }
+
+    function renderEmployeeJobs(data) {
+      const routeRows = (data.daily_routes || []).filter((row) => row.green_grin_jobs && row.green_grin_jobs.status !== "Completed");
+      const groups = new Map();
+      routeRows.forEach((row) => {
+        const routeDate = jobDateKey(row.route_date);
+        if (!groups.has(routeDate)) groups.set(routeDate, []);
+        groups.get(routeDate).push(row.green_grin_jobs);
+      });
+      const routedIds = new Set(routeRows.map((row) => row.job_id));
+      const routeHtml = [...groups.entries()].map(([routeDate, jobs]) => `
+        <div class="route-day-group">
+          <h3>${cleanText(displayScheduleDate(routeDate))}</h3>
+          ${jobs.map((job) => employeeJobCard(job, routeDate)).join("")}
+        </div>
+      `).join("");
+      const otherJobs = (data.jobs || []).filter((job) => !routedIds.has(job.id));
+      const otherHtml = otherJobs.length
+        ? `<div class="route-day-group"><h3>Other Assigned Jobs</h3>${otherJobs.map((job) => employeeJobCard(job)).join("")}</div>`
+        : "";
+      return routeHtml || otherHtml ? routeHtml + otherHtml : notice("No jobs assigned to you yet.");
     }
 
     async function loadEmployeeJobs() {
@@ -6093,12 +6299,12 @@
         if (data.employee) {
           configureMarketingAccess(data.employee);
           const employeeName = data.employee.full_name || data.employee.email || "Employee";
-          $("#employee-welcome").textContent = `Welcome, ${employeeName}.`;
+          const services = subcontractorServices(data.employee);
+          const roleLine = data.employee.is_subcontractor ? ` Subcontractor: ${services.length ? services.join(", ") : "General"}.` : "";
+          $("#employee-welcome").textContent = `Welcome, ${employeeName}.${roleLine}`;
           $("#account-pill").textContent = `Welcome, ${employeeName}`;
         }
-        $("#employee-result").innerHTML = data.jobs.length
-          ? data.jobs.map((job) => employeeJobCard(job)).join("")
-          : notice("No jobs assigned to you yet.");
+        $("#employee-result").innerHTML = renderEmployeeJobs(data);
       } catch (error) {
         $("#employee-result").innerHTML = notice(error.message, true);
       }
@@ -6165,6 +6371,8 @@
         const pending = employeeDirectory.filter((employee) => employee.status !== "Active");
         const active = employeeDirectory.filter((employee) => employee.status === "Active");
         if ($("#owner_job_employee")) $("#owner_job_employee").innerHTML = employeeOptions("");
+        renderDailyRouteEmployeeOptions();
+        renderDailyRouteBuilder();
         renderTimeReportEmployeeOptions();
         renderMarketingEmployeeOptions();
         $("#employee-pending-result").innerHTML = pending.length
@@ -6190,6 +6398,42 @@
         $("#activity-result").innerHTML = notice(error.message, true);
       }
     }
+
+    async function saveDailyRoute() {
+      const routeDate = $("#daily-route-date").value;
+      const employeeId = $("#daily-route-employee").value;
+      if (!routeDate || !employeeId) {
+        $("#daily-route-result").innerHTML = notice("Choose a date and employee first.", true);
+        return;
+      }
+      const jobIds = [...document.querySelectorAll(".daily-route-job-checkbox:checked")].map((input) => input.value);
+      $("#save-daily-route").disabled = true;
+      $("#daily-route-result").innerHTML = notice("Saving daily route...");
+      try {
+        const data = await requestJson("portal-jobs", {
+          method: "PATCH",
+          headers: adminHeaders(),
+          body: JSON.stringify({
+            action: "assign-daily-route",
+            route_date: routeDate,
+            assigned_employee_id: employeeId,
+            job_ids: jobIds
+          })
+        });
+        await loadAdminJobs();
+        const saved = jobIds.length ? `Daily route saved with ${jobIds.length} ${jobIds.length === 1 ? "job" : "jobs"}.` : "Daily route cleared.";
+        $("#daily-route-result").innerHTML = notice(pushDeliveryText(data.push, saved));
+      } catch (error) {
+        $("#daily-route-result").innerHTML = notice(error.message, true);
+      } finally {
+        $("#save-daily-route").disabled = false;
+      }
+    }
+
+    $("#daily-route-date").addEventListener("change", renderDailyRouteBuilder);
+    $("#daily-route-employee").addEventListener("change", renderDailyRouteBuilder);
+    $("#load-daily-route").addEventListener("click", loadAdminJobs);
+    $("#save-daily-route").addEventListener("click", saveDailyRoute);
 
     $("#admin-result").addEventListener("click", async (event) => {
       const button = event.target.closest("button[data-action], button[data-customer-action]");
@@ -6254,7 +6498,11 @@
             headers: adminHeaders(),
             body: JSON.stringify({ id, template: action })
           });
-          const label = action === "completed" ? "Done message saved." : "Pickup reminder saved.";
+          const label = action === "completed"
+            ? "Done message saved."
+            : action === "arrived"
+              ? "Arrival notification saved."
+              : "Pickup reminder saved.";
           actionFeedback = pushDeliveryText(data.push, label);
         }
         await loadAdminJobs();
@@ -6271,6 +6519,8 @@
       if (!button) return;
       const card = button.closest(".job");
       const id = card.dataset.id;
+      const action = button.dataset.employeeAction;
+      const routeDate = card.dataset.routeDate || "";
       const pin = $("#employee-pin").value;
       button.disabled = true;
       try {
@@ -6278,9 +6528,9 @@
         const data = await requestJson("portal-message", {
           method: "POST",
           headers,
-          body: JSON.stringify({ id, template: "completed" })
+          body: JSON.stringify({ id, template: action, route_date: routeDate || undefined })
         });
-        const employeeFeedback = pushDeliveryText(data.push, "Done message saved.");
+        const employeeFeedback = pushDeliveryText(data.push, action === "arrived" ? "Arrival notification saved." : "Done message saved.");
         await loadEmployeeJobs();
         $("#employee-result").insertAdjacentHTML("afterbegin", notice(employeeFeedback));
       } catch (error) {
@@ -6291,7 +6541,7 @@
     });
 
     async function handleEmployeeAdminClick(event) {
-      const button = event.target.closest("button[data-employee-status], button[data-employee-pin], button[data-employee-rate], button[data-employee-marketer], button[data-employee-delete]");
+      const button = event.target.closest("button[data-employee-status], button[data-employee-pin], button[data-employee-rate], button[data-employee-marketer], button[data-employee-subcontractor], button[data-employee-sub-services], button[data-employee-delete]");
       if (!button) return;
       const card = button.closest(".job");
       const id = card.dataset.id;
@@ -6311,7 +6561,11 @@
               ? { id, hourly_rate: card.querySelector(".employee-rate-input")?.value || null }
               : Object.prototype.hasOwnProperty.call(button.dataset, "employeeMarketer")
                 ? { id, is_marketer: button.dataset.employeeMarketer === "true" }
-                : { id, status: button.dataset.employeeStatus };
+                : Object.prototype.hasOwnProperty.call(button.dataset, "employeeSubcontractor")
+                  ? { id, is_subcontractor: button.dataset.employeeSubcontractor === "true" }
+                  : button.dataset.employeeSubServices
+                    ? { id, subcontractor_services: [...card.querySelectorAll(".employee-sub-service:checked")].map((input) => input.value) }
+                    : { id, status: button.dataset.employeeStatus };
           await requestJson("portal-employees", {
             method: "PATCH",
             headers: adminHeaders(),
@@ -6497,6 +6751,8 @@
     clearExpenseForm();
     clearMileageForm();
     setExpenseView("receipts");
+    $("#daily-route-date").value = todayInputDate();
+    renderDailyRouteBuilder();
     enablePortalMotion();
     window.setInterval(updateRollingClock, 1000);
     loadSupabaseAuth();

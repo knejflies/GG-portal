@@ -154,6 +154,8 @@ create table if not exists public.green_grin_employees (
   employee_pin text,
   hourly_rate numeric(10, 2),
   is_marketer boolean not null default false,
+  is_subcontractor boolean not null default false,
+  subcontractor_services text[] not null default '{}'::text[],
   role text not null default 'Crew'
 );
 
@@ -168,6 +170,23 @@ alter table public.green_grin_employees
 
 alter table public.green_grin_employees
   add column if not exists is_marketer boolean not null default false;
+
+alter table public.green_grin_employees
+  add column if not exists is_subcontractor boolean not null default false;
+
+alter table public.green_grin_employees
+  add column if not exists subcontractor_services text[] not null default '{}'::text[];
+
+create table if not exists public.green_grin_daily_route_assignments (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  route_date date not null,
+  job_id uuid not null references public.green_grin_jobs(id) on delete cascade,
+  assigned_employee_id uuid not null references public.green_grin_employees(id) on delete cascade,
+  assigned_employee_name text,
+  unique (route_date, job_id)
+);
 
 create table if not exists public.green_grin_marketing_routes (
   id uuid primary key default gen_random_uuid(),
@@ -420,6 +439,7 @@ alter table public.green_grin_push_subscriptions enable row level security;
 alter table public.green_grin_expenses enable row level security;
 alter table public.green_grin_marketing_routes enable row level security;
 alter table public.green_grin_marketing_leads enable row level security;
+alter table public.green_grin_daily_route_assignments enable row level security;
 
 drop policy if exists "Customers can read own profile" on public.green_grin_customers;
 drop policy if exists "Customers can insert own profile" on public.green_grin_customers;
@@ -486,6 +506,9 @@ create index if not exists green_grin_employees_employee_code_idx on public.gree
 create index if not exists green_grin_employees_email_idx on public.green_grin_employees(email);
 create index if not exists green_grin_employees_status_idx on public.green_grin_employees(status);
 create index if not exists green_grin_employees_pin_idx on public.green_grin_employees(employee_pin);
+create index if not exists green_grin_daily_routes_date_idx on public.green_grin_daily_route_assignments(route_date);
+create index if not exists green_grin_daily_routes_employee_date_idx on public.green_grin_daily_route_assignments(assigned_employee_id, route_date);
+create index if not exists green_grin_daily_routes_job_date_idx on public.green_grin_daily_route_assignments(job_id, route_date);
 create index if not exists green_grin_time_entries_employee_idx on public.green_grin_time_entries(employee_id);
 create index if not exists green_grin_time_entries_clock_in_idx on public.green_grin_time_entries(clock_in_at desc);
 create index if not exists green_grin_time_entries_open_idx
