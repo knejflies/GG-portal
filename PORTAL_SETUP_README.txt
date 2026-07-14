@@ -26,6 +26,7 @@ WHAT WORKS AFTER SETUP
 - Admin can approve/deactivate/delete employees, set PINs, and set hourly rates.
 - Admin can grant Marketer access and assign an entire subdivision to a marketer.
 - Admin can edit subdivision routes, click houses onto a satellite planning map, switch between current street and satellite views, open the planning map full screen on a computer, save contact names and phone numbers, and delete individual houses.
+- Employees with notifications enabled receive an app alert when a new marketing route is assigned or an existing route is reassigned to them.
 - Marketers can save each house from their phone location and record card left, interested, or not interested.
 - Employee location taps match the nearest unvisited house planned by the owner.
 - Marking a house Interested immediately sends an app notification to registered admin devices.

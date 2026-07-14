@@ -136,6 +136,22 @@ async function employeeWorkspace(employee) {
   return { employee, routes, leads };
 }
 
+async function sendRouteAssignmentPush(employee, route) {
+  if (!employee?.id || !route?.id) return null;
+  try {
+    return await sendPushToTarget(supabase, {
+      employee_id: employee.id
+    }, {
+      title: "New marketing route assigned",
+      body: `${route.subdivision_name} in ${route.city}, ${route.state || "ID"} was assigned to you. Open Marketing to view the route.`,
+      url: "/employee/",
+      tag: `green-grin-route-${route.id}-${Date.now()}`
+    });
+  } catch (error) {
+    return { enabled: true, sent: 0, failed: 1, total: 0, errors: [{ reason: error.message }] };
+  }
+}
+
 function setupError(error) {
   const message = String(error?.message || "");
   return message.includes("green_grin_marketing_") || message.includes("is_marketer") || message.includes("schema cache");
@@ -187,7 +203,9 @@ exports.handler = async (event) => {
             status: "Active"
           })
         });
-        return json(200, { route: rows?.[0] });
+        const route = rows?.[0];
+        const push = await sendRouteAssignmentPush(employee, route);
+        return json(200, { route, push });
       }
 
       if (body.action === "add-house") {
@@ -275,6 +293,9 @@ exports.handler = async (event) => {
         const employeeRows = await supabase(`green_grin_employees?select=*&id=eq.${encodeURIComponent(body.assigned_employee_id)}&status=eq.Active&limit=1`);
         const employee = employeeRows?.[0];
         if (!employee?.is_marketer) return json(400, { error: "Choose an active employee with Marketer access." });
+        const existingRows = await supabase(`green_grin_marketing_routes?select=*&id=eq.${encodeURIComponent(body.id)}&limit=1`);
+        const existingRoute = existingRows?.[0];
+        if (!existingRoute) return json(404, { error: "That subdivision route was not found." });
         const rows = await supabase(`green_grin_marketing_routes?id=eq.${encodeURIComponent(body.id)}`, {
           method: "PATCH",
           body: JSON.stringify({
@@ -291,7 +312,10 @@ exports.handler = async (event) => {
           method: "PATCH",
           body: JSON.stringify({ assigned_employee_id: employee.id, updated_at: new Date().toISOString() })
         });
-        return json(200, { route: rows?.[0] });
+        const route = rows?.[0];
+        const reassigned = String(existingRoute.assigned_employee_id || "") !== String(employee.id);
+        const push = reassigned ? await sendRouteAssignmentPush(employee, route) : null;
+        return json(200, { route, push });
       }
 
       if (body.action === "route-status") {

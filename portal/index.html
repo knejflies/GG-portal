@@ -5269,7 +5269,7 @@
       };
       $("#marketing-result").innerHTML = notice("Saving house result...");
       try {
-        await requestJson("portal-marketing", {
+        const data = await requestJson("portal-marketing", {
           method: "PATCH",
           headers: marketingHeaders(),
           body: JSON.stringify(payload)
@@ -6367,7 +6367,7 @@
       const routeId = $("#marketing-route-id").value;
       $("#marketing-admin-result").innerHTML = notice(routeId ? "Saving route..." : "Assigning subdivision...");
       try {
-        await requestJson("portal-marketing", {
+        const data = await requestJson("portal-marketing", {
           method: routeId ? "PATCH" : "POST",
           headers: adminHeaders(),
           body: JSON.stringify({
@@ -6382,7 +6382,15 @@
         });
         clearMarketingRouteForm();
         await loadMarketingAdmin();
-        $("#marketing-admin-result").innerHTML = notice(routeId ? "Route updated." : "Subdivision assigned.");
+        const savedMessage = routeId ? "Route updated." : "Subdivision assigned.";
+        const deliveryMessage = data.push?.sent > 0
+          ? " Employee notified."
+          : data.push?.enabled === false
+            ? " App notifications are not configured yet."
+            : data.push
+              ? " Employee notification was not delivered; they may need to enable notifications on their device."
+              : "";
+        $("#marketing-admin-result").innerHTML = notice(savedMessage + deliveryMessage, Boolean(data.push && data.push.sent < 1));
       } catch (error) {
         $("#marketing-admin-result").innerHTML = notice(error.message, true);
       }
