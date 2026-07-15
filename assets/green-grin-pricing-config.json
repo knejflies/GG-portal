@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "currency": "USD",
+  "roundWeeklyTo": 5,
+  "mowingVisitsPerYear": 30,
+  "annualAgreementDiscount": 0.05,
+  "monthlyPaymentsPerYear": 12,
+  "manualReviewAboveLawnSqFt": 20000,
+  "plans": {
+    "fresh": {
+      "name": "Fresh Grin",
+      "minimumWeekly": 50,
+      "weeklyRatePerLawnSqFt": 0.01,
+      "includes": ["Mow", "Edge", "Blow"]
+    },
+    "sharp": {
+      "name": "Sharp Grin",
+      "minimumWeekly": 80,
+      "weeklyRatePerLawnSqFt": 0.016,
+      "includes": ["Mow", "Edge", "Blow", "Weed spraying"]
+    },
+    "full": {
+      "name": "Full Grin Season",
+      "minimumWeekly": 100,
+      "weeklyRatePerLawnSqFt": 0.02,
+      "includes": [
+        "Mow",
+        "Edge",
+        "Blow",
+        "Weed spraying",
+        "Spring dethatching",
+        "Annual core aeration",
+        "One irrigation maintenance call",
+        "First 30 minutes of irrigation labor"
+      ]
+    }
+  },
+  "addOns": {
+    "lawnFertilization": {
+      "name": "Lawn fertilization",
+      "minimumPerApplication": 55,
+      "ratePerLawnSqFtPerApplication": 0.011,
+      "applicationsPerYear": 4
+    },
+    "bedPlantFertilization": {
+      "name": "Flowerbed / plant fertilization",
+      "minimumPerVisit": 40,
+      "ratePerBedSqFtPerVisit": 0.08,
+      "visitsPerYear": 3
+    }
+  }
+}

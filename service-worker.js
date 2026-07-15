@@ -1,4 +1,4 @@
-const CACHE_NAME = "green-grin-app-v27";
+const CACHE_NAME = "green-grin-app-v28";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -12,7 +12,9 @@ const APP_SHELL = [
   "/assets/green-grin-tab-icon.png",
   "/assets/green-grin-pwa-192.png",
   "/assets/green-grin-pwa-512.png",
-  "/assets/green-grin-logo.png"
+  "/assets/green-grin-logo.png",
+  "/assets/green-grin-calculator.js",
+  "/assets/green-grin-pricing-config.json"
 ];
 
 self.addEventListener("install", (event) => {

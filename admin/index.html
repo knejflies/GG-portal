@@ -2283,6 +2283,245 @@
       padding: 24px;
     }
 
+    .bid-page-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .bid-page-head h2 {
+      font-size: clamp(1.65rem, 2.5vw, 2.35rem);
+      color: var(--pine);
+    }
+
+    .bid-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(310px, 0.65fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .bid-workspace,
+    .bid-settings {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .bid-workspace {
+      padding: clamp(18px, 3vw, 28px);
+    }
+
+    .bid-settings {
+      position: sticky;
+      top: 96px;
+      overflow: hidden;
+    }
+
+    .bid-settings > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 17px 18px;
+      background: var(--pine);
+      color: var(--white);
+      cursor: pointer;
+      font-weight: 800;
+      list-style: none;
+    }
+
+    .bid-settings > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .bid-settings > summary::after {
+      content: "+";
+      font-size: 1.35rem;
+      line-height: 1;
+    }
+
+    .bid-settings[open] > summary::after {
+      content: "−";
+    }
+
+    .bid-settings form {
+      display: grid;
+      gap: 18px;
+      max-height: calc(100vh - 180px);
+      padding: 18px;
+      overflow: auto;
+    }
+
+    .bid-setting-group {
+      display: grid;
+      gap: 12px;
+      border: 0;
+    }
+
+    .bid-setting-group + .bid-setting-group {
+      padding-top: 17px;
+      border-top: 1px solid var(--line);
+    }
+
+    .bid-setting-group legend {
+      width: 100%;
+      margin-bottom: 10px;
+      color: var(--pine);
+      font-weight: 900;
+    }
+
+    .bid-setting-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .bid-setting-grid .wide {
+      grid-column: 1 / -1;
+    }
+
+    .bid-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    .bid-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      font-weight: 800;
+    }
+
+    .bid-check input {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: var(--leaf-dark);
+    }
+
+    .bid-plan-results {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .bid-plan {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+      min-width: 0;
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-top: 4px solid var(--leaf-dark);
+      background: var(--white);
+      box-shadow: 0 10px 25px rgba(18, 51, 36, 0.08);
+    }
+
+    .bid-plan.selected {
+      border-color: var(--leaf-dark);
+      box-shadow: 0 0 0 2px rgba(120, 198, 83, 0.24), 0 14px 30px rgba(18, 51, 36, 0.12);
+    }
+
+    .bid-plan h3 {
+      min-height: 2.4em;
+      color: var(--pine);
+      font-size: 1.08rem;
+    }
+
+    .bid-plan .monthly-price {
+      color: var(--leaf-dark);
+      font-size: 1.65rem;
+      font-weight: 950;
+    }
+
+    .bid-plan ul {
+      display: grid;
+      gap: 5px;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .bid-plan .button {
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .bid-review {
+      padding: 9px 10px;
+      border-left: 3px solid var(--sun);
+      background: var(--warn);
+      color: var(--ink);
+      font-size: 0.82rem;
+      font-weight: 800;
+    }
+
+    .bid-selected-summary {
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-left: 4px solid var(--leaf-dark);
+      background: var(--mint);
+    }
+
+    .bid-disclaimer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    @media (max-width: 1100px) {
+      .bid-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .bid-settings {
+        position: static;
+      }
+
+      .bid-settings form {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .bid-plan-results {
+        grid-template-columns: 1fr;
+      }
+
+      .bid-plan h3 {
+        min-height: 0;
+      }
+
+      .bid-page-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .bid-setting-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .bid-setting-grid .wide {
+        grid-column: auto;
+      }
+
+      .bid-checkboxes {
+        display: grid;
+      }
+    }
+
     .install-prompt {
       position: fixed;
       left: 50%;
@@ -2541,7 +2780,7 @@
       <button class="tab customer-only" data-tab="property" type="button">Property</button>
       <button class="tab owner-only" data-tab="customers" type="button">Customers</button>
       <button class="tab owner-only" data-tab="owner" type="button">Jobs</button>
-      <button class="tab owner-only" data-tab="bids" type="button">Bid Calculator</button>
+      <button class="tab owner-only" data-tab="bids" type="button">Lawn Bidder</button>
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
       <button class="tab owner-only" data-tab="invoices" type="button">Invoices</button>
@@ -3059,92 +3298,201 @@
       </div>
     </section>
 
-    <section id="bids" class="panel">
-      <div class="grid">
-        <div class="card owner-only">
-          <h2>Bid calculator</h2>
+    <section id="bids" class="panel owner-only">
+      <div class="bid-page-head">
+        <div>
+          <h2>Lawn Bidder</h2>
+          <p class="muted">Build all three plan prices from lawn measurements.</p>
+        </div>
+        <span id="bid-config-version" class="badge">Pricing v1</span>
+      </div>
+
+      <div class="bid-layout">
+        <div class="bid-workspace">
           <form id="bid-form">
             <div class="two">
               <div>
                 <label for="bid_customer_name">Customer</label>
-                <input id="bid_customer_name" placeholder="Customer name" />
+                <input id="bid_customer_name" autocomplete="off" placeholder="Customer name" />
               </div>
               <div>
-                <label for="bid_plan">Plan</label>
-                <select id="bid_plan">
-                  <option>Fresh Grin Weekly - Mow, Edge, Blow</option>
-                  <option>Sharp Grin Weekly - Mow, Edge, Blow & Weed Spraying</option>
-                  <option>Full Grin Season - Mow, Edge, Blow, Weed Spraying, Spring & Fall Cleanup</option>
-                </select>
+                <label for="bid_lawn_sqft">Lawn square footage</label>
+                <input id="bid_lawn_sqft" type="number" min="1" step="1" value="5000" required />
+              </div>
+              <div>
+                <label for="bid_bed_sqft">Flowerbed square footage</label>
+                <input id="bid_bed_sqft" type="number" min="0" step="1" value="0" />
+              </div>
+              <div>
+                <label for="bid_difficulty">Property complexity</label>
+                <input id="bid_difficulty" type="number" min="0.1" step="0.05" value="1" required />
               </div>
             </div>
-            <div class="two">
-              <div>
-                <label for="bid_mow_visits">Mowing visits</label>
-                <input id="bid_mow_visits" type="number" min="0" step="1" value="28" />
-              </div>
-              <div>
-                <label for="bid_mow_rate">Price per mow</label>
-                <input id="bid_mow_rate" type="number" min="0" step="0.01" placeholder="0.00" />
-              </div>
+            <div class="bid-checkboxes">
+              <label class="bid-check" for="bid_lawn_fert">
+                <input id="bid_lawn_fert" type="checkbox" />
+                Lawn fertilization
+              </label>
+              <label class="bid-check" for="bid_bed_fert">
+                <input id="bid_bed_fert" type="checkbox" />
+                Flowerbed fertilization
+              </label>
+              <label class="bid-check" for="bid_annual_agreement">
+                <input id="bid_annual_agreement" type="checkbox" checked />
+                Annual agreement
+              </label>
             </div>
-            <div class="two">
-              <div>
-                <label for="bid_weed_spray">Weed spraying total</label>
-                <input id="bid_weed_spray" type="number" min="0" step="0.01" placeholder="0.00" />
-              </div>
-              <div>
-                <label for="bid_spring_cleanup">Spring cleanup</label>
-                <input id="bid_spring_cleanup" type="number" min="0" step="0.01" placeholder="0.00" />
-              </div>
-            </div>
-            <div class="two">
-              <div>
-                <label for="bid_fall_cleanup">Fall cleanup</label>
-                <input id="bid_fall_cleanup" type="number" min="0" step="0.01" placeholder="0.00" />
-              </div>
-              <div>
-                <label for="bid_custom_total">Custom services</label>
-                <input id="bid_custom_total" type="number" min="0" step="0.01" placeholder="0.00" />
-              </div>
-            </div>
-            <div class="two">
-              <div>
-                <label for="bid_adjustment">Adjustment</label>
-                <input id="bid_adjustment" type="number" step="0.01" placeholder="Optional discount or add-on" />
-              </div>
-              <div>
-                <label for="bid_months">Split across months</label>
-                <input id="bid_months" type="number" min="1" max="12" step="1" value="12" />
-              </div>
-            </div>
-            <div class="row-actions">
-              <button class="button" type="submit">Calculate Bid</button>
-              <button id="bid-copy-job" class="button ghost" type="button">Copy To Job</button>
-              <button id="bid-copy-invoice" class="button ghost" type="button">Copy To Invoice</button>
-            </div>
+            <button class="button" type="submit">Calculate Plans</button>
           </form>
+
           <div id="bid-result" aria-live="polite"></div>
+          <div id="bid-plan-results" class="bid-plan-results" role="region" aria-live="polite"></div>
+          <div id="bid-selected-summary" class="bid-selected-summary" hidden></div>
+          <div class="row-actions">
+            <button id="bid-copy-job" class="button secondary" type="button">Copy Selected Plan To Job</button>
+            <button id="bid-copy-invoice" class="button ghost" type="button">Copy Selected Plan To Invoice</button>
+          </div>
+          <p class="bid-disclaimer">Estimate only. Final pricing depends on property condition, access, obstacles, travel and an on-site review.</p>
         </div>
 
-        <div class="card owner-only">
-          <h2>Bid total</h2>
-          <div class="three">
-            <div class="metric">
-              <span>Yearly Quote</span>
-              <strong id="bid-annual-total">$0.00</strong>
+        <details class="bid-settings" open>
+          <summary>Pricing Settings</summary>
+          <form id="bid-pricing-form">
+            <fieldset class="bid-setting-group">
+              <legend>General</legend>
+              <div class="bid-setting-grid">
+                <div>
+                  <label for="pricing_round">Round weekly up to</label>
+                  <input id="pricing_round" type="number" min="0.01" step="0.01" required />
+                </div>
+                <div>
+                  <label for="pricing_visits">Mowing visits / year</label>
+                  <input id="pricing_visits" type="number" min="1" step="1" required />
+                </div>
+                <div>
+                  <label for="pricing_discount">Annual discount %</label>
+                  <input id="pricing_discount" type="number" min="0" max="100" step="0.01" required />
+                </div>
+                <div>
+                  <label for="pricing_months">Equal payments</label>
+                  <input id="pricing_months" type="number" min="1" max="24" step="1" required />
+                </div>
+                <div class="wide">
+                  <label for="pricing_review">Manual review above sq ft</label>
+                  <input id="pricing_review" type="number" min="1" step="1" required />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group" data-plan-settings="fresh">
+              <legend>Fresh Grin</legend>
+              <div class="bid-setting-grid">
+                <div class="wide">
+                  <label for="pricing_fresh_name">Plan name</label>
+                  <input id="pricing_fresh_name" maxlength="80" required />
+                </div>
+                <div>
+                  <label for="pricing_fresh_min">Minimum weekly</label>
+                  <input id="pricing_fresh_min" type="number" min="0" step="0.01" required />
+                </div>
+                <div>
+                  <label for="pricing_fresh_rate">Rate / lawn sq ft</label>
+                  <input id="pricing_fresh_rate" type="number" min="0" step="0.0001" required />
+                </div>
+                <div class="wide">
+                  <label for="pricing_fresh_includes">Included services</label>
+                  <textarea id="pricing_fresh_includes" rows="3" required></textarea>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group" data-plan-settings="sharp">
+              <legend>Sharp Grin</legend>
+              <div class="bid-setting-grid">
+                <div class="wide">
+                  <label for="pricing_sharp_name">Plan name</label>
+                  <input id="pricing_sharp_name" maxlength="80" required />
+                </div>
+                <div>
+                  <label for="pricing_sharp_min">Minimum weekly</label>
+                  <input id="pricing_sharp_min" type="number" min="0" step="0.01" required />
+                </div>
+                <div>
+                  <label for="pricing_sharp_rate">Rate / lawn sq ft</label>
+                  <input id="pricing_sharp_rate" type="number" min="0" step="0.0001" required />
+                </div>
+                <div class="wide">
+                  <label for="pricing_sharp_includes">Included services</label>
+                  <textarea id="pricing_sharp_includes" rows="4" required></textarea>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group" data-plan-settings="full">
+              <legend>Full Grin Season</legend>
+              <div class="bid-setting-grid">
+                <div class="wide">
+                  <label for="pricing_full_name">Plan name</label>
+                  <input id="pricing_full_name" maxlength="80" required />
+                </div>
+                <div>
+                  <label for="pricing_full_min">Minimum weekly</label>
+                  <input id="pricing_full_min" type="number" min="0" step="0.01" required />
+                </div>
+                <div>
+                  <label for="pricing_full_rate">Rate / lawn sq ft</label>
+                  <input id="pricing_full_rate" type="number" min="0" step="0.0001" required />
+                </div>
+                <div class="wide">
+                  <label for="pricing_full_includes">Included services</label>
+                  <textarea id="pricing_full_includes" rows="7" required></textarea>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group">
+              <legend>Lawn Fertilization</legend>
+              <div class="bid-setting-grid">
+                <div>
+                  <label for="pricing_lawn_fert_min">Minimum / application</label>
+                  <input id="pricing_lawn_fert_min" type="number" min="0" step="0.01" required />
+                </div>
+                <div>
+                  <label for="pricing_lawn_fert_rate">Rate / lawn sq ft</label>
+                  <input id="pricing_lawn_fert_rate" type="number" min="0" step="0.0001" required />
+                </div>
+                <div class="wide">
+                  <label for="pricing_lawn_fert_visits">Applications / year</label>
+                  <input id="pricing_lawn_fert_visits" type="number" min="1" step="1" required />
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group">
+              <legend>Flowerbed Fertilization</legend>
+              <div class="bid-setting-grid">
+                <div>
+                  <label for="pricing_bed_fert_min">Minimum / visit</label>
+                  <input id="pricing_bed_fert_min" type="number" min="0" step="0.01" required />
+                </div>
+                <div>
+                  <label for="pricing_bed_fert_rate">Rate / bed sq ft</label>
+                  <input id="pricing_bed_fert_rate" type="number" min="0" step="0.0001" required />
+                </div>
+                <div class="wide">
+                  <label for="pricing_bed_fert_visits">Visits / year</label>
+                  <input id="pricing_bed_fert_visits" type="number" min="1" step="1" required />
+                </div>
+              </div>
+            </fieldset>
+
+            <div class="row-actions">
+              <button class="button" type="submit">Save Pricing</button>
+              <button id="bid-restore-pricing" class="button ghost" type="button">Restore Supplied Defaults</button>
             </div>
-            <div class="metric">
-              <span>Monthly</span>
-              <strong id="bid-monthly-total">$0.00</strong>
-            </div>
-            <div class="metric">
-              <span>Per Mow</span>
-              <strong id="bid-per-mow-total">$0.00</strong>
-            </div>
-          </div>
-          <div id="bid-breakdown" class="status-box"></div>
-        </div>
+            <div id="bid-pricing-result" aria-live="polite"></div>
+          </form>
+        </details>
       </div>
     </section>
 
@@ -3401,6 +3749,7 @@
     </div>
   </main>
 
+  <script src="/assets/green-grin-calculator.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const $ = (selector) => document.querySelector(selector);
@@ -3411,6 +3760,10 @@
     let invoiceDrafts = [];
     let invoiceCustomers = [];
     let latestBid = null;
+    let bidPricingConfig = null;
+    let bidDefaultPricingConfig = null;
+    let bidPlanEstimates = [];
+    let bidSelectedPlan = "fresh";
     let expenseRows = [];
     let employeeDirectory = [];
     let adminJobRows = [];
@@ -3823,6 +4176,7 @@
       await loadInvoiceCustomers();
       await loadInvoices();
       await loadExpenses();
+      await loadBidPricing(true);
       await loadActivity();
       await loadTimeClockReport();
     }
@@ -3973,6 +4327,7 @@
           loadInvoices();
         }
         if (button.dataset.tab === "expenses") loadExpenses();
+        if (button.dataset.tab === "bids") loadBidPricing();
         if (button.dataset.tab === "customers") loadCustomers();
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
@@ -4108,19 +4463,48 @@
 
     $("#bid-form").addEventListener("submit", (event) => {
       event.preventDefault();
-      calculateBid();
-      $("#bid-result").innerHTML = notice("Bid calculated.");
+      try {
+        calculateBid();
+        $("#bid-result").innerHTML = notice("Plans calculated.");
+      } catch (error) {
+        $("#bid-result").innerHTML = notice(error.message, true);
+      }
     });
 
-    document.querySelectorAll("#bid-form input, #bid-form select").forEach((field) => {
-      field.addEventListener("input", () => calculateBid());
-      field.addEventListener("change", () => calculateBid());
+    document.querySelectorAll("#bid-form input").forEach((field) => {
+      const refreshBid = () => {
+        try {
+          calculateBid();
+          $("#bid-result").innerHTML = "";
+        } catch (_error) {
+          return;
+        }
+      };
+      field.addEventListener("input", refreshBid);
+      field.addEventListener("change", refreshBid);
+    });
+
+    $("#bid-plan-results").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-select-bid-plan]");
+      if (!button) return;
+      bidSelectedPlan = button.dataset.selectBidPlan;
+      renderBid();
+    });
+
+    $("#bid-pricing-form").addEventListener("submit", saveBidPricing);
+
+    $("#bid-restore-pricing").addEventListener("click", () => {
+      if (!bidDefaultPricingConfig) return;
+      bidPricingConfig = cloneJson(bidDefaultPricingConfig);
+      populateBidPricingForm();
+      calculateBid();
+      $("#bid-pricing-result").innerHTML = notice("Supplied defaults loaded. Click Save Pricing to keep them.");
     });
 
     $("#bid-copy-job").addEventListener("click", () => {
       const bid = calculateBid();
       $("#owner_job_customer_name").value = bid.customer || $("#owner_job_customer_name").value;
-      $("#owner_job_service_type").value = bid.plan;
+      selectJobPlan(bid.planId);
       $("#owner_job_annual_price").value = bid.annualTotal.toFixed(2);
       $("#owner_job_monthly_price").value = bid.monthlyTotal.toFixed(2);
       $("#owner_job_notes").value = bidNotes(bid);
@@ -4133,7 +4517,7 @@
       $("#invoice_id").value = "";
       $("#invoice_amount").value = bid.monthlyTotal.toFixed(2);
       $("#invoice_status").value = "Draft";
-      $("#invoice_custom_service").value = bid.plan;
+      $("#invoice_custom_service").value = bid.planName;
       $("#invoice_notes").value = bidNotes(bid);
       $("#invoice-submit").textContent = "Save Draft";
       $("#bid-result").innerHTML = notice("Bid copied to a draft invoice.");
@@ -4177,71 +4561,257 @@
       return Number.isFinite(number) ? `$${number.toFixed(2)}` : "$0.00";
     }
 
-    function bidValue(selector) {
-      const number = Number($(selector)?.value || 0);
-      return Number.isFinite(number) ? number : 0;
+    function cloneJson(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function requiredBidNumber(selector, name, allowZero = false) {
+      const number = Number($(selector)?.value);
+      if (!Number.isFinite(number) || number < (allowZero ? 0 : Number.EPSILON)) {
+        throw new Error(`${name} must be ${allowZero ? "zero or greater" : "greater than zero"}.`);
+      }
+      return number;
+    }
+
+    async function loadBidDefaults() {
+      if (bidDefaultPricingConfig) return bidDefaultPricingConfig;
+      const response = await fetch("/assets/green-grin-pricing-config.json", { cache: "no-store" });
+      if (!response.ok) throw new Error("The supplied Lawn Bidder pricing file could not be loaded.");
+      bidDefaultPricingConfig = await response.json();
+      return bidDefaultPricingConfig;
+    }
+
+    async function loadBidPricing(force = false) {
+      if (bidPricingConfig && !force) return bidPricingConfig;
+      try {
+        await loadBidDefaults();
+        if (!adminPin()) {
+          bidPricingConfig = cloneJson(bidDefaultPricingConfig);
+          populateBidPricingForm();
+          calculateBid();
+          return bidPricingConfig;
+        }
+        $("#bid-pricing-result").innerHTML = notice("Loading saved pricing...");
+        const data = await requestJson("portal-pricing", { headers: adminHeaders() });
+        bidPricingConfig = cloneJson(data.config || bidDefaultPricingConfig);
+        populateBidPricingForm();
+        calculateBid();
+        $("#bid-pricing-result").innerHTML = data.warning
+          ? notice(data.warning, true)
+          : notice(`Saved pricing v${data.version || bidPricingConfig.version} loaded.`);
+        return bidPricingConfig;
+      } catch (error) {
+        if (bidDefaultPricingConfig) {
+          bidPricingConfig = cloneJson(bidDefaultPricingConfig);
+          populateBidPricingForm();
+          calculateBid();
+        }
+        $("#bid-pricing-result").innerHTML = notice(error.message, true);
+        return bidPricingConfig;
+      }
+    }
+
+    function setPricingField(id, value) {
+      const field = $(id);
+      if (field) field.value = value ?? "";
+    }
+
+    function populateBidPricingForm() {
+      if (!bidPricingConfig) return;
+      const pricing = bidPricingConfig;
+      setPricingField("#pricing_round", pricing.roundWeeklyTo);
+      setPricingField("#pricing_visits", pricing.mowingVisitsPerYear);
+      setPricingField("#pricing_discount", Number(pricing.annualAgreementDiscount || 0) * 100);
+      setPricingField("#pricing_months", pricing.monthlyPaymentsPerYear);
+      setPricingField("#pricing_review", pricing.manualReviewAboveLawnSqFt);
+
+      for (const planId of ["fresh", "sharp", "full"]) {
+        const plan = pricing.plans[planId];
+        setPricingField(`#pricing_${planId}_name`, plan.name);
+        setPricingField(`#pricing_${planId}_min`, plan.minimumWeekly);
+        setPricingField(`#pricing_${planId}_rate`, plan.weeklyRatePerLawnSqFt);
+        setPricingField(`#pricing_${planId}_includes`, plan.includes.join("\n"));
+      }
+
+      const lawn = pricing.addOns.lawnFertilization;
+      setPricingField("#pricing_lawn_fert_min", lawn.minimumPerApplication);
+      setPricingField("#pricing_lawn_fert_rate", lawn.ratePerLawnSqFtPerApplication);
+      setPricingField("#pricing_lawn_fert_visits", lawn.applicationsPerYear);
+      const beds = pricing.addOns.bedPlantFertilization;
+      setPricingField("#pricing_bed_fert_min", beds.minimumPerVisit);
+      setPricingField("#pricing_bed_fert_rate", beds.ratePerBedSqFtPerVisit);
+      setPricingField("#pricing_bed_fert_visits", beds.visitsPerYear);
+      $("#bid-config-version").textContent = `Pricing v${pricing.version || 1}`;
+      updateJobPlanOptions();
+    }
+
+    function pricingIncludes(selector) {
+      const items = $(selector).value.split("\n").map((item) => item.trim()).filter(Boolean);
+      if (!items.length) throw new Error("Each plan needs at least one included service.");
+      return items;
+    }
+
+    function pricingFromForm() {
+      const number = (selector, name, allowZero = false) => requiredBidNumber(selector, name, allowZero);
+      return {
+        version: bidPricingConfig?.version || 1,
+        currency: "USD",
+        roundWeeklyTo: number("#pricing_round", "Weekly rounding increment"),
+        mowingVisitsPerYear: Math.round(number("#pricing_visits", "Mowing visits per year")),
+        annualAgreementDiscount: number("#pricing_discount", "Annual discount", true) / 100,
+        monthlyPaymentsPerYear: Math.round(number("#pricing_months", "Equal payments")),
+        manualReviewAboveLawnSqFt: Math.round(number("#pricing_review", "Manual review threshold")),
+        plans: {
+          fresh: {
+            name: $("#pricing_fresh_name").value.trim(),
+            minimumWeekly: number("#pricing_fresh_min", "Fresh Grin minimum", true),
+            weeklyRatePerLawnSqFt: number("#pricing_fresh_rate", "Fresh Grin square-foot rate", true),
+            includes: pricingIncludes("#pricing_fresh_includes")
+          },
+          sharp: {
+            name: $("#pricing_sharp_name").value.trim(),
+            minimumWeekly: number("#pricing_sharp_min", "Sharp Grin minimum", true),
+            weeklyRatePerLawnSqFt: number("#pricing_sharp_rate", "Sharp Grin square-foot rate", true),
+            includes: pricingIncludes("#pricing_sharp_includes")
+          },
+          full: {
+            name: $("#pricing_full_name").value.trim(),
+            minimumWeekly: number("#pricing_full_min", "Full Grin minimum", true),
+            weeklyRatePerLawnSqFt: number("#pricing_full_rate", "Full Grin square-foot rate", true),
+            includes: pricingIncludes("#pricing_full_includes")
+          }
+        },
+        addOns: {
+          lawnFertilization: {
+            name: "Lawn fertilization",
+            minimumPerApplication: number("#pricing_lawn_fert_min", "Lawn fertilization minimum", true),
+            ratePerLawnSqFtPerApplication: number("#pricing_lawn_fert_rate", "Lawn fertilization square-foot rate", true),
+            applicationsPerYear: Math.round(number("#pricing_lawn_fert_visits", "Lawn fertilization applications"))
+          },
+          bedPlantFertilization: {
+            name: "Flowerbed / plant fertilization",
+            minimumPerVisit: number("#pricing_bed_fert_min", "Flowerbed fertilization minimum", true),
+            ratePerBedSqFtPerVisit: number("#pricing_bed_fert_rate", "Flowerbed fertilization square-foot rate", true),
+            visitsPerYear: Math.round(number("#pricing_bed_fert_visits", "Flowerbed fertilization visits"))
+          }
+        }
+      };
+    }
+
+    async function saveBidPricing(event) {
+      event.preventDefault();
+      try {
+        if (!adminPin()) throw new Error("Sign in as owner before saving pricing.");
+        const config = pricingFromForm();
+        $("#bid-pricing-result").innerHTML = notice("Saving pricing...");
+        const data = await requestJson("portal-pricing", {
+          method: "PATCH",
+          headers: adminHeaders(),
+          body: JSON.stringify({ config })
+        });
+        bidPricingConfig = cloneJson(data.config);
+        populateBidPricingForm();
+        calculateBid();
+        $("#bid-pricing-result").innerHTML = notice(`Pricing v${data.version} saved.`);
+      } catch (error) {
+        $("#bid-pricing-result").innerHTML = notice(error.message, true);
+      }
+    }
+
+    function updateJobPlanOptions() {
+      const select = $("#owner_job_service_type");
+      if (!select || !bidPricingConfig) return;
+      ["fresh", "sharp", "full"].forEach((planId, index) => {
+        const option = select.options[index];
+        const plan = bidPricingConfig.plans[planId];
+        if (!option || !plan) return;
+        option.value = plan.name;
+        option.textContent = `${plan.name} - ${plan.includes.join(", ")}`;
+      });
+    }
+
+    function selectJobPlan(planId) {
+      const index = ["fresh", "sharp", "full"].indexOf(planId);
+      const select = $("#owner_job_service_type");
+      if (select && index >= 0 && select.options[index]) select.selectedIndex = index;
     }
 
     function calculateBid() {
-      const visits = Math.max(0, Math.round(bidValue("#bid_mow_visits")));
-      const mowRate = bidValue("#bid_mow_rate");
-      const mowTotal = visits * mowRate;
-      const weedSpray = bidValue("#bid_weed_spray");
-      const springCleanup = bidValue("#bid_spring_cleanup");
-      const fallCleanup = bidValue("#bid_fall_cleanup");
-      const customTotal = bidValue("#bid_custom_total");
-      const adjustment = bidValue("#bid_adjustment");
-      const months = Math.min(12, Math.max(1, Math.round(bidValue("#bid_months") || 12)));
-      const annualTotal = Math.max(0, mowTotal + weedSpray + springCleanup + fallCleanup + customTotal + adjustment);
-      const monthlyTotal = annualTotal / months;
-      const perMowTotal = visits > 0 ? annualTotal / visits : 0;
-      latestBid = {
-        customer: $("#bid_customer_name").value.trim(),
-        plan: $("#bid_plan").value,
-        visits,
-        mowRate,
-        mowTotal,
-        weedSpray,
-        springCleanup,
-        fallCleanup,
-        customTotal,
-        adjustment,
-        months,
-        annualTotal,
-        monthlyTotal,
-        perMowTotal
+      if (!bidPricingConfig) throw new Error("Pricing settings are still loading.");
+      if (!window.GreenGrinCalculator) throw new Error("The Lawn Bidder calculator could not be loaded.");
+      const input = {
+        lawnSqFt: requiredBidNumber("#bid_lawn_sqft", "Lawn square footage"),
+        flowerbedSqFt: requiredBidNumber("#bid_bed_sqft", "Flowerbed square footage", true),
+        difficultyMultiplier: requiredBidNumber("#bid_difficulty", "Property complexity"),
+        lawnFertilization: $("#bid_lawn_fert").checked,
+        bedPlantFertilization: $("#bid_bed_fert").checked,
+        annualAgreement: $("#bid_annual_agreement").checked
       };
+      bidPlanEstimates = window.GreenGrinCalculator.calculateAllGreenGrinPlans(input, bidPricingConfig);
+      if (!bidPlanEstimates.some((plan) => plan.planId === bidSelectedPlan)) bidSelectedPlan = "fresh";
       renderBid();
       return latestBid;
     }
 
     function renderBid() {
-      const bid = latestBid || calculateBid();
-      $("#bid-annual-total").textContent = fixedMoney(bid.annualTotal);
-      $("#bid-monthly-total").textContent = fixedMoney(bid.monthlyTotal);
-      $("#bid-per-mow-total").textContent = fixedMoney(bid.perMowTotal);
-      $("#bid-breakdown").innerHTML = `
-        <div class="message">
-          <div class="message-head"><strong>${cleanText(bid.plan)}</strong><span class="badge">${cleanText(bid.months)} months</span></div>
-          <p class="muted">Mowing: ${cleanText(String(bid.visits))} visits x ${cleanText(fixedMoney(bid.mowRate))} = ${cleanText(fixedMoney(bid.mowTotal))}</p>
-          <p class="muted">Weed spraying: ${cleanText(fixedMoney(bid.weedSpray))}</p>
-          <p class="muted">Spring cleanup: ${cleanText(fixedMoney(bid.springCleanup))} | Fall cleanup: ${cleanText(fixedMoney(bid.fallCleanup))}</p>
-          <p class="muted">Custom services: ${cleanText(fixedMoney(bid.customTotal))} | Adjustment: ${cleanText(fixedMoney(bid.adjustment))}</p>
-        </div>
+      if (!bidPlanEstimates.length) {
+        $("#bid-plan-results").innerHTML = notice("Enter lawn measurements to calculate plans.");
+        return;
+      }
+      $("#bid-plan-results").innerHTML = bidPlanEstimates.map((estimate) => {
+        const selected = estimate.planId === bidSelectedPlan;
+        const review = estimate.manualReviewRequired
+          ? `<div class="bid-review">Custom quote required before booking.</div>`
+          : "";
+        return `
+          <article class="bid-plan ${selected ? "selected" : ""}">
+            <h3>${cleanText(estimate.planName)}</h3>
+            <div class="monthly-price">${cleanText(fixedMoney(estimate.monthlyPayment))}<small>/ month</small></div>
+            <p><strong>${cleanText(fixedMoney(estimate.weeklyService))}</strong> weekly service</p>
+            <p class="muted">${cleanText(fixedMoney(estimate.annualTotal))} annual total</p>
+            <p class="muted">${cleanText(fixedMoney(estimate.annualSavings))} annual savings</p>
+            <ul>${estimate.includes.map((item) => `<li>${cleanText(item)}</li>`).join("")}</ul>
+            ${review}
+            <button class="button ${selected ? "secondary" : "ghost"}" type="button" data-select-bid-plan="${cleanText(estimate.planId)}" aria-pressed="${selected}">
+              ${selected ? "Selected" : "Select Plan"}
+            </button>
+          </article>
+        `;
+      }).join("");
+
+      const selected = bidPlanEstimates.find((estimate) => estimate.planId === bidSelectedPlan) || bidPlanEstimates[0];
+      latestBid = {
+        ...selected,
+        customer: $("#bid_customer_name").value.trim(),
+        plan: selected.planName,
+        monthlyTotal: selected.monthlyPayment,
+        perMowTotal: selected.weeklyService,
+        pricingVersion: bidPricingConfig.version,
+        annualAgreement: $("#bid_annual_agreement").checked
+      };
+      $("#bid-selected-summary").hidden = false;
+      $("#bid-selected-summary").innerHTML = `
+        <strong>${cleanText(selected.planName)} selected</strong>
+        <p>${cleanText(fixedMoney(selected.monthlyPayment))} per month across ${cleanText(String(bidPricingConfig.monthlyPaymentsPerYear))} equal payments.</p>
       `;
     }
 
     function bidNotes(bid) {
+      const addOns = [];
+      if (bid.lawnFertilizationAnnual) addOns.push(`Lawn fertilization: ${fixedMoney(bid.lawnFertilizationAnnual)} annually`);
+      if (bid.bedPlantFertilizationAnnual) addOns.push(`Flowerbed fertilization: ${fixedMoney(bid.bedPlantFertilizationAnnual)} annually`);
       return [
-        `${bid.plan}`,
-        `Mowing: ${bid.visits} visits x ${fixedMoney(bid.mowRate)} = ${fixedMoney(bid.mowTotal)}`,
-        `Weed spraying: ${fixedMoney(bid.weedSpray)}`,
-        `Spring cleanup: ${fixedMoney(bid.springCleanup)}`,
-        `Fall cleanup: ${fixedMoney(bid.fallCleanup)}`,
-        `Custom services: ${fixedMoney(bid.customTotal)}`,
-        `Adjustment: ${fixedMoney(bid.adjustment)}`,
+        `${bid.planName} - Pricing v${bid.pricingVersion}`,
+        `Lawn: ${bid.lawnSqFt.toLocaleString()} sq ft`,
+        `Flowerbeds: ${bid.flowerbedSqFt.toLocaleString()} sq ft`,
+        `Property complexity: ${bid.difficultyMultiplier}`,
+        `Weekly service: ${fixedMoney(bid.weeklyService)}`,
+        ...addOns,
+        `Annual subtotal: ${fixedMoney(bid.annualSubtotal)}`,
+        `Annual agreement savings: ${fixedMoney(bid.annualSavings)}`,
         `Yearly quote: ${fixedMoney(bid.annualTotal)}`,
-        `Monthly payment: ${fixedMoney(bid.monthlyTotal)}`
+        `Monthly payment: ${fixedMoney(bid.monthlyPayment)}`,
+        bid.manualReviewRequired ? "Manual property review required before final quote." : bid.disclaimer
       ].join("\n");
     }
 
@@ -6905,7 +7475,9 @@
 
     applyPortalMode();
     updateRollingClock();
-    calculateBid();
+    loadBidPricing().catch((error) => {
+      $("#bid-result").innerHTML = notice(error.message, true);
+    });
     clearExpenseForm();
     clearMileageForm();
     setExpenseView("receipts");

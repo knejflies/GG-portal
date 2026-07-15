@@ -17,7 +17,9 @@ WHAT WORKS AFTER SETUP
 - Admin can set service plan, annual price, and monthly price.
 - Admin can create, save, send, edit, and delete invoices.
 - Admin can mark invoices paid, search paid invoices, and keep paid invoices collapsed below open invoices.
-- Admin can build a starting bid from mowing, spraying, cleanups, and custom service totals.
+- Admin -> Lawn Bidder calculates all three plans from lawn and flowerbed square footage.
+- Admin can adjust every plan minimum, square-foot rate, visit count, discount, payment split, add-on rate, and manual-review threshold.
+- Lawn Bidder pricing saves in Supabase and can be copied directly into a job or invoice.
 - Admin can scan receipt photos with AI, review the result, and save expenses.
 - Admin can log start/end mileage and have the calculated miles added as a vehicle expense at $0.76 per mile.
 - Sent invoices show in the customer's Billing tab.
@@ -83,6 +85,13 @@ The SUPABASE_ANON_KEY and GREEN_GRIN_VAPID_PUBLIC_KEY are okay to expose.
 
 OPENAI_RECEIPT_MODEL is optional. Leave it out unless you are intentionally changing the receipt scanner model.
 GREEN_GRIN_GEOCODER_URL is optional. Leave it out to use the default OpenStreetMap address lookup.
+
+LAWN BIDDER
+1. Run the latest portal-setup.sql so green_grin_pricing_config exists.
+2. Sign in at /admin/ and open Lawn Bidder.
+3. Open Pricing Settings, adjust the numbers, and click Save Pricing.
+4. Pricing is stored in Supabase; no additional Netlify environment variable is required.
+5. Select a calculated plan and copy it to a job or draft invoice.
 
 MARKETING ROUTES
 1. In Admin -> Employees, approve the employee and click Make Marketer.

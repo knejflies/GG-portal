@@ -1,8 +1,13 @@
 {
   "name": "green-grin-netlify-site",
-  "version": "1.79.0",
+  "version": "1.80.0",
   "private": true,
   "description": "Green Grin Lawn & Landscape site and portals for Netlify.",
+  "scripts": {
+    "test:lawn-bidder": "node tests/lawn-bidder.test.cjs",
+    "test:portal-html": "node tests/portal-html-syntax.test.cjs",
+    "test:portal-pricing": "node tests/portal-pricing.test.cjs"
+  },
   "dependencies": {
     "web-push": "^3.6.7"
   }

@@ -1,0 +1,38 @@
+{
+  "pricingConfigVersion": 1,
+  "moneyTolerance": 0.01,
+  "cases": [
+    {
+      "name": "5,000 sq ft without add-ons",
+      "input": { "lawnSqFt": 5000, "flowerbedSqFt": 0, "annualAgreement": true, "lawnFertilization": false, "bedPlantFertilization": false },
+      "expected": {
+        "fresh": { "weeklyService": 50, "annualTotal": 1425, "monthlyPayment": 118.75 },
+        "sharp": { "weeklyService": 80, "annualTotal": 2280, "monthlyPayment": 190 },
+        "full": { "weeklyService": 100, "annualTotal": 2850, "monthlyPayment": 237.5 }
+      }
+    },
+    {
+      "name": "7,500 sq ft without add-ons",
+      "input": { "lawnSqFt": 7500, "flowerbedSqFt": 0, "annualAgreement": true, "lawnFertilization": false, "bedPlantFertilization": false },
+      "expected": {
+        "fresh": { "weeklyService": 75, "annualTotal": 2137.5, "monthlyPayment": 178.13 },
+        "sharp": { "weeklyService": 120, "annualTotal": 3420, "monthlyPayment": 285 },
+        "full": { "weeklyService": 150, "annualTotal": 4275, "monthlyPayment": 356.25 }
+      }
+    },
+    {
+      "name": "7,500 lawn and 600 bed sq ft with both add-ons",
+      "input": { "lawnSqFt": 7500, "flowerbedSqFt": 600, "annualAgreement": true, "lawnFertilization": true, "bedPlantFertilization": true },
+      "expected": {
+        "fresh": { "weeklyService": 75, "annualTotal": 2603, "monthlyPayment": 216.92 },
+        "sharp": { "weeklyService": 120, "annualTotal": 3885.5, "monthlyPayment": 323.79 },
+        "full": { "weeklyService": 150, "annualTotal": 4740.5, "monthlyPayment": 395.04 }
+      }
+    },
+    {
+      "name": "Manual review over 20,000 sq ft",
+      "input": { "lawnSqFt": 20001, "flowerbedSqFt": 0, "annualAgreement": true },
+      "expectedFlags": { "manualReviewRequired": true }
+    }
+  ]
+}

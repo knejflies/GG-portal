@@ -386,6 +386,13 @@ alter table public.green_grin_expenses
 alter table public.green_grin_expenses
   add column if not exists active boolean not null default true;
 
+create table if not exists public.green_grin_pricing_config (
+  id text primary key default 'active',
+  version integer not null default 1,
+  config jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.green_grin_push_subscriptions (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
@@ -437,6 +444,7 @@ alter table public.green_grin_invoices enable row level security;
 alter table public.green_grin_time_entries enable row level security;
 alter table public.green_grin_push_subscriptions enable row level security;
 alter table public.green_grin_expenses enable row level security;
+alter table public.green_grin_pricing_config enable row level security;
 alter table public.green_grin_marketing_routes enable row level security;
 alter table public.green_grin_marketing_leads enable row level security;
 alter table public.green_grin_daily_route_assignments enable row level security;
