@@ -2593,6 +2593,87 @@
       }
     }
 
+    /* Keep late-loaded bidder and plan controls inside the dark portal theme. */
+    .button.secondary {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 44%),
+        linear-gradient(180deg, #123f28, #082719);
+      color: #f2ffed;
+      border-color: rgba(var(--role-accent-rgb), 0.4);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .button.secondary:hover,
+    .button.secondary:focus-visible {
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 44%),
+        linear-gradient(180deg, #195737, #0b3320);
+      color: #ffffff;
+    }
+
+    .bid-page-head h2,
+    .bid-setting-group legend,
+    .bid-plan h3 {
+      color: var(--chrome);
+    }
+
+    .bid-workspace,
+    .bid-settings,
+    .bid-plan {
+      border-color: rgba(210, 232, 204, 0.16);
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.06), transparent 34%),
+        linear-gradient(180deg, rgba(8, 34, 21, 0.96), rgba(2, 14, 8, 0.98));
+      box-shadow: 0 22px 58px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .bid-settings > summary {
+      background:
+        linear-gradient(110deg, rgba(var(--role-accent-rgb), 0.2), rgba(255, 255, 255, 0.035)),
+        #082719;
+      color: #f4ffef;
+    }
+
+    .bid-setting-group + .bid-setting-group {
+      border-top-color: rgba(210, 232, 204, 0.14);
+    }
+
+    .bid-check {
+      border-color: rgba(210, 232, 204, 0.16);
+      background: rgba(2, 17, 10, 0.76);
+      color: #edf8e9;
+    }
+
+    .bid-plan {
+      border-top-color: var(--role-accent);
+    }
+
+    .bid-plan.selected {
+      border-color: rgba(var(--role-accent-rgb), 0.72);
+      box-shadow: 0 0 0 2px rgba(var(--role-accent-rgb), 0.15), 0 22px 58px rgba(0, 0, 0, 0.44);
+    }
+
+    .bid-plan .monthly-price {
+      color: var(--role-accent);
+    }
+
+    .bid-plan ul,
+    .bid-disclaimer {
+      color: rgba(231, 244, 225, 0.76);
+    }
+
+    .bid-review {
+      border-left-color: #e2ad48;
+      background: rgba(226, 173, 72, 0.12);
+      color: #fff1cf;
+    }
+
+    .bid-selected-summary {
+      border-left-color: var(--role-accent);
+      background: rgba(var(--role-accent-rgb), 0.11);
+      color: #effbea;
+    }
+
     .install-prompt {
       position: fixed;
       left: 50%;
