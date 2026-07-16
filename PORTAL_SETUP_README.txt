@@ -13,6 +13,8 @@ LIVE URLS
 WHAT WORKS AFTER SETUP
 - Customers can create an account and sign in with email/password.
 - New customer accounts show in Admin -> Customers.
+- Customers can compare Fresh Grin, Sharp Grin, and Full Grin Season, then request the plan they want.
+- Starting monthly plan prices use the current Lawn Bidder pricing settings; customer requests appear in Admin -> Customers without changing confirmed billing.
 - Admin can create jobs tied to customers.
 - Admin can set service plan, annual price, and monthly price.
 - Admin can create, save, send, edit, and delete invoices.

@@ -93,6 +93,9 @@ create table if not exists public.green_grin_customers (
   email text,
   active boolean not null default true,
   billing_plan text,
+  requested_plan_id text,
+  requested_plan text,
+  requested_plan_at timestamptz,
   billing_status text not null default 'Not connected',
   monthly_price numeric(10, 2),
   annual_price numeric(10, 2),
@@ -111,6 +114,15 @@ alter table public.green_grin_customers
 
 alter table public.green_grin_customers
   add column if not exists billing_plan text;
+
+alter table public.green_grin_customers
+  add column if not exists requested_plan_id text;
+
+alter table public.green_grin_customers
+  add column if not exists requested_plan text;
+
+alter table public.green_grin_customers
+  add column if not exists requested_plan_at timestamptz;
 
 alter table public.green_grin_customers
   add column if not exists billing_status text not null default 'Not connected';

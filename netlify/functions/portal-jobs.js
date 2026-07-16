@@ -152,6 +152,9 @@ async function syncCustomerPlan(customerUserId, job) {
     method: "PATCH",
     body: JSON.stringify({
       billing_plan: job.service_type || null,
+      requested_plan_id: null,
+      requested_plan: null,
+      requested_plan_at: null,
       customer_code: job.customer_code || null,
       billing_status: job.status || "Scheduled",
       monthly_price: job.monthly_price || null,

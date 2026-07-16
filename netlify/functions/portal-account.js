@@ -1,6 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const DEFAULT_PRICING = require("../../assets/green-grin-pricing-config.json");
 
 const headers = {
   "Content-Type": "application/json",
@@ -50,6 +51,11 @@ async function supabase(path, options = {}) {
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(data?.message || "Supabase request failed.");
   return data;
+}
+
+async function activePricing() {
+  const rows = await supabase("green_grin_pricing_config?select=config&id=eq.active&limit=1").catch(() => []);
+  return rows?.[0]?.config || DEFAULT_PRICING;
 }
 
 function isMissingPreferenceColumn(error) {
@@ -226,6 +232,23 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "PATCH") {
       const body = JSON.parse(event.body || "{}");
+
+      if (Object.prototype.hasOwnProperty.call(body, "plan_request")) {
+        const planId = String(body.plan_request || "").trim().toLowerCase();
+        if (!["fresh", "sharp", "full"].includes(planId)) {
+          return json(400, { error: "Choose a valid Green Grin service plan." });
+        }
+        const pricing = await activePricing();
+        const requestedPlan = pricing?.plans?.[planId]?.name || DEFAULT_PRICING.plans[planId].name;
+        await supabase(`green_grin_customers?id=eq.${encodeURIComponent(user.id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            requested_plan_id: planId,
+            requested_plan: requestedPlan,
+            requested_plan_at: new Date().toISOString()
+          })
+        });
+      }
 
       if (body.profile) {
         const normalizedPhone = normalizePhone(body.profile.phone);

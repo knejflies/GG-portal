@@ -13,6 +13,14 @@ for (const [file, expectedManifest] of Object.entries(files)) {
   if (manifest !== expectedManifest) {
     throw new Error(`${file}: expected ${expectedManifest}, found ${manifest || "no manifest"}`);
   }
+  for (const requiredMarkup of [
+    'data-tab="plans"',
+    'id="customer-plan-options"',
+    'id="customer-plan-result"',
+    'data-request-plan'
+  ]) {
+    if (!html.includes(requiredMarkup)) throw new Error(`${file}: missing customer plan markup ${requiredMarkup}`);
+  }
   const inlineScripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)]
     .map((match) => match[1])
     .filter((code) => code.trim());

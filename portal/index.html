@@ -881,6 +881,77 @@
       font-weight: 950;
     }
 
+    .customer-plan-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .customer-plan-choice {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--glass-line);
+      border-radius: 8px;
+      background: rgba(5, 24, 14, 0.72);
+      box-shadow: 0 22px 48px rgba(0, 0, 0, 0.24);
+    }
+
+    .customer-plan-choice.is-requested {
+      border-color: var(--leaf);
+      box-shadow: 0 0 0 2px rgba(120, 198, 83, 0.2), 0 22px 48px rgba(0, 0, 0, 0.24);
+    }
+
+    .customer-plan-image {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      object-fit: cover;
+    }
+
+    .customer-plan-body {
+      display: grid;
+      align-content: start;
+      gap: 13px;
+      padding: 20px;
+    }
+
+    .customer-plan-number {
+      color: var(--lime);
+      font-size: 1.7rem;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .customer-plan-name {
+      color: #efffeb;
+      font-size: 1.2rem;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .customer-plan-price {
+      color: var(--leaf);
+      font-size: 0.92rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .customer-plan-choice .button {
+      width: 100%;
+      margin-top: auto;
+    }
+
+    .plan-request-banner {
+      margin-top: 18px;
+      border-left: 4px solid var(--leaf);
+      border-radius: 6px;
+      background: rgba(120, 198, 83, 0.1);
+      padding: 13px 15px;
+      color: rgba(239, 255, 235, 0.9);
+    }
+
     .checklist {
       display: grid;
       gap: 10px;
@@ -2775,6 +2846,7 @@
     <div class="portal-layout">
     <div class="tabs" role="tablist">
       <button class="tab active customer-only" data-tab="dashboard" type="button">Dashboard</button>
+      <button class="tab customer-only" data-tab="plans" type="button">Plans</button>
       <button class="tab customer-only" data-tab="messages" type="button">Messages</button>
       <button class="tab customer-only" data-tab="billing" type="button">Billing</button>
       <button class="tab customer-only" data-tab="property" type="button">Property</button>
@@ -2829,11 +2901,21 @@
         <div class="card">
           <h2>Quick actions</h2>
           <div class="quick-actions">
+            <button class="button ghost go-tab" data-go="plans" type="button">Compare Plans</button>
             <button class="button ghost go-tab" data-go="billing" type="button">View Billing</button>
             <button class="button ghost go-tab" data-go="property" type="button">Update Yard Notes</button>
             <button class="button secondary go-tab" data-go="messages" type="button">Message Green Grin</button>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="plans" class="panel customer-only">
+      <div class="card">
+        <h2>Choose your Green Grin plan</h2>
+        <p class="muted">Pick the level of lawn care that fits your property. Green Grin will review the yard and confirm your final monthly price.</p>
+        <div id="customer-plan-options" class="customer-plan-grid"></div>
+        <div id="customer-plan-result" aria-live="polite"></div>
       </div>
     </section>
 
@@ -3759,6 +3841,8 @@
     let accountData = null;
     let invoiceDrafts = [];
     let invoiceCustomers = [];
+    let customerPlanOptions = [];
+    let customerPlanDisclaimer = "";
     let latestBid = null;
     let bidPricingConfig = null;
     let bidDefaultPricingConfig = null;
@@ -4328,6 +4412,7 @@
         }
         if (button.dataset.tab === "expenses") loadExpenses();
         if (button.dataset.tab === "bids") loadBidPricing();
+        if (button.dataset.tab === "plans") loadCustomerPlanOptions();
         if (button.dataset.tab === "customers") loadCustomers();
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
@@ -4337,6 +4422,31 @@
     document.querySelectorAll(".go-tab").forEach((button) => {
       button.addEventListener("click", () => openTab(button.dataset.go));
     });
+    $("#customer-plan-options").addEventListener("click", async (event) => {
+      const button = event.target.closest("button[data-request-plan]");
+      if (!button || button.disabled) return;
+      if (!activeAccount || activeAccount.id === "owner" || activeAccount.id === "employee") {
+        $("#customer-plan-result").innerHTML = notice("Sign in to the Customer Portal to choose a plan.", true);
+        return;
+      }
+      const originalLabel = button.textContent;
+      button.disabled = true;
+      button.textContent = "Saving...";
+      try {
+        const data = await requestJson("portal-account", {
+          method: "PATCH",
+          body: JSON.stringify({ plan_request: button.dataset.requestPlan })
+        });
+        accountData = data;
+        renderAccount(data);
+        $("#customer-plan-result").insertAdjacentHTML("beforeend", notice("Plan request saved. Green Grin can now see it in your customer account."));
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = originalLabel;
+        $("#customer-plan-result").innerHTML = notice(error.message, true);
+      }
+    });
+
 
     $("#enable-push").addEventListener("click", enablePushNotifications);
     $("#test-push").addEventListener("click", testPushNotifications);
@@ -4877,6 +4987,77 @@
       `;
     }
 
+    const customerPlanImages = {
+      fresh: "/assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg",
+      sharp: "/assets/green-grin-residential-landscape-curbing-yard-maintenance.jpg",
+      full: "/assets/green-grin-caldwell-golf-course-lawn-care.jpg"
+    };
+
+    function renderCustomerPlanOptions(customer = accountData?.customer || {}) {
+      const container = $("#customer-plan-options");
+      const result = $("#customer-plan-result");
+      if (!container || !result) return;
+      if (!customerPlanOptions.length) {
+        container.innerHTML = notice("Loading Green Grin plans...");
+        result.innerHTML = "";
+        return;
+      }
+
+      const requestedId = String(customer.requested_plan_id || "").toLowerCase();
+      const confirmedName = String(customer.billing_plan || "").toLowerCase();
+      container.innerHTML = customerPlanOptions.map((plan) => {
+        const requested = requestedId === plan.id;
+        const planName = String(plan.name || "").toLowerCase();
+        const confirmed = confirmedName && (confirmedName === planName || confirmedName.includes(planName));
+        const buttonText = requested ? "Requested" : confirmed ? "Current Plan" : `Select ${plan.name}`;
+        return `
+          <article class="customer-plan-choice ${requested ? "is-requested" : ""}">
+            <img class="customer-plan-image" src="${cleanText(customerPlanImages[plan.id] || customerPlanImages.fresh)}" alt="${cleanText(plan.name)} lawn care plan by Green Grin" loading="lazy" />
+            <div class="customer-plan-body">
+              <span class="customer-plan-number">${cleanText(plan.number)}</span>
+              <strong class="customer-plan-name">${cleanText(plan.name)}</strong>
+              <span class="customer-plan-price">Starting at ${cleanText(fixedMoney(plan.starting_monthly))}/month</span>
+              <ul class="clean-list">
+                ${(plan.includes || []).map((item) => `<li>${cleanText(item)}</li>`).join("")}
+              </ul>
+              <button class="button ${requested || confirmed ? "ghost" : "secondary"}" data-request-plan="${cleanText(plan.id)}" type="button" ${requested || confirmed ? "disabled" : ""}>${cleanText(buttonText)}</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+
+      if (customer.requested_plan) {
+        const requestedOn = customer.requested_plan_at
+          ? ` on ${new Date(customer.requested_plan_at).toLocaleDateString()}`
+          : "";
+        result.innerHTML = `<div class="plan-request-banner"><strong>${cleanText(customer.requested_plan)} requested${cleanText(requestedOn)}.</strong> Green Grin will review your property and confirm the final monthly price.</div>`;
+      } else if (customer.billing_plan) {
+        result.innerHTML = `<div class="plan-request-banner"><strong>Current plan: ${cleanText(customer.billing_plan)}.</strong> Choose another plan above to request a change.</div>`;
+      } else {
+        result.innerHTML = `<p class="muted" style="margin-top: 16px;">${cleanText(customerPlanDisclaimer)}</p>`;
+      }
+    }
+
+    async function loadCustomerPlanOptions(force = false) {
+      if (customerPlanOptions.length && !force) {
+        renderCustomerPlanOptions();
+        return customerPlanOptions;
+      }
+      renderCustomerPlanOptions();
+      try {
+        const response = await fetch(api("portal-plans"), { cache: "no-store" });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Plans could not be loaded.");
+        customerPlanOptions = data.plans || [];
+        customerPlanDisclaimer = data.disclaimer || "Final pricing is confirmed after Green Grin reviews the property.";
+        renderCustomerPlanOptions();
+        return customerPlanOptions;
+      } catch (error) {
+        $("#customer-plan-options").innerHTML = notice(error.message, true);
+        return [];
+      }
+    }
+
     function invoiceCard(invoice) {
       const amount = money(invoice.amount);
       const due = invoice.due_date ? displayScheduleDate(invoice.due_date) : "No due date";
@@ -5296,6 +5477,7 @@
           <p class="muted"><strong>Messages:</strong> ${cleanText(preferenceLine(customer))}</p>
           <p class="muted"><strong>Notifications:</strong> ${cleanText(notificationLine(customer))}</p>
           <p class="muted"><strong>Plan:</strong> ${cleanText(customer.plan || "Not set")} ${customer.monthly_price ? `| $${Number(customer.monthly_price).toFixed(2)}/month` : ""}</p>
+          ${customer.requested_plan ? `<p class="plan-request-banner"><strong>Customer requested:</strong> ${cleanText(customer.requested_plan)}${customer.requested_plan_at ? ` on ${cleanText(new Date(customer.requested_plan_at).toLocaleDateString())}` : ""}</p>` : ""}
           <div class="status-box">
             ${jobs.length ? jobs.slice(0, 4).map((job) => upcomingStep(job)).join("") : notice("No jobs created for this customer yet.")}
           </div>
@@ -5324,6 +5506,7 @@
             <p class="muted">${cleanText(customer.email || "")}${customer.phone ? ` | ${cleanText(customer.phone)}` : ""}</p>
             <p>${cleanText(property.address || "No property address saved yet.")}</p>
             <p class="muted">${cleanText(plan)} | Monthly payment: ${cleanText(price)}</p>
+            ${customer.requested_plan ? `<p class="plan-request-banner"><strong>Requested plan:</strong> ${cleanText(customer.requested_plan)}${customer.requested_plan_at ? ` on ${cleanText(new Date(customer.requested_plan_at).toLocaleDateString())}` : ""}</p>` : ""}
             <p class="muted">${cleanText(preferenceLine(customer))}</p>
             <p class="muted">${cleanText(notificationLine(customer))}</p>
             <p class="muted">Yearly quote: ${annualAmount ? `$${Number(annualAmount).toFixed(2)}` : "Not set"}</p>
@@ -5415,6 +5598,7 @@
         ? `${currentPrice} monthly payment for ${customer.billing_plan || currentJob?.service_type || "service"}.`
         : "No monthly payment is set on this account yet.";
       $("#customer-billing-plans").innerHTML = billingPlanCard(currentJob, customer);
+      renderCustomerPlanOptions(customer);
       $("#customer-invoice-list").innerHTML = invoices.length
         ? invoices.map((invoice) => invoiceCard(invoice)).join("")
         : notice("No invoices yet.");
@@ -7475,6 +7659,7 @@
 
     applyPortalMode();
     updateRollingClock();
+    loadCustomerPlanOptions();
     loadBidPricing().catch((error) => {
       $("#bid-result").innerHTML = notice(error.message, true);
     });
