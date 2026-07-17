@@ -23,9 +23,22 @@
     const lawnSqFt = positiveNumber(input.lawnSqFt, "Lawn square footage");
     const flowerbedSqFt = positiveNumber(input.flowerbedSqFt ?? 0, "Flowerbed square footage", true);
     const difficultyMultiplier = positiveNumber(input.difficultyMultiplier ?? 1, "Property complexity multiplier");
+    const propertyType = String(input.propertyType || "residential").toLowerCase();
     const plan = pricing.plans[input.plan];
 
     if (!plan) throw new Error("Please choose a valid Green Grin plan.");
+    if (!["residential", "hoa_commercial"].includes(propertyType)) {
+      throw new Error("Please choose a valid property type.");
+    }
+
+    const manualReviewRequired =
+      propertyType === "hoa_commercial" ||
+      lawnSqFt > pricing.manualReviewAboveLawnSqFt;
+    const manualReviewReason = propertyType === "hoa_commercial"
+      ? "HOA and commercial properties require a custom site review."
+      : manualReviewRequired
+        ? `Properties above ${Number(pricing.manualReviewAboveLawnSqFt).toLocaleString()} lawn sq ft require a custom site review.`
+        : "";
 
     const rawWeekly = Math.max(
       plan.minimumWeekly,
@@ -67,6 +80,7 @@
     return {
       planId: input.plan,
       planName: plan.name,
+      propertyType,
       lawnSqFt,
       flowerbedSqFt,
       difficultyMultiplier,
@@ -79,7 +93,9 @@
       annualTotal,
       monthlyPayment,
       includes: [...plan.includes],
-      manualReviewRequired: lawnSqFt > pricing.manualReviewAboveLawnSqFt,
+      manualReviewRequired,
+      displayPriceAllowed: !manualReviewRequired,
+      manualReviewReason,
       disclaimer: "Estimate only. Final pricing depends on property condition, access, obstacles, travel and an on-site review."
     };
   }

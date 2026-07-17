@@ -20,7 +20,9 @@ for (const testCase of cases.cases) {
   }
   if (testCase.expectedFlags) {
     for (const result of results) {
-      assert.equal(result.manualReviewRequired, testCase.expectedFlags.manualReviewRequired, testCase.name);
+      for (const [field, expected] of Object.entries(testCase.expectedFlags)) {
+        assert.equal(result[field], expected, `${testCase.name}: ${field}`);
+      }
     }
   }
 }

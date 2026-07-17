@@ -17,7 +17,11 @@ for (const [file, expectedManifest] of Object.entries(files)) {
     'data-tab="plans"',
     'id="customer-plan-options"',
     'id="customer-plan-result"',
-    'data-request-plan'
+    'data-request-plan',
+    'id="bid_property_type"',
+    '<option value="hoa_commercial">HOA / Commercial</option>',
+    'bid.manualReviewRequired',
+    'This property needs a custom site review before a price can be copied'
   ]) {
     if (!html.includes(requiredMarkup)) throw new Error(`${file}: missing customer plan markup ${requiredMarkup}`);
   }

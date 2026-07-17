@@ -3479,6 +3479,13 @@
                 <input id="bid_customer_name" autocomplete="off" placeholder="Customer name" />
               </div>
               <div>
+                <label for="bid_property_type">Property type</label>
+                <select id="bid_property_type" required>
+                  <option value="residential">Residential</option>
+                  <option value="hoa_commercial">HOA / Commercial</option>
+                </select>
+              </div>
+              <div>
                 <label for="bid_lawn_sqft">Lawn square footage</label>
                 <input id="bid_lawn_sqft" type="number" min="1" step="1" value="5000" required />
               </div>
@@ -4655,18 +4662,22 @@
     $("#bid-form").addEventListener("submit", (event) => {
       event.preventDefault();
       try {
-        calculateBid();
-        $("#bid-result").innerHTML = notice("Plans calculated.");
+        const bid = calculateBid();
+        $("#bid-result").innerHTML = bid.manualReviewRequired
+          ? notice(bid.manualReviewReason)
+          : notice("Plans calculated.");
       } catch (error) {
         $("#bid-result").innerHTML = notice(error.message, true);
       }
     });
 
-    document.querySelectorAll("#bid-form input").forEach((field) => {
+    document.querySelectorAll("#bid-form input, #bid-form select").forEach((field) => {
       const refreshBid = () => {
         try {
-          calculateBid();
-          $("#bid-result").innerHTML = "";
+          const bid = calculateBid();
+          $("#bid-result").innerHTML = bid.manualReviewRequired
+            ? notice(bid.manualReviewReason)
+            : "";
         } catch (_error) {
           return;
         }
@@ -4694,6 +4705,10 @@
 
     $("#bid-copy-job").addEventListener("click", () => {
       const bid = calculateBid();
+      if (bid.manualReviewRequired) {
+        $("#bid-result").innerHTML = notice("This property needs a custom site review before a price can be copied to a job.", true);
+        return;
+      }
       $("#owner_job_customer_name").value = bid.customer || $("#owner_job_customer_name").value;
       selectJobPlan(bid.planId);
       $("#owner_job_annual_price").value = bid.annualTotal.toFixed(2);
@@ -4705,6 +4720,10 @@
 
     $("#bid-copy-invoice").addEventListener("click", () => {
       const bid = calculateBid();
+      if (bid.manualReviewRequired) {
+        $("#bid-result").innerHTML = notice("This property needs a custom site review before a price can be copied to an invoice.", true);
+        return;
+      }
       $("#invoice_id").value = "";
       $("#invoice_amount").value = bid.monthlyTotal.toFixed(2);
       $("#invoice_status").value = "Draft";
@@ -4931,6 +4950,7 @@
       if (!bidPricingConfig) throw new Error("Pricing settings are still loading.");
       if (!window.GreenGrinCalculator) throw new Error("The Lawn Bidder calculator could not be loaded.");
       const input = {
+        propertyType: $("#bid_property_type").value,
         lawnSqFt: requiredBidNumber("#bid_lawn_sqft", "Lawn square footage"),
         flowerbedSqFt: requiredBidNumber("#bid_bed_sqft", "Flowerbed square footage", true),
         difficultyMultiplier: requiredBidNumber("#bid_difficulty", "Property complexity"),
@@ -4952,15 +4972,24 @@
       $("#bid-plan-results").innerHTML = bidPlanEstimates.map((estimate) => {
         const selected = estimate.planId === bidSelectedPlan;
         const review = estimate.manualReviewRequired
-          ? `<div class="bid-review">Custom quote required before booking.</div>`
+          ? `<div class="bid-review">${cleanText(estimate.manualReviewReason)}</div>`
           : "";
-        return `
-          <article class="bid-plan ${selected ? "selected" : ""}">
-            <h3>${cleanText(estimate.planName)}</h3>
+        const price = estimate.manualReviewRequired
+          ? `
+            <div class="monthly-price">Custom quote<small>site review required</small></div>
+            <p><strong>HOA / commercial pricing</strong></p>
+            <p class="muted">Set the final amount after reviewing scope, access and visit frequency.</p>
+          `
+          : `
             <div class="monthly-price">${cleanText(fixedMoney(estimate.monthlyPayment))}<small>/ month</small></div>
             <p><strong>${cleanText(fixedMoney(estimate.weeklyService))}</strong> weekly service</p>
             <p class="muted">${cleanText(fixedMoney(estimate.annualTotal))} annual total</p>
             <p class="muted">${cleanText(fixedMoney(estimate.annualSavings))} annual savings</p>
+          `;
+        return `
+          <article class="bid-plan ${selected ? "selected" : ""}">
+            <h3>${cleanText(estimate.planName)}</h3>
+            ${price}
             <ul>${estimate.includes.map((item) => `<li>${cleanText(item)}</li>`).join("")}</ul>
             ${review}
             <button class="button ${selected ? "secondary" : "ghost"}" type="button" data-select-bid-plan="${cleanText(estimate.planId)}" aria-pressed="${selected}">
@@ -4975,16 +5004,23 @@
         ...selected,
         customer: $("#bid_customer_name").value.trim(),
         plan: selected.planName,
-        monthlyTotal: selected.monthlyPayment,
-        perMowTotal: selected.weeklyService,
+        monthlyTotal: selected.manualReviewRequired ? null : selected.monthlyPayment,
+        perMowTotal: selected.manualReviewRequired ? null : selected.weeklyService,
         pricingVersion: bidPricingConfig.version,
         annualAgreement: $("#bid_annual_agreement").checked
       };
+      $("#bid-copy-job").disabled = selected.manualReviewRequired;
+      $("#bid-copy-invoice").disabled = selected.manualReviewRequired;
       $("#bid-selected-summary").hidden = false;
-      $("#bid-selected-summary").innerHTML = `
-        <strong>${cleanText(selected.planName)} selected</strong>
-        <p>${cleanText(fixedMoney(selected.monthlyPayment))} per month across ${cleanText(String(bidPricingConfig.monthlyPaymentsPerYear))} equal payments.</p>
-      `;
+      $("#bid-selected-summary").innerHTML = selected.manualReviewRequired
+        ? `
+          <strong>${cleanText(selected.planName)} scope selected</strong>
+          <p>${cleanText(selected.manualReviewReason)} Enter the approved custom amount directly on the job or invoice after the review.</p>
+        `
+        : `
+          <strong>${cleanText(selected.planName)} selected</strong>
+          <p>${cleanText(fixedMoney(selected.monthlyPayment))} per month across ${cleanText(String(bidPricingConfig.monthlyPaymentsPerYear))} equal payments.</p>
+        `;
     }
 
     function bidNotes(bid) {

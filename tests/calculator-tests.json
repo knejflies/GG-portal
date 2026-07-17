@@ -32,7 +32,12 @@
     {
       "name": "Manual review over 20,000 sq ft",
       "input": { "lawnSqFt": 20001, "flowerbedSqFt": 0, "annualAgreement": true },
-      "expectedFlags": { "manualReviewRequired": true }
+      "expectedFlags": { "manualReviewRequired": true, "displayPriceAllowed": false }
+    },
+    {
+      "name": "HOA properties always require a custom quote",
+      "input": { "propertyType": "hoa_commercial", "lawnSqFt": 12000, "flowerbedSqFt": 0, "annualAgreement": true },
+      "expectedFlags": { "manualReviewRequired": true, "displayPriceAllowed": false }
     }
   ]
 }
