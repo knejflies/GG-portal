@@ -6,6 +6,16 @@
   "annualAgreementDiscount": 0.05,
   "monthlyPaymentsPerYear": 12,
   "manualReviewAboveLawnSqFt": 20000,
+  "mowingBid": {
+    "serviceName": "Mowing service",
+    "minimumPerVisit": 50,
+    "pricePer1000SqFtPerVisit": 10,
+    "visitsPerYear": 30,
+    "annualAgreementDiscount": 0.05,
+    "paymentsPerYear": 12,
+    "roundPriceTo": 5,
+    "manualReviewAboveLawnSqFt": 20000
+  },
   "plans": {
     "fresh": {
       "name": "Fresh Grin",
@@ -58,12 +68,10 @@
     "adminOverheadPerVisit": 60,
     "costReservePerVisit": 1,
     "targetGrossMargin": 0.5,
+    "pricePer1000SqFtPerVisit": 35,
     "minimumApplicationCharge": 125,
     "roundChargeTo": 5,
-    "segwayPurchaseCost": 600,
-    "recoveryPeriodSeasons": 1,
     "fertilizerVisitsPerSeason": 5,
-    "mowingVisitsPerSeason": 36,
     "paymentsPerYear": 12,
     "products": {
       "nitrex": {

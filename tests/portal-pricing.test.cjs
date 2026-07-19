@@ -34,16 +34,20 @@ const event = (method, body) => ({
   const defaultsBody = JSON.parse(defaultsResponse.body);
   assert.equal(defaultsResponse.statusCode, 200);
   assert.deepEqual(defaultsBody.config, defaultPricing);
+  assert.equal(defaultsBody.config.mowingBid.pricePer1000SqFtPerVisit, 10);
   assert.equal(defaultsBody.config.fertilizerBid.targetGrossMargin, 0.5);
+  assert.equal(defaultsBody.config.fertilizerBid.pricePer1000SqFtPerVisit, 35);
   assert.equal(defaultsBody.config.fertilizerBid.applications.length, 5);
 
   const changed = JSON.parse(JSON.stringify(defaultPricing));
   changed.plans.fresh.minimumWeekly = 65;
+  changed.mowingBid.minimumPerVisit = 60;
   changed.fertilizerBid.targetGrossMargin = 0.55;
   const saveResponse = await handler(event("PATCH", { config: changed }));
   const saveBody = JSON.parse(saveResponse.body);
   assert.equal(saveResponse.statusCode, 200);
   assert.equal(saveBody.config.plans.fresh.minimumWeekly, 65);
+  assert.equal(saveBody.config.mowingBid.minimumPerVisit, 60);
   assert.equal(saveBody.config.fertilizerBid.targetGrossMargin, 0.55);
   assert.equal(saveBody.version, 2);
 

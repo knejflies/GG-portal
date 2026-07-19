@@ -16,20 +16,22 @@ WHAT WORKS AFTER SETUP
 - Customers can compare Fresh Grin, Sharp Grin, and Full Grin Season, then request the plan they want.
 - Starting monthly plan prices use the current Lawn Bidder pricing settings; customer requests appear in Admin -> Customers without changing confirmed billing.
 - Admin can create jobs tied to customers.
-- Admin can set service plan, annual price, and monthly price.
+- Admin creates recurring jobs with a price per service week and season dates.
+- Monthly invoices count the actual scheduled service weeks, so a five-week month bills five weekly services.
 - Admin can create, save, send, edit, and delete invoices.
 - Admin can mark invoices paid, search paid invoices, and keep paid invoices collapsed below open invoices.
-- Admin -> Lawn Bidder calculates all three plans from lawn and flowerbed square footage.
-- Admin -> Fert Bidder calculates a five-application fertilizer program from turf square footage, product analysis, bag cost, labor, overhead, Segway recovery, minimum charges, rounding, and target margin.
+- Admin -> Bidders groups the single-price Mowing Bidder and five-application Fertilizer Bidder as subsections.
+- Mowing Bidder calculates one straightforward quote from the minimum per mow, price per 1,000 square feet, property complexity, visit count, discount, and payment split.
+- Fertilizer Bidder prices each application from the minimum or saved price per 1,000 square feet, whichever is higher, while product, labor, and overhead remain visible as a profit check.
 - Fert Bidder shows product pounds, fractional bags used, whole bags to purchase, cash product purchase, application charges, annual quote, operating profit, gross margin, and first-job cash profit.
-- Admin can adjust every plan minimum, square-foot rate, visit count, discount, payment split, add-on rate, and manual-review threshold.
-- Lawn Bidder pricing saves in Supabase and can be copied directly into a job or invoice.
+- Admin can adjust the simple mowing and fertilizer price drivers, with detailed operating-cost settings kept in advanced subsections.
+- Bidder pricing saves in Supabase and can be copied directly into a job or invoice.
 - Admin can scan receipt photos with AI, review the result, and save expenses.
 - Admin can log start/end mileage and have the calculated miles added as a vehicle expense at $0.76 per mile.
 - Sent invoices show in the customer's Billing tab.
 - Customers can send invoice payments by Zelle to Green Grin Lawns, then report the payment as pending.
 - Admin receives an app notification, verifies the bank deposit, and marks the invoice paid.
-- Admin can send a monthly invoice from the customer's monthly service number.
+- Admin can send a monthly invoice calculated from that month's scheduled service weeks.
 - Employees can request access.
 - Admin can approve/deactivate/delete employees, set PINs, and set hourly rates.
 - Admin can mark an employee as a subcontractor and select Aeration, Shrubs, and Snow categories.
@@ -95,20 +97,26 @@ The SUPABASE_ANON_KEY and GREEN_GRIN_VAPID_PUBLIC_KEY are okay to expose.
 OPENAI_RECEIPT_MODEL is optional. Leave it out unless you are intentionally changing the receipt scanner model.
 GREEN_GRIN_GEOCODER_URL is optional. Leave it out to use the default OpenStreetMap address lookup.
 
-LAWN BIDDER
+MOWING BIDDER
 1. Run the latest portal-setup.sql so green_grin_pricing_config exists.
-2. Sign in at /admin/ and open Lawn Bidder.
-3. Open Pricing Settings, adjust the numbers, and click Save Pricing.
+2. Sign in at /admin/, open Bidders, and choose Mowing Bidder.
+3. Open Mowing Price Settings, adjust the minimum, price per 1,000 square feet, visit count, discount, rounding, and payments, then click Save Mowing Price.
 4. Pricing is stored in Supabase; no additional Netlify environment variable is required.
-5. Select a calculated plan and copy it to a job or draft invoice.
+5. Copy the single calculated quote to a job or draft invoice.
 
 FERTILIZER BIDDER
-1. Sign in at /admin/ and open Fert Bidder.
+1. Sign in at /admin/, open Bidders, and choose Fertilizer Bidder.
 2. Enter turf square footage to calculate the full five-application program.
-3. Open Fertilizer Pricing Settings to adjust production, labor, overhead, Segway recovery, product analyses, bag costs, application timing, nitrogen rates, target margin, and price rounding.
+3. Open Fertilizer Pricing Settings to adjust the price per 1,000 square feet, minimum application, visits, and rounding. Operating costs, products, and the application schedule are under advanced subsections.
 4. Click Save Fert Pricing to store the owner settings in the same Supabase pricing record used by Lawn Bidder.
 5. Copy the annual program to a job or copy the average application charge to a draft invoice.
-6. Existing saved Lawn Bidder pricing remains compatible; missing fertilizer settings are filled from the supplied defaults.
+6. Existing saved pricing remains compatible; new simple bidder settings are filled from the supplied defaults.
+
+WEEKLY JOB BILLING
+1. In Admin -> Jobs, enter the price per service week plus the season start and end dates.
+2. The portal calculates the season total from the scheduled weekly visits.
+3. Monthly invoices count the weekly service dates that fall in that calendar month.
+4. A four-week month bills four services and a five-week month bills five services.
 
 MARKETING ROUTES
 1. In Admin -> Employees, approve the employee and click Make Marketer.

@@ -144,7 +144,7 @@
       padding: 52px 0 30px;
       background:
         linear-gradient(90deg, rgba(18, 51, 36, 0.94), rgba(18, 51, 36, 0.68)),
-        url("../assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center / cover;
+        url("assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center / cover;
       color: var(--white);
     }
 
@@ -1229,7 +1229,7 @@
       padding: 30px 0 22px;
       background:
         linear-gradient(120deg, rgba(8, 17, 11, 0.84), rgba(4, 29, 17, 0.5)),
-        url("../assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center 42% / cover;
+        url("assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center 42% / cover;
       border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     }
 
@@ -1722,7 +1722,7 @@
     .hero {
       background:
         linear-gradient(112deg, rgba(2, 13, 8, 0.93), rgba(5, 36, 21, 0.66)),
-        url("../assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
+        url("assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
       border-bottom-color: rgba(201, 239, 187, 0.12);
       transition: background-position 160ms ease-out;
     }
@@ -1981,7 +1981,7 @@
       padding: 38px 0 28px;
       background:
         linear-gradient(104deg, rgba(1, 7, 4, 0.97) 5%, rgba(2, 24, 13, 0.82) 48%, rgba(3, 36, 19, 0.58) 100%),
-        url("../assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
+        url("assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
     }
 
     .hero-grid {
@@ -2102,6 +2102,15 @@
 
     .tabs::before {
       color: var(--chrome-mid);
+    }
+
+    .tab-section-label {
+      margin: 8px 8px -2px;
+      color: #b9d4b5;
+      font-size: 0.68rem;
+      font-weight: 950;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
     }
 
     .tab {
@@ -2866,6 +2875,205 @@
       color: #effbea;
     }
 
+    .bidder-subnav {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 8px;
+      border: 1px solid rgba(210, 232, 204, 0.18);
+      border-radius: 10px;
+      background: rgba(2, 15, 8, 0.82);
+    }
+
+    .bidder-subnav-button {
+      min-height: 46px;
+      padding: 10px 14px;
+      border: 1px solid rgba(210, 232, 204, 0.16);
+      border-radius: 8px;
+      background: rgba(12, 42, 26, 0.84);
+      color: #dcebd8;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 900;
+    }
+
+    .bidder-subnav-button.active {
+      border-color: rgba(var(--role-accent-rgb), 0.75);
+      background: linear-gradient(180deg, #6bc447, #3d8f2d);
+      color: #071208;
+      box-shadow: 0 8px 22px rgba(var(--role-accent-rgb), 0.2);
+    }
+
+    .bid-workspace label,
+    .bid-settings label,
+    .bid-settings .bid-setting-group legend,
+    .fert-settings .bid-setting-group legend,
+    .fert-table-block h3,
+    .fert-checkline,
+    .fert-checkline strong {
+      color: #f2ffed;
+    }
+
+    .bid-workspace input,
+    .bid-workspace select,
+    .bid-settings input,
+    .bid-settings select,
+    .bid-settings textarea,
+    .bid-settings.fert-settings input,
+    .bid-settings.fert-settings select {
+      border: 2px solid #a8c89c;
+      background: #ffffff;
+      color: #10251a;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .bid-workspace input:focus,
+    .bid-workspace select:focus,
+    .bid-settings input:focus,
+    .bid-settings select:focus,
+    .bid-settings textarea:focus {
+      border-color: #78c653;
+      outline: 3px solid rgba(120, 198, 83, 0.22);
+    }
+
+    .settings-help {
+      margin: 0;
+      padding: 12px 14px;
+      border-left: 4px solid var(--role-accent);
+      border-radius: 8px;
+      background: rgba(var(--role-accent-rgb), 0.12);
+      color: #eef9e9;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .quick-price-settings {
+      padding: 14px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.32);
+      border-radius: 10px;
+      background: rgba(var(--role-accent-rgb), 0.08);
+    }
+
+    .settings-advanced {
+      border: 1px solid rgba(210, 232, 204, 0.17);
+      border-radius: 9px;
+      background: rgba(1, 12, 6, 0.36);
+      overflow: hidden;
+    }
+
+    .settings-advanced > summary {
+      padding: 13px 14px;
+      color: #eaf7e5;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .settings-advanced > .bid-setting-group {
+      padding: 14px;
+      border-top: 1px solid rgba(210, 232, 204, 0.14);
+    }
+
+    .mowing-quote-grid,
+    .fert-quote-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .mowing-quote-card,
+    .fert-quote-card {
+      min-height: 94px;
+      padding: 14px;
+      border: 1px solid #c7dcc0;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #10251a;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .mowing-quote-card.primary,
+    .fert-quote-card.primary {
+      border-color: #78c653;
+      background: #eaf7e4;
+    }
+
+    .mowing-quote-card span,
+    .fert-quote-card span {
+      display: block;
+      color: #48634e;
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .mowing-quote-card strong,
+    .fert-quote-card strong {
+      display: block;
+      margin-top: 7px;
+      color: #123324;
+      font-size: 1.35rem;
+    }
+
+    .fert-table-wrap {
+      border-color: #c7d8c1;
+      background: #ffffff;
+    }
+
+    .fert-table td {
+      color: #183425;
+      border-bottom-color: #d9e5d5;
+    }
+
+    .fert-table tbody tr:nth-child(even) {
+      background: #eef5eb;
+    }
+
+    .fert-table tfoot td {
+      color: #102b1b;
+      background: #dff0d8;
+    }
+
+    .profit-check {
+      display: block;
+      margin-top: 8px;
+      padding: 10px 12px;
+      border-radius: 8px;
+    }
+
+    .profit-check.pass {
+      background: rgba(120, 198, 83, 0.16);
+      color: #dcffd1;
+    }
+
+    .profit-check.warn {
+      background: rgba(226, 173, 72, 0.16);
+      color: #fff0c9;
+    }
+
+    @media (max-width: 900px) {
+      .mowing-quote-grid,
+      .fert-quote-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .tab-section-label {
+        display: none !important;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .bidder-subnav,
+      .mowing-quote-grid,
+      .fert-quote-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .install-prompt {
       position: fixed;
       left: 50%;
@@ -2999,7 +3207,7 @@
   <header>
     <div class="wrap nav">
       <a class="brand" href="/">
-        <img src="../assets/green-grin-logo.png" alt="Green Grin Lawn & Landscape" />
+        <img src="assets/green-grin-logo.png" alt="Green Grin Lawn & Landscape" />
       </a>
       <div class="nav-actions">
         <span id="account-pill" class="account-pill">Signed in</span>
@@ -3010,7 +3218,7 @@
   </header>
 
   <aside id="install-prompt" class="install-prompt" role="dialog" aria-labelledby="install-title" aria-describedby="install-copy" hidden>
-    <img src="../assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
+    <img src="assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
     <div>
       <strong id="install-title">Install Green Grin</strong>
       <p id="install-copy">Add this portal to your Home Screen.</p>
@@ -3028,7 +3236,7 @@
         <p id="portal-subtitle">Service status, billing, messages, and property details.</p>
       </div>
       <div class="portal-card">
-        <img src="../assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
+        <img src="assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
         <strong>Customer accounts</strong>
         <span>Green Grin service dashboard</span>
       </div>
@@ -3123,14 +3331,18 @@
       <button class="tab customer-only" data-tab="messages" type="button">Messages</button>
       <button class="tab customer-only" data-tab="billing" type="button">Billing</button>
       <button class="tab customer-only" data-tab="property" type="button">Property</button>
+      <span class="tab-section-label owner-only">Customers &amp; work</span>
       <button class="tab owner-only" data-tab="customers" type="button">Customers</button>
       <button class="tab owner-only" data-tab="owner" type="button">Jobs</button>
-      <button class="tab owner-only" data-tab="bids" type="button">Lawn Bidder</button>
-      <button class="tab owner-only" data-tab="fert-bids" type="button">Fert Bidder</button>
+      <span class="tab-section-label owner-only">Quoting tools</span>
+      <button class="tab owner-only" data-tab="bids" type="button">Bidders</button>
+      <span class="tab-section-label owner-only">Team</span>
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
+      <span class="tab-section-label owner-only">Money</span>
       <button class="tab owner-only" data-tab="invoices" type="button">Invoices</button>
       <button class="tab owner-only" data-tab="expenses" type="button">Expenses</button>
+      <span class="tab-section-label owner-only">Records</span>
       <button class="tab owner-only" data-tab="activity" type="button">Activity</button>
       <button class="tab employee-only" data-tab="employee-work" type="button">My Jobs</button>
       <button id="marketing-tab" class="tab employee-only" data-tab="marketing" type="button" hidden>Marketing Route</button>
@@ -3157,7 +3369,7 @@
         <div class="metric">
           <span>Monthly Plan</span>
           <strong id="dashboard-plan">Not set</strong>
-          <p id="dashboard-price" class="muted">Monthly price will appear here.</p>
+          <p id="dashboard-price" class="muted">This month's scheduled service charge will appear here.</p>
         </div>
         <div class="metric">
           <span>Service Status</span>
@@ -3409,12 +3621,12 @@
                 </select>
               </div>
               <div>
-                <label for="owner_job_annual_price">Yearly price</label>
-                <input id="owner_job_annual_price" type="number" min="0" step="0.01" placeholder="Yearly price" />
+                <label for="owner_job_weekly_price">Price per service week</label>
+                <input id="owner_job_weekly_price" type="number" min="0" step="0.01" placeholder="Weekly price" />
               </div>
               <div>
-                <label for="owner_job_monthly_price">Monthly price</label>
-                <input id="owner_job_monthly_price" type="number" min="0" step="0.01" placeholder="Monthly price" />
+                <label for="owner_job_annual_price">Season total</label>
+                <input id="owner_job_annual_price" type="number" min="0" step="0.01" placeholder="Calculated from scheduled weeks" />
               </div>
             </div>
             <div class="two">
@@ -3441,6 +3653,7 @@
                 </select>
               </div>
             </div>
+            <p id="owner_job_weekly_summary" class="settings-help">Choose the season dates and a weekly price. Monthly invoices will count the actual service weeks in each month.</p>
             <div>
               <label for="owner_job_notes">Job notes</label>
               <textarea id="owner_job_notes" placeholder="Gate code, pets, backyard notes, project details"></textarea>
@@ -3656,10 +3869,14 @@
     </section>
 
     <section id="bids" class="panel owner-only">
+      <div class="bidder-subnav" role="tablist" aria-label="Bidders">
+        <button class="bidder-subnav-button active" data-bidder-section="bids" type="button" role="tab" aria-selected="true">Mowing Bidder</button>
+        <button class="bidder-subnav-button" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="false">Fertilizer Bidder</button>
+      </div>
       <div class="bid-page-head">
         <div>
-          <h2>Lawn Bidder</h2>
-          <p class="muted">Build all three plan prices from lawn measurements.</p>
+          <h2>Mowing Bidder</h2>
+          <p class="muted">One straightforward mowing quote—no plan selection.</p>
         </div>
         <span id="bid-config-version" class="badge">Pricing v1</span>
       </div>
@@ -3684,175 +3901,87 @@
                 <input id="bid_lawn_sqft" type="number" min="1" step="1" value="5000" required />
               </div>
               <div>
-                <label for="bid_bed_sqft">Flowerbed square footage</label>
-                <input id="bid_bed_sqft" type="number" min="0" step="1" value="0" />
-              </div>
-              <div>
                 <label for="bid_difficulty">Property complexity</label>
-                <input id="bid_difficulty" type="number" min="0.1" step="0.05" value="1" required />
+                <select id="bid_difficulty" required>
+                  <option value="0.9">Easy / wide open</option>
+                  <option value="1" selected>Standard property</option>
+                  <option value="1.15">Tight gates / extra trimming</option>
+                  <option value="1.3">Very complex</option>
+                </select>
               </div>
             </div>
             <div class="bid-checkboxes">
-              <label class="bid-check" for="bid_lawn_fert">
-                <input id="bid_lawn_fert" type="checkbox" />
-                Lawn fertilization
-              </label>
-              <label class="bid-check" for="bid_bed_fert">
-                <input id="bid_bed_fert" type="checkbox" />
-                Flowerbed fertilization
-              </label>
               <label class="bid-check" for="bid_annual_agreement">
                 <input id="bid_annual_agreement" type="checkbox" checked />
-                Annual agreement
+                Apply annual agreement discount
               </label>
             </div>
-            <button class="button" type="submit">Calculate Plans</button>
+            <button class="button" type="submit">Calculate Mowing Quote</button>
           </form>
 
           <div id="bid-result" aria-live="polite"></div>
-          <div id="bid-plan-results" class="bid-plan-results" role="region" aria-live="polite"></div>
-          <div id="bid-selected-summary" class="bid-selected-summary" hidden></div>
+          <div id="bid-plan-results" class="mowing-quote-grid" role="region" aria-live="polite"></div>
           <div class="row-actions">
-            <button id="bid-copy-job" class="button secondary" type="button">Copy Selected Plan To Job</button>
-            <button id="bid-copy-invoice" class="button ghost" type="button">Copy Selected Plan To Invoice</button>
+            <button id="bid-copy-job" class="button secondary" type="button">Copy Quote To Job</button>
+            <button id="bid-copy-invoice" class="button ghost" type="button">Copy Monthly Price To Invoice</button>
           </div>
           <p class="bid-disclaimer">Estimate only. Final pricing depends on property condition, access, obstacles, travel and an on-site review.</p>
         </div>
 
-        <details class="bid-settings" open>
-          <summary>Pricing Settings</summary>
+        <details class="bid-settings">
+          <summary>Mowing Price Settings</summary>
           <form id="bid-pricing-form">
-            <fieldset class="bid-setting-group">
-              <legend>General</legend>
+            <p class="settings-help">These six fields control the customer quote. Prices are calculated per mowing visit.</p>
+            <fieldset class="bid-setting-group quick-price-settings">
+              <legend>Customer price</legend>
               <div class="bid-setting-grid">
                 <div>
-                  <label for="pricing_round">Round weekly up to</label>
-                  <input id="pricing_round" type="number" min="0.01" step="0.01" required />
+                  <label for="mowing_minimum">Minimum per mow</label>
+                  <input id="mowing_minimum" type="number" min="0" step="0.01" required />
                 </div>
                 <div>
-                  <label for="pricing_visits">Mowing visits / year</label>
-                  <input id="pricing_visits" type="number" min="1" step="1" required />
+                  <label for="mowing_rate_1000">Price per 1,000 sq. ft.</label>
+                  <input id="mowing_rate_1000" type="number" min="0" step="0.01" required />
                 </div>
                 <div>
-                  <label for="pricing_discount">Annual discount %</label>
-                  <input id="pricing_discount" type="number" min="0" max="100" step="0.01" required />
+                  <label for="mowing_visits">Mows per year</label>
+                  <input id="mowing_visits" type="number" min="1" max="365" step="1" required />
                 </div>
                 <div>
-                  <label for="pricing_months">Equal payments</label>
-                  <input id="pricing_months" type="number" min="1" max="24" step="1" required />
+                  <label for="mowing_round">Round price to nearest</label>
+                  <input id="mowing_round" type="number" min="0.01" step="0.01" required />
                 </div>
-                <div class="wide">
-                  <label for="pricing_review">Manual review above sq ft</label>
-                  <input id="pricing_review" type="number" min="1" step="1" required />
+                <div>
+                  <label for="mowing_discount">Annual discount %</label>
+                  <input id="mowing_discount" type="number" min="0" max="100" step="0.1" required />
+                </div>
+                <div>
+                  <label for="mowing_payments">Equal payments per year</label>
+                  <input id="mowing_payments" type="number" min="1" max="24" step="1" required />
                 </div>
               </div>
             </fieldset>
 
-            <fieldset class="bid-setting-group" data-plan-settings="fresh">
-              <legend>Fresh Grin</legend>
-              <div class="bid-setting-grid">
-                <div class="wide">
-                  <label for="pricing_fresh_name">Plan name</label>
-                  <input id="pricing_fresh_name" maxlength="80" required />
+            <details class="settings-advanced">
+              <summary>Advanced settings</summary>
+              <fieldset class="bid-setting-group">
+                <legend>Review rules</legend>
+                <div class="bid-setting-grid">
+                <div>
+                    <label for="mowing_service_name">Service label</label>
+                    <input id="mowing_service_name" maxlength="80" required />
                 </div>
                 <div>
-                  <label for="pricing_fresh_min">Minimum weekly</label>
-                  <input id="pricing_fresh_min" type="number" min="0" step="0.01" required />
+                    <label for="mowing_review">Custom quote above sq. ft.</label>
+                    <input id="mowing_review" type="number" min="1" step="1" required />
                 </div>
-                <div>
-                  <label for="pricing_fresh_rate">Rate / lawn sq ft</label>
-                  <input id="pricing_fresh_rate" type="number" min="0" step="0.0001" required />
                 </div>
-                <div class="wide">
-                  <label for="pricing_fresh_includes">Included services</label>
-                  <textarea id="pricing_fresh_includes" rows="3" required></textarea>
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset class="bid-setting-group" data-plan-settings="sharp">
-              <legend>Sharp Grin</legend>
-              <div class="bid-setting-grid">
-                <div class="wide">
-                  <label for="pricing_sharp_name">Plan name</label>
-                  <input id="pricing_sharp_name" maxlength="80" required />
-                </div>
-                <div>
-                  <label for="pricing_sharp_min">Minimum weekly</label>
-                  <input id="pricing_sharp_min" type="number" min="0" step="0.01" required />
-                </div>
-                <div>
-                  <label for="pricing_sharp_rate">Rate / lawn sq ft</label>
-                  <input id="pricing_sharp_rate" type="number" min="0" step="0.0001" required />
-                </div>
-                <div class="wide">
-                  <label for="pricing_sharp_includes">Included services</label>
-                  <textarea id="pricing_sharp_includes" rows="4" required></textarea>
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset class="bid-setting-group" data-plan-settings="full">
-              <legend>Full Grin Season</legend>
-              <div class="bid-setting-grid">
-                <div class="wide">
-                  <label for="pricing_full_name">Plan name</label>
-                  <input id="pricing_full_name" maxlength="80" required />
-                </div>
-                <div>
-                  <label for="pricing_full_min">Minimum weekly</label>
-                  <input id="pricing_full_min" type="number" min="0" step="0.01" required />
-                </div>
-                <div>
-                  <label for="pricing_full_rate">Rate / lawn sq ft</label>
-                  <input id="pricing_full_rate" type="number" min="0" step="0.0001" required />
-                </div>
-                <div class="wide">
-                  <label for="pricing_full_includes">Included services</label>
-                  <textarea id="pricing_full_includes" rows="7" required></textarea>
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset class="bid-setting-group">
-              <legend>Lawn Fertilization</legend>
-              <div class="bid-setting-grid">
-                <div>
-                  <label for="pricing_lawn_fert_min">Minimum / application</label>
-                  <input id="pricing_lawn_fert_min" type="number" min="0" step="0.01" required />
-                </div>
-                <div>
-                  <label for="pricing_lawn_fert_rate">Rate / lawn sq ft</label>
-                  <input id="pricing_lawn_fert_rate" type="number" min="0" step="0.0001" required />
-                </div>
-                <div class="wide">
-                  <label for="pricing_lawn_fert_visits">Applications / year</label>
-                  <input id="pricing_lawn_fert_visits" type="number" min="1" step="1" required />
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset class="bid-setting-group">
-              <legend>Flowerbed Fertilization</legend>
-              <div class="bid-setting-grid">
-                <div>
-                  <label for="pricing_bed_fert_min">Minimum / visit</label>
-                  <input id="pricing_bed_fert_min" type="number" min="0" step="0.01" required />
-                </div>
-                <div>
-                  <label for="pricing_bed_fert_rate">Rate / bed sq ft</label>
-                  <input id="pricing_bed_fert_rate" type="number" min="0" step="0.0001" required />
-                </div>
-                <div class="wide">
-                  <label for="pricing_bed_fert_visits">Visits / year</label>
-                  <input id="pricing_bed_fert_visits" type="number" min="1" step="1" required />
-                </div>
-              </div>
-            </fieldset>
+              </fieldset>
+            </details>
 
             <div class="row-actions">
-              <button class="button" type="submit">Save Pricing</button>
-              <button id="bid-restore-pricing" class="button ghost" type="button">Restore Supplied Defaults</button>
+              <button class="button" type="submit">Save Mowing Price</button>
+              <button id="bid-restore-pricing" class="button ghost" type="button">Restore Mowing Defaults</button>
             </div>
             <div id="bid-pricing-result" aria-live="polite"></div>
           </form>
@@ -3861,10 +3990,14 @@
     </section>
 
     <section id="fert-bids" class="panel owner-only">
+      <div class="bidder-subnav" role="tablist" aria-label="Bidders">
+        <button class="bidder-subnav-button" data-bidder-section="bids" type="button" role="tab" aria-selected="false">Mowing Bidder</button>
+        <button class="bidder-subnav-button active" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="true">Fertilizer Bidder</button>
+      </div>
       <div class="bid-page-head">
         <div>
           <h2>Fertilizer Bidder</h2>
-          <p class="muted">Build a five-application quote from turf size, product costs, labor, overhead and target margin.</p>
+          <p class="muted">Set one price per 1,000 sq. ft.; product and labor costs stay visible as a profit check.</p>
         </div>
         <span id="fert-config-version" class="badge">Pricing v1</span>
       </div>
@@ -3927,13 +4060,26 @@
           <p class="bid-disclaimer">Estimate only. Confirm product availability, label rates, site conditions and local application requirements before presenting a final quote.</p>
         </div>
 
-        <details class="bid-settings fert-settings" open>
+        <details class="bid-settings fert-settings">
           <summary>Fertilizer Pricing Settings</summary>
           <form id="fert-pricing-form">
-            <p class="fert-settings-note">Blue fields are saved owner pricing drivers. The $1 cost reserve is explicit because it is included in the supplied operating-cost math; first-job cash profit excludes it.</p>
+            <p class="settings-help">The customer price uses the rate per 1,000 sq. ft. or the minimum—whichever is higher.</p>
 
-            <fieldset class="bid-setting-group">
-              <legend>Production and pricing</legend>
+            <fieldset class="bid-setting-group quick-price-settings">
+              <legend>Customer price</legend>
+              <div class="bid-setting-grid">
+                <div><label for="fert_price_1000">Price per 1,000 sq. ft.</label><input id="fert_price_1000" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_min_charge">Minimum per application</label><input id="fert_min_charge" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_visits">Applications per year</label><input id="fert_visits" type="number" min="1" step="1" required /></div>
+                <div><label for="fert_round_to">Round price to nearest</label><input id="fert_round_to" type="number" min="0.01" step="0.01" required /></div>
+                <div class="wide"><label for="fert_payments">Equal payments per year</label><input id="fert_payments" type="number" min="1" max="24" step="1" required /></div>
+              </div>
+            </fieldset>
+
+            <details class="settings-advanced">
+              <summary>Advanced cost &amp; profit check</summary>
+              <fieldset class="bid-setting-group">
+              <legend>Operating costs</legend>
               <div class="bid-setting-grid">
                 <div><label for="fert_production">Production sq ft / hr</label><input id="fert_production" type="number" min="1" step="1" required /></div>
                 <div><label for="fert_setup_hours">Setup/load hours</label><input id="fert_setup_hours" type="number" min="0" step="0.01" required /></div>
@@ -3943,22 +4089,12 @@
                 <div><label for="fert_admin_cost">Admin overhead / visit</label><input id="fert_admin_cost" type="number" min="0" step="0.01" required /></div>
                 <div><label for="fert_cost_reserve">Cost reserve / visit</label><input id="fert_cost_reserve" type="number" min="0" step="0.01" required /></div>
                 <div><label for="fert_margin">Target gross margin %</label><input id="fert_margin" type="number" min="0" max="99" step="0.1" required /></div>
-                <div><label for="fert_min_charge">Minimum application</label><input id="fert_min_charge" type="number" min="0" step="0.01" required /></div>
-                <div><label for="fert_round_to">Round charge up to</label><input id="fert_round_to" type="number" min="0.01" step="0.01" required /></div>
               </div>
-            </fieldset>
+              </fieldset>
+            </details>
 
-            <fieldset class="bid-setting-group">
-              <legend>Segway recovery</legend>
-              <div class="bid-setting-grid">
-                <div><label for="fert_segway_cost">Purchase cost</label><input id="fert_segway_cost" type="number" min="0" step="0.01" required /></div>
-                <div><label for="fert_recovery_seasons">Recovery seasons</label><input id="fert_recovery_seasons" type="number" min="0.01" step="0.01" required /></div>
-                <div><label for="fert_visits">Fert visits / season</label><input id="fert_visits" type="number" min="1" step="1" required /></div>
-                <div><label for="fert_mowing_visits">Mowing visits / season</label><input id="fert_mowing_visits" type="number" min="0" step="1" required /></div>
-                <div class="wide"><label for="fert_payments">Equal payments / year</label><input id="fert_payments" type="number" min="1" max="24" step="1" required /></div>
-              </div>
-            </fieldset>
-
+            <details class="settings-advanced">
+              <summary>Products &amp; application schedule</summary>
             <fieldset class="bid-setting-group">
               <legend>BEST Nitrex product</legend>
               <div class="bid-setting-grid">
@@ -3993,6 +4129,7 @@
               <legend>Five-application program</legend>
               <div id="fert-program-settings"></div>
             </fieldset>
+            </details>
 
             <div class="row-actions">
               <button class="button" type="submit">Save Fert Pricing</button>
@@ -4354,7 +4491,7 @@
     function applyPortalMode() {
       const mode = portalMode();
       const manifestByMode = {
-        customer: "/manifest-customer.webmanifest",
+        customer: "/manifest-employee.webmanifest",
         admin: "/manifest-admin.webmanifest",
         employee: "/manifest-employee.webmanifest"
       };
@@ -4823,11 +4960,17 @@
     }
 
     function openTab(tabId) {
+      const mainTabId = ["bids", "fert-bids"].includes(tabId) ? "bids" : tabId;
       document.querySelectorAll(".tab").forEach((tab) => {
-        tab.classList.toggle("active", tab.dataset.tab === tabId);
+        tab.classList.toggle("active", tab.dataset.tab === mainTabId);
       });
       document.querySelectorAll(".panel").forEach((panel) => {
         panel.classList.toggle("active", panel.id === tabId);
+      });
+      document.querySelectorAll("[data-bidder-section]").forEach((button) => {
+        const active = button.dataset.bidderSection === tabId;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", String(active));
       });
     }
 
@@ -4850,6 +4993,13 @@
 
     document.querySelectorAll(".go-tab").forEach((button) => {
       button.addEventListener("click", () => openTab(button.dataset.go));
+    });
+
+    document.querySelectorAll("[data-bidder-section]").forEach((button) => {
+      button.addEventListener("click", () => {
+        openTab(button.dataset.bidderSection);
+        loadBidPricing();
+      });
     });
     $("#customer-plan-options").addEventListener("click", async (event) => {
       const button = event.target.closest("button[data-request-plan]");
@@ -4996,9 +5146,10 @@
       }
     });
 
-    $("#owner_job_annual_price").addEventListener("input", () => {
-      $("#owner_job_monthly_price").value = monthlyFromAnnual($("#owner_job_annual_price").value);
-    });
+    $("#owner_job_weekly_price").addEventListener("input", syncOwnerSeasonTotalFromWeekly);
+    $("#owner_job_scheduled_date").addEventListener("change", syncOwnerSeasonTotalFromWeekly);
+    $("#owner_job_end_date").addEventListener("change", syncOwnerSeasonTotalFromWeekly);
+    $("#owner_job_annual_price").addEventListener("input", syncOwnerWeeklyFromSeasonTotal);
 
     $("#bid-form").addEventListener("submit", (event) => {
       event.preventDefault();
@@ -5006,7 +5157,7 @@
         const bid = calculateBid();
         $("#bid-result").innerHTML = bid.manualReviewRequired
           ? notice(bid.manualReviewReason)
-          : notice("Plans calculated.");
+          : notice("Mowing quote calculated.");
       } catch (error) {
         $("#bid-result").innerHTML = notice(error.message, true);
       }
@@ -5027,13 +5178,6 @@
       field.addEventListener("change", refreshBid);
     });
 
-    $("#bid-plan-results").addEventListener("click", (event) => {
-      const button = event.target.closest("[data-select-bid-plan]");
-      if (!button) return;
-      bidSelectedPlan = button.dataset.selectBidPlan;
-      renderBid();
-    });
-
     $("#bid-pricing-form").addEventListener("submit", saveBidPricing);
 
     $("#bid-restore-pricing").addEventListener("click", () => {
@@ -5052,10 +5196,11 @@
         return;
       }
       $("#owner_job_customer_name").value = bid.customer || $("#owner_job_customer_name").value;
-      selectJobPlan(bid.planId);
+      selectJobPlan("fresh");
       $("#owner_job_annual_price").value = bid.annualTotal.toFixed(2);
-      $("#owner_job_monthly_price").value = bid.monthlyTotal.toFixed(2);
+      $("#owner_job_weekly_price").value = (bid.annualTotal / bid.visitsPerYear).toFixed(2);
       $("#owner_job_notes").value = bidNotes(bid);
+      refreshOwnerJobWeeklySummary();
       $("#bid-result").innerHTML = notice("Bid copied to the job form.");
       openTab("owner");
     });
@@ -5067,9 +5212,9 @@
         return;
       }
       $("#invoice_id").value = "";
-      $("#invoice_amount").value = bid.monthlyTotal.toFixed(2);
+      $("#invoice_amount").value = bid.monthlyPayment.toFixed(2);
       $("#invoice_status").value = "Draft";
-      $("#invoice_custom_service").value = bid.planName;
+      $("#invoice_custom_service").value = bid.serviceName;
       $("#invoice_notes").value = bidNotes(bid);
       $("#invoice-submit").textContent = "Save Draft";
       $("#bid-result").innerHTML = notice("Bid copied to a draft invoice.");
@@ -5127,8 +5272,9 @@
       $("#owner_job_customer_name").value = bid.customer || $("#owner_job_customer_name").value;
       selectFertilizerJobPlan();
       $("#owner_job_annual_price").value = bid.annualPrice.toFixed(2);
-      $("#owner_job_monthly_price").value = bid.monthlyPayment.toFixed(2);
+      $("#owner_job_weekly_price").value = "";
       $("#owner_job_notes").value = fertilizerBidNotes(bid);
+      refreshOwnerJobWeeklySummary();
       $("#fert-result").innerHTML = notice("Fertilizer bid copied to the job form.");
       openTab("owner");
     });
@@ -5175,6 +5321,128 @@
     function monthlyFromAnnual(value) {
       const number = Number(value);
       return Number.isFinite(number) && number > 0 ? (number / 12).toFixed(2) : "";
+    }
+
+    function billingMonthKey(value = new Date()) {
+      const date = value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(date.getTime())) return "";
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+    function calculateWeeklySchedule(weeklyPrice, scheduleStartDate, scheduleEndDate, billingDate = new Date()) {
+      if (!window.GreenGrinCalculator?.calculateWeeklyJobBilling) {
+        throw new Error("Weekly job billing could not be loaded.");
+      }
+      return window.GreenGrinCalculator.calculateWeeklyJobBilling({
+        weeklyPrice,
+        scheduleStartDate,
+        scheduleEndDate,
+        billingMonth: billingMonthKey(billingDate)
+      });
+    }
+
+    function weeklyPriceFromJob(job) {
+      const start = String(job?.schedule_start_date || job?.scheduled_date || "").split("T")[0];
+      const end = String(job?.schedule_end_date || "").split("T")[0];
+      if (!start || !end) return 0;
+      try {
+        const unitSchedule = calculateWeeklySchedule(1, start, end);
+        const seasonTotal = Number(job?.annual_price);
+        if (Number.isFinite(seasonTotal) && seasonTotal > 0 && unitSchedule.serviceWeeks > 0) {
+          return seasonTotal / unitSchedule.serviceWeeks;
+        }
+      } catch (_error) {
+        return 0;
+      }
+      return 0;
+    }
+
+    function jobBillingForMonth(job, billingDate = new Date()) {
+      const fallback = Number(job?.monthly_price);
+      const weeklyPrice = weeklyPriceFromJob(job);
+      const start = String(job?.schedule_start_date || job?.scheduled_date || "").split("T")[0];
+      const end = String(job?.schedule_end_date || "").split("T")[0];
+      if (!weeklyPrice || !start || !end) {
+        return {
+          amount: Number.isFinite(fallback) && fallback > 0 ? fallback : 0,
+          weeks: null,
+          weeklyPrice: 0
+        };
+      }
+      const billing = calculateWeeklySchedule(weeklyPrice, start, end, billingDate);
+      return {
+        amount: billing.monthlyCharge,
+        weeks: billing.serviceWeeksInBillingMonth,
+        weeklyPrice: billing.weeklyPrice,
+        seasonTotal: billing.seasonTotal,
+        serviceWeeks: billing.serviceWeeks
+      };
+    }
+
+    function refreshOwnerJobWeeklySummary() {
+      const summary = $("#owner_job_weekly_summary");
+      const weeklyPrice = Number($("#owner_job_weekly_price").value);
+      const start = $("#owner_job_scheduled_date").value;
+      const end = $("#owner_job_end_date").value;
+      if (!weeklyPrice || !start || !end) {
+        summary.textContent = "Choose the season dates and a weekly price. Monthly invoices will count the actual service weeks in each month.";
+        return;
+      }
+      try {
+        const billing = calculateWeeklySchedule(weeklyPrice, start, end);
+        const monthLabel = new Date().toLocaleDateString(undefined, { month: "long", year: "numeric" });
+        summary.textContent = `${billing.serviceWeeks} scheduled service weeks. ${monthLabel}: ${billing.serviceWeeksInBillingMonth} week${billing.serviceWeeksInBillingMonth === 1 ? "" : "s"} = ${fixedMoney(billing.monthlyCharge)}. Season total: ${fixedMoney(billing.seasonTotal)}.`;
+      } catch (error) {
+        summary.textContent = error.message;
+      }
+    }
+
+    function syncOwnerSeasonTotalFromWeekly() {
+      const weeklyPrice = Number($("#owner_job_weekly_price").value);
+      const start = $("#owner_job_scheduled_date").value;
+      const end = $("#owner_job_end_date").value;
+      if (weeklyPrice > 0 && start && end) {
+        try {
+          $("#owner_job_annual_price").value = calculateWeeklySchedule(weeklyPrice, start, end).seasonTotal.toFixed(2);
+        } catch (_error) {
+          // The summary below explains invalid or incomplete dates.
+        }
+      }
+      refreshOwnerJobWeeklySummary();
+    }
+
+    function syncOwnerWeeklyFromSeasonTotal() {
+      const seasonTotal = Number($("#owner_job_annual_price").value);
+      const start = $("#owner_job_scheduled_date").value;
+      const end = $("#owner_job_end_date").value;
+      if (seasonTotal > 0 && start && end) {
+        try {
+          const unitSchedule = calculateWeeklySchedule(1, start, end);
+          $("#owner_job_weekly_price").value = (seasonTotal / unitSchedule.serviceWeeks).toFixed(2);
+        } catch (_error) {
+          // The summary below explains invalid or incomplete dates.
+        }
+      }
+      refreshOwnerJobWeeklySummary();
+    }
+
+    function ownerJobPricingPayload() {
+      const weeklyPrice = Number($("#owner_job_weekly_price").value);
+      const start = $("#owner_job_scheduled_date").value;
+      const end = $("#owner_job_end_date").value;
+      const fixedSeasonTotal = Number($("#owner_job_annual_price").value);
+      if (weeklyPrice > 0) {
+        if (!start || !end) throw new Error("Season start and season end are required for weekly billing.");
+        const billing = calculateWeeklySchedule(weeklyPrice, start, end);
+        return {
+          annualPrice: billing.seasonTotal.toFixed(2),
+          monthlyPrice: billing.monthlyCharge.toFixed(2)
+        };
+      }
+      return {
+        annualPrice: fixedSeasonTotal > 0 ? fixedSeasonTotal.toFixed(2) : null,
+        monthlyPrice: fixedSeasonTotal > 0 ? monthlyFromAnnual(fixedSeasonTotal) : null
+      };
     }
 
     function fixedMoney(value) {
@@ -5274,82 +5542,35 @@
     function populateBidPricingForm() {
       if (!bidPricingConfig) return;
       const pricing = bidPricingConfig;
-      setPricingField("#pricing_round", pricing.roundWeeklyTo);
-      setPricingField("#pricing_visits", pricing.mowingVisitsPerYear);
-      setPricingField("#pricing_discount", Number(pricing.annualAgreementDiscount || 0) * 100);
-      setPricingField("#pricing_months", pricing.monthlyPaymentsPerYear);
-      setPricingField("#pricing_review", pricing.manualReviewAboveLawnSqFt);
-
-      for (const planId of ["fresh", "sharp", "full"]) {
-        const plan = pricing.plans[planId];
-        setPricingField(`#pricing_${planId}_name`, plan.name);
-        setPricingField(`#pricing_${planId}_min`, plan.minimumWeekly);
-        setPricingField(`#pricing_${planId}_rate`, plan.weeklyRatePerLawnSqFt);
-        setPricingField(`#pricing_${planId}_includes`, plan.includes.join("\n"));
-      }
-
-      const lawn = pricing.addOns.lawnFertilization;
-      setPricingField("#pricing_lawn_fert_min", lawn.minimumPerApplication);
-      setPricingField("#pricing_lawn_fert_rate", lawn.ratePerLawnSqFtPerApplication);
-      setPricingField("#pricing_lawn_fert_visits", lawn.applicationsPerYear);
-      const beds = pricing.addOns.bedPlantFertilization;
-      setPricingField("#pricing_bed_fert_min", beds.minimumPerVisit);
-      setPricingField("#pricing_bed_fert_rate", beds.ratePerBedSqFtPerVisit);
-      setPricingField("#pricing_bed_fert_visits", beds.visitsPerYear);
+      const mowing = pricing.mowingBid;
+      setPricingField("#mowing_service_name", mowing.serviceName);
+      setPricingField("#mowing_minimum", mowing.minimumPerVisit);
+      setPricingField("#mowing_rate_1000", mowing.pricePer1000SqFtPerVisit);
+      setPricingField("#mowing_visits", mowing.visitsPerYear);
+      setPricingField("#mowing_discount", Number(mowing.annualAgreementDiscount || 0) * 100);
+      setPricingField("#mowing_payments", mowing.paymentsPerYear);
+      setPricingField("#mowing_round", mowing.roundPriceTo);
+      setPricingField("#mowing_review", mowing.manualReviewAboveLawnSqFt);
       $("#bid-config-version").textContent = `Pricing v${pricing.version || 1}`;
       updateJobPlanOptions();
       populateFertilizerPricingForm();
     }
 
-    function pricingIncludes(selector) {
-      const items = $(selector).value.split("\n").map((item) => item.trim()).filter(Boolean);
-      if (!items.length) throw new Error("Each plan needs at least one included service.");
-      return items;
-    }
-
     function pricingFromForm() {
       const number = (selector, name, allowZero = false) => requiredBidNumber(selector, name, allowZero);
+      const existing = cloneJson(bidPricingConfig || bidDefaultPricingConfig || {});
       return {
-        version: bidPricingConfig?.version || 1,
-        currency: "USD",
-        roundWeeklyTo: number("#pricing_round", "Weekly rounding increment"),
-        mowingVisitsPerYear: Math.round(number("#pricing_visits", "Mowing visits per year")),
-        annualAgreementDiscount: number("#pricing_discount", "Annual discount", true) / 100,
-        monthlyPaymentsPerYear: Math.round(number("#pricing_months", "Equal payments")),
-        manualReviewAboveLawnSqFt: Math.round(number("#pricing_review", "Manual review threshold")),
-        plans: {
-          fresh: {
-            name: $("#pricing_fresh_name").value.trim(),
-            minimumWeekly: number("#pricing_fresh_min", "Fresh Grin minimum", true),
-            weeklyRatePerLawnSqFt: number("#pricing_fresh_rate", "Fresh Grin square-foot rate", true),
-            includes: pricingIncludes("#pricing_fresh_includes")
-          },
-          sharp: {
-            name: $("#pricing_sharp_name").value.trim(),
-            minimumWeekly: number("#pricing_sharp_min", "Sharp Grin minimum", true),
-            weeklyRatePerLawnSqFt: number("#pricing_sharp_rate", "Sharp Grin square-foot rate", true),
-            includes: pricingIncludes("#pricing_sharp_includes")
-          },
-          full: {
-            name: $("#pricing_full_name").value.trim(),
-            minimumWeekly: number("#pricing_full_min", "Full Grin minimum", true),
-            weeklyRatePerLawnSqFt: number("#pricing_full_rate", "Full Grin square-foot rate", true),
-            includes: pricingIncludes("#pricing_full_includes")
-          }
-        },
-        addOns: {
-          lawnFertilization: {
-            name: "Lawn fertilization",
-            minimumPerApplication: number("#pricing_lawn_fert_min", "Lawn fertilization minimum", true),
-            ratePerLawnSqFtPerApplication: number("#pricing_lawn_fert_rate", "Lawn fertilization square-foot rate", true),
-            applicationsPerYear: Math.round(number("#pricing_lawn_fert_visits", "Lawn fertilization applications"))
-          },
-          bedPlantFertilization: {
-            name: "Flowerbed / plant fertilization",
-            minimumPerVisit: number("#pricing_bed_fert_min", "Flowerbed fertilization minimum", true),
-            ratePerBedSqFtPerVisit: number("#pricing_bed_fert_rate", "Flowerbed fertilization square-foot rate", true),
-            visitsPerYear: Math.round(number("#pricing_bed_fert_visits", "Flowerbed fertilization visits"))
-          }
+        ...existing,
+        version: existing.version || 1,
+        mowingBid: {
+          serviceName: $("#mowing_service_name").value.trim() || "Mowing service",
+          minimumPerVisit: number("#mowing_minimum", "Minimum mowing price", true),
+          pricePer1000SqFtPerVisit: number("#mowing_rate_1000", "Mowing price per 1,000 square feet", true),
+          visitsPerYear: Math.round(number("#mowing_visits", "Mowing visits per year")),
+          annualAgreementDiscount: number("#mowing_discount", "Mowing annual discount", true) / 100,
+          paymentsPerYear: Math.round(number("#mowing_payments", "Equal mowing payments")),
+          roundPriceTo: number("#mowing_round", "Mowing rounding increment"),
+          manualReviewAboveLawnSqFt: Math.round(number("#mowing_review", "Mowing review threshold"))
         },
         fertilizerBid: fertilizerSettingsFromForm()
       };
@@ -5396,92 +5617,52 @@
 
     function calculateBid() {
       if (!bidPricingConfig) throw new Error("Pricing settings are still loading.");
-      if (!window.GreenGrinCalculator) throw new Error("The Lawn Bidder calculator could not be loaded.");
-      const input = {
+      if (!window.GreenGrinCalculator?.calculateMowingBid) throw new Error("The Mowing Bidder calculator could not be loaded.");
+      latestBid = window.GreenGrinCalculator.calculateMowingBid({
+        customer: $("#bid_customer_name").value.trim(),
         propertyType: $("#bid_property_type").value,
         lawnSqFt: requiredBidNumber("#bid_lawn_sqft", "Lawn square footage"),
-        flowerbedSqFt: requiredBidNumber("#bid_bed_sqft", "Flowerbed square footage", true),
         difficultyMultiplier: requiredBidNumber("#bid_difficulty", "Property complexity"),
-        lawnFertilization: $("#bid_lawn_fert").checked,
-        bedPlantFertilization: $("#bid_bed_fert").checked,
         annualAgreement: $("#bid_annual_agreement").checked
-      };
-      bidPlanEstimates = window.GreenGrinCalculator.calculateAllGreenGrinPlans(input, bidPricingConfig);
-      if (!bidPlanEstimates.some((plan) => plan.planId === bidSelectedPlan)) bidSelectedPlan = "fresh";
-      renderBid();
-      return latestBid;
-    }
-
-    function renderBid() {
-      if (!bidPlanEstimates.length) {
-        $("#bid-plan-results").innerHTML = notice("Enter lawn measurements to calculate plans.");
-        return;
-      }
-      $("#bid-plan-results").innerHTML = bidPlanEstimates.map((estimate) => {
-        const selected = estimate.planId === bidSelectedPlan;
-        const review = estimate.manualReviewRequired
-          ? `<div class="bid-review">${cleanText(estimate.manualReviewReason)}</div>`
-          : "";
-        const price = estimate.manualReviewRequired
-          ? `
-            <div class="monthly-price">Custom quote<small>site review required</small></div>
-            <p><strong>HOA / commercial pricing</strong></p>
-            <p class="muted">Set the final amount after reviewing scope, access and visit frequency.</p>
-          `
-          : `
-            <div class="monthly-price">${cleanText(fixedMoney(estimate.monthlyPayment))}<small>/ month</small></div>
-            <p><strong>${cleanText(fixedMoney(estimate.weeklyService))}</strong> weekly service</p>
-            <p class="muted">${cleanText(fixedMoney(estimate.annualTotal))} annual total</p>
-            <p class="muted">${cleanText(fixedMoney(estimate.annualSavings))} annual savings</p>
-          `;
-        return `
-          <article class="bid-plan ${selected ? "selected" : ""}">
-            <h3>${cleanText(estimate.planName)}</h3>
-            ${price}
-            <ul>${estimate.includes.map((item) => `<li>${cleanText(item)}</li>`).join("")}</ul>
-            ${review}
-            <button class="button ${selected ? "secondary" : "ghost"}" type="button" data-select-bid-plan="${cleanText(estimate.planId)}" aria-pressed="${selected}">
-              ${selected ? "Selected" : "Select Plan"}
-            </button>
-          </article>
-        `;
-      }).join("");
-
-      const selected = bidPlanEstimates.find((estimate) => estimate.planId === bidSelectedPlan) || bidPlanEstimates[0];
+      }, bidPricingConfig.mowingBid);
       latestBid = {
-        ...selected,
-        customer: $("#bid_customer_name").value.trim(),
-        plan: selected.planName,
-        monthlyTotal: selected.manualReviewRequired ? null : selected.monthlyPayment,
-        perMowTotal: selected.manualReviewRequired ? null : selected.weeklyService,
+        ...latestBid,
+        monthlyTotal: latestBid.manualReviewRequired ? null : latestBid.monthlyPayment,
+        perMowTotal: latestBid.manualReviewRequired ? null : latestBid.perVisitPrice,
         pricingVersion: bidPricingConfig.version,
         annualAgreement: $("#bid_annual_agreement").checked
       };
-      $("#bid-copy-job").disabled = selected.manualReviewRequired;
-      $("#bid-copy-invoice").disabled = selected.manualReviewRequired;
-      $("#bid-selected-summary").hidden = false;
-      $("#bid-selected-summary").innerHTML = selected.manualReviewRequired
-        ? `
-          <strong>${cleanText(selected.planName)} scope selected</strong>
-          <p>${cleanText(selected.manualReviewReason)} Enter the approved custom amount directly on the job or invoice after the review.</p>
-        `
-        : `
-          <strong>${cleanText(selected.planName)} selected</strong>
-          <p>${cleanText(fixedMoney(selected.monthlyPayment))} per month across ${cleanText(String(bidPricingConfig.monthlyPaymentsPerYear))} equal payments.</p>
-        `;
+      renderBid(latestBid);
+      return latestBid;
+    }
+
+    function renderBid(bid) {
+      $("#bid-copy-job").disabled = bid.manualReviewRequired;
+      $("#bid-copy-invoice").disabled = bid.manualReviewRequired;
+      if (bid.manualReviewRequired) {
+        $("#bid-plan-results").innerHTML = `<div class="bid-review wide"><strong>Custom quote required.</strong><br>${cleanText(bid.manualReviewReason)}</div>`;
+        return;
+      }
+      const cards = [
+        ["Price per mow", fixedMoney(bid.perVisitPrice), true],
+        ["Annual mowing", fixedMoney(bid.annualTotal), true],
+        ["Monthly payment", fixedMoney(bid.monthlyPayment)],
+        ["Annual discount", fixedMoney(bid.annualSavings)]
+      ];
+      $("#bid-plan-results").innerHTML = cards.map(([label, value, primary]) => `
+        <div class="mowing-quote-card ${primary ? "primary" : ""}">
+          <span>${cleanText(label)}</span><strong>${cleanText(value)}</strong>
+        </div>
+      `).join("");
     }
 
     function bidNotes(bid) {
-      const addOns = [];
-      if (bid.lawnFertilizationAnnual) addOns.push(`Lawn fertilization: ${fixedMoney(bid.lawnFertilizationAnnual)} annually`);
-      if (bid.bedPlantFertilizationAnnual) addOns.push(`Flowerbed fertilization: ${fixedMoney(bid.bedPlantFertilizationAnnual)} annually`);
       return [
-        `${bid.planName} - Pricing v${bid.pricingVersion}`,
+        `${bid.serviceName} - Pricing v${bid.pricingVersion}`,
         `Lawn: ${bid.lawnSqFt.toLocaleString()} sq ft`,
-        `Flowerbeds: ${bid.flowerbedSqFt.toLocaleString()} sq ft`,
         `Property complexity: ${bid.difficultyMultiplier}`,
-        `Weekly service: ${fixedMoney(bid.weeklyService)}`,
-        ...addOns,
+        `Price per mow: ${fixedMoney(bid.perVisitPrice)}`,
+        `Mows per year: ${bid.visitsPerYear}`,
         `Annual subtotal: ${fixedMoney(bid.annualSubtotal)}`,
         `Annual agreement savings: ${fixedMoney(bid.annualSavings)}`,
         `Yearly quote: ${fixedMoney(bid.annualTotal)}`,
@@ -5502,12 +5683,10 @@
       setPricingField("#fert_admin_cost", settings.adminOverheadPerVisit);
       setPricingField("#fert_cost_reserve", settings.costReservePerVisit);
       setPricingField("#fert_margin", Number(settings.targetGrossMargin || 0) * 100);
+      setPricingField("#fert_price_1000", settings.pricePer1000SqFtPerVisit);
       setPricingField("#fert_min_charge", settings.minimumApplicationCharge);
       setPricingField("#fert_round_to", settings.roundChargeTo);
-      setPricingField("#fert_segway_cost", settings.segwayPurchaseCost);
-      setPricingField("#fert_recovery_seasons", settings.recoveryPeriodSeasons);
       setPricingField("#fert_visits", settings.fertilizerVisitsPerSeason);
-      setPricingField("#fert_mowing_visits", settings.mowingVisitsPerSeason);
       setPricingField("#fert_payments", settings.paymentsPerYear || 12);
 
       const productIds = ["nitrex", "turfGold", "umaxx"];
@@ -5580,12 +5759,10 @@
         adminOverheadPerVisit: number("#fert_admin_cost", "Admin overhead", true),
         costReservePerVisit: number("#fert_cost_reserve", "Cost reserve", true),
         targetGrossMargin: number("#fert_margin", "Target gross margin", true) / 100,
+        pricePer1000SqFtPerVisit: number("#fert_price_1000", "Price per 1,000 square feet", true),
         minimumApplicationCharge: number("#fert_min_charge", "Minimum application charge", true),
         roundChargeTo: number("#fert_round_to", "Charge rounding increment"),
-        segwayPurchaseCost: number("#fert_segway_cost", "Segway purchase cost", true),
-        recoveryPeriodSeasons: number("#fert_recovery_seasons", "Recovery period"),
         fertilizerVisitsPerSeason: Math.round(number("#fert_visits", "Fertilizer visits per season")),
-        mowingVisitsPerSeason: Math.round(number("#fert_mowing_visits", "Mowing visits per season", true)),
         paymentsPerYear: Math.round(number("#fert_payments", "Equal payments per year")),
         products,
         applications
@@ -5623,7 +5800,7 @@
         ["Gross margin", fixedPercent(bid.grossMargin)],
         ["Cash product purchase", fixedMoney(bid.cashProductPurchase)],
         ["First-job cash profit", fixedMoney(bid.firstJobCashProfit)],
-        ["Price / 1,000 / visit", fixedMoney(bid.pricePer1000SqFtPerVisit)]
+        ["Saved price / 1,000", fixedMoney(bid.configuredPricePer1000SqFtPerVisit)]
       ];
       $("#fert-quote-summary").innerHTML = cards.map(([label, value, primary]) => `
         <div class="fert-quote-card ${primary ? "primary" : ""}">
@@ -5631,9 +5808,13 @@
         </div>
       `).join("");
 
-      $("#fert-visit-check").innerHTML = bid.visitCountAligned
+      const programCheck = bid.visitCountAligned
         ? `<strong>Program check: PASS.</strong> ${cleanText(String(bid.applications.length))} schedule rows match ${cleanText(String(bid.fertilizerVisitsPerSeason))} fertilizer visits.`
         : `<strong>Program check: REVIEW.</strong> ${cleanText(String(bid.applications.length))} schedule rows do not match ${cleanText(String(bid.fertilizerVisitsPerSeason))} fertilizer visits.`;
+      const marginCheck = bid.marginGoalMet
+        ? `<span class="profit-check pass"><strong>Profit check: PASS.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin meets the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal.</span>`
+        : `<span class="profit-check warn"><strong>Profit check: REVIEW.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin is below the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal. Raise the minimum or price per 1,000.</span>`;
+      $("#fert-visit-check").innerHTML = `${programCheck}${marginCheck}`;
 
       $("#fert-application-rows").innerHTML = bid.applications.map((application) => `
         <tr>
@@ -5648,7 +5829,7 @@
           <td>${cleanText(fixedMoney(application.materialCost))}</td>
           <td>${cleanText(fixedNumber(application.laborHours, 2))}</td>
           <td>${cleanText(fixedMoney(application.laborCost))}</td>
-          <td>${cleanText(fixedMoney(application.vehicleOverheadSegway))}</td>
+          <td>${cleanText(fixedMoney(application.visitOverhead))}</td>
           <td>${cleanText(fixedMoney(application.totalCost))}</td>
           <td><strong>${cleanText(fixedMoney(application.quotedCharge))}</strong></td>
           <td>${cleanText(fixedMoney(application.grossProfit))}</td>
@@ -5666,7 +5847,7 @@
           <td>${cleanText(fixedMoney(totalMaterialCost))}</td>
           <td>${cleanText(fixedNumber(bid.totalLaborHours, 2))}</td>
           <td>${cleanText(fixedMoney(bid.totalLaborCost))}</td>
-          <td>${cleanText(fixedMoney(bid.totalVehicleOverheadSegway))}</td>
+          <td>${cleanText(fixedMoney(bid.totalVisitOverhead))}</td>
           <td>${cleanText(fixedMoney(bid.operatingCost))}</td>
           <td>${cleanText(fixedMoney(bid.annualPrice))}</td>
           <td>${cleanText(fixedMoney(bid.grossProfit))}</td>
@@ -5698,6 +5879,7 @@
         `Yearly quote: ${fixedMoney(bid.annualPrice)}`,
         `Monthly payment: ${fixedMoney(bid.monthlyPayment)}`,
         `Average application: ${fixedMoney(bid.averageApplicationCharge)}`,
+        `Saved rate: ${fixedMoney(bid.configuredPricePer1000SqFtPerVisit)} per 1,000 sq ft per application`,
         `Gross margin: ${fixedPercent(bid.grossMargin)}`,
         `Cash product purchase: ${fixedMoney(bid.cashProductPurchase)}`,
         ...stageLines,
@@ -5784,16 +5966,21 @@
 
     function billingPlanCard(job, customer) {
       const plan = customer.billing_plan || job?.service_type || "Monthly service";
-      const price = money(customer.monthly_price || job?.monthly_price);
+      const monthBilling = job ? jobBillingForMonth(job) : { amount: 0, weeks: null, weeklyPrice: 0 };
+      const monthAmount = monthBilling.weeks !== null
+        ? monthBilling.amount
+        : monthBilling.amount || customer.monthly_price || job?.monthly_price;
+      const price = money(monthAmount);
       const annual = money(customer.annual_price || job?.annual_price);
       const status = customer.billing_status || job?.status || "Active";
       return `
         <div class="plan">
           <strong>${cleanText(plan)}</strong>
-          <div class="price">${price || "Quote"} <span>/ month</span></div>
+          <div class="price">${price || "Quote"} <span>this month</span></div>
           <ul class="clean-list">
             <li>${cleanText(status)}</li>
-            <li>${cleanText(annual ? `${annual} split across 12 months` : "Custom price set by Green Grin")}</li>
+            <li>${cleanText(monthBilling.weeks === null ? "Monthly price set by Green Grin" : `${monthBilling.weeks} scheduled service week${monthBilling.weeks === 1 ? "" : "s"} at ${fixedMoney(monthBilling.weeklyPrice)} each`)}</li>
+            <li>${cleanText(annual ? `${annual} season total` : "Custom price set by Green Grin")}</li>
             <li>${cleanText(job?.address || "Service address on file")}</li>
             <li>${cleanText(job?.cleanup_reminder_time ? `Morning reminder ${String(job.cleanup_reminder_time).slice(0, 5)}` : "Morning reminder on scheduled service days")}</li>
           </ul>
@@ -6381,6 +6568,11 @@
     function customerDetailHtml(customer) {
       const property = customer.property || {};
       const jobs = customer.jobs || [];
+      const currentJob = newestJob(jobs);
+      const monthBilling = currentJob ? jobBillingForMonth(currentJob) : { amount: 0, weeks: null };
+      const currentAmount = monthBilling.weeks !== null
+        ? monthBilling.amount
+        : monthBilling.amount || customer.monthly_price || currentJob?.monthly_price || 0;
       return `
         <div class="job">
           <div class="job-head">
@@ -6393,7 +6585,7 @@
           <p class="muted"><strong>Yard notes:</strong> ${cleanText(property.yard_notes || property.service_preferences || "None saved yet.")}</p>
           <p class="muted"><strong>Messages:</strong> ${cleanText(preferenceLine(customer))}</p>
           <p class="muted"><strong>Notifications:</strong> ${cleanText(notificationLine(customer))}</p>
-          <p class="muted"><strong>Plan:</strong> ${cleanText(customer.plan || "Not set")} ${customer.monthly_price ? `| $${Number(customer.monthly_price).toFixed(2)}/month` : ""}</p>
+          <p class="muted"><strong>Plan:</strong> ${cleanText(customer.plan || "Not set")} ${currentAmount ? `| $${Number(currentAmount).toFixed(2)} this month${monthBilling.weeks === null ? "" : ` (${monthBilling.weeks} service weeks)`}` : ""}</p>
           ${customer.requested_plan ? `<p class="plan-request-banner"><strong>Customer requested:</strong> ${cleanText(customer.requested_plan)}${customer.requested_plan_at ? ` on ${cleanText(new Date(customer.requested_plan_at).toLocaleDateString())}` : ""}</p>` : ""}
           <div class="status-box">
             ${jobs.length ? jobs.slice(0, 4).map((job) => upcomingStep(job)).join("") : notice("No jobs created for this customer yet.")}
@@ -6405,10 +6597,13 @@
     function adminCustomerCard(customer, index) {
       const property = customer.property || {};
       const job = newestJob(customer.jobs || []);
-      const monthlyAmount = customer.monthly_price || job?.monthly_price || "";
+      const monthBilling = job ? jobBillingForMonth(job) : { amount: 0, weeks: null, weeklyPrice: 0 };
+      const monthlyAmount = monthBilling.weeks !== null
+        ? monthBilling.amount
+        : monthBilling.amount || customer.monthly_price || job?.monthly_price || "";
       const annualAmount = customer.annual_price || job?.annual_price || "";
       const plan = customer.plan || job?.service_type || "No plan set";
-      const price = monthlyAmount ? `$${Number(monthlyAmount).toFixed(2)}/month` : "No monthly payment set";
+      const price = monthlyAmount ? `$${Number(monthlyAmount).toFixed(2)} this month` : "No service charge this month";
       return `
         <div class="job customer-card collapsed-customer" data-customer-index="${index}">
           <div class="job-head">
@@ -6422,7 +6617,7 @@
           <div class="customer-collapse" hidden>
             <p class="muted">${cleanText(customer.email || "")}${customer.phone ? ` | ${cleanText(customer.phone)}` : ""}</p>
             <p>${cleanText(property.address || "No property address saved yet.")}</p>
-            <p class="muted">${cleanText(plan)} | Monthly payment: ${cleanText(price)}</p>
+            <p class="muted">${cleanText(plan)} | ${cleanText(price)}${monthBilling.weeks === null ? "" : ` for ${monthBilling.weeks} scheduled week${monthBilling.weeks === 1 ? "" : "s"}`}</p>
             ${customer.requested_plan ? `<p class="plan-request-banner"><strong>Requested plan:</strong> ${cleanText(customer.requested_plan)}${customer.requested_plan_at ? ` on ${cleanText(new Date(customer.requested_plan_at).toLocaleDateString())}` : ""}</p>` : ""}
             <p class="muted">${cleanText(preferenceLine(customer))}</p>
             <p class="muted">${cleanText(notificationLine(customer))}</p>
@@ -6481,7 +6676,11 @@
       const logs = accountData.logs || [];
       const nextJob = nextScheduledJob(jobs);
       const currentJob = nextJob || newestJob(jobs);
-      const currentPrice = money(customer.monthly_price || currentJob?.monthly_price);
+      const currentMonthBilling = currentJob ? jobBillingForMonth(currentJob) : { amount: 0, weeks: null };
+      const currentMonthAmount = currentMonthBilling.weeks !== null
+        ? currentMonthBilling.amount
+        : currentMonthBilling.amount || customer.monthly_price || currentJob?.monthly_price;
+      const currentPrice = money(currentMonthAmount);
       if (customer.customer_code) $("#account-pill").textContent = customer.customer_code;
 
       $("#customer_name").value = customer.full_name || activeAccount?.user_metadata?.name || "";
@@ -6499,7 +6698,9 @@
       $("#dashboard-next-visit").textContent = currentJob ? scheduleLine(currentJob) : "Not scheduled";
       $("#dashboard-next-service").textContent = currentJob?.service_type || "Your next service will appear here.";
       $("#dashboard-plan").textContent = customer.billing_plan || currentJob?.service_type || "Not set";
-      $("#dashboard-price").textContent = currentPrice ? `${currentPrice} monthly payment` : "Monthly payment will appear here.";
+      $("#dashboard-price").textContent = currentPrice
+        ? `${currentPrice} this month${currentMonthBilling.weeks === null ? "" : ` for ${currentMonthBilling.weeks} service week${currentMonthBilling.weeks === 1 ? "" : "s"}`}`
+        : "No scheduled service charge this month.";
       $("#dashboard-status").textContent = currentJob?.status || customer.billing_status || "Account ready";
       $("#dashboard-address").textContent = property.address || currentJob?.address || "Property details will appear here.";
 
@@ -6512,8 +6713,8 @@
         : notice("No customer messages yet.");
 
       $("#billing-summary").textContent = currentPrice
-        ? `${currentPrice} monthly payment for ${customer.billing_plan || currentJob?.service_type || "service"}.`
-        : "No monthly payment is set on this account yet.";
+        ? `${currentPrice} for ${customer.billing_plan || currentJob?.service_type || "service"} this month${currentMonthBilling.weeks === null ? "" : ` (${currentMonthBilling.weeks} scheduled service weeks)`}.`
+        : "No service is scheduled to bill this month.";
       $("#customer-billing-plans").innerHTML = billingPlanCard(currentJob, customer);
       renderCustomerPlanOptions(customer);
       $("#customer-invoice-list").innerHTML = invoices.length
@@ -6650,8 +6851,9 @@
     function jobCard(job, admin = false) {
       const scheduled = scheduleLine(job);
       const reminderTime = job.cleanup_reminder_time ? String(job.cleanup_reminder_time).slice(0, 5) : "08:00";
-      const monthlyPrice = job.monthly_price ? Number(job.monthly_price).toFixed(2) : "";
       const annualPrice = job.annual_price ? Number(job.annual_price).toFixed(2) : "";
+      const monthlyBilling = jobBillingForMonth(job);
+      const weeklyPrice = monthlyBilling.weeklyPrice ? Number(monthlyBilling.weeklyPrice).toFixed(2) : "";
       const scheduleStart = String(job.schedule_start_date || job.scheduled_date || "").split("T")[0];
       const scheduleEnd = String(job.schedule_end_date || "").split("T")[0];
       return `
@@ -6667,7 +6869,7 @@
             <p class="muted">Status: ${job.status || "New"}</p>
             <p class="muted">${job.service_type || "Service"} - ${scheduled}</p>
             <p class="muted">Morning notification: ${reminderTime}</p>
-            ${admin && monthlyPrice ? `<p class="muted">Customer price: $${monthlyPrice}/month${annualPrice ? ` from $${annualPrice}/year` : ""}</p>` : ""}
+            ${admin && weeklyPrice ? `<p class="muted">Customer price: $${weeklyPrice}/service week. This month: ${monthlyBilling.weeks} week${monthlyBilling.weeks === 1 ? "" : "s"} = $${Number(monthlyBilling.amount).toFixed(2)}${annualPrice ? `. Season total: $${annualPrice}` : ""}</p>` : ""}
             <p>${job.address || ""}</p>
             <p class="muted">${job.notes || ""}</p>
             ${admin ? `<p class="muted">Assigned to: ${cleanText(job.assigned_employee_name || "Unassigned")}</p>` : ""}
@@ -6677,8 +6879,8 @@
               <input type="date" class="schedule-input" value="${scheduleStart}" />
               <input type="date" class="schedule-end-input" value="${scheduleEnd}" />
               <input type="time" class="reminder-time-input" value="${reminderTime}" />
-              <input type="number" min="0" step="0.01" class="annual-price-input" value="${annualPrice}" placeholder="Yearly price" />
-              <input type="number" min="0" step="0.01" class="price-input" value="${monthlyPrice}" placeholder="Monthly price" />
+              <input type="number" min="0" step="0.01" class="weekly-price-input" value="${weeklyPrice}" placeholder="Price per service week" />
+              <input type="number" min="0" step="0.01" class="annual-price-input" value="${annualPrice}" placeholder="Season total" />
               <select class="status-input">
                 <option>New</option>
                 <option>Scheduled</option>
@@ -7435,11 +7637,10 @@
       const form = event.currentTarget;
       const scheduledDate = $("#owner_job_scheduled_date").value;
       const scheduleEndDate = $("#owner_job_end_date").value;
-      const annualPrice = $("#owner_job_annual_price").value || null;
-      const monthlyPrice = $("#owner_job_monthly_price").value || monthlyFromAnnual(annualPrice) || null;
       const assignedEmployee = $("#owner_job_employee").selectedOptions[0];
       $("#owner-create-result").innerHTML = notice("Creating job...");
       try {
+        const pricing = ownerJobPricingPayload();
         await requestJson("portal-jobs", {
           method: "POST",
           headers: adminHeaders(),
@@ -7455,13 +7656,14 @@
             cleanup_reminder_time: $("#owner_job_reminder_time").value || "08:00",
             assigned_employee_id: $("#owner_job_employee").value || null,
             assigned_employee_name: assignedEmployee?.dataset.name || null,
-            annual_price: annualPrice,
-            monthly_price: monthlyPrice,
+            annual_price: pricing.annualPrice,
+            monthly_price: pricing.monthlyPrice,
             notes: $("#owner_job_notes").value,
             status: scheduledDate ? "Scheduled" : "New"
           })
         });
         form.reset();
+        refreshOwnerJobWeeklySummary();
         $("#owner-create-result").innerHTML = notice("Job created. It is now in the job list below.");
         await loadAdminJobs();
       } catch (error) {
@@ -7601,8 +7803,13 @@
     $("#invoice_customer").addEventListener("change", () => {
       const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || null;
       if (!selectedCustomer) return;
-      if (selectedCustomer.monthly_price && !$("#invoice_amount").value) {
-        $("#invoice_amount").value = Number(selectedCustomer.monthly_price).toFixed(2);
+      const selectedJob = newestJob(selectedCustomer.jobs || []);
+      const monthBilling = selectedJob ? jobBillingForMonth(selectedJob) : { amount: 0 };
+      const amount = monthBilling.weeks !== null
+        ? monthBilling.amount
+        : monthBilling.amount || selectedCustomer.monthly_price || selectedJob?.monthly_price || 0;
+      if (amount && !$("#invoice_amount").value) {
+        $("#invoice_amount").value = Number(amount).toFixed(2);
       }
       if (!$("#invoice_notes").value) {
         $("#invoice_notes").value = selectedCustomer.plan || "Monthly service";
@@ -7868,10 +8075,25 @@
     $("#load-expenses").addEventListener("click", loadExpenses);
 
     $("#admin-result").addEventListener("input", (event) => {
-      if (!event.target.classList.contains("annual-price-input")) return;
+      if (!event.target.matches(".annual-price-input, .weekly-price-input, .schedule-input, .schedule-end-input")) return;
       const card = event.target.closest(".job");
-      const monthlyInput = card.querySelector(".price-input");
-      monthlyInput.value = monthlyFromAnnual(event.target.value);
+      const weeklyInput = card.querySelector(".weekly-price-input");
+      const annualInput = card.querySelector(".annual-price-input");
+      const start = card.querySelector(".schedule-input")?.value;
+      const end = card.querySelector(".schedule-end-input")?.value;
+      if (!start || !end) return;
+      try {
+        const unitSchedule = calculateWeeklySchedule(1, start, end);
+        if (event.target.classList.contains("annual-price-input")) {
+          const seasonTotal = Number(annualInput.value);
+          weeklyInput.value = seasonTotal > 0 ? (seasonTotal / unitSchedule.serviceWeeks).toFixed(2) : "";
+        } else {
+          const weeklyPrice = Number(weeklyInput.value);
+          annualInput.value = weeklyPrice > 0 ? (weeklyPrice * unitSchedule.serviceWeeks).toFixed(2) : "";
+        }
+      } catch (_error) {
+        return;
+      }
     });
 
     $("#customers-result").addEventListener("click", async (event) => {
@@ -7882,7 +8104,10 @@
       if (!customer) return;
       const action = button.dataset.customerListAction;
       const newestCustomerJob = newestJob(customer.jobs || []);
-      const customerMonthlyPrice = customer.monthly_price || newestCustomerJob?.monthly_price || "";
+      const customerMonthBilling = newestCustomerJob ? jobBillingForMonth(newestCustomerJob) : { amount: 0, weeks: null, weeklyPrice: 0 };
+      const customerMonthlyPrice = customerMonthBilling.weeks !== null
+        ? customerMonthBilling.amount
+        : customerMonthBilling.amount || customer.monthly_price || newestCustomerJob?.monthly_price || "";
       const customerAnnualPrice = customer.annual_price || newestCustomerJob?.annual_price || "";
       const customerPlan = customer.plan || newestCustomerJob?.service_type || "Monthly service";
 
@@ -7910,8 +8135,11 @@
         $("#owner_job_address").value = property.address || customer.jobs?.[0]?.address || "";
         if (customerPlan) $("#owner_job_service_type").value = customerPlan;
         $("#owner_job_annual_price").value = customerAnnualPrice || "";
-        $("#owner_job_monthly_price").value = customerMonthlyPrice || "";
+        $("#owner_job_weekly_price").value = customerMonthBilling.weeklyPrice ? Number(customerMonthBilling.weeklyPrice).toFixed(2) : "";
+        $("#owner_job_scheduled_date").value = String(newestCustomerJob?.schedule_start_date || newestCustomerJob?.scheduled_date || "").split("T")[0];
+        $("#owner_job_end_date").value = String(newestCustomerJob?.schedule_end_date || "").split("T")[0];
         $("#owner_job_notes").value = [property.gate_code ? `Gate code: ${property.gate_code}` : "", property.pets ? `Pets: ${property.pets}` : "", property.yard_notes || property.service_preferences || ""].filter(Boolean).join("\n");
+        refreshOwnerJobWeeklySummary();
         $("#customer-detail-result").innerHTML = notice("Customer copied into the booking form. Open Jobs to finish the schedule.");
         openTab("owner");
         return;
@@ -7933,7 +8161,7 @@
 
       if (action === "monthly-invoice") {
         if (!customerMonthlyPrice) {
-          $("#customer-detail-result").innerHTML = notice("Set a monthly payment on this customer's job before sending a monthly invoice.", true);
+          $("#customer-detail-result").innerHTML = notice("There are no scheduled service weeks to bill this month.", true);
           return;
         }
         try {
@@ -7955,7 +8183,9 @@
               due_date: dueDate,
               status: "Sent",
               service_line: customerPlan,
-              notes: `Monthly service invoice for ${customerPlan}`,
+              notes: customerMonthBilling.weeks === null
+                ? `Monthly service invoice for ${customerPlan}`
+                : `${customerMonthBilling.weeks} scheduled service week${customerMonthBilling.weeks === 1 ? "" : "s"} for ${customerPlan}`,
               notify_customer: true
             })
           });
@@ -8227,8 +8457,9 @@
       const scheduled_date = card.querySelector(".schedule-input")?.value;
       const schedule_end_date = card.querySelector(".schedule-end-input")?.value;
       const cleanup_reminder_time = card.querySelector(".reminder-time-input")?.value;
-      const annual_price = card.querySelector(".annual-price-input")?.value || null;
-      const monthly_price = card.querySelector(".price-input")?.value || monthlyFromAnnual(annual_price) || null;
+      const weekly_price = Number(card.querySelector(".weekly-price-input")?.value);
+      let annual_price = card.querySelector(".annual-price-input")?.value || null;
+      let monthly_price = monthlyFromAnnual(annual_price) || null;
       const status = card.querySelector(".status-input")?.value;
       const employeeSelect = card.querySelector(".employee-assign-input");
       const assigned_employee_id = employeeSelect?.value || null;
@@ -8257,6 +8488,12 @@
             body: JSON.stringify({ id })
           });
         } else if (action === "schedule") {
+          if (weekly_price > 0) {
+            if (!scheduled_date || !schedule_end_date) throw new Error("Season start and season end are required for weekly billing.");
+            const billing = calculateWeeklySchedule(weekly_price, scheduled_date, schedule_end_date);
+            annual_price = billing.seasonTotal.toFixed(2);
+            monthly_price = billing.monthlyCharge.toFixed(2);
+          }
           await requestJson("portal-jobs", {
             method: "PATCH",
             headers: adminHeaders(),

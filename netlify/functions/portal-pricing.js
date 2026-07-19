@@ -57,12 +57,6 @@ function positiveInteger(value, name, maximum = 1000) {
   return number;
 }
 
-function nonnegativeInteger(value, name, maximum = 1000) {
-  const number = finiteNumber(value, name, { minimum: 0, maximum });
-  if (!Number.isInteger(number)) throw new Error(`${name} must be a whole number.`);
-  return number;
-}
-
 function cleanName(value, fallback) {
   const name = String(value || "").trim().slice(0, 80);
   return name || fallback;
@@ -104,6 +98,19 @@ function normalizePricing(input, nextVersion) {
     addOns: {}
   };
 
+  const mowingDefaults = DEFAULT_PRICING.mowingBid;
+  const mowing = source.mowingBid || mowingDefaults;
+  normalized.mowingBid = {
+    serviceName: cleanName(mowing.serviceName, mowingDefaults.serviceName),
+    minimumPerVisit: finiteNumber(mowing.minimumPerVisit ?? mowingDefaults.minimumPerVisit, "Mowing minimum per visit", { minimum: 0, maximum: 100000 }),
+    pricePer1000SqFtPerVisit: finiteNumber(mowing.pricePer1000SqFtPerVisit ?? mowingDefaults.pricePer1000SqFtPerVisit, "Mowing price per 1,000 square feet", { minimum: 0, maximum: 100000 }),
+    visitsPerYear: positiveInteger(mowing.visitsPerYear ?? mowingDefaults.visitsPerYear, "Mowing visits per year", 365),
+    annualAgreementDiscount: finiteNumber(mowing.annualAgreementDiscount ?? mowingDefaults.annualAgreementDiscount, "Mowing annual agreement discount", { minimum: 0, maximum: 1 }),
+    paymentsPerYear: positiveInteger(mowing.paymentsPerYear ?? mowingDefaults.paymentsPerYear, "Mowing equal payments", 24),
+    roundPriceTo: finiteNumber(mowing.roundPriceTo ?? mowingDefaults.roundPriceTo, "Mowing rounding increment", { minimum: 0.01, maximum: 1000 }),
+    manualReviewAboveLawnSqFt: finiteNumber(mowing.manualReviewAboveLawnSqFt ?? mowingDefaults.manualReviewAboveLawnSqFt, "Mowing manual review threshold", { minimum: 1, maximum: 10000000 })
+  };
+
   for (const planId of ["fresh", "sharp", "full"]) {
     const plan = plans[planId] || {};
     const fallback = DEFAULT_PRICING.plans[planId];
@@ -142,12 +149,10 @@ function normalizePricing(input, nextVersion) {
     adminOverheadPerVisit: finiteNumber(fertilizer.adminOverheadPerVisit ?? fertilizerDefaults.adminOverheadPerVisit, "Fertilizer admin overhead", { minimum: 0, maximum: 100000 }),
     costReservePerVisit: finiteNumber(fertilizer.costReservePerVisit ?? fertilizerDefaults.costReservePerVisit, "Fertilizer cost reserve", { minimum: 0, maximum: 100000 }),
     targetGrossMargin: finiteNumber(fertilizer.targetGrossMargin ?? fertilizerDefaults.targetGrossMargin, "Fertilizer target gross margin", { minimum: 0, maximum: 0.99 }),
+    pricePer1000SqFtPerVisit: finiteNumber(fertilizer.pricePer1000SqFtPerVisit ?? fertilizerDefaults.pricePer1000SqFtPerVisit, "Fertilizer price per 1,000 square feet", { minimum: 0, maximum: 100000 }),
     minimumApplicationCharge: finiteNumber(fertilizer.minimumApplicationCharge ?? fertilizerDefaults.minimumApplicationCharge, "Fertilizer minimum application charge", { minimum: 0, maximum: 1000000 }),
     roundChargeTo: finiteNumber(fertilizer.roundChargeTo ?? fertilizerDefaults.roundChargeTo, "Fertilizer rounding increment", { minimum: 0.01, maximum: 100000 }),
-    segwayPurchaseCost: finiteNumber(fertilizer.segwayPurchaseCost ?? fertilizerDefaults.segwayPurchaseCost, "Segway purchase cost", { minimum: 0, maximum: 1000000 }),
-    recoveryPeriodSeasons: finiteNumber(fertilizer.recoveryPeriodSeasons ?? fertilizerDefaults.recoveryPeriodSeasons, "Segway recovery period", { minimum: 0.01, maximum: 100 }),
     fertilizerVisitsPerSeason: positiveInteger(fertilizer.fertilizerVisitsPerSeason ?? fertilizerDefaults.fertilizerVisitsPerSeason, "Fertilizer visits per season", 100),
-    mowingVisitsPerSeason: nonnegativeInteger(fertilizer.mowingVisitsPerSeason ?? fertilizerDefaults.mowingVisitsPerSeason, "Mowing visits per season", 365),
     paymentsPerYear: positiveInteger(fertilizer.paymentsPerYear ?? fertilizerDefaults.paymentsPerYear, "Fertilizer payments per year", 24),
     products: {},
     applications: []
