@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DEFAULT_PRICING = require("../../assets/green-grin-pricing-config.json");
+const { sendPushToTarget } = require("./push-helper");
 
 const headers = {
   "Content-Type": "application/json",
@@ -64,6 +65,77 @@ function isMissingPreferenceColumn(error) {
 
 function normalizePhone(value) {
   return String(value || "").replace(/\D/g, "");
+}
+
+function invoicePaymentReference(invoice) {
+  const raw = String(invoice?.id || "").replace(/-/g, "");
+  return raw ? `GG-${raw.slice(0, 8).toUpperCase()}` : "GG-PAYMENT";
+}
+
+function invoiceBelongsToCustomer(invoice, user, customer) {
+  const invoiceEmail = String(invoice?.email || "").trim().toLowerCase();
+  const userEmail = String(user?.email || "").trim().toLowerCase();
+  return Boolean(
+    invoice?.customer_user_id === user?.id ||
+    (invoice?.customer_code && invoice.customer_code === customer?.customer_code) ||
+    (invoiceEmail && userEmail && invoiceEmail === userEmail) ||
+    (normalizePhone(invoice?.phone) && normalizePhone(invoice?.phone) === normalizePhone(customer?.phone))
+  );
+}
+
+function isMissingPaymentColumn(error) {
+  return /payment_method|payment_reference|payment_reported_at|payment_confirmed_at|schema cache/i.test(error?.message || "");
+}
+
+async function reportZellePayment(user, invoiceId) {
+  const customer = await ensureCustomer(user);
+  const rows = await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(invoiceId)}&active=eq.true&limit=1`);
+  const invoice = rows?.[0];
+  if (!invoice || !invoiceBelongsToCustomer(invoice, user, customer)) {
+    return { error: "Invoice not found for this account.", statusCode: 404 };
+  }
+  if (String(invoice.status || "").toLowerCase() === "paid") {
+    return { error: "This invoice is already marked paid.", statusCode: 409 };
+  }
+  const alreadyPending = String(invoice.status || "").toLowerCase() === "payment pending" ||
+    String(invoice.payment_url || "").startsWith("zelle-reported:");
+  if (alreadyPending) return { account: await loadAccount(user), push: null };
+
+  const reportedAt = new Date().toISOString();
+  const reference = invoice.payment_reference || invoicePaymentReference(invoice);
+  const paymentUpdate = {
+    status: "Payment Pending",
+    payment_method: "Zelle",
+    payment_reference: reference,
+    payment_reported_at: reportedAt,
+    payment_confirmed_at: null,
+    payment_url: `zelle-reported:${reportedAt}`
+  };
+  try {
+    await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(invoice.id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(paymentUpdate)
+    });
+  } catch (error) {
+    if (!isMissingPaymentColumn(error)) throw error;
+    await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(invoice.id)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: paymentUpdate.status, payment_url: paymentUpdate.payment_url })
+    });
+  }
+
+  const push = await sendPushToTarget(supabase, { owner_type: "admin" }, {
+    title: "Zelle payment reported",
+    body: `${customer.full_name || invoice.customer_name || "Customer"} reported $${Number(invoice.amount || 0).toFixed(2)} for ${reference}. Verify the bank deposit before marking paid.`,
+    url: "/admin/",
+    tag: `green-grin-zelle-${invoice.id}`
+  }).catch(() => null);
+
+  return {
+    account: await loadAccount(user),
+    push,
+    zelle_payment: { invoice_id: invoice.id, reference, reported_at: reportedAt }
+  };
 }
 
 function codeNumber(code) {
@@ -233,6 +305,12 @@ exports.handler = async (event) => {
     if (event.httpMethod === "PATCH") {
       const body = JSON.parse(event.body || "{}");
 
+      if (body.zelle_payment?.invoice_id) {
+        const result = await reportZellePayment(user, body.zelle_payment.invoice_id);
+        if (result.error) return json(result.statusCode || 400, { error: result.error });
+        return json(200, { ...result.account, push: result.push, zelle_payment: result.zelle_payment || null });
+      }
+
       if (Object.prototype.hasOwnProperty.call(body, "plan_request")) {
         const planId = String(body.plan_request || "").trim().toLowerCase();
         if (!["fresh", "sharp", "full"].includes(planId)) {
@@ -320,3 +398,5 @@ exports.handler = async (event) => {
     return json(500, { error: error.message });
   }
 };
+
+exports._test = { invoicePaymentReference, invoiceBelongsToCustomer, isMissingPaymentColumn };

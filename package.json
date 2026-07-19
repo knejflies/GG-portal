@@ -1,12 +1,16 @@
 {
   "name": "green-grin-netlify-site",
-  "version": "1.82.2",
+  "version": "1.83.0",
   "private": true,
   "description": "Green Grin Lawn & Landscape site and portals for Netlify.",
   "scripts": {
+    "test": "npm run test:lawn-bidder && npm run test:fert-bidder && npm run test:fert-portal && npm run test:portal-pricing && npm run test:zelle && npm run test:customer-plans && npm run test:portal-html",
     "test:lawn-bidder": "node tests/lawn-bidder.test.cjs",
+    "test:fert-bidder": "node tests/fertilizer-bidder.test.cjs",
+    "test:fert-portal": "node tests/fertilizer-portal-integration.test.cjs",
     "test:portal-html": "node tests/portal-html-syntax.test.cjs",
     "test:portal-pricing": "node tests/portal-pricing.test.cjs",
+    "test:zelle": "node tests/zelle-payments.test.cjs",
     "test:customer-plans": "node tests/customer-plans.test.cjs && node tests/customer-plan-request.test.cjs"
   },
   "dependencies": {

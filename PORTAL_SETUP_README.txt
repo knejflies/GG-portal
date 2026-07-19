@@ -2,7 +2,7 @@ GREEN GRIN PORTAL SETUP
 
 This portal is built for Netlify + Supabase + app notifications.
 There is no SMS setup in this version.
-There are no customer pay links in this version.
+Customer invoices include manual Zelle payment instructions and bank-deposit verification.
 
 LIVE URLS
 - Main site: /
@@ -20,11 +20,15 @@ WHAT WORKS AFTER SETUP
 - Admin can create, save, send, edit, and delete invoices.
 - Admin can mark invoices paid, search paid invoices, and keep paid invoices collapsed below open invoices.
 - Admin -> Lawn Bidder calculates all three plans from lawn and flowerbed square footage.
+- Admin -> Fert Bidder calculates a five-application fertilizer program from turf square footage, product analysis, bag cost, labor, overhead, Segway recovery, minimum charges, rounding, and target margin.
+- Fert Bidder shows product pounds, fractional bags used, whole bags to purchase, cash product purchase, application charges, annual quote, operating profit, gross margin, and first-job cash profit.
 - Admin can adjust every plan minimum, square-foot rate, visit count, discount, payment split, add-on rate, and manual-review threshold.
 - Lawn Bidder pricing saves in Supabase and can be copied directly into a job or invoice.
 - Admin can scan receipt photos with AI, review the result, and save expenses.
 - Admin can log start/end mileage and have the calculated miles added as a vehicle expense at $0.76 per mile.
 - Sent invoices show in the customer's Billing tab.
+- Customers can send invoice payments by Zelle to Green Grin Lawns, then report the payment as pending.
+- Admin receives an app notification, verifies the bank deposit, and marks the invoice paid.
 - Admin can send a monthly invoice from the customer's monthly service number.
 - Employees can request access.
 - Admin can approve/deactivate/delete employees, set PINs, and set hourly rates.
@@ -79,6 +83,9 @@ GREEN_GRIN_TIMEZONE=America/Denver
 GREEN_GRIN_VAPID_PUBLIC_KEY=from GGL-1.55-NOTIFICATION-KEYS.txt
 GREEN_GRIN_VAPID_PRIVATE_KEY=from GGL-1.55-NOTIFICATION-KEYS.txt
 GREEN_GRIN_VAPID_SUBJECT=mailto:notifications@greengrinlawns.com
+GREEN_GRIN_ZELLE_RECIPIENT_NAME=Green Grin Lawns
+GREEN_GRIN_ZELLE_PHONE=2087408837
+GREEN_GRIN_ZELLE_EMAIL=ken@greengrinlawns.com
 OPENAI_API_KEY=your OpenAI API key for receipt scanning
 
 Do not put the notification keys text file in GitHub.
@@ -94,6 +101,14 @@ LAWN BIDDER
 3. Open Pricing Settings, adjust the numbers, and click Save Pricing.
 4. Pricing is stored in Supabase; no additional Netlify environment variable is required.
 5. Select a calculated plan and copy it to a job or draft invoice.
+
+FERTILIZER BIDDER
+1. Sign in at /admin/ and open Fert Bidder.
+2. Enter turf square footage to calculate the full five-application program.
+3. Open Fertilizer Pricing Settings to adjust production, labor, overhead, Segway recovery, product analyses, bag costs, application timing, nitrogen rates, target margin, and price rounding.
+4. Click Save Fert Pricing to store the owner settings in the same Supabase pricing record used by Lawn Bidder.
+5. Copy the annual program to a job or copy the average application charge to a draft invoice.
+6. Existing saved Lawn Bidder pricing remains compatible; missing fertilizer settings are filled from the supplied defaults.
 
 MARKETING ROUTES
 1. In Admin -> Employees, approve the employee and click Make Marketer.
@@ -140,8 +155,14 @@ When you deploy a new version, the installed app usually updates the next time i
 If it looks stuck on an old version, fully close and reopen the app.
 
 PAYMENTS
-Payments are intentionally turned off in this version.
-Invoices can be created and sent, but customers will not see a pay button.
+Sent and overdue invoices show Zelle instructions in the customer Billing tab.
+The customer sends the exact amount in their bank app to Green Grin Lawns using either:
+- Phone: (208) 740-8837
+- Email: ken@greengrinlawns.com
+The customer includes the unique invoice memo, then taps I Sent This Zelle Payment.
+The invoice moves to Payment Pending and the admin receives an app notification.
+The owner must verify the deposit in the bank account before selecting Mark Paid.
+The portal does not connect to the bank and never marks a Zelle payment paid automatically.
 
 EXPENSE SCANNER
 Admin -> Expenses can scan receipt photos after OPENAI_API_KEY is added in Netlify.

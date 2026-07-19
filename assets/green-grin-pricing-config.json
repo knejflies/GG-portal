@@ -48,5 +48,74 @@
       "ratePerBedSqFtPerVisit": 0.08,
       "visitsPerYear": 3
     }
+  },
+  "fertilizerBid": {
+    "applicationProductionSqFtPerHour": 30000,
+    "fixedSetupHours": 0.5,
+    "minimumBillableHours": 1,
+    "loadedLaborRatePerHour": 35,
+    "vehicleEquipmentPerVisit": 35,
+    "adminOverheadPerVisit": 60,
+    "costReservePerVisit": 1,
+    "targetGrossMargin": 0.5,
+    "minimumApplicationCharge": 125,
+    "roundChargeTo": 5,
+    "segwayPurchaseCost": 600,
+    "recoveryPeriodSeasons": 1,
+    "fertilizerVisitsPerSeason": 5,
+    "mowingVisitsPerSeason": 36,
+    "paymentsPerYear": 12,
+    "products": {
+      "nitrex": {
+        "name": "BEST Nitrex",
+        "analysis": "20-1-5",
+        "bagSizeLb": 50,
+        "bagCost": 60
+      },
+      "turfGold": {
+        "name": "BEST Turf Gold",
+        "analysis": "23-2-4",
+        "bagSizeLb": 50,
+        "bagCost": 59.99
+      },
+      "umaxx": {
+        "name": "BEST 24-4-12 UMAXX Mini",
+        "analysis": "24-4-12",
+        "bagSizeLb": 50,
+        "bagCost": 74.04
+      }
+    },
+    "applications": [
+      {
+        "stage": "Spring Wake-Up",
+        "timing": "Mar 15–Apr 1",
+        "productId": "nitrex",
+        "nitrogenRateLbPer1000": 0.5
+      },
+      {
+        "stage": "Spring Growth",
+        "timing": "May 1–20",
+        "productId": "turfGold",
+        "nitrogenRateLbPer1000": 0.5
+      },
+      {
+        "stage": "Summer Defense",
+        "timing": "Jun 10–25",
+        "productId": "umaxx",
+        "nitrogenRateLbPer1000": 0.5
+      },
+      {
+        "stage": "Fall Recovery",
+        "timing": "Aug 25–Sep 15",
+        "productId": "turfGold",
+        "nitrogenRateLbPer1000": 1
+      },
+      {
+        "stage": "Winterizer",
+        "timing": "Oct 20–Nov 10",
+        "productId": "umaxx",
+        "nitrogenRateLbPer1000": 1
+      }
+    ]
   }
 }

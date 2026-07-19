@@ -1,12 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Employee Portal | Green Grin Lawn & Landscape</title>
+  <title>Customer Portal | Green Grin Lawn & Landscape</title>
   <meta name="theme-color" content="#123324" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Green Grin Crew" />
+  <meta name="apple-mobile-web-app-title" content="Green Grin Portal" />
   <link rel="icon" href="/assets/green-grin-tab-icon.png" type="image/png" />
   <link rel="apple-touch-icon" href="/assets/green-grin-pwa-192.png" />
   <link rel="manifest" href="/manifest-employee.webmanifest" />
@@ -448,6 +448,68 @@
       border-radius: var(--radius);
       background: var(--soft);
       padding: 16px;
+    }
+
+    .zelle-payment-card {
+      display: grid;
+      gap: 12px;
+      margin-top: 14px;
+      padding: 15px;
+      border: 1px solid rgba(98, 208, 81, 0.34);
+      border-radius: 10px;
+      background: rgba(24, 74, 45, 0.38);
+    }
+
+    .zelle-payment-card h3,
+    .zelle-payment-card p {
+      margin: 0;
+    }
+
+    .zelle-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .zelle-detail {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+      padding: 10px 11px;
+      border: 1px solid rgba(233, 244, 228, 0.16);
+      border-radius: 8px;
+      background: rgba(2, 14, 8, 0.34);
+    }
+
+    .zelle-detail span {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .zelle-detail strong {
+      overflow-wrap: anywhere;
+    }
+
+    .zelle-warning,
+    .zelle-pending {
+      padding: 11px 12px;
+      border-left: 4px solid #f2c94c;
+      border-radius: 8px;
+      background: rgba(242, 201, 76, 0.12);
+    }
+
+    .zelle-pending {
+      margin-top: 12px;
+      border-left-color: var(--leaf);
+      background: rgba(98, 208, 81, 0.12);
+    }
+
+    @media (max-width: 620px) {
+      .zelle-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .admin-job.collapsed-job {
@@ -2550,6 +2612,136 @@
       font-size: 0.83rem;
     }
 
+    .fert-quote-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin: 18px 0;
+    }
+
+    .fert-quote-card {
+      min-height: 94px;
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #f7faf5;
+    }
+
+    .fert-quote-card.primary {
+      border-color: rgba(77, 159, 53, 0.55);
+      background: linear-gradient(145deg, var(--mint), #f8fbe9);
+    }
+
+    .fert-quote-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.045em;
+      text-transform: uppercase;
+    }
+
+    .fert-quote-card strong {
+      display: block;
+      margin-top: 6px;
+      color: var(--pine);
+      font-size: 1.32rem;
+      line-height: 1.1;
+    }
+
+    .fert-table-block {
+      margin-top: 18px;
+    }
+
+    .fert-table-block h3 {
+      margin-bottom: 9px;
+      color: var(--pine);
+    }
+
+    .fert-table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+    }
+
+    .fert-table {
+      width: 100%;
+      min-width: 1320px;
+      border-collapse: collapse;
+      font-size: 0.79rem;
+    }
+
+    .fert-table.purchase {
+      min-width: 720px;
+    }
+
+    .fert-table th,
+    .fert-table td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .fert-table th {
+      color: var(--white);
+      background: var(--pine);
+      font-size: 0.72rem;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .fert-table th:first-child,
+    .fert-table th:nth-child(2),
+    .fert-table th:nth-child(3),
+    .fert-table td:first-child,
+    .fert-table td:nth-child(2),
+    .fert-table td:nth-child(3) {
+      text-align: left;
+    }
+
+    .fert-table tbody tr:nth-child(even) {
+      background: #f8faf7;
+    }
+
+    .fert-table tfoot td {
+      color: var(--pine);
+      background: var(--mint);
+      font-weight: 800;
+      border-bottom: 0;
+    }
+
+    .fert-settings input,
+    .fert-settings select {
+      border-color: #9db8cc;
+      background: #e7f2fb;
+      color: #1f4e78;
+    }
+
+    .fert-settings .bid-setting-group legend {
+      color: var(--pine);
+    }
+
+    .fert-settings-note {
+      margin: 12px 0 0;
+      padding: 10px 12px;
+      border-left: 3px solid var(--sun);
+      color: #5b4d12;
+      background: #fff7d8;
+      font-size: 0.82rem;
+    }
+
+    .fert-checkline {
+      margin: 12px 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .fert-checkline strong {
+      color: var(--pine);
+    }
+
     @media (max-width: 1100px) {
       .bid-layout {
         grid-template-columns: 1fr;
@@ -2934,6 +3126,7 @@
       <button class="tab owner-only" data-tab="customers" type="button">Customers</button>
       <button class="tab owner-only" data-tab="owner" type="button">Jobs</button>
       <button class="tab owner-only" data-tab="bids" type="button">Lawn Bidder</button>
+      <button class="tab owner-only" data-tab="fert-bids" type="button">Fert Bidder</button>
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
       <button class="tab owner-only" data-tab="invoices" type="button">Invoices</button>
@@ -3212,6 +3405,7 @@
                   <option>Fresh Grin Weekly - Mow, Edge, Blow</option>
                   <option>Sharp Grin Weekly - Mow, Edge, Blow & Weed Spraying</option>
                   <option>Full Grin Season - Mow, Edge, Blow, Weed Spraying, Spring & Fall Cleanup</option>
+                  <option>Fertilization Program</option>
                 </select>
               </div>
               <div>
@@ -3666,6 +3860,150 @@
       </div>
     </section>
 
+    <section id="fert-bids" class="panel owner-only">
+      <div class="bid-page-head">
+        <div>
+          <h2>Fertilizer Bidder</h2>
+          <p class="muted">Build a five-application quote from turf size, product costs, labor, overhead and target margin.</p>
+        </div>
+        <span id="fert-config-version" class="badge">Pricing v1</span>
+      </div>
+
+      <div class="bid-layout">
+        <div class="bid-workspace">
+          <form id="fert-bid-form">
+            <div class="two">
+              <div>
+                <label for="fert_customer_name">Customer</label>
+                <input id="fert_customer_name" autocomplete="off" placeholder="Customer name" />
+              </div>
+              <div>
+                <label for="fert_lawn_sqft">Turf square footage</label>
+                <input id="fert_lawn_sqft" type="number" min="1" step="1" value="10876" required />
+              </div>
+            </div>
+            <button class="button" type="submit">Calculate Fert Bid</button>
+          </form>
+
+          <div id="fert-result" aria-live="polite"></div>
+          <div id="fert-quote-summary" class="fert-quote-grid" aria-live="polite"></div>
+          <p id="fert-visit-check" class="fert-checkline"></p>
+
+          <div class="fert-table-block">
+            <h3>Application schedule</h3>
+            <div class="fert-table-wrap">
+              <table class="fert-table">
+                <thead>
+                  <tr>
+                    <th>Stage</th><th>Timing</th><th>Product</th><th>Analysis</th>
+                    <th>N rate</th><th>Product rate</th><th>Product needed</th><th>Bags used</th>
+                    <th>Material</th><th>Labor hrs</th><th>Labor</th><th>Visit cost</th>
+                    <th>Total cost</th><th>Charge</th><th>Profit</th><th>Margin</th>
+                  </tr>
+                </thead>
+                <tbody id="fert-application-rows"></tbody>
+                <tfoot id="fert-application-totals"></tfoot>
+              </table>
+            </div>
+          </div>
+
+          <div class="fert-table-block">
+            <h3>Whole-bag purchase plan</h3>
+            <div class="fert-table-wrap">
+              <table class="fert-table purchase">
+                <thead>
+                  <tr><th>Product</th><th>Bag size</th><th>Bag cost</th><th>Annual product needed</th><th>Bags to buy</th><th>Cash purchase</th></tr>
+                </thead>
+                <tbody id="fert-purchase-rows"></tbody>
+                <tfoot id="fert-purchase-totals"></tfoot>
+              </table>
+            </div>
+          </div>
+
+          <div class="row-actions">
+            <button id="fert-copy-job" class="button secondary" type="button">Copy Annual Quote To Job</button>
+            <button id="fert-copy-invoice" class="button ghost" type="button">Copy Average Application To Invoice</button>
+          </div>
+          <p class="bid-disclaimer">Estimate only. Confirm product availability, label rates, site conditions and local application requirements before presenting a final quote.</p>
+        </div>
+
+        <details class="bid-settings fert-settings" open>
+          <summary>Fertilizer Pricing Settings</summary>
+          <form id="fert-pricing-form">
+            <p class="fert-settings-note">Blue fields are saved owner pricing drivers. The $1 cost reserve is explicit because it is included in the supplied operating-cost math; first-job cash profit excludes it.</p>
+
+            <fieldset class="bid-setting-group">
+              <legend>Production and pricing</legend>
+              <div class="bid-setting-grid">
+                <div><label for="fert_production">Production sq ft / hr</label><input id="fert_production" type="number" min="1" step="1" required /></div>
+                <div><label for="fert_setup_hours">Setup/load hours</label><input id="fert_setup_hours" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_min_hours">Minimum billable hours</label><input id="fert_min_hours" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_labor_rate">Loaded labor / hr</label><input id="fert_labor_rate" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_vehicle_cost">Vehicle/equipment / visit</label><input id="fert_vehicle_cost" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_admin_cost">Admin overhead / visit</label><input id="fert_admin_cost" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_cost_reserve">Cost reserve / visit</label><input id="fert_cost_reserve" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_margin">Target gross margin %</label><input id="fert_margin" type="number" min="0" max="99" step="0.1" required /></div>
+                <div><label for="fert_min_charge">Minimum application</label><input id="fert_min_charge" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_round_to">Round charge up to</label><input id="fert_round_to" type="number" min="0.01" step="0.01" required /></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group">
+              <legend>Segway recovery</legend>
+              <div class="bid-setting-grid">
+                <div><label for="fert_segway_cost">Purchase cost</label><input id="fert_segway_cost" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_recovery_seasons">Recovery seasons</label><input id="fert_recovery_seasons" type="number" min="0.01" step="0.01" required /></div>
+                <div><label for="fert_visits">Fert visits / season</label><input id="fert_visits" type="number" min="1" step="1" required /></div>
+                <div><label for="fert_mowing_visits">Mowing visits / season</label><input id="fert_mowing_visits" type="number" min="0" step="1" required /></div>
+                <div class="wide"><label for="fert_payments">Equal payments / year</label><input id="fert_payments" type="number" min="1" max="24" step="1" required /></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group">
+              <legend>BEST Nitrex product</legend>
+              <div class="bid-setting-grid">
+                <div class="wide"><label for="fert_product_nitrex_name">Product name</label><input id="fert_product_nitrex_name" maxlength="80" required /></div>
+                <div><label for="fert_product_nitrex_analysis">Analysis</label><input id="fert_product_nitrex_analysis" maxlength="24" required /></div>
+                <div><label for="fert_product_nitrex_bag_size">Bag size (lb)</label><input id="fert_product_nitrex_bag_size" type="number" min="0.01" step="0.01" required /></div>
+                <div class="wide"><label for="fert_product_nitrex_bag_cost">Bag cost</label><input id="fert_product_nitrex_bag_cost" type="number" min="0" step="0.01" required /></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group">
+              <legend>BEST Turf Gold product</legend>
+              <div class="bid-setting-grid">
+                <div class="wide"><label for="fert_product_turfGold_name">Product name</label><input id="fert_product_turfGold_name" maxlength="80" required /></div>
+                <div><label for="fert_product_turfGold_analysis">Analysis</label><input id="fert_product_turfGold_analysis" maxlength="24" required /></div>
+                <div><label for="fert_product_turfGold_bag_size">Bag size (lb)</label><input id="fert_product_turfGold_bag_size" type="number" min="0.01" step="0.01" required /></div>
+                <div class="wide"><label for="fert_product_turfGold_bag_cost">Bag cost</label><input id="fert_product_turfGold_bag_cost" type="number" min="0" step="0.01" required /></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group">
+              <legend>BEST UMAXX product</legend>
+              <div class="bid-setting-grid">
+                <div class="wide"><label for="fert_product_umaxx_name">Product name</label><input id="fert_product_umaxx_name" maxlength="80" required /></div>
+                <div><label for="fert_product_umaxx_analysis">Analysis</label><input id="fert_product_umaxx_analysis" maxlength="24" required /></div>
+                <div><label for="fert_product_umaxx_bag_size">Bag size (lb)</label><input id="fert_product_umaxx_bag_size" type="number" min="0.01" step="0.01" required /></div>
+                <div class="wide"><label for="fert_product_umaxx_bag_cost">Bag cost</label><input id="fert_product_umaxx_bag_cost" type="number" min="0" step="0.01" required /></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group">
+              <legend>Five-application program</legend>
+              <div id="fert-program-settings"></div>
+            </fieldset>
+
+            <div class="row-actions">
+              <button class="button" type="submit">Save Fert Pricing</button>
+              <button id="fert-restore-pricing" class="button ghost" type="button">Restore Fert Defaults</button>
+            </div>
+            <div id="fert-pricing-result" aria-live="polite"></div>
+          </form>
+        </details>
+      </div>
+    </section>
+
     <section id="activity" class="panel">
       <div class="grid">
         <div class="card owner-only">
@@ -3722,6 +4060,7 @@
                 <select id="invoice_status">
                   <option>Draft</option>
                   <option>Sent</option>
+                  <option>Payment Pending</option>
                   <option>Paid</option>
                   <option>Overdue</option>
                 </select>
@@ -3936,6 +4275,7 @@
     let bidDefaultPricingConfig = null;
     let bidPlanEstimates = [];
     let bidSelectedPlan = "fresh";
+    let latestFertBid = null;
     let expenseRows = [];
     let employeeDirectory = [];
     let adminJobRows = [];
@@ -4501,6 +4841,7 @@
         if (button.dataset.tab === "expenses") loadExpenses();
         if (button.dataset.tab === "bids") loadBidPricing();
         if (button.dataset.tab === "plans") loadCustomerPlanOptions();
+        if (button.dataset.tab === "fert-bids") loadBidPricing();
         if (button.dataset.tab === "customers") loadCustomers();
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
@@ -4697,9 +5038,10 @@
 
     $("#bid-restore-pricing").addEventListener("click", () => {
       if (!bidDefaultPricingConfig) return;
-      bidPricingConfig = cloneJson(bidDefaultPricingConfig);
+      bidPricingConfig = mergeBidPricingConfig(bidDefaultPricingConfig);
       populateBidPricingForm();
       calculateBid();
+      calculateFertBid();
       $("#bid-pricing-result").innerHTML = notice("Supplied defaults loaded. Click Save Pricing to keep them.");
     });
 
@@ -4731,6 +5073,75 @@
       $("#invoice_notes").value = bidNotes(bid);
       $("#invoice-submit").textContent = "Save Draft";
       $("#bid-result").innerHTML = notice("Bid copied to a draft invoice.");
+      openTab("invoices");
+    });
+
+    $("#fert-bid-form").addEventListener("submit", (event) => {
+      event.preventDefault();
+      try {
+        calculateFertBid();
+        $("#fert-result").innerHTML = notice("Fertilizer bid calculated.");
+      } catch (error) {
+        $("#fert-result").innerHTML = notice(error.message, true);
+      }
+    });
+
+    $("#fert-bid-form").addEventListener("input", () => {
+      try {
+        calculateFertBid();
+        $("#fert-result").innerHTML = "";
+      } catch (_error) {
+        return;
+      }
+    });
+
+    $("#fert-pricing-form").addEventListener("input", () => {
+      try {
+        calculateFertBid();
+        $("#fert-pricing-result").innerHTML = notice("Unsaved pricing changes are reflected in this bid.");
+      } catch (_error) {
+        return;
+      }
+    });
+
+    $("#fert-pricing-form").addEventListener("change", () => {
+      try {
+        calculateFertBid();
+      } catch (_error) {
+        return;
+      }
+    });
+
+    $("#fert-pricing-form").addEventListener("submit", saveFertilizerPricing);
+
+    $("#fert-restore-pricing").addEventListener("click", () => {
+      if (!bidDefaultPricingConfig?.fertilizerBid) return;
+      bidPricingConfig.fertilizerBid = cloneJson(bidDefaultPricingConfig.fertilizerBid);
+      populateFertilizerPricingForm();
+      calculateFertBid();
+      $("#fert-pricing-result").innerHTML = notice("Supplied fertilizer defaults loaded. Click Save Fert Pricing to keep them.");
+    });
+
+    $("#fert-copy-job").addEventListener("click", () => {
+      const bid = calculateFertBid();
+      $("#owner_job_customer_name").value = bid.customer || $("#owner_job_customer_name").value;
+      selectFertilizerJobPlan();
+      $("#owner_job_annual_price").value = bid.annualPrice.toFixed(2);
+      $("#owner_job_monthly_price").value = bid.monthlyPayment.toFixed(2);
+      $("#owner_job_notes").value = fertilizerBidNotes(bid);
+      $("#fert-result").innerHTML = notice("Fertilizer bid copied to the job form.");
+      openTab("owner");
+    });
+
+    $("#fert-copy-invoice").addEventListener("click", () => {
+      const bid = calculateFertBid();
+      $("#invoice_id").value = "";
+      $("#invoice_amount").value = bid.averageApplicationCharge.toFixed(2);
+      $("#invoice_status").value = "Draft";
+      $("#invoice_custom_service").value = "Fertilizer application";
+      $("#invoice_notes").value = fertilizerBidNotes(bid);
+      $("#invoice-submit").textContent = "Save Draft";
+      $("#fert-result").innerHTML = notice("Average application charge copied to a draft invoice.");
       openTab("invoices");
     });
 
@@ -4791,30 +5202,64 @@
       return bidDefaultPricingConfig;
     }
 
+    function mergeBidPricingConfig(config) {
+      const defaults = cloneJson(bidDefaultPricingConfig || config || {});
+      const incoming = config || {};
+      const defaultFertilizer = defaults.fertilizerBid || {};
+      const incomingFertilizer = incoming.fertilizerBid || {};
+      const productIds = Object.keys(defaultFertilizer.products || {});
+      const products = productIds.reduce((result, productId) => {
+        result[productId] = {
+          ...(defaultFertilizer.products?.[productId] || {}),
+          ...(incomingFertilizer.products?.[productId] || {})
+        };
+        return result;
+      }, {});
+      const applications = (defaultFertilizer.applications || []).map((application, index) => ({
+        ...application,
+        ...(incomingFertilizer.applications?.[index] || {})
+      }));
+      return {
+        ...defaults,
+        ...incoming,
+        plans: { ...(defaults.plans || {}), ...(incoming.plans || {}) },
+        addOns: { ...(defaults.addOns || {}), ...(incoming.addOns || {}) },
+        fertilizerBid: {
+          ...defaultFertilizer,
+          ...incomingFertilizer,
+          products,
+          applications
+        }
+      };
+    }
+
     async function loadBidPricing(force = false) {
       if (bidPricingConfig && !force) return bidPricingConfig;
       try {
         await loadBidDefaults();
         if (!adminPin()) {
-          bidPricingConfig = cloneJson(bidDefaultPricingConfig);
+          bidPricingConfig = mergeBidPricingConfig(bidDefaultPricingConfig);
           populateBidPricingForm();
           calculateBid();
+          calculateFertBid();
           return bidPricingConfig;
         }
         $("#bid-pricing-result").innerHTML = notice("Loading saved pricing...");
         const data = await requestJson("portal-pricing", { headers: adminHeaders() });
-        bidPricingConfig = cloneJson(data.config || bidDefaultPricingConfig);
+        bidPricingConfig = mergeBidPricingConfig(data.config || bidDefaultPricingConfig);
         populateBidPricingForm();
         calculateBid();
+        calculateFertBid();
         $("#bid-pricing-result").innerHTML = data.warning
           ? notice(data.warning, true)
           : notice(`Saved pricing v${data.version || bidPricingConfig.version} loaded.`);
         return bidPricingConfig;
       } catch (error) {
         if (bidDefaultPricingConfig) {
-          bidPricingConfig = cloneJson(bidDefaultPricingConfig);
+          bidPricingConfig = mergeBidPricingConfig(bidDefaultPricingConfig);
           populateBidPricingForm();
           calculateBid();
+          calculateFertBid();
         }
         $("#bid-pricing-result").innerHTML = notice(error.message, true);
         return bidPricingConfig;
@@ -4853,6 +5298,7 @@
       setPricingField("#pricing_bed_fert_visits", beds.visitsPerYear);
       $("#bid-config-version").textContent = `Pricing v${pricing.version || 1}`;
       updateJobPlanOptions();
+      populateFertilizerPricingForm();
     }
 
     function pricingIncludes(selector) {
@@ -4904,7 +5350,8 @@
             ratePerBedSqFtPerVisit: number("#pricing_bed_fert_rate", "Flowerbed fertilization square-foot rate", true),
             visitsPerYear: Math.round(number("#pricing_bed_fert_visits", "Flowerbed fertilization visits"))
           }
-        }
+        },
+        fertilizerBid: fertilizerSettingsFromForm()
       };
     }
 
@@ -4919,9 +5366,10 @@
           headers: adminHeaders(),
           body: JSON.stringify({ config })
         });
-        bidPricingConfig = cloneJson(data.config);
+        bidPricingConfig = mergeBidPricingConfig(data.config);
         populateBidPricingForm();
         calculateBid();
+        calculateFertBid();
         $("#bid-pricing-result").innerHTML = notice(`Pricing v${data.version} saved.`);
       } catch (error) {
         $("#bid-pricing-result").innerHTML = notice(error.message, true);
@@ -5040,6 +5488,255 @@
         `Monthly payment: ${fixedMoney(bid.monthlyPayment)}`,
         bid.manualReviewRequired ? "Manual property review required before final quote." : bid.disclaimer
       ].join("\n");
+    }
+
+    function populateFertilizerPricingForm() {
+      const settings = bidPricingConfig?.fertilizerBid;
+      if (!settings || !$("#fert-program-settings")) return;
+
+      setPricingField("#fert_production", settings.applicationProductionSqFtPerHour);
+      setPricingField("#fert_setup_hours", settings.fixedSetupHours);
+      setPricingField("#fert_min_hours", settings.minimumBillableHours);
+      setPricingField("#fert_labor_rate", settings.loadedLaborRatePerHour);
+      setPricingField("#fert_vehicle_cost", settings.vehicleEquipmentPerVisit);
+      setPricingField("#fert_admin_cost", settings.adminOverheadPerVisit);
+      setPricingField("#fert_cost_reserve", settings.costReservePerVisit);
+      setPricingField("#fert_margin", Number(settings.targetGrossMargin || 0) * 100);
+      setPricingField("#fert_min_charge", settings.minimumApplicationCharge);
+      setPricingField("#fert_round_to", settings.roundChargeTo);
+      setPricingField("#fert_segway_cost", settings.segwayPurchaseCost);
+      setPricingField("#fert_recovery_seasons", settings.recoveryPeriodSeasons);
+      setPricingField("#fert_visits", settings.fertilizerVisitsPerSeason);
+      setPricingField("#fert_mowing_visits", settings.mowingVisitsPerSeason);
+      setPricingField("#fert_payments", settings.paymentsPerYear || 12);
+
+      const productIds = ["nitrex", "turfGold", "umaxx"];
+      productIds.forEach((productId) => {
+        const product = settings.products[productId];
+        setPricingField(`#fert_product_${productId}_name`, product.name);
+        setPricingField(`#fert_product_${productId}_analysis`, product.analysis);
+        setPricingField(`#fert_product_${productId}_bag_size`, product.bagSizeLb);
+        setPricingField(`#fert_product_${productId}_bag_cost`, product.bagCost);
+      });
+
+      const productOptions = productIds.map((productId) => {
+        const product = settings.products[productId];
+        return `<option value="${cleanText(productId)}">${cleanText(product.name)}</option>`;
+      }).join("");
+      $("#fert-program-settings").innerHTML = settings.applications.map((application, index) => `
+        <div class="bid-setting-group">
+          <div class="bid-setting-grid">
+            <div class="wide">
+              <label for="fert_app_${index + 1}_stage">Application ${index + 1} stage</label>
+              <input id="fert_app_${index + 1}_stage" maxlength="80" required />
+            </div>
+            <div>
+              <label for="fert_app_${index + 1}_timing">Timing</label>
+              <input id="fert_app_${index + 1}_timing" maxlength="80" required />
+            </div>
+            <div>
+              <label for="fert_app_${index + 1}_product">Product</label>
+              <select id="fert_app_${index + 1}_product" required>${productOptions}</select>
+            </div>
+            <div class="wide">
+              <label for="fert_app_${index + 1}_n_rate">N rate (lb / 1,000)</label>
+              <input id="fert_app_${index + 1}_n_rate" type="number" min="0.01" step="0.01" required />
+            </div>
+          </div>
+        </div>
+      `).join("");
+      settings.applications.forEach((application, index) => {
+        setPricingField(`#fert_app_${index + 1}_stage`, application.stage);
+        setPricingField(`#fert_app_${index + 1}_timing`, application.timing);
+        setPricingField(`#fert_app_${index + 1}_product`, application.productId);
+        setPricingField(`#fert_app_${index + 1}_n_rate`, application.nitrogenRateLbPer1000);
+      });
+      $("#fert-config-version").textContent = `Pricing v${bidPricingConfig.version || 1}`;
+    }
+
+    function fertilizerSettingsFromForm() {
+      const number = (selector, name, allowZero = false) => requiredBidNumber(selector, name, allowZero);
+      const products = {};
+      ["nitrex", "turfGold", "umaxx"].forEach((productId) => {
+        products[productId] = {
+          name: $(`#fert_product_${productId}_name`).value.trim(),
+          analysis: $(`#fert_product_${productId}_analysis`).value.trim(),
+          bagSizeLb: number(`#fert_product_${productId}_bag_size`, `${productId} bag size`),
+          bagCost: number(`#fert_product_${productId}_bag_cost`, `${productId} bag cost`, true)
+        };
+      });
+      const applications = [1, 2, 3, 4, 5].map((index) => ({
+        stage: $(`#fert_app_${index}_stage`).value.trim(),
+        timing: $(`#fert_app_${index}_timing`).value.trim(),
+        productId: $(`#fert_app_${index}_product`).value,
+        nitrogenRateLbPer1000: number(`#fert_app_${index}_n_rate`, `Application ${index} nitrogen rate`)
+      }));
+      return {
+        applicationProductionSqFtPerHour: number("#fert_production", "Fertilizer production rate"),
+        fixedSetupHours: number("#fert_setup_hours", "Fertilizer setup time", true),
+        minimumBillableHours: number("#fert_min_hours", "Minimum billable time", true),
+        loadedLaborRatePerHour: number("#fert_labor_rate", "Loaded labor rate", true),
+        vehicleEquipmentPerVisit: number("#fert_vehicle_cost", "Vehicle and equipment cost", true),
+        adminOverheadPerVisit: number("#fert_admin_cost", "Admin overhead", true),
+        costReservePerVisit: number("#fert_cost_reserve", "Cost reserve", true),
+        targetGrossMargin: number("#fert_margin", "Target gross margin", true) / 100,
+        minimumApplicationCharge: number("#fert_min_charge", "Minimum application charge", true),
+        roundChargeTo: number("#fert_round_to", "Charge rounding increment"),
+        segwayPurchaseCost: number("#fert_segway_cost", "Segway purchase cost", true),
+        recoveryPeriodSeasons: number("#fert_recovery_seasons", "Recovery period"),
+        fertilizerVisitsPerSeason: Math.round(number("#fert_visits", "Fertilizer visits per season")),
+        mowingVisitsPerSeason: Math.round(number("#fert_mowing_visits", "Mowing visits per season", true)),
+        paymentsPerYear: Math.round(number("#fert_payments", "Equal payments per year")),
+        products,
+        applications
+      };
+    }
+
+    function fixedNumber(value, digits = 2) {
+      const number = Number(value);
+      return Number.isFinite(number)
+        ? number.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits })
+        : "0";
+    }
+
+    function fixedPercent(value) {
+      return `${fixedNumber(Number(value) * 100, 1)}%`;
+    }
+
+    function calculateFertBid() {
+      if (!bidPricingConfig) throw new Error("Pricing settings are still loading.");
+      if (!window.GreenGrinCalculator?.calculateFertilizerBid) throw new Error("The Fertilizer Bidder calculator could not be loaded.");
+      latestFertBid = window.GreenGrinCalculator.calculateFertilizerBid({
+        customer: $("#fert_customer_name").value.trim(),
+        lawnSqFt: requiredBidNumber("#fert_lawn_sqft", "Turf square footage")
+      }, fertilizerSettingsFromForm());
+      renderFertBid(latestFertBid);
+      return latestFertBid;
+    }
+
+    function renderFertBid(bid) {
+      const cards = [
+        ["Recommended annual price", fixedMoney(bid.annualPrice), true],
+        ["Average application", fixedMoney(bid.averageApplicationCharge), true],
+        ["Operating cost", fixedMoney(bid.operatingCost)],
+        ["Gross profit", fixedMoney(bid.grossProfit)],
+        ["Gross margin", fixedPercent(bid.grossMargin)],
+        ["Cash product purchase", fixedMoney(bid.cashProductPurchase)],
+        ["First-job cash profit", fixedMoney(bid.firstJobCashProfit)],
+        ["Price / 1,000 / visit", fixedMoney(bid.pricePer1000SqFtPerVisit)]
+      ];
+      $("#fert-quote-summary").innerHTML = cards.map(([label, value, primary]) => `
+        <div class="fert-quote-card ${primary ? "primary" : ""}">
+          <span>${cleanText(label)}</span><strong>${cleanText(value)}</strong>
+        </div>
+      `).join("");
+
+      $("#fert-visit-check").innerHTML = bid.visitCountAligned
+        ? `<strong>Program check: PASS.</strong> ${cleanText(String(bid.applications.length))} schedule rows match ${cleanText(String(bid.fertilizerVisitsPerSeason))} fertilizer visits.`
+        : `<strong>Program check: REVIEW.</strong> ${cleanText(String(bid.applications.length))} schedule rows do not match ${cleanText(String(bid.fertilizerVisitsPerSeason))} fertilizer visits.`;
+
+      $("#fert-application-rows").innerHTML = bid.applications.map((application) => `
+        <tr>
+          <td>${cleanText(application.stage)}</td>
+          <td>${cleanText(application.timing)}</td>
+          <td>${cleanText(application.productName)}</td>
+          <td>${cleanText(application.analysis)}</td>
+          <td>${cleanText(fixedNumber(application.nitrogenRateLbPer1000, 2))}</td>
+          <td>${cleanText(fixedNumber(application.productRateLbPer1000, 2))}</td>
+          <td>${cleanText(fixedNumber(application.productNeededLb, 1))} lb</td>
+          <td>${cleanText(fixedNumber(application.bagsUsed, 2))}</td>
+          <td>${cleanText(fixedMoney(application.materialCost))}</td>
+          <td>${cleanText(fixedNumber(application.laborHours, 2))}</td>
+          <td>${cleanText(fixedMoney(application.laborCost))}</td>
+          <td>${cleanText(fixedMoney(application.vehicleOverheadSegway))}</td>
+          <td>${cleanText(fixedMoney(application.totalCost))}</td>
+          <td><strong>${cleanText(fixedMoney(application.quotedCharge))}</strong></td>
+          <td>${cleanText(fixedMoney(application.grossProfit))}</td>
+          <td>${cleanText(fixedPercent(application.margin))}</td>
+        </tr>
+      `).join("");
+
+      const totalBagsUsed = bid.applications.reduce((sum, application) => sum + application.bagsUsed, 0);
+      const totalMaterialCost = bid.applications.reduce((sum, application) => sum + application.materialCost, 0);
+      $("#fert-application-totals").innerHTML = `
+        <tr>
+          <td colspan="6">Annual totals</td>
+          <td>${cleanText(fixedNumber(bid.totalProductAppliedLb, 1))} lb</td>
+          <td>${cleanText(fixedNumber(totalBagsUsed, 2))}</td>
+          <td>${cleanText(fixedMoney(totalMaterialCost))}</td>
+          <td>${cleanText(fixedNumber(bid.totalLaborHours, 2))}</td>
+          <td>${cleanText(fixedMoney(bid.totalLaborCost))}</td>
+          <td>${cleanText(fixedMoney(bid.totalVehicleOverheadSegway))}</td>
+          <td>${cleanText(fixedMoney(bid.operatingCost))}</td>
+          <td>${cleanText(fixedMoney(bid.annualPrice))}</td>
+          <td>${cleanText(fixedMoney(bid.grossProfit))}</td>
+          <td>${cleanText(fixedPercent(bid.grossMargin))}</td>
+        </tr>
+      `;
+
+      $("#fert-purchase-rows").innerHTML = bid.purchasePlan.map((product) => `
+        <tr>
+          <td>${cleanText(product.productName)}</td>
+          <td>${cleanText(fixedNumber(product.bagSizeLb, 1))} lb</td>
+          <td>${cleanText(fixedMoney(product.bagCost))}</td>
+          <td>${cleanText(fixedNumber(product.annualProductNeededLb, 1))} lb</td>
+          <td>${cleanText(String(product.bagsToPurchase))}</td>
+          <td>${cleanText(fixedMoney(product.cashPurchase))}</td>
+        </tr>
+      `).join("");
+      $("#fert-purchase-totals").innerHTML = `<tr><td colspan="5">Total cash product purchase</td><td>${cleanText(fixedMoney(bid.cashProductPurchase))}</td></tr>`;
+      $("#fert-config-version").textContent = `Pricing v${bidPricingConfig.version || 1}`;
+    }
+
+    function fertilizerBidNotes(bid) {
+      const stageLines = bid.applications.map((application) =>
+        `${application.stage} (${application.timing}): ${application.productName}, ${fixedNumber(application.productNeededLb, 1)} lb, ${fixedMoney(application.quotedCharge)}`
+      );
+      return [
+        `Fertilization Program - Pricing v${bidPricingConfig.version || 1}`,
+        `Turf: ${bid.lawnSqFt.toLocaleString()} sq ft`,
+        `Yearly quote: ${fixedMoney(bid.annualPrice)}`,
+        `Monthly payment: ${fixedMoney(bid.monthlyPayment)}`,
+        `Average application: ${fixedMoney(bid.averageApplicationCharge)}`,
+        `Gross margin: ${fixedPercent(bid.grossMargin)}`,
+        `Cash product purchase: ${fixedMoney(bid.cashProductPurchase)}`,
+        ...stageLines,
+        `The ${fixedMoney(bid.costReservePerVisit)} per-visit cost reserve is included in operating profit and excluded from first-job cash profit.`
+      ].join("\n");
+    }
+
+    function selectFertilizerJobPlan() {
+      const select = $("#owner_job_service_type");
+      if (!select) return;
+      let option = [...select.options].find((item) => item.value === "Fertilization Program");
+      if (!option) {
+        option = document.createElement("option");
+        option.value = "Fertilization Program";
+        option.textContent = "Fertilization Program";
+        select.append(option);
+      }
+      select.value = option.value;
+    }
+
+    async function saveFertilizerPricing(event) {
+      event.preventDefault();
+      try {
+        if (!adminPin()) throw new Error("Sign in as owner before saving pricing.");
+        const config = pricingFromForm();
+        $("#fert-pricing-result").innerHTML = notice("Saving fertilizer pricing...");
+        const data = await requestJson("portal-pricing", {
+          method: "PATCH",
+          headers: adminHeaders(),
+          body: JSON.stringify({ config })
+        });
+        bidPricingConfig = mergeBidPricingConfig(data.config);
+        populateBidPricingForm();
+        calculateBid();
+        calculateFertBid();
+        $("#fert-pricing-result").innerHTML = notice(`Fertilizer pricing v${data.version} saved.`);
+      } catch (error) {
+        $("#fert-pricing-result").innerHTML = notice(error.message, true);
+      }
     }
 
     function newestJob(jobs) {
@@ -5175,6 +5872,58 @@
       }
     }
 
+    function zellePaymentReference(invoice) {
+      const raw = String(invoice.payment_reference || "").trim();
+      if (raw) return raw;
+      const id = String(invoice.id || "").replace(/-/g, "");
+      return id ? `GG-${id.slice(0, 8).toUpperCase()}` : "GG-PAYMENT";
+    }
+
+    function zelleDisplayPhone(value) {
+      const digits = String(value || "").replace(/\D/g, "");
+      return digits.length === 10
+        ? `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+        : String(value || "");
+    }
+
+    function isZellePaymentPending(invoice) {
+      return String(invoice.status || "").toLowerCase() === "payment pending" ||
+        String(invoice.payment_url || "").startsWith("zelle-reported:");
+    }
+
+    function zellePaymentMarkup(invoice) {
+      if (isPaidInvoice(invoice)) {
+        return `<div class="zelle-pending"><strong>Payment confirmed.</strong> Green Grin has marked this invoice paid.</div>`;
+      }
+      const reference = zellePaymentReference(invoice);
+      if (isZellePaymentPending(invoice)) {
+        return `
+          <div class="zelle-pending">
+            <strong>Zelle payment reported.</strong>
+            Green Grin will verify the bank deposit before marking this invoice paid. Memo: ${cleanText(reference)}
+          </div>
+        `;
+      }
+      const recipient = portalConfig.zelleRecipientName || "Green Grin Lawns";
+      const phone = portalConfig.zellePhone || "2087408837";
+      const email = portalConfig.zelleEmail || "ken@greengrinlawns.com";
+      return `
+        <div class="zelle-payment-card">
+          <h3>Pay with Zelle</h3>
+          <p>Open Zelle in your bank app and send exactly <strong>${cleanText(money(invoice.amount) || "$0.00")}</strong>. Use either the phone or email below, not both.</p>
+          <div class="zelle-grid">
+            <div class="zelle-detail"><span>Recipient</span><strong>${cleanText(recipient)}</strong></div>
+            <div class="zelle-detail"><span>Payment memo</span><strong>${cleanText(reference)}</strong></div>
+            <div class="zelle-detail"><span>Phone</span><strong>${cleanText(zelleDisplayPhone(phone))}</strong><button class="button small ghost" type="button" data-zelle-copy="${cleanText(phone)}">Copy phone</button></div>
+            <div class="zelle-detail"><span>Email</span><strong>${cleanText(email)}</strong><button class="button small ghost" type="button" data-zelle-copy="${cleanText(email)}">Copy email</button></div>
+          </div>
+          <button class="button small ghost" type="button" data-zelle-copy="${cleanText(reference)}">Copy payment memo</button>
+          <p class="zelle-warning">Before sending, confirm your bank shows <strong>${cleanText(recipient)}</strong> as the recipient. Only report the payment after your bank confirms it was sent.</p>
+          <button class="button secondary" type="button" data-zelle-report="${cleanText(invoice.id)}">I Sent This Zelle Payment</button>
+        </div>
+      `;
+    }
+
     function invoiceCard(invoice) {
       const amount = money(invoice.amount);
       const due = invoice.due_date ? displayScheduleDate(invoice.due_date) : "No due date";
@@ -5185,12 +5934,59 @@
           <p class="muted">${cleanText(amount || "$0.00")} - Due ${cleanText(due)}</p>
           <p class="muted">${cleanText(invoice.customer_code || "")}${invoice.customer_code ? " - " : ""}${cleanText(invoice.customer_name || "Customer")}</p>
           ${invoice.notes ? `<p>${cleanText(invoice.notes)}</p>` : ""}
+          ${zellePaymentMarkup(invoice)}
         </div>
       `;
     }
 
     function wireBillingButtons() {
-      return;
+      const list = $("#customer-invoice-list");
+      if (!list || list.dataset.billingWired === "true") return;
+      list.dataset.billingWired = "true";
+      list.addEventListener("click", async (event) => {
+        const copyButton = event.target.closest("button[data-zelle-copy]");
+        if (copyButton) {
+          const value = copyButton.dataset.zelleCopy || "";
+          try {
+            if (navigator.clipboard?.writeText) {
+              await navigator.clipboard.writeText(value);
+            } else {
+              const field = document.createElement("textarea");
+              field.value = value;
+              field.style.position = "fixed";
+              field.style.opacity = "0";
+              document.body.appendChild(field);
+              field.select();
+              document.execCommand("copy");
+              field.remove();
+            }
+            const original = copyButton.textContent;
+            copyButton.textContent = "Copied";
+            setTimeout(() => { copyButton.textContent = original; }, 1400);
+          } catch (_error) {
+            $("#billing-result").innerHTML = notice(`Copy failed. Please copy this manually: ${value}`, true);
+          }
+          return;
+        }
+
+        const reportButton = event.target.closest("button[data-zelle-report]");
+        if (!reportButton) return;
+        if (!confirm("Only continue if your bank confirms the Zelle payment was sent. Report this payment now?")) return;
+        reportButton.disabled = true;
+        reportButton.textContent = "Reporting payment...";
+        try {
+          const data = await requestJson("portal-account", {
+            method: "PATCH",
+            body: JSON.stringify({ zelle_payment: { invoice_id: reportButton.dataset.zelleReport } })
+          });
+          renderAccount(data);
+          $("#billing-result").innerHTML = notice("Payment reported. Green Grin will verify the bank deposit before marking the invoice paid.");
+        } catch (error) {
+          reportButton.disabled = false;
+          reportButton.textContent = "I Sent This Zelle Payment";
+          $("#billing-result").innerHTML = notice(error.message, true);
+        }
+      });
     }
 
     function invoiceNumber(invoice) {
@@ -5214,7 +6010,10 @@
         invoice.due_date,
         invoice.status,
         invoice.service_line,
-        invoice.notes
+        invoice.notes,
+        invoice.payment_method,
+        invoice.payment_reference,
+        invoice.payment_reported_at
       ].map((item) => String(item || "").toLowerCase()).join(" ");
     }
 
@@ -5226,6 +6025,7 @@
             <p class="muted">${cleanText(invoiceNumber(invoice))}</p>
             <p>${cleanText(invoice.service_line || invoice.notes || "")}</p>
             ${invoice.service_line && invoice.notes ? `<p class="muted">${cleanText(invoice.notes)}</p>` : ""}
+            ${isZellePaymentPending(invoice) ? `<div class="zelle-pending"><strong>Zelle payment reported.</strong> Verify the bank deposit before selecting Mark Paid.<br><span class="muted">Memo: ${cleanText(zellePaymentReference(invoice))}</span></div>` : ""}
             <div class="row-actions">
               <button class="button small ghost" data-invoice-action="edit" type="button">Edit</button>
               ${invoice.status === "Draft" ? `<button class="button small" data-invoice-action="send" type="button">Send</button>` : ""}
@@ -6755,6 +7555,7 @@
       const form = event.currentTarget || $("#invoice-form");
       const intent = event.submitter?.dataset.invoiceIntent || "draft";
       const id = $("#invoice_id").value;
+      const existingInvoice = invoiceDrafts.find((invoice) => invoice.id === id) || {};
       const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || null;
       if (!selectedCustomer) {
         $("#invoice-result").innerHTML = notice("Choose a customer before saving an invoice.", true);
@@ -6772,6 +7573,11 @@
         status: intent === "send" ? "Sent" : ($("#invoice_status").value === "Sent" ? "Draft" : ($("#invoice_status").value || "Draft")),
         service_line: $("#invoice_custom_service").value || $("#invoice_notes").value || "Monthly service",
         notes: $("#invoice_notes").value || "Monthly service",
+        payment_url: existingInvoice.payment_url || "",
+        payment_method: existingInvoice.payment_method || "",
+        payment_reference: existingInvoice.payment_reference || "",
+        payment_reported_at: existingInvoice.payment_reported_at || null,
+        payment_confirmed_at: existingInvoice.payment_confirmed_at || null,
         notify_customer: intent === "send"
       };
       $("#invoice-result").innerHTML = notice(intent === "send" ? "Sending invoice..." : "Saving draft...");

@@ -301,6 +301,10 @@ create table if not exists public.green_grin_invoices (
   service_line text,
   notes text,
   payment_url text,
+  payment_method text,
+  payment_reference text,
+  payment_reported_at timestamptz,
+  payment_confirmed_at timestamptz,
   active boolean not null default true
 );
 
@@ -318,6 +322,18 @@ alter table public.green_grin_invoices
 
 alter table public.green_grin_invoices
   add column if not exists payment_url text;
+
+alter table public.green_grin_invoices
+  add column if not exists payment_method text;
+
+alter table public.green_grin_invoices
+  add column if not exists payment_reference text;
+
+alter table public.green_grin_invoices
+  add column if not exists payment_reported_at timestamptz;
+
+alter table public.green_grin_invoices
+  add column if not exists payment_confirmed_at timestamptz;
 
 alter table public.green_grin_invoices
   add column if not exists service_line text;

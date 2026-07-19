@@ -43,6 +43,8 @@ async function supabase(path, options = {}) {
 
 function invoicePayload(body) {
   const amount = Number(body.amount);
+  const status = body.status || "Draft";
+  const isPaid = status === "Paid";
   return {
     customer_user_id: body.customer_user_id || null,
     customer_code: body.customer_code || "",
@@ -51,12 +53,41 @@ function invoicePayload(body) {
     email: body.email || "",
     amount: Number.isFinite(amount) ? amount : 0,
     due_date: body.due_date || null,
-    status: body.status || "Draft",
+    status,
     service_line: body.service_line || "",
     notes: body.notes || "",
-    payment_url: "",
-    active: true
+    payment_url: body.payment_url || "",
+    payment_method: body.payment_method || "",
+    payment_reference: body.payment_reference || "",
+    payment_reported_at: body.payment_reported_at || null,
+    payment_confirmed_at: isPaid
+      ? (body.payment_confirmed_at || new Date().toISOString())
+      : null,
+    active: body.active !== false
   };
+}
+
+function legacyInvoicePayload(payload) {
+  const legacy = { ...payload };
+  delete legacy.payment_method;
+  delete legacy.payment_reference;
+  delete legacy.payment_reported_at;
+  delete legacy.payment_confirmed_at;
+  return legacy;
+}
+
+function isMissingPaymentColumn(error) {
+  return /payment_method|payment_reference|payment_reported_at|payment_confirmed_at|schema cache/i.test(error?.message || "");
+}
+
+async function saveInvoice(path, method, body) {
+  const payload = invoicePayload(body);
+  try {
+    return await supabase(path, { method, body: JSON.stringify(payload) });
+  } catch (error) {
+    if (!isMissingPaymentColumn(error)) throw error;
+    return await supabase(path, { method, body: JSON.stringify(legacyInvoicePayload(payload)) });
+  }
 }
 
 async function notifyInvoice(invoice) {
@@ -105,10 +136,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
 
     if (event.httpMethod === "POST") {
-      const rows = await supabase("green_grin_invoices", {
-        method: "POST",
-        body: JSON.stringify(invoicePayload(body))
-      });
+      const rows = await saveInvoice("green_grin_invoices", "POST", body);
       const invoice = rows?.[0] || null;
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
       return json(200, { invoice, push });
@@ -116,10 +144,7 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "PATCH") {
       if (!body.id) return json(400, { error: "Invoice id is required." });
-      const rows = await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(body.id)}`, {
-        method: "PATCH",
-        body: JSON.stringify(invoicePayload(body))
-      });
+      const rows = await saveInvoice(`green_grin_invoices?id=eq.${encodeURIComponent(body.id)}`, "PATCH", body);
       const invoice = rows?.[0] || null;
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
       return json(200, { invoice, push });
@@ -136,3 +161,5 @@ exports.handler = async (event) => {
     return json(500, { error: error.message });
   }
 };
+
+exports._test = { invoicePayload, legacyInvoicePayload, isMissingPaymentColumn };

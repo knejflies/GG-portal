@@ -57,6 +57,12 @@ function positiveInteger(value, name, maximum = 1000) {
   return number;
 }
 
+function nonnegativeInteger(value, name, maximum = 1000) {
+  const number = finiteNumber(value, name, { minimum: 0, maximum });
+  if (!Number.isInteger(number)) throw new Error(`${name} must be a whole number.`);
+  return number;
+}
+
 function cleanName(value, fallback) {
   const name = String(value || "").trim().slice(0, 80);
   return name || fallback;
@@ -66,6 +72,20 @@ function cleanIncludes(value, fallback) {
   const items = Array.isArray(value) ? value : String(value || "").split("\n");
   const cleaned = items.map((item) => String(item || "").trim().slice(0, 100)).filter(Boolean).slice(0, 20);
   return cleaned.length ? cleaned : [...fallback];
+}
+
+function cleanShortText(value, fallback, maximum = 100) {
+  const text = String(value || "").trim().slice(0, maximum);
+  return text || fallback;
+}
+
+function cleanAnalysis(value, fallback) {
+  const analysis = cleanShortText(value, fallback, 24);
+  if (!/^\d+(?:\.\d+)?-\d+(?:\.\d+)?-\d+(?:\.\d+)?$/.test(analysis)) {
+    throw new Error("Fertilizer analysis must use a format like 20-1-5.");
+  }
+  if (Number(analysis.split("-")[0]) <= 0) throw new Error("Fertilizer nitrogen analysis must be greater than zero.");
+  return analysis;
 }
 
 function normalizePricing(input, nextVersion) {
@@ -111,6 +131,53 @@ function normalizePricing(input, nextVersion) {
     visitsPerYear: positiveInteger(beds.visitsPerYear, "Flowerbed fertilization visits", 100)
   };
 
+  const fertilizerDefaults = DEFAULT_PRICING.fertilizerBid;
+  const fertilizer = source.fertilizerBid || fertilizerDefaults;
+  normalized.fertilizerBid = {
+    applicationProductionSqFtPerHour: finiteNumber(fertilizer.applicationProductionSqFtPerHour ?? fertilizerDefaults.applicationProductionSqFtPerHour, "Fertilizer production rate", { minimum: 1, maximum: 10000000 }),
+    fixedSetupHours: finiteNumber(fertilizer.fixedSetupHours ?? fertilizerDefaults.fixedSetupHours, "Fertilizer setup time", { minimum: 0, maximum: 24 }),
+    minimumBillableHours: finiteNumber(fertilizer.minimumBillableHours ?? fertilizerDefaults.minimumBillableHours, "Fertilizer minimum billable time", { minimum: 0, maximum: 24 }),
+    loadedLaborRatePerHour: finiteNumber(fertilizer.loadedLaborRatePerHour ?? fertilizerDefaults.loadedLaborRatePerHour, "Fertilizer labor rate", { minimum: 0, maximum: 10000 }),
+    vehicleEquipmentPerVisit: finiteNumber(fertilizer.vehicleEquipmentPerVisit ?? fertilizerDefaults.vehicleEquipmentPerVisit, "Fertilizer vehicle and equipment cost", { minimum: 0, maximum: 100000 }),
+    adminOverheadPerVisit: finiteNumber(fertilizer.adminOverheadPerVisit ?? fertilizerDefaults.adminOverheadPerVisit, "Fertilizer admin overhead", { minimum: 0, maximum: 100000 }),
+    costReservePerVisit: finiteNumber(fertilizer.costReservePerVisit ?? fertilizerDefaults.costReservePerVisit, "Fertilizer cost reserve", { minimum: 0, maximum: 100000 }),
+    targetGrossMargin: finiteNumber(fertilizer.targetGrossMargin ?? fertilizerDefaults.targetGrossMargin, "Fertilizer target gross margin", { minimum: 0, maximum: 0.99 }),
+    minimumApplicationCharge: finiteNumber(fertilizer.minimumApplicationCharge ?? fertilizerDefaults.minimumApplicationCharge, "Fertilizer minimum application charge", { minimum: 0, maximum: 1000000 }),
+    roundChargeTo: finiteNumber(fertilizer.roundChargeTo ?? fertilizerDefaults.roundChargeTo, "Fertilizer rounding increment", { minimum: 0.01, maximum: 100000 }),
+    segwayPurchaseCost: finiteNumber(fertilizer.segwayPurchaseCost ?? fertilizerDefaults.segwayPurchaseCost, "Segway purchase cost", { minimum: 0, maximum: 1000000 }),
+    recoveryPeriodSeasons: finiteNumber(fertilizer.recoveryPeriodSeasons ?? fertilizerDefaults.recoveryPeriodSeasons, "Segway recovery period", { minimum: 0.01, maximum: 100 }),
+    fertilizerVisitsPerSeason: positiveInteger(fertilizer.fertilizerVisitsPerSeason ?? fertilizerDefaults.fertilizerVisitsPerSeason, "Fertilizer visits per season", 100),
+    mowingVisitsPerSeason: nonnegativeInteger(fertilizer.mowingVisitsPerSeason ?? fertilizerDefaults.mowingVisitsPerSeason, "Mowing visits per season", 365),
+    paymentsPerYear: positiveInteger(fertilizer.paymentsPerYear ?? fertilizerDefaults.paymentsPerYear, "Fertilizer payments per year", 24),
+    products: {},
+    applications: []
+  };
+
+  const productIds = Object.keys(fertilizerDefaults.products);
+  const fertilizerProducts = fertilizer.products || {};
+  for (const productId of productIds) {
+    const fallback = fertilizerDefaults.products[productId];
+    const product = fertilizerProducts[productId] || fallback;
+    normalized.fertilizerBid.products[productId] = {
+      name: cleanName(product.name, fallback.name),
+      analysis: cleanAnalysis(product.analysis, fallback.analysis),
+      bagSizeLb: finiteNumber(product.bagSizeLb ?? fallback.bagSizeLb, `${fallback.name} bag size`, { minimum: 0.01, maximum: 100000 }),
+      bagCost: finiteNumber(product.bagCost ?? fallback.bagCost, `${fallback.name} bag cost`, { minimum: 0, maximum: 1000000 })
+    };
+  }
+
+  const fertilizerApplications = Array.isArray(fertilizer.applications) ? fertilizer.applications : [];
+  fertilizerDefaults.applications.forEach((fallback, index) => {
+    const application = fertilizerApplications[index] || fallback;
+    const productId = productIds.includes(application.productId) ? application.productId : fallback.productId;
+    normalized.fertilizerBid.applications.push({
+      stage: cleanShortText(application.stage, fallback.stage, 80),
+      timing: cleanShortText(application.timing, fallback.timing, 80),
+      productId,
+      nitrogenRateLbPer1000: finiteNumber(application.nitrogenRateLbPer1000 ?? fallback.nitrogenRateLbPer1000, `${fallback.stage} nitrogen rate`, { minimum: 0.01, maximum: 100 })
+    });
+  });
+
   return normalized;
 }
 
@@ -126,8 +193,9 @@ exports.handler = async (event) => {
       try {
         const rows = await supabase("green_grin_pricing_config?select=config,version,updated_at&id=eq.active&limit=1");
         if (rows?.[0]?.config) {
+          const config = normalizePricing(rows[0].config, rows[0].version || rows[0].config.version || 1);
           return json(200, {
-            config: rows[0].config,
+            config,
             version: rows[0].version,
             updated_at: rows[0].updated_at,
             using_defaults: false
