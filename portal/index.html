@@ -450,9 +450,17 @@
       padding: 16px;
     }
 
-    .zelle-payment-card {
+    .payment-options,
+    .payment-card {
       display: grid;
       gap: 12px;
+    }
+
+    .payment-options {
+      margin-top: 14px;
+    }
+
+    .payment-card {
       margin-top: 14px;
       padding: 15px;
       border: 1px solid rgba(98, 208, 81, 0.34);
@@ -460,18 +468,18 @@
       background: rgba(24, 74, 45, 0.38);
     }
 
-    .zelle-payment-card h3,
-    .zelle-payment-card p {
+    .payment-card h3,
+    .payment-card p {
       margin: 0;
     }
 
-    .zelle-grid {
+    .payment-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 9px;
     }
 
-    .zelle-detail {
+    .payment-detail {
       display: grid;
       gap: 4px;
       min-width: 0;
@@ -481,33 +489,33 @@
       background: rgba(2, 14, 8, 0.34);
     }
 
-    .zelle-detail span {
+    .payment-detail span {
       color: var(--muted);
       font-size: 0.78rem;
       font-weight: 850;
       text-transform: uppercase;
     }
 
-    .zelle-detail strong {
+    .payment-detail strong {
       overflow-wrap: anywhere;
     }
 
-    .zelle-warning,
-    .zelle-pending {
+    .payment-warning,
+    .payment-pending {
       padding: 11px 12px;
       border-left: 4px solid #f2c94c;
       border-radius: 8px;
       background: rgba(242, 201, 76, 0.12);
     }
 
-    .zelle-pending {
+    .payment-pending {
       margin-top: 12px;
       border-left-color: var(--leaf);
       background: rgba(98, 208, 81, 0.12);
     }
 
     @media (max-width: 620px) {
-      .zelle-grid {
+      .payment-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -6059,7 +6067,7 @@
       }
     }
 
-    function zellePaymentReference(invoice) {
+    function paymentReference(invoice) {
       const raw = String(invoice.payment_reference || "").trim();
       if (raw) return raw;
       const id = String(invoice.id || "").replace(/-/g, "");
@@ -6073,40 +6081,60 @@
         : String(value || "");
     }
 
-    function isZellePaymentPending(invoice) {
-      return String(invoice.status || "").toLowerCase() === "payment pending" ||
-        String(invoice.payment_url || "").startsWith("zelle-reported:");
+    function paymentMethod(invoice) {
+      const explicit = String(invoice.payment_method || "").trim();
+      if (explicit) return explicit;
+      const match = String(invoice.payment_url || "").match(/^(zelle|venmo)-reported:/i);
+      return match ? `${match[1][0].toUpperCase()}${match[1].slice(1).toLowerCase()}` : "Payment";
     }
 
-    function zellePaymentMarkup(invoice) {
+    function isPaymentPending(invoice) {
+      return String(invoice.status || "").toLowerCase() === "payment pending" ||
+        /^(zelle|venmo)-reported:/.test(String(invoice.payment_url || ""));
+    }
+
+    function paymentOptionsMarkup(invoice) {
       if (isPaidInvoice(invoice)) {
-        return `<div class="zelle-pending"><strong>Payment confirmed.</strong> Green Grin has marked this invoice paid.</div>`;
+        return `<div class="payment-pending"><strong>Payment confirmed.</strong> Green Grin has marked this invoice paid.</div>`;
       }
-      const reference = zellePaymentReference(invoice);
-      if (isZellePaymentPending(invoice)) {
+      const reference = paymentReference(invoice);
+      if (isPaymentPending(invoice)) {
         return `
-          <div class="zelle-pending">
-            <strong>Zelle payment reported.</strong>
-            Green Grin will verify the bank deposit before marking this invoice paid. Memo: ${cleanText(reference)}
+          <div class="payment-pending">
+            <strong>${cleanText(paymentMethod(invoice))} payment reported.</strong>
+            Green Grin will verify the payment before marking this invoice paid. Memo: ${cleanText(reference)}
           </div>
         `;
       }
       const recipient = portalConfig.zelleRecipientName || "Green Grin Lawns";
       const phone = portalConfig.zellePhone || "2087408837";
       const email = portalConfig.zelleEmail || "ken@greengrinlawns.com";
+      const venmo = portalConfig.venmoHandle || "@greengrinlawns";
       return `
-        <div class="zelle-payment-card">
-          <h3>Pay with Zelle</h3>
-          <p>Open Zelle in your bank app and send exactly <strong>${cleanText(money(invoice.amount) || "$0.00")}</strong>. Use either the phone or email below, not both.</p>
-          <div class="zelle-grid">
-            <div class="zelle-detail"><span>Recipient</span><strong>${cleanText(recipient)}</strong></div>
-            <div class="zelle-detail"><span>Payment memo</span><strong>${cleanText(reference)}</strong></div>
-            <div class="zelle-detail"><span>Phone</span><strong>${cleanText(zelleDisplayPhone(phone))}</strong><button class="button small ghost" type="button" data-zelle-copy="${cleanText(phone)}">Copy phone</button></div>
-            <div class="zelle-detail"><span>Email</span><strong>${cleanText(email)}</strong><button class="button small ghost" type="button" data-zelle-copy="${cleanText(email)}">Copy email</button></div>
+        <div class="payment-options">
+          <div class="payment-card">
+            <h3>Pay with Zelle</h3>
+            <p>Open Zelle in your bank app and send exactly <strong>${cleanText(money(invoice.amount) || "$0.00")}</strong>. Use either the phone or email below, not both.</p>
+            <div class="payment-grid">
+              <div class="payment-detail"><span>Recipient</span><strong>${cleanText(recipient)}</strong></div>
+              <div class="payment-detail"><span>Payment memo</span><strong>${cleanText(reference)}</strong></div>
+              <div class="payment-detail"><span>Phone</span><strong>${cleanText(zelleDisplayPhone(phone))}</strong><button class="button small ghost" type="button" data-payment-copy="${cleanText(phone)}">Copy phone</button></div>
+              <div class="payment-detail"><span>Email</span><strong>${cleanText(email)}</strong><button class="button small ghost" type="button" data-payment-copy="${cleanText(email)}">Copy email</button></div>
+            </div>
+            <button class="button small ghost" type="button" data-payment-copy="${cleanText(reference)}">Copy payment memo</button>
+            <p class="payment-warning">Before sending, confirm your bank shows <strong>${cleanText(recipient)}</strong> as the recipient.</p>
+            <button class="button secondary" type="button" data-payment-report="${cleanText(invoice.id)}" data-payment-method="Zelle">I Sent This Zelle Payment</button>
           </div>
-          <button class="button small ghost" type="button" data-zelle-copy="${cleanText(reference)}">Copy payment memo</button>
-          <p class="zelle-warning">Before sending, confirm your bank shows <strong>${cleanText(recipient)}</strong> as the recipient. Only report the payment after your bank confirms it was sent.</p>
-          <button class="button secondary" type="button" data-zelle-report="${cleanText(invoice.id)}">I Sent This Zelle Payment</button>
+          <div class="payment-card">
+            <h3>Pay with Venmo</h3>
+            <p>Open Venmo, search for the exact business username below, and send <strong>${cleanText(money(invoice.amount) || "$0.00")}</strong>.</p>
+            <div class="payment-grid">
+              <div class="payment-detail"><span>Venmo username</span><strong>${cleanText(venmo)}</strong><button class="button small ghost" type="button" data-payment-copy="${cleanText(venmo)}">Copy username</button></div>
+              <div class="payment-detail"><span>Payment memo</span><strong>${cleanText(reference)}</strong><button class="button small ghost" type="button" data-payment-copy="${cleanText(reference)}">Copy memo</button></div>
+            </div>
+            <p class="payment-warning">Before sending, confirm the Venmo business profile is <strong>Green Grin Lawns</strong> with username <strong>${cleanText(venmo)}</strong>.</p>
+            <button class="button secondary" type="button" data-payment-report="${cleanText(invoice.id)}" data-payment-method="Venmo">I Sent This Venmo Payment</button>
+          </div>
         </div>
       `;
     }
@@ -6121,7 +6149,7 @@
           <p class="muted">${cleanText(amount || "$0.00")} - Due ${cleanText(due)}</p>
           <p class="muted">${cleanText(invoice.customer_code || "")}${invoice.customer_code ? " - " : ""}${cleanText(invoice.customer_name || "Customer")}</p>
           ${invoice.notes ? `<p>${cleanText(invoice.notes)}</p>` : ""}
-          ${zellePaymentMarkup(invoice)}
+          ${paymentOptionsMarkup(invoice)}
         </div>
       `;
     }
@@ -6131,9 +6159,9 @@
       if (!list || list.dataset.billingWired === "true") return;
       list.dataset.billingWired = "true";
       list.addEventListener("click", async (event) => {
-        const copyButton = event.target.closest("button[data-zelle-copy]");
+        const copyButton = event.target.closest("button[data-payment-copy]");
         if (copyButton) {
-          const value = copyButton.dataset.zelleCopy || "";
+          const value = copyButton.dataset.paymentCopy || "";
           try {
             if (navigator.clipboard?.writeText) {
               await navigator.clipboard.writeText(value);
@@ -6156,21 +6184,22 @@
           return;
         }
 
-        const reportButton = event.target.closest("button[data-zelle-report]");
+        const reportButton = event.target.closest("button[data-payment-report]");
         if (!reportButton) return;
-        if (!confirm("Only continue if your bank confirms the Zelle payment was sent. Report this payment now?")) return;
+        const method = reportButton.dataset.paymentMethod || "payment";
+        if (!confirm(`Only continue if ${method} confirms the payment was sent. Report this payment now?`)) return;
         reportButton.disabled = true;
         reportButton.textContent = "Reporting payment...";
         try {
           const data = await requestJson("portal-account", {
             method: "PATCH",
-            body: JSON.stringify({ zelle_payment: { invoice_id: reportButton.dataset.zelleReport } })
+            body: JSON.stringify({ payment_report: { invoice_id: reportButton.dataset.paymentReport, method } })
           });
           renderAccount(data);
-          $("#billing-result").innerHTML = notice("Payment reported. Green Grin will verify the bank deposit before marking the invoice paid.");
+          $("#billing-result").innerHTML = notice("Payment reported. Green Grin will verify it before marking the invoice paid.");
         } catch (error) {
           reportButton.disabled = false;
-          reportButton.textContent = "I Sent This Zelle Payment";
+          reportButton.textContent = `I Sent This ${method} Payment`;
           $("#billing-result").innerHTML = notice(error.message, true);
         }
       });
@@ -6212,7 +6241,7 @@
             <p class="muted">${cleanText(invoiceNumber(invoice))}</p>
             <p>${cleanText(invoice.service_line || invoice.notes || "")}</p>
             ${invoice.service_line && invoice.notes ? `<p class="muted">${cleanText(invoice.notes)}</p>` : ""}
-            ${isZellePaymentPending(invoice) ? `<div class="zelle-pending"><strong>Zelle payment reported.</strong> Verify the bank deposit before selecting Mark Paid.<br><span class="muted">Memo: ${cleanText(zellePaymentReference(invoice))}</span></div>` : ""}
+            ${isPaymentPending(invoice) ? `<div class="payment-pending"><strong>${cleanText(paymentMethod(invoice))} payment reported.</strong> Verify the payment before selecting Mark Paid.<br><span class="muted">Memo: ${cleanText(paymentReference(invoice))}</span></div>` : ""}
             <div class="row-actions">
               <button class="button small ghost" data-invoice-action="edit" type="button">Edit</button>
               ${invoice.status === "Draft" ? `<button class="button small" data-invoice-action="send" type="button">Send</button>` : ""}

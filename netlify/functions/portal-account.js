@@ -87,7 +87,16 @@ function isMissingPaymentColumn(error) {
   return /payment_method|payment_reference|payment_reported_at|payment_confirmed_at|schema cache/i.test(error?.message || "");
 }
 
-async function reportZellePayment(user, invoiceId) {
+function normalizePaymentMethod(value) {
+  const method = String(value || "").trim().toLowerCase();
+  if (method === "zelle") return "Zelle";
+  if (method === "venmo") return "Venmo";
+  return "";
+}
+
+async function reportPayment(user, invoiceId, requestedMethod) {
+  const method = normalizePaymentMethod(requestedMethod);
+  if (!method) return { error: "Choose Zelle or Venmo as the payment method.", statusCode: 400 };
   const customer = await ensureCustomer(user);
   const rows = await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(invoiceId)}&active=eq.true&limit=1`);
   const invoice = rows?.[0];
@@ -98,18 +107,18 @@ async function reportZellePayment(user, invoiceId) {
     return { error: "This invoice is already marked paid.", statusCode: 409 };
   }
   const alreadyPending = String(invoice.status || "").toLowerCase() === "payment pending" ||
-    String(invoice.payment_url || "").startsWith("zelle-reported:");
+    /^(zelle|venmo)-reported:/.test(String(invoice.payment_url || ""));
   if (alreadyPending) return { account: await loadAccount(user), push: null };
 
   const reportedAt = new Date().toISOString();
   const reference = invoice.payment_reference || invoicePaymentReference(invoice);
   const paymentUpdate = {
     status: "Payment Pending",
-    payment_method: "Zelle",
+    payment_method: method,
     payment_reference: reference,
     payment_reported_at: reportedAt,
     payment_confirmed_at: null,
-    payment_url: `zelle-reported:${reportedAt}`
+    payment_url: `${method.toLowerCase()}-reported:${reportedAt}`
   };
   try {
     await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(invoice.id)}`, {
@@ -125,16 +134,16 @@ async function reportZellePayment(user, invoiceId) {
   }
 
   const push = await sendPushToTarget(supabase, { owner_type: "admin" }, {
-    title: "Zelle payment reported",
-    body: `${customer.full_name || invoice.customer_name || "Customer"} reported $${Number(invoice.amount || 0).toFixed(2)} for ${reference}. Verify the bank deposit before marking paid.`,
+    title: `${method} payment reported`,
+    body: `${customer.full_name || invoice.customer_name || "Customer"} reported a $${Number(invoice.amount || 0).toFixed(2)} ${method} payment for ${reference}. Verify the payment before marking paid.`,
     url: "/admin/",
-    tag: `green-grin-zelle-${invoice.id}`
+    tag: `green-grin-${method.toLowerCase()}-${invoice.id}`
   }).catch(() => null);
 
   return {
     account: await loadAccount(user),
     push,
-    zelle_payment: { invoice_id: invoice.id, reference, reported_at: reportedAt }
+    payment_report: { invoice_id: invoice.id, method, reference, reported_at: reportedAt }
   };
 }
 
@@ -305,10 +314,13 @@ exports.handler = async (event) => {
     if (event.httpMethod === "PATCH") {
       const body = JSON.parse(event.body || "{}");
 
-      if (body.zelle_payment?.invoice_id) {
-        const result = await reportZellePayment(user, body.zelle_payment.invoice_id);
+      const paymentReport = body.payment_report || (body.zelle_payment?.invoice_id
+        ? { invoice_id: body.zelle_payment.invoice_id, method: "Zelle" }
+        : null);
+      if (paymentReport?.invoice_id) {
+        const result = await reportPayment(user, paymentReport.invoice_id, paymentReport.method);
         if (result.error) return json(result.statusCode || 400, { error: result.error });
-        return json(200, { ...result.account, push: result.push, zelle_payment: result.zelle_payment || null });
+        return json(200, { ...result.account, push: result.push, payment_report: result.payment_report || null });
       }
 
       if (Object.prototype.hasOwnProperty.call(body, "plan_request")) {
@@ -399,4 +411,4 @@ exports.handler = async (event) => {
   }
 };
 
-exports._test = { invoicePaymentReference, invoiceBelongsToCustomer, isMissingPaymentColumn };
+exports._test = { invoicePaymentReference, invoiceBelongsToCustomer, isMissingPaymentColumn, normalizePaymentMethod };

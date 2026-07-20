@@ -13,7 +13,8 @@ exports.handler = async () => {
       vapidPublicKey: process.env.GREEN_GRIN_VAPID_PUBLIC_KEY || "",
       zelleRecipientName: process.env.GREEN_GRIN_ZELLE_RECIPIENT_NAME || "Green Grin Lawns",
       zellePhone: process.env.GREEN_GRIN_ZELLE_PHONE || "2087408837",
-      zelleEmail: process.env.GREEN_GRIN_ZELLE_EMAIL || "ken@greengrinlawns.com"
+      zelleEmail: process.env.GREEN_GRIN_ZELLE_EMAIL || "ken@greengrinlawns.com",
+      venmoHandle: process.env.GREEN_GRIN_VENMO_HANDLE || "@greengrinlawns"
     })
   };
 };

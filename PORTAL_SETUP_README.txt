@@ -2,7 +2,7 @@ GREEN GRIN PORTAL SETUP
 
 This portal is built for Netlify + Supabase + app notifications.
 There is no SMS setup in this version.
-Customer invoices include manual Zelle payment instructions and bank-deposit verification.
+Customer invoices include manual Zelle and Venmo payment instructions with owner verification.
 
 LIVE URLS
 - Main site: /
@@ -29,8 +29,8 @@ WHAT WORKS AFTER SETUP
 - Admin can scan receipt photos with AI, review the result, and save expenses.
 - Admin can log start/end mileage and have the calculated miles added as a vehicle expense at $0.76 per mile.
 - Sent invoices show in the customer's Billing tab.
-- Customers can send invoice payments by Zelle to Green Grin Lawns, then report the payment as pending.
-- Admin receives an app notification, verifies the bank deposit, and marks the invoice paid.
+- Customers can send invoice payments by Zelle or Venmo to Green Grin Lawns, then report the payment as pending.
+- Admin receives an app notification, verifies the payment, and marks the invoice paid.
 - Admin can send a monthly invoice calculated from that month's scheduled service weeks.
 - Employees can request access.
 - Admin can approve/deactivate/delete employees, set PINs, and set hourly rates.
@@ -88,6 +88,7 @@ GREEN_GRIN_VAPID_SUBJECT=mailto:notifications@greengrinlawns.com
 GREEN_GRIN_ZELLE_RECIPIENT_NAME=Green Grin Lawns
 GREEN_GRIN_ZELLE_PHONE=2087408837
 GREEN_GRIN_ZELLE_EMAIL=ken@greengrinlawns.com
+GREEN_GRIN_VENMO_HANDLE=@greengrinlawns
 OPENAI_API_KEY=your OpenAI API key for receipt scanning
 
 Do not put the notification keys text file in GitHub.
@@ -163,14 +164,15 @@ When you deploy a new version, the installed app usually updates the next time i
 If it looks stuck on an old version, fully close and reopen the app.
 
 PAYMENTS
-Sent and overdue invoices show Zelle instructions in the customer Billing tab.
-The customer sends the exact amount in their bank app to Green Grin Lawns using either:
+Sent and overdue invoices show Zelle and Venmo instructions in the customer Billing tab.
+For Zelle, the customer sends the exact amount in their bank app to Green Grin Lawns using either:
 - Phone: (208) 740-8837
 - Email: ken@greengrinlawns.com
-The customer includes the unique invoice memo, then taps I Sent This Zelle Payment.
+For Venmo, the customer searches the exact business username @greengrinlawns and confirms Green Grin Lawns before sending.
+The customer includes the unique invoice memo, then taps the matching I Sent This Payment button.
 The invoice moves to Payment Pending and the admin receives an app notification.
-The owner must verify the deposit in the bank account before selecting Mark Paid.
-The portal does not connect to the bank and never marks a Zelle payment paid automatically.
+The owner must verify the Zelle or Venmo payment before selecting Mark Paid.
+The portal does not connect to either payment service and never marks a payment paid automatically.
 
 EXPENSE SCANNER
 Admin -> Expenses can scan receipt photos after OPENAI_API_KEY is added in Netlify.

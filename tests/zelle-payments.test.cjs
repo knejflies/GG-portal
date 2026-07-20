@@ -51,15 +51,19 @@ assert.equal(invoiceModule._test.isMissingPaymentColumn(new Error("payment_refer
   assert.equal(config.zelleRecipientName, "Green Grin Lawns");
   assert.equal(config.zellePhone, "2087408837");
   assert.equal(config.zelleEmail, "ken@greengrinlawns.com");
+  assert.equal(config.venmoHandle, "@greengrinlawns");
 
   const files = ["portal.html", "admin/index.html", "employee/index.html", "portal/index.html"];
   const requiredMarkers = [
-    "function zellePaymentReference(invoice)",
-    "function isZellePaymentPending(invoice)",
-    'data-zelle-report="',
+    "function paymentReference(invoice)",
+    "function isPaymentPending(invoice)",
+    'data-payment-method="Zelle"',
+    'data-payment-method="Venmo"',
     "I Sent This Zelle Payment",
+    "I Sent This Venmo Payment",
+    "@greengrinlawns",
     "Payment Pending",
-    "Verify the bank deposit"
+    "Verify the payment"
   ];
   for (const file of files) {
     const html = fs.readFileSync(file, "utf8");
@@ -112,7 +116,7 @@ assert.equal(invoiceModule._test.isMissingPaymentColumn(new Error("payment_refer
   const reportEvent = {
     httpMethod: "PATCH",
     headers: { authorization: "Bearer customer-token" },
-    body: JSON.stringify({ zelle_payment: { invoice_id: apiInvoice.id } })
+    body: JSON.stringify({ payment_report: { invoice_id: apiInvoice.id, method: "Zelle" } })
   };
   const reportResponse = await accountModule.handler(reportEvent);
   const reportBody = JSON.parse(reportResponse.body);
@@ -127,6 +131,25 @@ assert.equal(invoiceModule._test.isMissingPaymentColumn(new Error("payment_refer
   assert.equal(repeatedResponse.statusCode, 200);
   assert.equal(paymentPatchCount, 1, "repeated payment reports should be idempotent");
 
+  apiInvoice = { ...apiInvoice, status: "Sent", payment_method: "", payment_reported_at: null, payment_url: "" };
+  const venmoEvent = {
+    ...reportEvent,
+    body: JSON.stringify({ payment_report: { invoice_id: apiInvoice.id, method: "Venmo" } })
+  };
+  const venmoResponse = await accountModule.handler(venmoEvent);
+  const venmoBody = JSON.parse(venmoResponse.body);
+  assert.equal(venmoResponse.statusCode, 200);
+  assert.equal(venmoBody.invoices[0].payment_method, "Venmo");
+  assert.ok(venmoBody.invoices[0].payment_url.startsWith("venmo-reported:"));
+  assert.equal(paymentPatchCount, 2);
+
+  apiInvoice = { ...apiInvoice, status: "Sent", payment_method: "", payment_reported_at: null, payment_url: "" };
+  const invalidResponse = await accountModule.handler({
+    ...reportEvent,
+    body: JSON.stringify({ payment_report: { invoice_id: apiInvoice.id, method: "Cash App" } })
+  });
+  assert.equal(invalidResponse.statusCode, 400, "unsupported payment methods must be rejected");
+
   apiInvoice = {
     ...apiInvoice,
     status: "Sent",
@@ -139,7 +162,7 @@ assert.equal(invoiceModule._test.isMissingPaymentColumn(new Error("payment_refer
   const forbiddenResponse = await accountModule.handler(reportEvent);
   assert.equal(forbiddenResponse.statusCode, 404, "customers must not report another account's invoice");
 
-  console.log("Zelle payment flow tests passed.");
+  console.log("Invoice payment option tests passed.");
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;
