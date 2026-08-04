@@ -1,0 +1,14 @@
+GREEN GRIN GOOGLE SHEETS FEED
+
+1. In Netlify, add GREEN_GRIN_SHEETS_SYNC_KEY with a long private value you make up.
+2. Redeploy the portal site.
+3. Create or open your Google Sheet.
+4. In the Sheet, open Extensions -> Apps Script.
+5. Replace the sample code with Code.gs from this folder and click Save.
+6. In Apps Script, open Project Settings -> Script properties.
+7. Add GREEN_GRIN_SITE_URL with your portal site address, such as https://portal.greengrinlawns.com
+8. Add GREEN_GRIN_SHEETS_SYNC_KEY with the exact same private value used in Netlify.
+9. Return to the Sheet and reload it.
+10. Open Green Grin -> Install 15-minute refresh and approve Google's permissions.
+
+The Customers tab will be created and refreshed automatically. Do not share the sync key or commit it to GitHub.

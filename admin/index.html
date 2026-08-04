@@ -144,7 +144,7 @@
       padding: 52px 0 30px;
       background:
         linear-gradient(90deg, rgba(18, 51, 36, 0.94), rgba(18, 51, 36, 0.68)),
-        url("assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center / cover;
+        url("/assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center / cover;
       color: var(--white);
     }
 
@@ -1237,7 +1237,7 @@
       padding: 30px 0 22px;
       background:
         linear-gradient(120deg, rgba(8, 17, 11, 0.84), rgba(4, 29, 17, 0.5)),
-        url("assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center 42% / cover;
+        url("/assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") center 42% / cover;
       border-bottom: 1px solid rgba(255, 255, 255, 0.09);
     }
 
@@ -1730,7 +1730,7 @@
     .hero {
       background:
         linear-gradient(112deg, rgba(2, 13, 8, 0.93), rgba(5, 36, 21, 0.66)),
-        url("assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
+        url("/assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
       border-bottom-color: rgba(201, 239, 187, 0.12);
       transition: background-position 160ms ease-out;
     }
@@ -1989,7 +1989,7 @@
       padding: 38px 0 28px;
       background:
         linear-gradient(104deg, rgba(1, 7, 4, 0.97) 5%, rgba(2, 24, 13, 0.82) 48%, rgba(3, 36, 19, 0.58) 100%),
-        url("assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
+        url("/assets/green-grin-caldwell-idaho-striped-lawn-mowing.jpg") calc(50% + var(--scene-x)) calc(42% + var(--scene-y)) / cover;
     }
 
     .hero-grid {
@@ -2111,6 +2111,13 @@
     .tabs::before {
       color: var(--chrome-mid);
     }
+
+    .chat-thread { display: grid; gap: 10px; max-height: 420px; overflow-y: auto; padding: 4px; }
+    .chat-bubble { max-width: 84%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); }
+    .chat-bubble.owner { margin-left: auto; background: var(--mint); border-color: #b9d99f; }
+    .chat-bubble p { margin: 0; }
+    .chat-bubble .muted { margin-top: 5px; font-size: .78rem; }
+    .chat-compose { margin-top: 14px; }
 
     .tab-section-label {
       margin: 8px 8px -2px;
@@ -2494,7 +2501,7 @@
     }
 
     .bid-settings[open] > summary::after {
-      content: "−";
+      content: "-";
     }
 
     .bid-settings form {
@@ -3215,7 +3222,7 @@
   <header>
     <div class="wrap nav">
       <a class="brand" href="/">
-        <img src="assets/green-grin-logo.png" alt="Green Grin Lawn & Landscape" />
+        <img src="/assets/green-grin-logo.png" alt="Green Grin Lawn & Landscape" />
       </a>
       <div class="nav-actions">
         <span id="account-pill" class="account-pill">Signed in</span>
@@ -3226,7 +3233,7 @@
   </header>
 
   <aside id="install-prompt" class="install-prompt" role="dialog" aria-labelledby="install-title" aria-describedby="install-copy" hidden>
-    <img src="assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
+    <img src="/assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
     <div>
       <strong id="install-title">Install Green Grin</strong>
       <p id="install-copy">Add this portal to your Home Screen.</p>
@@ -3244,7 +3251,7 @@
         <p id="portal-subtitle">Service status, billing, messages, and property details.</p>
       </div>
       <div class="portal-card">
-        <img src="assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
+        <img src="/assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
         <strong>Customer accounts</strong>
         <span>Green Grin service dashboard</span>
       </div>
@@ -3494,6 +3501,14 @@
       <div class="grid">
         <div class="card">
           <h2>Customer messages</h2>
+          <div id="customer-chat-list" class="chat-thread"></div>
+          <form id="customer-chat-form" class="chat-compose">
+            <label for="customer-chat-message">Message Green Grin</label>
+            <textarea id="customer-chat-message" maxlength="1000" required placeholder="Type your message"></textarea>
+            <button class="button" type="submit">Send Message</button>
+          </form>
+          <div id="customer-chat-result" aria-live="polite"></div>
+          <h3>Service notifications</h3>
           <div id="customer-message-list" class="status-box"></div>
         </div>
 
@@ -3590,6 +3605,16 @@
           <h2>Customer details</h2>
           <div id="customer-detail-result" class="status-box">
             <div class="notice">Select a customer to fill the job form or review their account details.</div>
+          </div>
+          <div id="admin-chat-panel" hidden>
+            <h3 id="admin-chat-title">Customer chat</h3>
+            <div id="admin-chat-list" class="chat-thread"></div>
+            <form id="admin-chat-form" class="chat-compose">
+              <label for="admin-chat-message">Reply</label>
+              <textarea id="admin-chat-message" maxlength="1000" required placeholder="Type your reply"></textarea>
+              <button class="button" type="submit">Send Reply</button>
+            </form>
+            <div id="admin-chat-result" aria-live="polite"></div>
           </div>
         </div>
       </div>
@@ -3884,7 +3909,7 @@
       <div class="bid-page-head">
         <div>
           <h2>Mowing Bidder</h2>
-          <p class="muted">One straightforward mowing quote—no plan selection.</p>
+          <p class="muted">One straightforward mowing quote - no plan selection.</p>
         </div>
         <span id="bid-config-version" class="badge">Pricing v1</span>
       </div>
@@ -4071,7 +4096,7 @@
         <details class="bid-settings fert-settings">
           <summary>Fertilizer Pricing Settings</summary>
           <form id="fert-pricing-form">
-            <p class="settings-help">The customer price uses the rate per 1,000 sq. ft. or the minimum—whichever is higher.</p>
+            <p class="settings-help">The customer price uses the rate per 1,000 sq. ft. or the minimum, whichever is higher.</p>
 
             <fieldset class="bid-setting-group quick-price-settings">
               <legend>Customer price</legend>
@@ -4413,6 +4438,7 @@
     let accountData = null;
     let invoiceDrafts = [];
     let invoiceCustomers = [];
+    let adminChatCustomer = null;
     let customerPlanOptions = [];
     let customerPlanDisclaimer = "";
     let latestBid = null;
@@ -6067,6 +6093,39 @@
       }
     }
 
+    function chatMessageCard(message) {
+      const owner = message.sender_type === "Owner";
+      const when = message.created_at ? new Date(message.created_at).toLocaleString() : "";
+      return `<div class="chat-bubble ${owner ? "owner" : "customer"}"><p>${cleanText(message.message || "")}</p><p class="muted">${cleanText(message.sender_name || message.sender_type || "Message")} | ${cleanText(when)}</p></div>`;
+    }
+
+    async function loadCustomerChat() {
+      if (!activeAccount || activeAccount.id === "employee") return;
+      const list = $("#customer-chat-list");
+      if (!list) return;
+      try {
+        const data = await requestJson("portal-chat");
+        list.innerHTML = data.messages?.length ? data.messages.map(chatMessageCard).join("") : notice("No messages yet. Send Green Grin a message here.");
+        list.scrollTop = list.scrollHeight;
+      } catch (error) {
+        list.innerHTML = notice(error.message, true);
+      }
+    }
+
+    async function loadAdminChat(customer) {
+      adminChatCustomer = customer;
+      $("#admin-chat-panel").hidden = false;
+      $("#admin-chat-title").textContent = `Chat with ${customer.name || customer.customer_code || "customer"}`;
+      $("#admin-chat-list").innerHTML = notice("Loading messages...");
+      try {
+        const data = await requestJson(`portal-chat?customer_user_id=${encodeURIComponent(customer.customer_user_id || customer.id)}`, { headers: adminHeaders() });
+        $("#admin-chat-list").innerHTML = data.messages?.length ? data.messages.map(chatMessageCard).join("") : notice("No messages yet.");
+        $("#admin-chat-list").scrollTop = $("#admin-chat-list").scrollHeight;
+      } catch (error) {
+        $("#admin-chat-list").innerHTML = notice(error.message, true);
+      }
+    }
+
     function paymentReference(invoice) {
       const raw = String(invoice.payment_reference || "").trim();
       if (raw) return raw;
@@ -6651,11 +6710,16 @@
             <p class="muted">${cleanText(preferenceLine(customer))}</p>
             <p class="muted">${cleanText(notificationLine(customer))}</p>
             <p class="muted">Yearly quote: ${annualAmount ? `$${Number(annualAmount).toFixed(2)}` : "Not set"}</p>
+            <div class="two">
+              <div><label>Weekly service day</label><select class="customer-service-weekday"><option value="">Use booking start day</option>${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"].map((day, dayIndex) => `<option value="${dayIndex}" ${customer.service_weekday === dayIndex ? "selected" : ""}>${day}</option>`).join("")}</select></div>
+              <button class="button small secondary" data-customer-list-action="save-service-day" type="button">Save Service Day</button>
+            </div>
             <div class="status-box">
               ${(customer.jobs || []).length ? (customer.jobs || []).slice(0, 4).map((item) => upcomingStep(item)).join("") : notice("No jobs created for this customer yet.")}
             </div>
             <div class="admin-actions">
               <button class="button small secondary" data-customer-list-action="details" type="button">View Details</button>
+              <button class="button small secondary" data-customer-list-action="chat" type="button">Open Chat</button>
               <button class="button small" data-customer-list-action="fill-job" type="button">Create Booking</button>
               <button class="button small" data-customer-list-action="invoice" type="button">Create Invoice</button>
               <button class="button small" data-customer-list-action="monthly-invoice" type="button">Send Monthly Invoice</button>
@@ -6740,6 +6804,7 @@
       $("#customer-message-list").innerHTML = logs.length
         ? logs.map((log) => customerMessageCard(log)).join("")
         : notice("No customer messages yet.");
+      loadCustomerChat();
 
       $("#billing-summary").textContent = currentPrice
         ? `${currentPrice} for ${customer.billing_plan || currentJob?.service_type || "service"} this month${currentMonthBilling.weeks === null ? "" : ` (${currentMonthBilling.weeks} scheduled service weeks)`}.`
@@ -7781,6 +7846,33 @@
       }
     });
 
+    $("#customer-chat-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const input = $("#customer-chat-message");
+      try {
+        await requestJson("portal-chat", { method: "POST", body: JSON.stringify({ message: input.value }) });
+        input.value = "";
+        $("#customer-chat-result").innerHTML = notice("Message sent.");
+        await loadCustomerChat();
+      } catch (error) {
+        $("#customer-chat-result").innerHTML = notice(error.message, true);
+      }
+    });
+
+    $("#admin-chat-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!adminChatCustomer) return;
+      const input = $("#admin-chat-message");
+      try {
+        await requestJson("portal-chat", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ customer_user_id: adminChatCustomer.customer_user_id || adminChatCustomer.id, message: input.value }) });
+        input.value = "";
+        $("#admin-chat-result").innerHTML = notice("Reply sent.");
+        await loadAdminChat(adminChatCustomer);
+      } catch (error) {
+        $("#admin-chat-result").innerHTML = notice(error.message, true);
+      }
+    });
+
     $("#invoice-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = event.currentTarget || $("#invoice-form");
@@ -8153,6 +8245,23 @@
 
       if (action === "details") {
         $("#customer-detail-result").innerHTML = customerDetailHtml(customer);
+        return;
+      }
+
+      if (action === "chat") {
+        await loadAdminChat(customer);
+        return;
+      }
+
+      if (action === "save-service-day") {
+        try {
+          const value = card.querySelector(".customer-service-weekday")?.value ?? "";
+          await requestJson("portal-customers", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ customer_user_id: customer.customer_user_id || customer.id, service_weekday: value === "" ? null : Number(value) }) });
+          customer.service_weekday = value === "" ? null : Number(value);
+          $("#customer-detail-result").innerHTML = notice(value === "" ? "Service day now follows the booking start date." : `Weekly service day saved as ${["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][Number(value)]}.`);
+        } catch (error) {
+          $("#customer-detail-result").innerHTML = notice(error.message, true);
+        }
         return;
       }
 
@@ -8864,6 +8973,3 @@
   </script>
 </body>
 </html>
-
-
-

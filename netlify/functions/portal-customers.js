@@ -59,13 +59,15 @@ async function archiveForCustomer({ customerUserId, phone, email }) {
     properties: [],
     jobs: [],
     invoices: [],
-    message_logs: []
+    message_logs: [],
+    chat_messages: []
   };
 
   if (customerUserId) {
     const customers = await supabase(`green_grin_customers?select=*&id=eq.${encodeURIComponent(customerUserId)}&limit=1`);
     archive.customer = customers?.[0] || null;
     archive.properties = await supabase(`green_grin_properties?select=*&customer_user_id=eq.${encodeURIComponent(customerUserId)}`);
+    archive.chat_messages = await supabase(`green_grin_customer_chat?select=*&customer_user_id=eq.${encodeURIComponent(customerUserId)}&order=created_at.asc`).catch(() => []);
   }
 
   const jobMatches = [];
@@ -145,6 +147,7 @@ exports.handler = async (event) => {
           billing_status: customer.billing_status || "",
           monthly_price: customer.monthly_price || newestJob.monthly_price || null,
           annual_price: customer.annual_price || newestJob.annual_price || null,
+          service_weekday: Number.isInteger(customer.service_weekday) ? customer.service_weekday : null,
           text_cleanup_reminders: customer.text_cleanup_reminders !== false,
           text_done_messages: customer.text_done_messages !== false,
           email_monthly_receipts: customer.email_monthly_receipts === true,
@@ -168,7 +171,18 @@ exports.handler = async (event) => {
     }
 
     if (event.httpMethod === "PATCH") {
-      if (!customerUserId) return json(400, { error: "Only account customers can be deactivated. Use Delete for request-only customers." });
+      if (!customerUserId) return json(400, { error: "Only account customers can be updated." });
+      if (Object.prototype.hasOwnProperty.call(body, "service_weekday")) {
+        const weekday = body.service_weekday === null || body.service_weekday === "" ? null : Number(body.service_weekday);
+        if (weekday !== null && (!Number.isInteger(weekday) || weekday < 0 || weekday > 6)) {
+          return json(400, { error: "Choose a valid service day." });
+        }
+        const rows = await supabase(`green_grin_customers?id=eq.${encodeURIComponent(customerUserId)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ service_weekday: weekday })
+        });
+        return json(200, { customer: rows?.[0] || null });
+      }
       const rows = await supabase(`green_grin_customers?id=eq.${encodeURIComponent(customerUserId)}`, {
         method: "PATCH",
         body: JSON.stringify({ active: false })
@@ -184,6 +198,7 @@ exports.handler = async (event) => {
       }
 
       if (customerUserId) {
+        await supabase(`green_grin_customer_chat?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" }).catch(() => null);
         await supabase(`green_grin_properties?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" });
         await supabase(`green_grin_jobs?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" });
         await supabase(`green_grin_invoices?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" });

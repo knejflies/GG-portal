@@ -99,6 +99,7 @@ create table if not exists public.green_grin_customers (
   billing_status text not null default 'Not connected',
   monthly_price numeric(10, 2),
   annual_price numeric(10, 2),
+  service_weekday smallint check (service_weekday between 0 and 6),
   text_cleanup_reminders boolean not null default true,
   text_done_messages boolean not null default true,
   email_monthly_receipts boolean not null default false,
@@ -132,6 +133,20 @@ alter table public.green_grin_customers
 
 alter table public.green_grin_customers
   add column if not exists annual_price numeric(10, 2);
+
+alter table public.green_grin_customers
+  add column if not exists service_weekday smallint check (service_weekday between 0 and 6);
+
+create table if not exists public.green_grin_customer_chat (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  customer_user_id uuid not null references auth.users(id) on delete cascade,
+  customer_code text,
+  sender_type text not null check (sender_type in ('Customer', 'Owner')),
+  sender_name text,
+  message text not null check (char_length(message) between 1 and 1000),
+  read_at timestamptz
+);
 
 alter table public.green_grin_customers
   add column if not exists text_cleanup_reminders boolean not null default true;
@@ -552,6 +567,7 @@ create index if not exists green_grin_time_entries_open_idx
   where clock_out_at is null;
 create index if not exists green_grin_message_log_created_at_idx on public.green_grin_message_log(created_at desc);
 create index if not exists green_grin_customers_customer_code_idx on public.green_grin_customers(customer_code);
+create index if not exists green_grin_customer_chat_customer_idx on public.green_grin_customer_chat(customer_user_id, created_at);
 create index if not exists green_grin_invoices_customer_user_idx on public.green_grin_invoices(customer_user_id);
 create index if not exists green_grin_invoices_customer_code_idx on public.green_grin_invoices(customer_code);
 create index if not exists green_grin_invoices_status_idx on public.green_grin_invoices(status);

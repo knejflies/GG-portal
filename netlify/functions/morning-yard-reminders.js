@@ -27,11 +27,12 @@ function localWeekday(value) {
   return new Date(year, month - 1, day).getDay();
 }
 
-function isServiceToday(job, today) {
+function isServiceToday(job, today, serviceWeekday = null) {
   if (job.recurring_weekly && job.schedule_start_date && job.schedule_end_date) {
     const start = dateOnly(job.schedule_start_date);
     const end = dateOnly(job.schedule_end_date);
-    return today >= start && today <= end && localWeekday(today) === localWeekday(start);
+    const weekday = Number.isInteger(serviceWeekday) ? serviceWeekday : localWeekday(start);
+    return today >= start && today <= end && localWeekday(today) === weekday;
   }
   return dateOnly(job.scheduled_date) === today;
 }
@@ -120,12 +121,19 @@ exports.handler = async () => {
   const today = localDate();
   const nowTime = localTime();
   const jobs = await supabase("green_grin_jobs?select=*&status=neq.Completed&limit=200");
+  const customers = await supabase("green_grin_customers?select=id,customer_code,email,phone,service_weekday,text_cleanup_reminders&active=eq.true&limit=500").catch(() => []);
 
   let sent = 0;
   let skipped = 0;
 
   for (const job of jobs || []) {
-    if (!isServiceToday(job, today)) {
+    const customer = (customers || []).find((row) =>
+      (job.customer_user_id && row.id === job.customer_user_id) ||
+      (job.customer_code && row.customer_code === job.customer_code) ||
+      (job.email && String(row.email || "").toLowerCase() === String(job.email).toLowerCase()) ||
+      (job.phone && normalizePhone(row.phone) === normalizePhone(job.phone))
+    );
+    if (customer?.text_cleanup_reminders === false || !isServiceToday(job, today, customer?.service_weekday ?? null)) {
       skipped += 1;
       continue;
     }
@@ -179,3 +187,5 @@ exports.handler = async () => {
     body: JSON.stringify({ date: today, time: nowTime, sent, skipped })
   };
 };
+
+exports._test = { isServiceToday, localWeekday };

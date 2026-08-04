@@ -89,6 +89,7 @@ GREEN_GRIN_ZELLE_RECIPIENT_NAME=Green Grin Lawns
 GREEN_GRIN_ZELLE_PHONE=2087408837
 GREEN_GRIN_ZELLE_EMAIL=ken@greengrinlawns.com
 GREEN_GRIN_VENMO_HANDLE=@greengrinlawns
+GREEN_GRIN_SHEETS_SYNC_KEY=make up a long private sync password
 OPENAI_API_KEY=your OpenAI API key for receipt scanning
 
 Do not put the notification keys text file in GitHub.
@@ -97,6 +98,12 @@ The SUPABASE_ANON_KEY and GREEN_GRIN_VAPID_PUBLIC_KEY are okay to expose.
 
 OPENAI_RECEIPT_MODEL is optional. Leave it out unless you are intentionally changing the receipt scanner model.
 GREEN_GRIN_GEOCODER_URL is optional. Leave it out to use the default OpenStreetMap address lookup.
+
+GOOGLE SHEETS CUSTOMER FEED
+1. Add GREEN_GRIN_SHEETS_SYNC_KEY in Netlify using a long private value.
+2. Follow google-sheets/SETUP.txt to connect a Google Sheet.
+3. The feed includes contact details, address, plan, service day, monthly price, paid totals, open balance, and payment status.
+4. Keep the sync key private. It grants read-only access to the customer report.
 
 MOWING BIDDER
 1. Run the latest portal-setup.sql so green_grin_pricing_config exists.
