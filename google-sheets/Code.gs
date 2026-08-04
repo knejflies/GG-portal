@@ -9,7 +9,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('Green Grin')
     .addItem('Refresh customers now', 'refreshGreenGrinCustomers')
-    .addItem('Install 15-minute refresh', 'installGreenGrinRefresh')
+    .addItem('Install daily refresh', 'installGreenGrinRefresh')
     .addToUi();
 }
 
@@ -54,6 +54,6 @@ function installGreenGrinRefresh() {
   ScriptApp.getProjectTriggers()
     .filter((trigger) => trigger.getHandlerFunction() === 'refreshGreenGrinCustomers')
     .forEach((trigger) => ScriptApp.deleteTrigger(trigger));
-  ScriptApp.newTrigger('refreshGreenGrinCustomers').timeBased().everyMinutes(15).create();
+  ScriptApp.newTrigger('refreshGreenGrinCustomers').timeBased().everyDays(1).atHour(6).create();
   refreshGreenGrinCustomers();
 }

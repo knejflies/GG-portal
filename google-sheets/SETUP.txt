@@ -9,6 +9,6 @@ GREEN GRIN GOOGLE SHEETS FEED
 7. Add GREEN_GRIN_SITE_URL with your portal site address, such as https://portal.greengrinlawns.com
 8. Add GREEN_GRIN_SHEETS_SYNC_KEY with the exact same private value used in Netlify.
 9. Return to the Sheet and reload it.
-10. Open Green Grin -> Install 15-minute refresh and approve Google's permissions.
+10. Open Green Grin -> Install daily refresh and approve Google's permissions.
 
-The Customers tab will be created and refreshed automatically. Do not share the sync key or commit it to GitHub.
+The Customers tab will be created and refreshed once per day around 6:00 AM in the Apps Script project's time zone. Do not share the sync key or commit it to GitHub.
