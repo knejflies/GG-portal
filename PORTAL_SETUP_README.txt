@@ -91,6 +91,9 @@ GREEN_GRIN_ZELLE_EMAIL=ken@greengrinlawns.com
 GREEN_GRIN_VENMO_HANDLE=@greengrinlawns
 GREEN_GRIN_SHEETS_SYNC_KEY=make up a long private sync password
 OPENAI_API_KEY=your OpenAI API key for receipt scanning
+RESEND_API_KEY=your private Resend API key
+GREEN_GRIN_INVOICE_FROM=Green Grin Lawn & Landscape <ken@greengrinlawns.com>
+GREEN_GRIN_PORTAL_URL=https://portal.greengrinlawns.com/portal/
 
 Do not put the notification keys text file in GitHub.
 Do not share the service_role key, private notification key, OpenAI API key, or admin PIN.
@@ -98,6 +101,12 @@ The SUPABASE_ANON_KEY and GREEN_GRIN_VAPID_PUBLIC_KEY are okay to expose.
 
 OPENAI_RECEIPT_MODEL is optional. Leave it out unless you are intentionally changing the receipt scanner model.
 GREEN_GRIN_GEOCODER_URL is optional. Leave it out to use the default OpenStreetMap address lookup.
+
+INVOICE EMAIL
+1. Create a Resend account and verify greengrinlawns.com under Domains.
+2. Add the three invoice email variables above in Netlify, then redeploy.
+3. Save Draft never emails a customer. Send Invoice emails the customer and sends the existing app notification.
+4. Customers see Green Grin Lawn & Landscape <ken@greengrinlawns.com> as the sender.
 
 GOOGLE SHEETS CUSTOMER FEED
 1. Add GREEN_GRIN_SHEETS_SYNC_KEY in Netlify using a long private value.

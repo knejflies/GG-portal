@@ -3218,6 +3218,105 @@
         height: 360px;
       }
     }
+
+    /* Final phone command-center layout. Keep this last so older theme layers cannot override it. */
+    @media (max-width: 700px) {
+      html { scroll-padding-top: 128px; }
+      body { overflow-x: hidden; }
+      header { position: sticky; top: 0; z-index: 30; }
+      .wrap { width: min(100% - 20px, 1180px); }
+      .nav { min-height: 58px; gap: 8px; }
+      .brand img { width: 118px; }
+      .nav-actions { min-width: 0; gap: 6px; }
+      .nav-actions .account-pill { display: none !important; }
+      .nav-actions .button {
+        min-height: 42px;
+        padding: 8px 10px;
+        white-space: nowrap;
+        font-size: 0.78rem;
+      }
+      .hero { padding: 10px 0; }
+      .hero-grid { padding: 15px; gap: 10px; }
+      .hero h1 { font-size: 1.65rem; }
+      .hero p { font-size: 0.9rem; }
+      .portal-card { display: none; }
+      main { padding-top: 10px; }
+      .portal-layout { display: block; }
+      .tabs {
+        position: sticky;
+        top: 58px;
+        z-index: 24;
+        display: flex;
+        flex-flow: row nowrap;
+        gap: 7px;
+        width: calc(100vw - 20px);
+        max-width: none;
+        margin: 0 0 12px;
+        padding: 8px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scroll-snap-type: x proximity;
+        scrollbar-width: none;
+        border-radius: 8px;
+      }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tabs::before,
+      .tab-section-label { display: none !important; }
+      .tab {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 112px;
+        min-height: 44px;
+        padding: 9px 12px;
+        text-align: center;
+        white-space: nowrap;
+        scroll-snap-align: start;
+      }
+      .portal-content,
+      .panel,
+      .card,
+      .job,
+      .invoice,
+      .customer-card { min-width: 0; max-width: 100%; }
+      .card,
+      .auth-card { padding: 15px; border-radius: 8px; }
+      .three,
+      .two,
+      .grid,
+      .plans,
+      .admin-bar,
+      .notification-bar { grid-template-columns: 1fr !important; }
+      .admin-bar,
+      .notification-bar { align-items: stretch; gap: 10px; }
+      input,
+      select,
+      textarea,
+      button,
+      .button { font-size: 16px; }
+      input,
+      select,
+      button,
+      .button { min-height: 46px; }
+      .row-actions,
+      .admin-actions,
+      .notification-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .row-actions > *,
+      .admin-actions > *,
+      .notification-actions > * { width: 100%; min-width: 0; }
+      .chat-bubble { max-width: 92%; overflow-wrap: anywhere; }
+      .install-prompt { width: calc(100% - 20px); bottom: max(10px, env(safe-area-inset-bottom)); }
+    }
+
+    @media (max-width: 390px) {
+      .nav-actions .button { padding-inline: 8px; font-size: 0.72rem; }
+      .row-actions,
+      .admin-actions,
+      .notification-actions { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -4627,6 +4726,15 @@
       if (sent > 0) return `${fallback} App notification sent to ${sent} device${sent === 1 ? "" : "s"}.`;
       if (total > 0) return `${fallback} No app notification delivered yet.${pushErrorText(push)}`;
       return `${fallback} No registered customer device was found yet.`;
+    }
+
+    function invoiceDeliveryText(data, fallback) {
+      const parts = [pushDeliveryText(data?.push, fallback)];
+      const email = data?.email;
+      if (email?.sent) parts.push("Invoice email sent.");
+      else if (email?.reason) parts.push(`Email not sent: ${cleanText(email.reason)}`);
+      else if (email?.error) parts.push(`Email failed: ${cleanText(email.error)}`);
+      return parts.join(" ");
     }
 
     function urlBase64ToUint8Array(base64String) {
@@ -7917,7 +8025,7 @@
         $("#invoice-submit").textContent = "Save Draft";
         renderInvoiceCustomerOptions();
         await loadInvoices();
-        $("#invoice-result").innerHTML = notice(intent === "send" ? pushDeliveryText(data.push, "Invoice sent to that customer account.") : "Invoice saved as a draft.");
+        $("#invoice-result").innerHTML = notice(intent === "send" ? invoiceDeliveryText(data, "Invoice sent to that customer account.") : "Invoice saved as a draft.");
       } catch (error) {
         $("#invoice-result").innerHTML = notice(error.message, true);
       }
@@ -7988,7 +8096,7 @@
             body: JSON.stringify({ ...invoice, status: "Sent", notify_customer: true })
           });
           await loadInvoices();
-          $("#invoice-result").innerHTML = notice(pushDeliveryText(data.push, "Invoice sent to that customer account."));
+          $("#invoice-result").innerHTML = notice(invoiceDeliveryText(data, "Invoice sent to that customer account."));
         } catch (error) {
           $("#invoice-result").innerHTML = notice(error.message, true);
         }
@@ -8330,7 +8438,7 @@
             })
           });
           await loadInvoices();
-          $("#customer-detail-result").innerHTML = notice(pushDeliveryText(data.push, `Monthly invoice sent for ${money(customerMonthlyPrice)}.`));
+          $("#customer-detail-result").innerHTML = notice(invoiceDeliveryText(data, `Monthly invoice sent for ${money(customerMonthlyPrice)}.`));
         } catch (error) {
           $("#customer-detail-result").innerHTML = notice(error.message, true);
         } finally {
