@@ -13,6 +13,8 @@ const payload = invoiceEmailPayload({
   amount: 119,
   due_date: "2026-08-15",
   service_line: "Fresh Grin",
+  service_address: "123 Green Way, Caldwell, ID",
+  project_scope: "Install 3 tons of <river rock>\nFinal cleanup included.",
   notes: "Monthly mowing"
 });
 
@@ -21,6 +23,9 @@ assert.deepEqual(payload.to, ["customer@example.com"]);
 assert.match(payload.subject, /\$119\.00/);
 assert.match(payload.text, /View your invoice: https:\/\/portal\.greengrinlawns\.com\/portal\//);
 assert.match(payload.html, /Ken &lt;Owner&gt;/);
+assert.match(payload.html, /123 Green Way/);
+assert.match(payload.html, /Install 3 tons of &lt;river rock&gt;/);
+assert.match(payload.text, /Project scope:/);
 assert.doesNotMatch(payload.html, /Ken <Owner>/);
 
 const calculated = invoicePayload({
@@ -37,5 +42,15 @@ assert.equal(calculated.subtotal, 106);
 assert.equal(calculated.tax_amount, 6.06);
 assert.equal(calculated.amount, 107.06);
 assert.equal(calculated.line_items[1].amount, 6);
+
+const project = invoicePayload({
+  customer_name: "One-time Customer",
+  service_address: "456 Rock Road",
+  project_scope: "Remove old mulch and install decorative rock.",
+  line_items: [{ description: "Decorative rock", quantity: 3, unit: "ton", rate: 275 }]
+});
+assert.equal(project.service_address, "456 Rock Road");
+assert.equal(project.project_scope, "Remove old mulch and install decorative rock.");
+assert.equal(project.amount, 825);
 
 console.log("Invoice email tests passed.");

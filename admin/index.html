@@ -3275,6 +3275,199 @@
     .invoice-items-summary { margin: 10px 0; padding: 10px; border-left: 3px solid var(--role-accent); background: rgba(var(--role-accent-rgb), 0.08); }
     .invoice-items-summary p { margin: 4px 0; }
 
+    .manual-invoice-customer {
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.28);
+      border-radius: 8px;
+      background: rgba(var(--role-accent-rgb), 0.07);
+    }
+
+    .project-scope {
+      margin: 14px 0;
+      padding: 14px;
+      border-left: 4px solid var(--role-accent);
+      background: rgba(var(--role-accent-rgb), 0.08);
+    }
+
+    .project-scope p { white-space: pre-wrap; }
+
+    .project-approval {
+      display: grid;
+      gap: 11px;
+      margin: 16px 0;
+      padding: 15px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.35);
+      border-radius: 8px;
+      background: rgba(1, 14, 8, 0.72);
+    }
+
+    .project-approval label { display: grid; gap: 6px; }
+    .project-approval .approval-consent { grid-template-columns: auto 1fr; align-items: start; }
+    .project-approval .approval-consent input { width: 22px; min-height: 22px; margin-top: 2px; }
+
+    .approval-complete {
+      margin: 14px 0;
+      padding: 13px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.38);
+      border-radius: 7px;
+      background: rgba(var(--role-accent-rgb), 0.12);
+      color: #efffeb;
+    }
+
+    .admin-mobile-nav { display: none; }
+
+    .admin-home-head,
+    .field-mode-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 18px;
+      padding: 4px 2px;
+    }
+
+    .admin-home-head h2,
+    .field-mode-head h2,
+    .admin-today-card h2,
+    .admin-quick-card h2 { margin: 3px 0; }
+
+    .admin-eyebrow {
+      color: var(--role-accent);
+      font-size: 0.74rem;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .admin-search-shell {
+      position: relative;
+      z-index: 4;
+      margin-bottom: 18px;
+      padding: 16px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.32);
+      border-radius: 8px;
+      background: rgba(2, 17, 10, 0.9);
+      box-shadow: 0 22px 52px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    }
+
+    .admin-search-shell input {
+      min-height: 58px;
+      font-size: 1.05rem;
+    }
+
+    .admin-search-results {
+      display: grid;
+      gap: 7px;
+      margin-top: 9px;
+    }
+
+    .admin-search-results:empty { display: none; }
+
+    .search-result-button {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      width: 100%;
+      min-height: 54px;
+      padding: 10px 12px;
+      border: 1px solid rgba(215, 234, 209, 0.14);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.045);
+      color: #f1ffed;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+    }
+
+    .search-result-button span { color: var(--muted); font-size: 0.82rem; }
+    .search-result-button small { color: var(--role-accent); align-self: center; }
+
+    .admin-home-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .home-metric {
+      display: grid;
+      gap: 2px;
+      min-height: 112px;
+      padding: 15px;
+      border: 1px solid rgba(215, 234, 209, 0.14);
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(var(--role-accent-rgb), 0.12), rgba(2, 15, 9, 0.94));
+      color: #efffeb;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+    }
+
+    .home-metric span,
+    .home-metric small { color: var(--muted); }
+    .home-metric strong { color: var(--role-accent); font-size: 1.8rem; line-height: 1.1; }
+
+    .admin-home-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .admin-quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .quick-command {
+      display: grid;
+      gap: 2px;
+      min-height: 86px;
+      padding: 12px;
+      border: 1px solid rgba(215, 234, 209, 0.15);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.045);
+      color: #efffeb;
+      cursor: pointer;
+      font: inherit;
+      text-align: left;
+    }
+
+    .quick-command span { color: var(--muted); font-size: 0.8rem; }
+
+    .field-date-control { min-width: 190px; }
+    .field-job-list { display: grid; gap: 11px; }
+
+    .field-job {
+      padding: 16px;
+      border: 1px solid rgba(211, 232, 205, 0.16);
+      border-left: 4px solid var(--role-accent);
+      border-radius: 8px;
+      background: rgba(3, 18, 11, 0.92);
+    }
+
+    .field-job-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .field-job h3 { margin: 0 0 4px; }
+    .field-job p { margin: 4px 0; }
+
+    .field-actions {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 13px;
+    }
+
+    .field-actions .button { min-height: 54px; }
+
     /* Final phone command-center layout. Keep this last so older theme layers cannot override it. */
     @media (max-width: 700px) {
       html { scroll-padding-top: 128px; }
@@ -3376,6 +3569,82 @@
       .row-actions,
       .admin-actions,
       .notification-actions { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      body.admin-site { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+      body.admin-site .hero { display: none; }
+      body.admin-site main { padding-top: 10px; }
+      body.admin-site .notification-bar { margin-bottom: 10px; }
+      body.admin-site .portal-layout { display: block; }
+      body.admin-site .tabs {
+        position: fixed;
+        inset: 58px 10px calc(70px + env(safe-area-inset-bottom)) 10px;
+        z-index: 45;
+        display: none;
+        width: auto;
+        max-width: none;
+        margin: 0;
+        padding: 14px;
+        overflow-y: auto;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        border-radius: 8px;
+        background: rgba(1, 9, 5, 0.985);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.72);
+      }
+      body.admin-site .tabs.mobile-menu-open { display: flex; }
+      body.admin-site .tabs .tab {
+        display: block;
+        width: 100%;
+        min-height: 52px;
+        text-align: left;
+      }
+      body.admin-site .tab-section-label { display: block !important; margin-top: 12px; }
+      body.admin-site #portal-app.active + .admin-mobile-nav {
+        position: fixed;
+        inset: auto 0 0 0;
+        z-index: 50;
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 2px;
+        padding: 7px 6px max(7px, env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(218, 236, 212, 0.2);
+        background: rgba(1, 10, 6, 0.97);
+        box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.52);
+        backdrop-filter: blur(14px);
+      }
+      body.admin-site .admin-mobile-nav button {
+        min-width: 0;
+        min-height: 52px;
+        padding: 7px 3px;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #a9b9ad;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.72rem;
+      }
+      body.admin-site .admin-mobile-nav button.active {
+        background: rgba(var(--role-accent-rgb), 0.16);
+        color: var(--role-accent);
+      }
+      .admin-home-head,
+      .field-mode-head { align-items: stretch; flex-direction: column; gap: 10px; }
+      .field-date-control { width: 100%; }
+      .admin-home-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+      .home-metric { min-height: 92px; padding: 10px 8px; }
+      .home-metric strong { font-size: 1.25rem; }
+      .home-metric small { font-size: 0.66rem; }
+      .admin-home-grid,
+      .admin-quick-grid { grid-template-columns: 1fr; }
+      .quick-command { min-height: 66px; }
+      .field-job { padding: 14px; }
+      .field-job-top { align-items: stretch; flex-direction: column; }
+      .field-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .field-actions .button { min-height: 58px; }
+      #admin-global-search { min-height: 56px; }
     }
   </style>
 </head>
@@ -3520,6 +3789,8 @@
   <main id="portal-app" class="wrap portal-app">
     <div class="portal-layout">
     <div class="tabs" role="tablist">
+      <button class="tab owner-only active" data-tab="admin-home" type="button">Home</button>
+      <button class="tab owner-only" data-tab="field-mode" type="button">Field Mode</button>
       <button class="tab active customer-only" data-tab="dashboard" type="button">Dashboard</button>
       <button class="tab customer-only" data-tab="plans" type="button">Plans</button>
       <button class="tab customer-only" data-tab="messages" type="button">Messages</button>
@@ -3774,6 +4045,68 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <section id="admin-home" class="panel owner-only">
+      <div class="admin-home-head">
+        <div>
+          <span class="admin-eyebrow">Owner command center</span>
+          <h2 id="admin-home-greeting">Good day, Ken.</h2>
+          <p id="admin-home-date" class="muted"></p>
+        </div>
+        <button class="button field-launch" data-home-go="field-mode" type="button">Open Field Mode</button>
+      </div>
+
+      <div class="admin-search-shell">
+        <label for="admin-global-search">Find anything</label>
+        <input id="admin-global-search" type="search" autocomplete="off" placeholder="Customer, GG number, phone, address, job, or invoice" />
+        <div id="admin-global-results" class="admin-search-results" aria-live="polite"></div>
+      </div>
+
+      <div class="admin-home-metrics">
+        <button class="home-metric" data-home-go="field-mode" type="button"><span>Today</span><strong id="home-today-count">0</strong><small>scheduled jobs</small></button>
+        <button class="home-metric" data-home-go="customers" type="button"><span>Customers</span><strong id="home-customer-count">0</strong><small>active accounts</small></button>
+        <button class="home-metric" data-home-go="invoices" type="button"><span>Outstanding</span><strong id="home-outstanding-total">$0.00</strong><small>open invoices</small></button>
+      </div>
+
+      <div class="admin-home-grid">
+        <div class="card admin-today-card">
+          <div class="job-head">
+            <div><span class="admin-eyebrow">Today</span><h2>Service board</h2></div>
+            <button class="button small ghost" data-home-go="field-mode" type="button">View Field Mode</button>
+          </div>
+          <div id="admin-home-today" class="field-job-list"></div>
+        </div>
+
+        <div class="card admin-quick-card">
+          <span class="admin-eyebrow">Quick actions</span>
+          <h2>Get it done</h2>
+          <div class="admin-quick-grid">
+            <button class="quick-command" data-home-go="owner" type="button"><strong>New Job</strong><span>Schedule service</span></button>
+            <button class="quick-command" data-home-go="invoices" type="button"><strong>New Invoice</strong><span>Bill a customer</span></button>
+            <button class="quick-command" data-home-go="customers" type="button"><strong>Customers</strong><span>Accounts and chat</span></button>
+            <button class="quick-command" data-home-go="expenses" type="button"><strong>Receipt</strong><span>Log an expense</span></button>
+            <button class="quick-command" data-home-go="employee-admin" type="button"><strong>Crew</strong><span>Employees and time</span></button>
+            <button class="quick-command" data-home-go="bids" type="button"><strong>New Bid</strong><span>Price a property</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="field-mode" class="panel owner-only">
+      <div class="field-mode-head">
+        <div>
+          <span class="admin-eyebrow">Field Mode</span>
+          <h2>Today at a glance</h2>
+          <p class="muted">Large controls for quick stops. Set navigation before moving.</p>
+        </div>
+        <div class="field-date-control">
+          <label for="field-mode-date">Service date</label>
+          <input id="field-mode-date" type="date" />
+        </div>
+      </div>
+      <div id="field-mode-result" aria-live="polite"></div>
+      <div id="field-mode-jobs" class="field-job-list" aria-live="polite"></div>
     </section>
 
     <section id="customers" class="panel">
@@ -4436,6 +4769,16 @@
                 <input id="invoice_amount" type="number" min="0" step="0.01" readonly value="0.00" />
               </div>
             </div>
+            <div id="invoice-manual-customer" class="manual-invoice-customer" hidden>
+              <div class="two">
+                <div><label for="invoice_manual_name">Customer name</label><input id="invoice_manual_name" autocomplete="name" placeholder="Customer or business name" /></div>
+                <div><label for="invoice_manual_email">Email</label><input id="invoice_manual_email" type="email" autocomplete="email" placeholder="customer@example.com" /></div>
+              </div>
+              <div class="two">
+                <div><label for="invoice_manual_phone">Phone</label><input id="invoice_manual_phone" type="tel" autocomplete="tel" placeholder="(208) 555-0199" /></div>
+                <div><label for="invoice_service_address">Project address</label><input id="invoice_service_address" autocomplete="street-address" placeholder="Street, city, state, ZIP" /></div>
+              </div>
+            </div>
             <div class="two">
               <div>
                 <label for="invoice_due">Due date</label>
@@ -4455,6 +4798,14 @@
             <div>
               <label for="invoice_custom_service">Custom service line</label>
               <input id="invoice_custom_service" placeholder="Optional: mulch install, sprinkler repair, spring cleanup, one-time project" />
+            </div>
+            <div id="invoice-saved-address-row">
+              <label for="invoice_saved_address">Service or project address</label>
+              <input id="invoice_saved_address" autocomplete="street-address" placeholder="Uses the customer's saved property unless changed" />
+            </div>
+            <div>
+              <label for="invoice_project_scope">Project scope</label>
+              <textarea id="invoice_project_scope" rows="7" placeholder="Describe the work, materials, preparation, cleanup, exclusions, and what completion includes."></textarea>
             </div>
             <div class="invoice-line-builder">
               <div class="invoice-line-heading">
@@ -4659,6 +5010,14 @@
     </div>
     </div>
   </main>
+
+  <nav class="admin-mobile-nav" aria-label="Admin navigation">
+    <button class="active" data-mobile-tab="admin-home" type="button"><strong>Home</strong></button>
+    <button data-mobile-tab="field-mode" type="button"><strong>Today</strong></button>
+    <button data-mobile-tab="customers" type="button"><strong>Customers</strong></button>
+    <button data-mobile-tab="invoices" type="button"><strong>Money</strong></button>
+    <button data-mobile-menu type="button" aria-expanded="false"><strong>More</strong></button>
+  </nav>
 
   <script src="/assets/green-grin-calculator.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -5098,21 +5457,17 @@
       const jobsData = await requestJson("portal-jobs?admin=1", { headers: { "x-admin-pin": pin } });
       if (remember) saveValue(sessionKeys.adminPin, pin);
       setSignedIn({ id: "owner", email: "Owner" });
-      openTab("owner");
-      await loadEmployees();
       adminJobRows = jobsData.jobs || [];
       adminDailyRouteRows = jobsData.daily_routes || [];
+      openTab("admin-home");
+      renderOwnerHome();
+      await loadEmployees();
       $("#admin-result").innerHTML = adminJobRows.length
         ? adminJobRows.map((job) => jobCard(job, true)).join("")
         : notice("No jobs yet.");
       renderDailyRouteBuilder();
-      await loadCustomers();
-      await loadInvoiceCustomers();
-      await loadInvoices();
-      await loadExpenses();
-      await loadBidPricing(true);
-      await loadActivity();
-      await loadTimeClockReport();
+      await Promise.allSettled([loadCustomers(), loadInvoiceCustomers(), loadInvoices()]);
+      renderOwnerHome();
     }
 
     async function setEmployeePinSignedIn(pin, remember = true) {
@@ -5274,6 +5629,16 @@
         button.classList.toggle("active", active);
         button.setAttribute("aria-selected", String(active));
       });
+      document.querySelectorAll("[data-mobile-tab]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.mobileTab === mainTabId);
+      });
+      const menu = document.querySelector(".tabs");
+      const moreButton = document.querySelector("[data-mobile-menu]");
+      const primaryMobileTabs = ["admin-home", "field-mode", "customers", "invoices"];
+      moreButton?.classList.toggle("active", !primaryMobileTabs.includes(mainTabId));
+      menu?.classList.remove("mobile-menu-open");
+      moreButton?.setAttribute("aria-expanded", "false");
+      if (tabId === "admin-home" || tabId === "field-mode") renderOwnerHome();
     }
 
     document.querySelectorAll(".tab").forEach((button) => {
@@ -5288,6 +5653,8 @@
         if (button.dataset.tab === "plans") loadCustomerPlanOptions();
         if (button.dataset.tab === "fert-bids") loadBidPricing();
         if (button.dataset.tab === "customers") loadCustomers();
+        if (button.dataset.tab === "employee-admin") loadEmployees();
+        if (button.dataset.tab === "activity") loadActivity();
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
       });
@@ -5295,6 +5662,66 @@
 
     document.querySelectorAll(".go-tab").forEach((button) => {
       button.addEventListener("click", () => openTab(button.dataset.go));
+    });
+
+    document.querySelectorAll("[data-home-go]").forEach((button) => {
+      button.addEventListener("click", () => openTab(button.dataset.homeGo));
+    });
+
+    document.querySelectorAll("[data-mobile-tab]").forEach((button) => {
+      button.addEventListener("click", () => openTab(button.dataset.mobileTab));
+    });
+
+    document.querySelector("[data-mobile-menu]")?.addEventListener("click", (event) => {
+      const menu = document.querySelector(".tabs");
+      const willOpen = !menu?.classList.contains("mobile-menu-open");
+      menu?.classList.toggle("mobile-menu-open", willOpen);
+      event.currentTarget.classList.toggle("active", willOpen || event.currentTarget.classList.contains("active"));
+      event.currentTarget.setAttribute("aria-expanded", String(willOpen));
+    });
+
+    $("#admin-global-search")?.addEventListener("input", renderAdminSearch);
+    $("#admin-global-results")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-search-type]");
+      if (!button) return;
+      const type = button.dataset.searchType;
+      const tabId = type === "customer" ? "customers" : type === "job" ? "owner" : "invoices";
+      openTab(tabId);
+      window.setTimeout(() => {
+        let card = null;
+        if (type === "customer") card = document.querySelector(`[data-customer-index="${button.dataset.searchIndex}"]`);
+        if (type === "job") card = document.querySelector(`.admin-job[data-id="${CSS.escape(button.dataset.searchId || "")}"]`);
+        if (type === "invoice") card = document.querySelector(`.invoice[data-id="${CSS.escape(button.dataset.searchId || "")}"]`);
+        const toggle = card?.querySelector(".job-toggle");
+        if (toggle && toggle.getAttribute("aria-expanded") !== "true") toggle.click();
+        card?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 80);
+    });
+
+    $("#field-mode-date")?.addEventListener("change", renderFieldMode);
+
+    document.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-field-action]");
+      if (!button || activeAccount?.id !== "owner") return;
+      const card = button.closest("[data-field-job-id]");
+      const id = card?.dataset.fieldJobId;
+      if (!id) return;
+      button.disabled = true;
+      $("#field-mode-result").innerHTML = notice(button.dataset.fieldAction === "completed" ? "Marking this stop done..." : "Sending arrival notification...");
+      try {
+        const data = await requestJson("portal-message", {
+          method: "POST",
+          headers: adminHeaders(),
+          body: JSON.stringify({ id, template: button.dataset.fieldAction })
+        });
+        const fallback = button.dataset.fieldAction === "completed" ? "Job marked done." : "Arrival notification saved.";
+        $("#field-mode-result").innerHTML = notice(pushDeliveryText(data.push, fallback));
+        await loadAdminJobs();
+      } catch (error) {
+        $("#field-mode-result").innerHTML = notice(error.message, true);
+      } finally {
+        button.disabled = false;
+      }
     });
 
     document.querySelectorAll("[data-bidder-section]").forEach((button) => {
@@ -6644,6 +7071,21 @@
       `;
     }
 
+    function projectApprovalMarkup(invoice) {
+      if (!String(invoice.project_scope || "").trim()) return "";
+      if (invoice.accepted_at) {
+        return `<div class="approval-complete"><strong>Project approved by ${cleanText(invoice.accepted_by || "Customer")}</strong><br><span class="muted">${cleanText(new Date(invoice.accepted_at).toLocaleString())}</span></div>`;
+      }
+      return `
+        <div class="project-approval">
+          <div><strong>Approve this project</strong><p class="muted">Review the scope and total above before approving.</p></div>
+          <label>Full legal name<input data-approval-name type="text" autocomplete="name" maxlength="120" placeholder="Type your full legal name" /></label>
+          <label class="approval-consent"><input data-approval-consent type="checkbox" /><span>I have reviewed the project scope and invoice total and authorize Green Grin Lawn &amp; Landscape to perform the described work.</span></label>
+          <button class="button" data-invoice-approve="${cleanText(invoice.id)}" type="button">Approve Project</button>
+        </div>
+      `;
+    }
+
     function invoiceCard(invoice) {
       const amount = money(invoice.amount);
       const due = invoice.due_date ? displayScheduleDate(invoice.due_date) : "No due date";
@@ -6653,8 +7095,11 @@
           <div class="invoice-head"><strong>${cleanText(invoice.service_line || invoice.notes || "Green Grin invoice")}</strong><span class="badge">${cleanText(status)}</span></div>
           <p class="muted">${cleanText(amount || "$0.00")} - Due ${cleanText(due)}</p>
           <p class="muted">${cleanText(invoice.customer_code || "")}${invoice.customer_code ? " - " : ""}${cleanText(invoice.customer_name || "Customer")}</p>
+          ${invoice.service_address ? `<p><strong>Project address:</strong> ${cleanText(invoice.service_address)}</p>` : ""}
+          ${invoice.project_scope ? `<div class="project-scope"><strong>Project scope</strong><p>${cleanText(invoice.project_scope)}</p></div>` : ""}
           ${invoiceItemsMarkup(invoice)}
           ${invoice.notes ? `<p>${cleanText(invoice.notes)}</p>` : ""}
+          ${projectApprovalMarkup(invoice)}
           ${paymentOptionsMarkup(invoice)}
         </div>
       `;
@@ -6665,6 +7110,32 @@
       if (!list || list.dataset.billingWired === "true") return;
       list.dataset.billingWired = "true";
       list.addEventListener("click", async (event) => {
+        const approveButton = event.target.closest("button[data-invoice-approve]");
+        if (approveButton) {
+          const card = approveButton.closest(".invoice");
+          const signedName = card?.querySelector("[data-approval-name]")?.value.trim() || "";
+          const agreed = Boolean(card?.querySelector("[data-approval-consent]")?.checked);
+          if (signedName.length < 2 || !agreed) {
+            $("#billing-result").innerHTML = notice("Type your full legal name and check the approval box first.", true);
+            return;
+          }
+          approveButton.disabled = true;
+          approveButton.textContent = "Saving approval...";
+          try {
+            const data = await requestJson("portal-account", {
+              method: "PATCH",
+              body: JSON.stringify({ invoice_acceptance: { invoice_id: approveButton.dataset.invoiceApprove, signed_name: signedName } })
+            });
+            renderAccount(data);
+            $("#billing-result").innerHTML = notice(pushDeliveryText(data.push, "Project approved. Green Grin has your authorization."));
+          } catch (error) {
+            approveButton.disabled = false;
+            approveButton.textContent = "Approve Project";
+            $("#billing-result").innerHTML = notice(error.message, true);
+          }
+          return;
+        }
+
         const copyButton = event.target.closest("button[data-payment-copy]");
         if (copyButton) {
           const value = copyButton.dataset.paymentCopy || "";
@@ -6790,7 +7261,10 @@
         return;
       }
       const rows = lines.map((item) => `<tr><td>${cleanText(item.description)}</td><td>${cleanText(item.quantity)} ${cleanText(item.unit)}</td><td>${cleanText(money(item.rate))}</td><td>${cleanText(money(item.quantity * item.rate))}</td></tr>`).join("");
-      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawn &amp; Landscape</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p><p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p><table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button></body></html>`);
+      const address = invoice.service_address ? `<p><strong>Project address:</strong> ${cleanText(invoice.service_address)}</p>` : "";
+      const scope = invoice.project_scope ? `<section class="scope"><h2>Project scope</h2><p>${cleanText(invoice.project_scope)}</p></section>` : "";
+      const approval = invoice.accepted_at ? `<p class="approval"><strong>Approved by ${cleanText(invoice.accepted_by || "Customer")}</strong> on ${cleanText(new Date(invoice.accepted_at).toLocaleString())}</p>` : "";
+      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}.scope{margin:22px 0;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.scope p{white-space:pre-wrap}.approval{padding:12px;border:1px solid #78c653;background:#f4faef}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawn &amp; Landscape</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p>${address}<p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p>${scope}<table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${approval}${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button></body></html>`);
       popup.document.close();
       popup.focus();
     }
@@ -6811,6 +7285,9 @@
         invoice.due_date,
         invoice.status,
         invoice.service_line,
+        invoice.service_address,
+        invoice.project_scope,
+        invoice.accepted_by,
         invoice.notes,
         invoice.payment_method,
         invoice.payment_reference,
@@ -6825,6 +7302,9 @@
             <p class="muted">${cleanText(money(invoice.amount) || "$0.00")} - Due ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "No due date")}</p>
             <p class="muted">${cleanText(invoiceNumber(invoice))}</p>
             <p>${cleanText(invoice.service_line || invoice.notes || "")}</p>
+            ${invoice.service_address ? `<p class="muted">${cleanText(invoice.service_address)}</p>` : ""}
+            ${invoice.project_scope ? `<div class="project-scope"><strong>Project scope</strong><p>${cleanText(invoice.project_scope)}</p></div>` : ""}
+            ${invoice.accepted_at ? `<div class="approval-complete"><strong>Approved by ${cleanText(invoice.accepted_by || "Customer")}</strong><br><span class="muted">${cleanText(new Date(invoice.accepted_at).toLocaleString())}</span></div>` : (invoice.project_scope ? `<p class="muted">Awaiting customer approval</p>` : "")}
             ${invoiceItemsMarkup(invoice)}
             ${invoice.service_line && invoice.notes ? `<p class="muted">${cleanText(invoice.notes)}</p>` : ""}
             ${isPaymentPending(invoice) ? `<div class="payment-pending"><strong>${cleanText(paymentMethod(invoice))} payment reported.</strong> Verify the payment before selecting Mark Paid.<br><span class="muted">Memo: ${cleanText(paymentReference(invoice))}</span></div>` : ""}
@@ -6866,13 +7346,45 @@
     }
 
     function renderInvoiceCustomerOptions() {
-      $("#invoice_customer").innerHTML = invoiceCustomers.length
-        ? `<option value="">Choose customer</option>` + invoiceCustomers.map((customer, index) => {
+      const select = $("#invoice_customer");
+      if (!select) return;
+      const previous = select.value;
+      select.innerHTML = `<option value="">Choose customer</option><option value="manual">One-time customer / manual entry</option>` + (invoiceCustomers.length
+        ? invoiceCustomers.map((customer, index) => {
             const code = customer.customer_code ? `${customer.customer_code} - ` : "";
             const label = `${code}${customer.name}${customer.phone ? ` (${customer.phone})` : ""}`;
             return `<option value="${index}">${cleanText(label)}</option>`;
           }).join("")
-        : `<option value="">No customers found</option>`;
+        : "");
+      if (previous === "manual" || invoiceCustomers[Number(previous)]) select.value = previous;
+      toggleManualInvoiceCustomer();
+    }
+
+    function toggleManualInvoiceCustomer() {
+      const manual = $("#invoice_customer")?.value === "manual";
+      if ($("#invoice-manual-customer")) $("#invoice-manual-customer").hidden = !manual;
+      if ($("#invoice-saved-address-row")) $("#invoice-saved-address-row").hidden = manual;
+    }
+
+    function selectedInvoiceCustomer() {
+      const value = $("#invoice_customer")?.value || "";
+      if (value === "manual") {
+        return {
+          customer_user_id: null,
+          customer_code: "",
+          name: $("#invoice_manual_name")?.value.trim() || "",
+          email: $("#invoice_manual_email")?.value.trim() || "",
+          phone: $("#invoice_manual_phone")?.value.trim() || "",
+          property: { address: $("#invoice_service_address")?.value.trim() || "" },
+          jobs: []
+        };
+      }
+      return value === "" ? null : (invoiceCustomers[Number(value)] || null);
+    }
+
+    function invoiceServiceAddress(customer) {
+      if ($("#invoice_customer")?.value === "manual") return $("#invoice_service_address")?.value.trim() || "";
+      return $("#invoice_saved_address")?.value.trim() || customer?.property?.address || customer?.jobs?.[0]?.address || "";
     }
 
     async function loadInvoiceCustomers() {
@@ -6893,6 +7405,7 @@
         const data = await requestJson("portal-invoices?admin=1", { headers: adminHeaders() });
         invoiceDrafts = data.invoices || [];
         renderInvoiceDrafts();
+        renderOwnerHome();
       } catch (error) {
         $("#invoice-list").innerHTML = notice(error.message, true);
       }
@@ -6902,7 +7415,8 @@
     const DEFAULT_MILEAGE_RATE = 0.76;
 
     function todayInputDate() {
-      return new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     }
 
     function expenseNumber(value) {
@@ -7275,6 +7789,7 @@
           ? invoiceCustomers.map((customer, index) => adminCustomerCard(customer, index)).join("")
           : notice("No customer accounts yet.");
         renderInvoiceCustomerOptions();
+        renderOwnerHome();
       } catch (error) {
         $("#customers-result").innerHTML = notice(error.message, true);
       }
@@ -7436,6 +7951,107 @@
       const endTime = end ? new Date(`${end}T12:00:00`).getTime() : Number.POSITIVE_INFINITY;
       if (!Number.isFinite(routeTime) || routeTime < startTime || routeTime > endTime) return false;
       return Math.round((routeTime - startTime) / 86400000) % 7 === 0;
+    }
+
+    function fieldJobsForDate(routeDate) {
+      const routedIds = new Set(adminDailyRouteRows
+        .filter((row) => jobDateKey(row.route_date) === routeDate)
+        .map((row) => row.job_id));
+      return adminJobRows.filter((job) => {
+        if (String(job.status || "").toLowerCase() === "completed") return false;
+        return routedIds.has(job.id) || jobRunsOnDate(job, routeDate);
+      });
+    }
+
+    function fieldJobCard(job, routeDate) {
+      const address = String(job.address || "").trim();
+      const phone = String(job.phone || "").trim();
+      const mapUrl = address ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}` : "";
+      const phoneUrl = phone ? `tel:${phone.replace(/[^+\d]/g, "")}` : "";
+      const arrivalSent = job.last_message_template === "arrived" && jobDateKey(job.last_message_sent_at) === routeDate;
+      return `
+        <article class="field-job" data-field-job-id="${cleanText(job.id)}">
+          <div class="field-job-top">
+            <div>
+              <h3>${cleanText(job.customer_name || "Customer")}</h3>
+              <p>${cleanText(address || "No service address saved")}</p>
+              <p class="muted">${cleanText(job.service_type || "Service")} ${job.customer_code ? `| ${cleanText(job.customer_code)}` : ""}</p>
+            </div>
+            <span class="badge">${cleanText(job.status || "Scheduled")}</span>
+          </div>
+          ${job.notes ? `<p class="muted">${cleanText(job.notes)}</p>` : ""}
+          <div class="field-actions">
+            ${mapUrl ? `<a class="button ghost" href="${cleanText(mapUrl)}" target="_blank" rel="noopener">Navigate</a>` : `<button class="button ghost" type="button" disabled>No Address</button>`}
+            ${phoneUrl ? `<a class="button ghost" href="${cleanText(phoneUrl)}">Call</a>` : `<button class="button ghost" type="button" disabled>No Phone</button>`}
+            <button class="button secondary" data-field-action="arrived" type="button"${arrivalSent ? " disabled" : ""}>${arrivalSent ? "Arrived Sent" : "Arrived"}</button>
+            <button class="button" data-field-action="completed" type="button">Done</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderFieldMode() {
+      const dateInput = $("#field-mode-date");
+      if (!dateInput) return;
+      if (!dateInput.value) dateInput.value = todayInputDate();
+      const jobs = fieldJobsForDate(dateInput.value);
+      $("#field-mode-jobs").innerHTML = jobs.length
+        ? jobs.map((job) => fieldJobCard(job, dateInput.value)).join("")
+        : notice("No work is scheduled for this date.");
+      if (dateInput.value === todayInputDate()) {
+        $("#admin-home-today").innerHTML = jobs.length
+          ? jobs.slice(0, 5).map((job) => fieldJobCard(job, dateInput.value)).join("")
+          : notice("No work is scheduled today.");
+      }
+    }
+
+    function adminSearchText(record) {
+      return Object.values(record || {}).map((value) => {
+        if (value && typeof value === "object") return adminSearchText(value);
+        return String(value || "");
+      }).join(" ").toLowerCase();
+    }
+
+    function renderAdminSearch() {
+      const input = $("#admin-global-search");
+      const target = $("#admin-global-results");
+      if (!input || !target) return;
+      const query = input.value.trim().toLowerCase();
+      if (query.length < 2) {
+        target.innerHTML = "";
+        return;
+      }
+      const matches = [];
+      invoiceCustomers.forEach((customer, index) => {
+        if (adminSearchText(customer).includes(query)) matches.push({ type: "customer", index, title: customer.name || "Customer", meta: [customer.customer_code, customer.phone, customer.property?.address].filter(Boolean).join(" | ") });
+      });
+      adminJobRows.forEach((job) => {
+        if (adminSearchText(job).includes(query)) matches.push({ type: "job", id: job.id, title: job.customer_name || "Job", meta: [job.customer_code, job.service_type, job.address].filter(Boolean).join(" | ") });
+      });
+      invoiceDrafts.forEach((invoice) => {
+        if (invoiceSearchText(invoice).includes(query)) matches.push({ type: "invoice", id: invoice.id, title: `${invoiceNumber(invoice)} - ${invoice.customer_name || "Customer"}`, meta: `${money(invoice.amount)} | ${invoice.status || "Draft"}` });
+      });
+      target.innerHTML = matches.length
+        ? matches.slice(0, 10).map((item) => `<button class="search-result-button" data-search-type="${item.type}" data-search-id="${cleanText(item.id || "")}" data-search-index="${Number.isInteger(item.index) ? item.index : ""}" type="button"><span><strong>${cleanText(item.title)}</strong><br>${cleanText(item.meta)}</span><small>Open</small></button>`).join("")
+        : notice("No customers, jobs, or invoices match that search.");
+    }
+
+    function renderOwnerHome() {
+      if (!$("#admin-home") || activeAccount?.id !== "owner") return;
+      const now = new Date();
+      const hour = now.getHours();
+      const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+      $("#admin-home-greeting").textContent = `${greeting}, Ken.`;
+      $("#admin-home-date").textContent = now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+      const todayJobs = fieldJobsForDate(todayInputDate());
+      const outstanding = invoiceDrafts
+        .filter((invoice) => !isPaidInvoice(invoice) && invoice.status !== "Draft")
+        .reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+      $("#home-today-count").textContent = String(todayJobs.length);
+      $("#home-customer-count").textContent = String(invoiceCustomers.length);
+      $("#home-outstanding-total").textContent = money(outstanding);
+      renderFieldMode();
+      renderAdminSearch();
     }
 
     function renderDailyRouteBuilder() {
@@ -8443,13 +9059,15 @@
       }
     });
     $("#invoice-print-draft").addEventListener("click", () => {
-      const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || {};
+      const selectedCustomer = selectedInvoiceCustomer() || {};
       const calculation = calculateInvoiceForm();
       printInvoice({
         id: $("#invoice_id").value,
         customer_name: selectedCustomer.name || "Customer",
         email: selectedCustomer.email || "",
         phone: selectedCustomer.phone || "",
+        service_address: invoiceServiceAddress(selectedCustomer),
+        project_scope: $("#invoice_project_scope").value,
         due_date: $("#invoice_due").value,
         service_line: $("#invoice_custom_service").value,
         notes: $("#invoice_notes").value,
@@ -8465,9 +9083,13 @@
       const intent = event.submitter?.dataset.invoiceIntent || "draft";
       const id = $("#invoice_id").value;
       const existingInvoice = invoiceDrafts.find((invoice) => invoice.id === id) || {};
-      const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || null;
+      const selectedCustomer = selectedInvoiceCustomer();
       if (!selectedCustomer) {
         $("#invoice-result").innerHTML = notice("Choose a customer before saving an invoice.", true);
+        return;
+      }
+      if (!selectedCustomer.name || (intent === "send" && !selectedCustomer.email)) {
+        $("#invoice-result").innerHTML = notice(intent === "send" ? "A customer name and email are required before sending." : "A customer name is required before saving.", true);
         return;
       }
       const calculation = calculateInvoiceForm();
@@ -8490,8 +9112,10 @@
         line_items: calculation.lines,
         due_date: $("#invoice_due").value || null,
         status: intent === "send" ? "Sent" : ($("#invoice_status").value === "Sent" ? "Draft" : ($("#invoice_status").value || "Draft")),
-        service_line: $("#invoice_custom_service").value || $("#invoice_notes").value || "Monthly service",
-        notes: $("#invoice_notes").value || "Monthly service",
+        service_line: $("#invoice_custom_service").value || "Green Grin service",
+        service_address: invoiceServiceAddress(selectedCustomer),
+        project_scope: $("#invoice_project_scope").value,
+        notes: $("#invoice_notes").value || "",
         payment_url: existingInvoice.payment_url || "",
         payment_method: existingInvoice.payment_method || "",
         payment_reference: existingInvoice.payment_reference || "",
@@ -8519,8 +9143,9 @@
     });
 
     $("#invoice_customer").addEventListener("change", () => {
-      const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || null;
-      if (!selectedCustomer) return;
+      toggleManualInvoiceCustomer();
+      const selectedCustomer = selectedInvoiceCustomer();
+      if (!selectedCustomer || $("#invoice_customer").value === "manual") return;
       const selectedJob = newestJob(selectedCustomer.jobs || []);
       const monthBilling = selectedJob ? jobBillingForMonth(selectedJob) : { amount: 0 };
       const amount = monthBilling.weeks !== null
@@ -8535,6 +9160,7 @@
       if (!$("#invoice_custom_service").value) {
         $("#invoice_custom_service").value = selectedCustomer.plan || "";
       }
+      $("#invoice_saved_address").value = selectedCustomer.property?.address || selectedJob?.address || "";
       renderInvoiceLines([{
         description: selectedCustomer.plan || selectedJob?.service_type || "Monthly lawn service",
         category: "Service",
@@ -8606,11 +9232,18 @@
         (invoice.customer_code && customer.customer_code === invoice.customer_code) ||
         (invoice.email && customer.email === invoice.email)
       );
-      $("#invoice_customer").value = index >= 0 ? String(index) : "";
+      $("#invoice_customer").value = index >= 0 ? String(index) : "manual";
+      $("#invoice_manual_name").value = index >= 0 ? "" : (invoice.customer_name || "");
+      $("#invoice_manual_email").value = index >= 0 ? "" : (invoice.email || "");
+      $("#invoice_manual_phone").value = index >= 0 ? "" : (invoice.phone || "");
+      $("#invoice_service_address").value = index >= 0 ? "" : (invoice.service_address || "");
+      $("#invoice_saved_address").value = index >= 0 ? (invoice.service_address || invoiceCustomers[index]?.property?.address || "") : "";
+      toggleManualInvoiceCustomer();
       $("#invoice_amount").value = invoice.amount || "";
       $("#invoice_due").value = invoice.due_date || "";
       $("#invoice_status").value = invoice.status;
       $("#invoice_custom_service").value = invoice.service_line || "";
+      $("#invoice_project_scope").value = invoice.project_scope || "";
       $("#invoice_notes").value = invoice.notes || "";
       $("#invoice_discount").value = Number(invoice.discount || 0);
       $("#invoice_tax_rate").value = Number(invoice.tax_rate || 0);
@@ -8644,11 +9277,11 @@
     $("#export-invoices-csv").addEventListener("click", async () => {
       if (!invoiceDrafts.length) await loadInvoices();
       downloadAccountingCsv(`green-grin-invoices-${todayInputDate()}.csv`,
-        ["Invoice", "Customer ID", "Customer", "Email", "Phone", "Status", "Due", "Subtotal", "Discount", "Tax", "Total", "Line items", "Notes"],
+        ["Invoice", "Customer ID", "Customer", "Email", "Phone", "Project address", "Status", "Due", "Subtotal", "Discount", "Tax", "Total", "Line items", "Project scope", "Approved by", "Approved at", "Notes"],
         invoiceDrafts.map((invoice) => [
-          invoiceNumber(invoice), invoice.customer_code, invoice.customer_name, invoice.email, invoice.phone, invoice.status,
+          invoiceNumber(invoice), invoice.customer_code, invoice.customer_name, invoice.email, invoice.phone, invoice.service_address, invoice.status,
           invoice.due_date, invoice.subtotal ?? invoice.amount, invoice.discount || 0, invoice.tax_amount || 0, invoice.amount,
-          normalizedInvoiceLines(invoice.line_items).map((item) => `${item.description}: ${item.quantity} ${item.unit} @ ${item.rate}`).join(" | "), invoice.notes
+          normalizedInvoiceLines(invoice.line_items).map((item) => `${item.description}: ${item.quantity} ${item.unit} @ ${item.rate}`).join(" | "), invoice.project_scope, invoice.accepted_by, invoice.accepted_at, invoice.notes
         ])
       );
     });
@@ -8934,8 +9567,12 @@
 
       if (action === "invoice") {
         const index = invoiceCustomers.findIndex((item) => item === customer);
+        const property = customer.property || {};
         $("#invoice_id").value = "";
         $("#invoice_customer").value = index >= 0 ? String(index) : "";
+        $("#invoice_saved_address").value = property.address || newestCustomerJob?.address || "";
+        $("#invoice_project_scope").value = "";
+        toggleManualInvoiceCustomer();
         $("#invoice_amount").value = customerMonthlyPrice ? Number(customerMonthlyPrice).toFixed(2) : "";
         $("#invoice_due").value = "";
         $("#invoice_status").value = "Draft";
@@ -8976,6 +9613,8 @@
               due_date: dueDate,
               status: "Sent",
               service_line: customerPlan,
+              service_address: customer.property?.address || newestCustomerJob?.address || "",
+              project_scope: "",
               notes: customerMonthBilling.weeks === null
                 ? `Monthly service invoice for ${customerPlan}`
                 : `${customerMonthBilling.weeks} scheduled service week${customerMonthBilling.weeks === 1 ? "" : "s"} for ${customerPlan}`,
@@ -9053,6 +9692,7 @@
           ? adminJobRows.map((job) => jobCard(job, true)).join("")
           : notice("No jobs yet.");
         renderDailyRouteBuilder();
+        renderOwnerHome();
       } catch (error) {
         $("#admin-result").innerHTML = notice(error.message, true);
         $("#daily-route-job-list").innerHTML = notice(error.message, true);

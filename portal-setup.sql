@@ -317,12 +317,19 @@ create table if not exists public.green_grin_invoices (
   due_date date,
   status text not null default 'Draft',
   service_line text,
+  service_address text,
+  project_scope text,
   notes text,
   payment_url text,
   payment_method text,
   payment_reference text,
   payment_reported_at timestamptz,
   payment_confirmed_at timestamptz,
+  accepted_by text,
+  accepted_at timestamptz,
+  acceptance_terms text,
+  acceptance_ip text,
+  acceptance_user_agent text,
   active boolean not null default true
 );
 
@@ -364,6 +371,13 @@ alter table public.green_grin_invoices add column if not exists discount numeric
 alter table public.green_grin_invoices add column if not exists tax_rate numeric(7, 4) not null default 0;
 alter table public.green_grin_invoices add column if not exists tax_amount numeric(10, 2) not null default 0;
 alter table public.green_grin_invoices add column if not exists line_items jsonb not null default '[]'::jsonb;
+alter table public.green_grin_invoices add column if not exists service_address text;
+alter table public.green_grin_invoices add column if not exists project_scope text;
+alter table public.green_grin_invoices add column if not exists accepted_by text;
+alter table public.green_grin_invoices add column if not exists accepted_at timestamptz;
+alter table public.green_grin_invoices add column if not exists acceptance_terms text;
+alter table public.green_grin_invoices add column if not exists acceptance_ip text;
+alter table public.green_grin_invoices add column if not exists acceptance_user_agent text;
 
 create table if not exists public.green_grin_expenses (
   id uuid primary key default gen_random_uuid(),

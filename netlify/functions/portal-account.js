@@ -94,6 +94,63 @@ function normalizePaymentMethod(value) {
   return "";
 }
 
+const PROJECT_APPROVAL_TERMS = "I have reviewed the project scope and invoice total and authorize Green Grin Lawn & Landscape to perform the described work.";
+
+function invoiceAcceptancePayload(event, signedName) {
+  const forwarded = String(event?.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
+  return {
+    accepted_by: String(signedName || "").trim().slice(0, 120),
+    accepted_at: new Date().toISOString(),
+    acceptance_terms: PROJECT_APPROVAL_TERMS,
+    acceptance_ip: String(event?.headers?.["x-nf-client-connection-ip"] || forwarded || "").slice(0, 120),
+    acceptance_user_agent: String(event?.headers?.["user-agent"] || "").slice(0, 500)
+  };
+}
+
+function isMissingAcceptanceColumn(error) {
+  return /accepted_by|accepted_at|acceptance_terms|acceptance_ip|acceptance_user_agent|project_scope|schema cache/i.test(error?.message || "");
+}
+
+async function acceptProjectInvoice(user, event, invoiceId, signedName) {
+  const name = String(signedName || "").trim();
+  if (name.length < 2) return { error: "Type your full legal name to approve this project.", statusCode: 400 };
+  const customer = await ensureCustomer(user);
+  const rows = await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(invoiceId)}&active=eq.true&limit=1`);
+  const invoice = rows?.[0];
+  if (!invoice || !invoiceBelongsToCustomer(invoice, user, customer)) {
+    return { error: "Invoice not found for this account.", statusCode: 404 };
+  }
+  if (!String(invoice.project_scope || "").trim()) {
+    return { error: "This invoice does not require project approval.", statusCode: 409 };
+  }
+  if (String(invoice.status || "").toLowerCase() === "draft") {
+    return { error: "This project has not been sent for approval yet.", statusCode: 409 };
+  }
+  if (invoice.accepted_at) return { account: await loadAccount(user), push: null };
+
+  const acceptance = invoiceAcceptancePayload(event, name);
+  try {
+    await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(invoice.id)}`, {
+      method: "PATCH",
+      body: JSON.stringify(acceptance)
+    });
+  } catch (error) {
+    if (isMissingAcceptanceColumn(error)) {
+      return { error: "Project approval is not installed yet. Run the newest portal-setup.sql in Supabase.", statusCode: 409 };
+    }
+    throw error;
+  }
+
+  const push = await sendPushToTarget(supabase, { owner_type: "admin" }, {
+    title: "Project approved",
+    body: `${name} approved ${invoice.service_line || "a Green Grin project"} for $${Number(invoice.amount || 0).toFixed(2)}.`,
+    url: "/admin/",
+    tag: `green-grin-project-approved-${invoice.id}`
+  }).catch(() => null);
+
+  return { account: await loadAccount(user), push, acceptance };
+}
+
 async function reportPayment(user, invoiceId, requestedMethod) {
   const method = normalizePaymentMethod(requestedMethod);
   if (!method) return { error: "Choose Zelle or Venmo as the payment method.", statusCode: 400 };
@@ -314,6 +371,12 @@ exports.handler = async (event) => {
     if (event.httpMethod === "PATCH") {
       const body = JSON.parse(event.body || "{}");
 
+      if (body.invoice_acceptance?.invoice_id) {
+        const result = await acceptProjectInvoice(user, event, body.invoice_acceptance.invoice_id, body.invoice_acceptance.signed_name);
+        if (result.error) return json(result.statusCode || 400, { error: result.error });
+        return json(200, { ...result.account, push: result.push, acceptance: result.acceptance || null });
+      }
+
       const paymentReport = body.payment_report || (body.zelle_payment?.invoice_id
         ? { invoice_id: body.zelle_payment.invoice_id, method: "Zelle" }
         : null);
@@ -411,4 +474,4 @@ exports.handler = async (event) => {
   }
 };
 
-exports._test = { invoicePaymentReference, invoiceBelongsToCustomer, isMissingPaymentColumn, normalizePaymentMethod };
+exports._test = { invoicePaymentReference, invoiceBelongsToCustomer, isMissingPaymentColumn, normalizePaymentMethod, invoiceAcceptancePayload, isMissingAcceptanceColumn, PROJECT_APPROVAL_TERMS };

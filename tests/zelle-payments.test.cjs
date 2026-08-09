@@ -31,6 +31,18 @@ assert.equal(accountModule._test.invoiceBelongsToCustomer(invoice, { id: "other"
 assert.equal(accountModule._test.invoiceBelongsToCustomer(invoice, { id: "other" }, { phone: "(208) 555-1111" }), true);
 assert.equal(accountModule._test.invoiceBelongsToCustomer(invoice, { id: "other", email: "wrong@example.com" }, { customer_code: "GG-9999", phone: "2085559999" }), false);
 
+const acceptance = accountModule._test.invoiceAcceptancePayload({
+  headers: {
+    "x-forwarded-for": "198.51.100.9, 10.0.0.1",
+    "user-agent": "Green Grin Test Browser"
+  }
+}, "  Kenneth Nejely  ");
+assert.equal(acceptance.accepted_by, "Kenneth Nejely");
+assert.equal(acceptance.acceptance_ip, "198.51.100.9");
+assert.equal(acceptance.acceptance_user_agent, "Green Grin Test Browser");
+assert.match(acceptance.acceptance_terms, /authorize Green Grin/);
+assert.ok(acceptance.accepted_at);
+
 const pendingPayload = invoiceModule._test.invoicePayload(invoice);
 assert.equal(pendingPayload.status, "Payment Pending");
 assert.equal(pendingPayload.payment_method, "Zelle");

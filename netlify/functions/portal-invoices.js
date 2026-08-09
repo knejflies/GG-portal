@@ -89,6 +89,8 @@ function invoicePayload(body) {
     due_date: body.due_date || null,
     status,
     service_line: body.service_line || "",
+    service_address: String(body.service_address || "").trim().slice(0, 300),
+    project_scope: String(body.project_scope || "").trim().slice(0, 8000),
     notes: body.notes || "",
     payment_url: body.payment_url || "",
     payment_method: body.payment_method || "",
@@ -112,11 +114,13 @@ function legacyInvoicePayload(payload) {
   delete legacy.tax_rate;
   delete legacy.tax_amount;
   delete legacy.line_items;
+  delete legacy.service_address;
+  delete legacy.project_scope;
   return legacy;
 }
 
 function isMissingPaymentColumn(error) {
-  return /payment_method|payment_reference|payment_reported_at|payment_confirmed_at|subtotal|discount|tax_rate|tax_amount|line_items|schema cache/i.test(error?.message || "");
+  return /payment_method|payment_reference|payment_reported_at|payment_confirmed_at|subtotal|discount|tax_rate|tax_amount|line_items|service_address|project_scope|schema cache/i.test(error?.message || "");
 }
 
 function escapeHtml(value) {
@@ -135,6 +139,8 @@ function invoiceEmailPayload(invoice) {
     ? new Date(`${invoice.due_date}T12:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : "Upon receipt";
   const customer = invoice.customer_name || "Customer";
+  const address = String(invoice.service_address || "").trim();
+  const scope = String(invoice.project_scope || "").trim();
   const items = normalizeLineItems(invoice.line_items);
   const itemText = items.map((item) => `${item.description}: ${item.quantity} ${item.unit} x $${item.rate.toFixed(2)} = $${item.amount.toFixed(2)}`);
   const itemRows = items.map((item) => `<tr><td style="padding:9px;border-bottom:1px solid #dce7d9">${escapeHtml(item.description)}</td><td style="padding:9px;border-bottom:1px solid #dce7d9;text-align:right">${escapeHtml(`${item.quantity} ${item.unit}`)}</td><td style="padding:9px;border-bottom:1px solid #dce7d9;text-align:right">$${item.rate.toFixed(2)}</td><td style="padding:9px;border-bottom:1px solid #dce7d9;text-align:right;font-weight:bold">$${item.amount.toFixed(2)}</td></tr>`).join("");
@@ -145,9 +151,11 @@ function invoiceEmailPayload(invoice) {
     "",
     "Your Green Grin invoice is ready.",
     `Service: ${service}`,
+    address ? `Project address: ${address}` : "",
     `Amount: ${amount}`,
     `Due: ${due}`,
     ...itemText,
+    scope ? `Project scope:\n${scope}` : "",
     invoice.notes ? `Notes: ${invoice.notes}` : "",
     "",
     `View your invoice: ${PORTAL_URL}`,
@@ -159,7 +167,7 @@ function invoiceEmailPayload(invoice) {
     to: [invoice.email],
     subject,
     text,
-    html: `<!doctype html><html><body style="margin:0;background:#eef4ec;color:#102419;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#07351d;color:#fff;padding:24px;border-radius:8px 8px 0 0"><strong style="font-size:22px">Green Grin Lawn &amp; Landscape</strong></div><div style="background:#fff;padding:28px;border:1px solid #d5e2d2;border-top:0;border-radius:0 0 8px 8px"><p style="margin-top:0">Hi ${escapeHtml(customer)},</p><h1 style="font-size:25px;color:#07351d">Your invoice is ready</h1><div style="background:#f2f8ef;border-left:4px solid #78c653;padding:16px;margin:22px 0"><p style="margin:0 0 8px"><strong>Service:</strong> ${escapeHtml(service)}</p><p style="margin:0 0 8px"><strong>Amount:</strong> ${escapeHtml(amount)}</p><p style="margin:0"><strong>Due:</strong> ${escapeHtml(due)}</p></div>${items.length ? `<table style="width:100%;border-collapse:collapse;margin:20px 0"><thead><tr style="background:#edf6e9"><th style="padding:9px;text-align:left">Description</th><th style="padding:9px;text-align:right">Quantity</th><th style="padding:9px;text-align:right">Rate</th><th style="padding:9px;text-align:right">Amount</th></tr></thead><tbody>${itemRows}</tbody></table>` : ""}${invoice.notes ? `<p><strong>Notes:</strong> ${escapeHtml(invoice.notes)}</p>` : ""}<p style="margin:26px 0"><a href="${escapeHtml(PORTAL_URL)}" style="display:inline-block;background:#78c653;color:#092114;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px;margin-right:8px">View Invoice</a><a href="${escapeHtml(venmoUrl)}" style="display:inline-block;background:#008cff;color:#fff;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px">Pay with Venmo</a></p><p style="color:#526458;font-size:13px">Confirm the Venmo profile is @${escapeHtml(VENMO_HANDLE)} and include the invoice number in the payment note.</p><p style="color:#526458;font-size:14px">Green Grin Lawn &amp; Landscape</p></div></div></body></html>`
+    html: `<!doctype html><html><body style="margin:0;background:#eef4ec;color:#102419;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#07351d;color:#fff;padding:24px;border-radius:8px 8px 0 0"><strong style="font-size:22px">Green Grin Lawn &amp; Landscape</strong></div><div style="background:#fff;padding:28px;border:1px solid #d5e2d2;border-top:0;border-radius:0 0 8px 8px"><p style="margin-top:0">Hi ${escapeHtml(customer)},</p><h1 style="font-size:25px;color:#07351d">Your invoice is ready</h1><div style="background:#f2f8ef;border-left:4px solid #78c653;padding:16px;margin:22px 0"><p style="margin:0 0 8px"><strong>Service:</strong> ${escapeHtml(service)}</p>${address ? `<p style="margin:0 0 8px"><strong>Project address:</strong> ${escapeHtml(address)}</p>` : ""}<p style="margin:0 0 8px"><strong>Amount:</strong> ${escapeHtml(amount)}</p><p style="margin:0"><strong>Due:</strong> ${escapeHtml(due)}</p></div>${scope ? `<div style="margin:22px 0"><h2 style="font-size:18px;color:#07351d">Project scope</h2><p style="white-space:pre-wrap;line-height:1.55">${escapeHtml(scope)}</p></div>` : ""}${items.length ? `<table style="width:100%;border-collapse:collapse;margin:20px 0"><thead><tr style="background:#edf6e9"><th style="padding:9px;text-align:left">Description</th><th style="padding:9px;text-align:right">Quantity</th><th style="padding:9px;text-align:right">Rate</th><th style="padding:9px;text-align:right">Amount</th></tr></thead><tbody>${itemRows}</tbody></table>` : ""}${invoice.notes ? `<p><strong>Notes:</strong> ${escapeHtml(invoice.notes)}</p>` : ""}<p style="margin:26px 0"><a href="${escapeHtml(PORTAL_URL)}" style="display:inline-block;background:#78c653;color:#092114;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px;margin-right:8px">Review${scope ? " &amp; Approve" : " Invoice"}</a><a href="${escapeHtml(venmoUrl)}" style="display:inline-block;background:#008cff;color:#fff;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px">Pay with Venmo</a></p><p style="color:#526458;font-size:13px">Confirm the Venmo profile is @${escapeHtml(VENMO_HANDLE)} and include the invoice number in the payment note.</p><p style="color:#526458;font-size:14px">Green Grin Lawn &amp; Landscape</p></div></div></body></html>`
   };
 }
 
@@ -191,6 +199,9 @@ async function saveInvoice(path, method, body) {
     return await supabase(path, { method, body: JSON.stringify(payload) });
   } catch (error) {
     if (!isMissingPaymentColumn(error)) throw error;
+    if (payload.project_scope) {
+      throw new Error("Project invoice fields are not installed yet. Run the newest portal-setup.sql in Supabase, then save again.");
+    }
     return await supabase(path, { method, body: JSON.stringify(legacyInvoicePayload(payload)) });
   }
 }

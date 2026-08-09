@@ -19,6 +19,9 @@ WHAT WORKS AFTER SETUP
 - Admin creates recurring jobs with a price per service week and season dates.
 - Monthly invoices count the actual scheduled service weeks, so a five-week month bills five weekly services.
 - Admin can create, save, send, edit, and delete invoices.
+- Admin can create one-time project invoices without a weekly mowing plan by entering the customer contact details directly.
+- One-time invoices support a project address, full scope of work, and itemized labor, material, equipment, spray, and service charges.
+- Customers can review a project in their portal and approve it with a consent checkbox and typed legal name. The approval name, terms, date/time, account, IP, and browser details are saved with the invoice.
 - Admin can mark invoices paid, search paid invoices, and keep paid invoices collapsed below open invoices.
 - Admin -> Bidders groups the single-price Mowing Bidder and five-application Fertilizer Bidder as subsections.
 - Mowing Bidder calculates one straightforward quote from the minimum per mow, price per 1,000 square feet, property complexity, visit count, discount, and payment split.
@@ -196,6 +199,16 @@ The customer includes the unique invoice memo, then taps the matching I Sent Thi
 The invoice moves to Payment Pending and the admin receives an app notification.
 The owner must verify the Zelle or Venmo payment before selecting Mark Paid.
 The portal does not connect to either payment service and never marks a payment paid automatically.
+
+ONE-TIME PROJECT INVOICES
+1. Open Admin -> Invoices.
+2. Choose One-time customer / manual entry.
+3. Enter the customer name, email, phone, and project address.
+4. Add a project title, detailed scope, and as many priced line items as needed.
+5. Save Draft to keep working, Print Preview for a paper copy, or Send Invoice to email and notify the customer.
+6. The customer creates or signs into the Customer Portal with the same email used on the invoice.
+7. The customer reviews the scope and total, checks the authorization statement, types their full legal name, and selects Approve Project.
+8. The approval appears on the admin invoice and printed copy. Run the newest portal-setup.sql before using this workflow.
 
 EXPENSE SCANNER
 Admin -> Expenses can scan receipt photos after OPENAI_API_KEY is added in Netlify.

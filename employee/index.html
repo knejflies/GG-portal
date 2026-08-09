@@ -3275,6 +3275,46 @@
     .invoice-items-summary { margin: 10px 0; padding: 10px; border-left: 3px solid var(--role-accent); background: rgba(var(--role-accent-rgb), 0.08); }
     .invoice-items-summary p { margin: 4px 0; }
 
+    .manual-invoice-customer {
+      margin: 12px 0;
+      padding: 14px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.28);
+      border-radius: 8px;
+      background: rgba(var(--role-accent-rgb), 0.07);
+    }
+
+    .project-scope {
+      margin: 14px 0;
+      padding: 14px;
+      border-left: 4px solid var(--role-accent);
+      background: rgba(var(--role-accent-rgb), 0.08);
+    }
+
+    .project-scope p { white-space: pre-wrap; }
+
+    .project-approval {
+      display: grid;
+      gap: 11px;
+      margin: 16px 0;
+      padding: 15px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.35);
+      border-radius: 8px;
+      background: rgba(1, 14, 8, 0.72);
+    }
+
+    .project-approval label { display: grid; gap: 6px; }
+    .project-approval .approval-consent { grid-template-columns: auto 1fr; align-items: start; }
+    .project-approval .approval-consent input { width: 22px; min-height: 22px; margin-top: 2px; }
+
+    .approval-complete {
+      margin: 14px 0;
+      padding: 13px;
+      border: 1px solid rgba(var(--role-accent-rgb), 0.38);
+      border-radius: 7px;
+      background: rgba(var(--role-accent-rgb), 0.12);
+      color: #efffeb;
+    }
+
     /* Final phone command-center layout. Keep this last so older theme layers cannot override it. */
     @media (max-width: 700px) {
       html { scroll-padding-top: 128px; }
@@ -4436,6 +4476,16 @@
                 <input id="invoice_amount" type="number" min="0" step="0.01" readonly value="0.00" />
               </div>
             </div>
+            <div id="invoice-manual-customer" class="manual-invoice-customer" hidden>
+              <div class="two">
+                <div><label for="invoice_manual_name">Customer name</label><input id="invoice_manual_name" autocomplete="name" placeholder="Customer or business name" /></div>
+                <div><label for="invoice_manual_email">Email</label><input id="invoice_manual_email" type="email" autocomplete="email" placeholder="customer@example.com" /></div>
+              </div>
+              <div class="two">
+                <div><label for="invoice_manual_phone">Phone</label><input id="invoice_manual_phone" type="tel" autocomplete="tel" placeholder="(208) 555-0199" /></div>
+                <div><label for="invoice_service_address">Project address</label><input id="invoice_service_address" autocomplete="street-address" placeholder="Street, city, state, ZIP" /></div>
+              </div>
+            </div>
             <div class="two">
               <div>
                 <label for="invoice_due">Due date</label>
@@ -4455,6 +4505,14 @@
             <div>
               <label for="invoice_custom_service">Custom service line</label>
               <input id="invoice_custom_service" placeholder="Optional: mulch install, sprinkler repair, spring cleanup, one-time project" />
+            </div>
+            <div id="invoice-saved-address-row">
+              <label for="invoice_saved_address">Service or project address</label>
+              <input id="invoice_saved_address" autocomplete="street-address" placeholder="Uses the customer's saved property unless changed" />
+            </div>
+            <div>
+              <label for="invoice_project_scope">Project scope</label>
+              <textarea id="invoice_project_scope" rows="7" placeholder="Describe the work, materials, preparation, cleanup, exclusions, and what completion includes."></textarea>
             </div>
             <div class="invoice-line-builder">
               <div class="invoice-line-heading">
@@ -6644,6 +6702,21 @@
       `;
     }
 
+    function projectApprovalMarkup(invoice) {
+      if (!String(invoice.project_scope || "").trim()) return "";
+      if (invoice.accepted_at) {
+        return `<div class="approval-complete"><strong>Project approved by ${cleanText(invoice.accepted_by || "Customer")}</strong><br><span class="muted">${cleanText(new Date(invoice.accepted_at).toLocaleString())}</span></div>`;
+      }
+      return `
+        <div class="project-approval">
+          <div><strong>Approve this project</strong><p class="muted">Review the scope and total above before approving.</p></div>
+          <label>Full legal name<input data-approval-name type="text" autocomplete="name" maxlength="120" placeholder="Type your full legal name" /></label>
+          <label class="approval-consent"><input data-approval-consent type="checkbox" /><span>I have reviewed the project scope and invoice total and authorize Green Grin Lawn &amp; Landscape to perform the described work.</span></label>
+          <button class="button" data-invoice-approve="${cleanText(invoice.id)}" type="button">Approve Project</button>
+        </div>
+      `;
+    }
+
     function invoiceCard(invoice) {
       const amount = money(invoice.amount);
       const due = invoice.due_date ? displayScheduleDate(invoice.due_date) : "No due date";
@@ -6653,8 +6726,11 @@
           <div class="invoice-head"><strong>${cleanText(invoice.service_line || invoice.notes || "Green Grin invoice")}</strong><span class="badge">${cleanText(status)}</span></div>
           <p class="muted">${cleanText(amount || "$0.00")} - Due ${cleanText(due)}</p>
           <p class="muted">${cleanText(invoice.customer_code || "")}${invoice.customer_code ? " - " : ""}${cleanText(invoice.customer_name || "Customer")}</p>
+          ${invoice.service_address ? `<p><strong>Project address:</strong> ${cleanText(invoice.service_address)}</p>` : ""}
+          ${invoice.project_scope ? `<div class="project-scope"><strong>Project scope</strong><p>${cleanText(invoice.project_scope)}</p></div>` : ""}
           ${invoiceItemsMarkup(invoice)}
           ${invoice.notes ? `<p>${cleanText(invoice.notes)}</p>` : ""}
+          ${projectApprovalMarkup(invoice)}
           ${paymentOptionsMarkup(invoice)}
         </div>
       `;
@@ -6665,6 +6741,32 @@
       if (!list || list.dataset.billingWired === "true") return;
       list.dataset.billingWired = "true";
       list.addEventListener("click", async (event) => {
+        const approveButton = event.target.closest("button[data-invoice-approve]");
+        if (approveButton) {
+          const card = approveButton.closest(".invoice");
+          const signedName = card?.querySelector("[data-approval-name]")?.value.trim() || "";
+          const agreed = Boolean(card?.querySelector("[data-approval-consent]")?.checked);
+          if (signedName.length < 2 || !agreed) {
+            $("#billing-result").innerHTML = notice("Type your full legal name and check the approval box first.", true);
+            return;
+          }
+          approveButton.disabled = true;
+          approveButton.textContent = "Saving approval...";
+          try {
+            const data = await requestJson("portal-account", {
+              method: "PATCH",
+              body: JSON.stringify({ invoice_acceptance: { invoice_id: approveButton.dataset.invoiceApprove, signed_name: signedName } })
+            });
+            renderAccount(data);
+            $("#billing-result").innerHTML = notice(pushDeliveryText(data.push, "Project approved. Green Grin has your authorization."));
+          } catch (error) {
+            approveButton.disabled = false;
+            approveButton.textContent = "Approve Project";
+            $("#billing-result").innerHTML = notice(error.message, true);
+          }
+          return;
+        }
+
         const copyButton = event.target.closest("button[data-payment-copy]");
         if (copyButton) {
           const value = copyButton.dataset.paymentCopy || "";
@@ -6790,7 +6892,10 @@
         return;
       }
       const rows = lines.map((item) => `<tr><td>${cleanText(item.description)}</td><td>${cleanText(item.quantity)} ${cleanText(item.unit)}</td><td>${cleanText(money(item.rate))}</td><td>${cleanText(money(item.quantity * item.rate))}</td></tr>`).join("");
-      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawn &amp; Landscape</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p><p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p><table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button></body></html>`);
+      const address = invoice.service_address ? `<p><strong>Project address:</strong> ${cleanText(invoice.service_address)}</p>` : "";
+      const scope = invoice.project_scope ? `<section class="scope"><h2>Project scope</h2><p>${cleanText(invoice.project_scope)}</p></section>` : "";
+      const approval = invoice.accepted_at ? `<p class="approval"><strong>Approved by ${cleanText(invoice.accepted_by || "Customer")}</strong> on ${cleanText(new Date(invoice.accepted_at).toLocaleString())}</p>` : "";
+      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}.scope{margin:22px 0;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.scope p{white-space:pre-wrap}.approval{padding:12px;border:1px solid #78c653;background:#f4faef}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawn &amp; Landscape</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p>${address}<p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p>${scope}<table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${approval}${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button></body></html>`);
       popup.document.close();
       popup.focus();
     }
@@ -6811,6 +6916,9 @@
         invoice.due_date,
         invoice.status,
         invoice.service_line,
+        invoice.service_address,
+        invoice.project_scope,
+        invoice.accepted_by,
         invoice.notes,
         invoice.payment_method,
         invoice.payment_reference,
@@ -6825,6 +6933,9 @@
             <p class="muted">${cleanText(money(invoice.amount) || "$0.00")} - Due ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "No due date")}</p>
             <p class="muted">${cleanText(invoiceNumber(invoice))}</p>
             <p>${cleanText(invoice.service_line || invoice.notes || "")}</p>
+            ${invoice.service_address ? `<p class="muted">${cleanText(invoice.service_address)}</p>` : ""}
+            ${invoice.project_scope ? `<div class="project-scope"><strong>Project scope</strong><p>${cleanText(invoice.project_scope)}</p></div>` : ""}
+            ${invoice.accepted_at ? `<div class="approval-complete"><strong>Approved by ${cleanText(invoice.accepted_by || "Customer")}</strong><br><span class="muted">${cleanText(new Date(invoice.accepted_at).toLocaleString())}</span></div>` : (invoice.project_scope ? `<p class="muted">Awaiting customer approval</p>` : "")}
             ${invoiceItemsMarkup(invoice)}
             ${invoice.service_line && invoice.notes ? `<p class="muted">${cleanText(invoice.notes)}</p>` : ""}
             ${isPaymentPending(invoice) ? `<div class="payment-pending"><strong>${cleanText(paymentMethod(invoice))} payment reported.</strong> Verify the payment before selecting Mark Paid.<br><span class="muted">Memo: ${cleanText(paymentReference(invoice))}</span></div>` : ""}
@@ -6866,13 +6977,45 @@
     }
 
     function renderInvoiceCustomerOptions() {
-      $("#invoice_customer").innerHTML = invoiceCustomers.length
-        ? `<option value="">Choose customer</option>` + invoiceCustomers.map((customer, index) => {
+      const select = $("#invoice_customer");
+      if (!select) return;
+      const previous = select.value;
+      select.innerHTML = `<option value="">Choose customer</option><option value="manual">One-time customer / manual entry</option>` + (invoiceCustomers.length
+        ? invoiceCustomers.map((customer, index) => {
             const code = customer.customer_code ? `${customer.customer_code} - ` : "";
             const label = `${code}${customer.name}${customer.phone ? ` (${customer.phone})` : ""}`;
             return `<option value="${index}">${cleanText(label)}</option>`;
           }).join("")
-        : `<option value="">No customers found</option>`;
+        : "");
+      if (previous === "manual" || invoiceCustomers[Number(previous)]) select.value = previous;
+      toggleManualInvoiceCustomer();
+    }
+
+    function toggleManualInvoiceCustomer() {
+      const manual = $("#invoice_customer")?.value === "manual";
+      if ($("#invoice-manual-customer")) $("#invoice-manual-customer").hidden = !manual;
+      if ($("#invoice-saved-address-row")) $("#invoice-saved-address-row").hidden = manual;
+    }
+
+    function selectedInvoiceCustomer() {
+      const value = $("#invoice_customer")?.value || "";
+      if (value === "manual") {
+        return {
+          customer_user_id: null,
+          customer_code: "",
+          name: $("#invoice_manual_name")?.value.trim() || "",
+          email: $("#invoice_manual_email")?.value.trim() || "",
+          phone: $("#invoice_manual_phone")?.value.trim() || "",
+          property: { address: $("#invoice_service_address")?.value.trim() || "" },
+          jobs: []
+        };
+      }
+      return value === "" ? null : (invoiceCustomers[Number(value)] || null);
+    }
+
+    function invoiceServiceAddress(customer) {
+      if ($("#invoice_customer")?.value === "manual") return $("#invoice_service_address")?.value.trim() || "";
+      return $("#invoice_saved_address")?.value.trim() || customer?.property?.address || customer?.jobs?.[0]?.address || "";
     }
 
     async function loadInvoiceCustomers() {
@@ -6902,7 +7045,8 @@
     const DEFAULT_MILEAGE_RATE = 0.76;
 
     function todayInputDate() {
-      return new Date().toISOString().slice(0, 10);
+      const now = new Date();
+      return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     }
 
     function expenseNumber(value) {
@@ -8443,13 +8587,15 @@
       }
     });
     $("#invoice-print-draft").addEventListener("click", () => {
-      const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || {};
+      const selectedCustomer = selectedInvoiceCustomer() || {};
       const calculation = calculateInvoiceForm();
       printInvoice({
         id: $("#invoice_id").value,
         customer_name: selectedCustomer.name || "Customer",
         email: selectedCustomer.email || "",
         phone: selectedCustomer.phone || "",
+        service_address: invoiceServiceAddress(selectedCustomer),
+        project_scope: $("#invoice_project_scope").value,
         due_date: $("#invoice_due").value,
         service_line: $("#invoice_custom_service").value,
         notes: $("#invoice_notes").value,
@@ -8465,9 +8611,13 @@
       const intent = event.submitter?.dataset.invoiceIntent || "draft";
       const id = $("#invoice_id").value;
       const existingInvoice = invoiceDrafts.find((invoice) => invoice.id === id) || {};
-      const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || null;
+      const selectedCustomer = selectedInvoiceCustomer();
       if (!selectedCustomer) {
         $("#invoice-result").innerHTML = notice("Choose a customer before saving an invoice.", true);
+        return;
+      }
+      if (!selectedCustomer.name || (intent === "send" && !selectedCustomer.email)) {
+        $("#invoice-result").innerHTML = notice(intent === "send" ? "A customer name and email are required before sending." : "A customer name is required before saving.", true);
         return;
       }
       const calculation = calculateInvoiceForm();
@@ -8490,8 +8640,10 @@
         line_items: calculation.lines,
         due_date: $("#invoice_due").value || null,
         status: intent === "send" ? "Sent" : ($("#invoice_status").value === "Sent" ? "Draft" : ($("#invoice_status").value || "Draft")),
-        service_line: $("#invoice_custom_service").value || $("#invoice_notes").value || "Monthly service",
-        notes: $("#invoice_notes").value || "Monthly service",
+        service_line: $("#invoice_custom_service").value || "Green Grin service",
+        service_address: invoiceServiceAddress(selectedCustomer),
+        project_scope: $("#invoice_project_scope").value,
+        notes: $("#invoice_notes").value || "",
         payment_url: existingInvoice.payment_url || "",
         payment_method: existingInvoice.payment_method || "",
         payment_reference: existingInvoice.payment_reference || "",
@@ -8519,8 +8671,9 @@
     });
 
     $("#invoice_customer").addEventListener("change", () => {
-      const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || null;
-      if (!selectedCustomer) return;
+      toggleManualInvoiceCustomer();
+      const selectedCustomer = selectedInvoiceCustomer();
+      if (!selectedCustomer || $("#invoice_customer").value === "manual") return;
       const selectedJob = newestJob(selectedCustomer.jobs || []);
       const monthBilling = selectedJob ? jobBillingForMonth(selectedJob) : { amount: 0 };
       const amount = monthBilling.weeks !== null
@@ -8535,6 +8688,7 @@
       if (!$("#invoice_custom_service").value) {
         $("#invoice_custom_service").value = selectedCustomer.plan || "";
       }
+      $("#invoice_saved_address").value = selectedCustomer.property?.address || selectedJob?.address || "";
       renderInvoiceLines([{
         description: selectedCustomer.plan || selectedJob?.service_type || "Monthly lawn service",
         category: "Service",
@@ -8606,11 +8760,18 @@
         (invoice.customer_code && customer.customer_code === invoice.customer_code) ||
         (invoice.email && customer.email === invoice.email)
       );
-      $("#invoice_customer").value = index >= 0 ? String(index) : "";
+      $("#invoice_customer").value = index >= 0 ? String(index) : "manual";
+      $("#invoice_manual_name").value = index >= 0 ? "" : (invoice.customer_name || "");
+      $("#invoice_manual_email").value = index >= 0 ? "" : (invoice.email || "");
+      $("#invoice_manual_phone").value = index >= 0 ? "" : (invoice.phone || "");
+      $("#invoice_service_address").value = index >= 0 ? "" : (invoice.service_address || "");
+      $("#invoice_saved_address").value = index >= 0 ? (invoice.service_address || invoiceCustomers[index]?.property?.address || "") : "";
+      toggleManualInvoiceCustomer();
       $("#invoice_amount").value = invoice.amount || "";
       $("#invoice_due").value = invoice.due_date || "";
       $("#invoice_status").value = invoice.status;
       $("#invoice_custom_service").value = invoice.service_line || "";
+      $("#invoice_project_scope").value = invoice.project_scope || "";
       $("#invoice_notes").value = invoice.notes || "";
       $("#invoice_discount").value = Number(invoice.discount || 0);
       $("#invoice_tax_rate").value = Number(invoice.tax_rate || 0);
@@ -8644,11 +8805,11 @@
     $("#export-invoices-csv").addEventListener("click", async () => {
       if (!invoiceDrafts.length) await loadInvoices();
       downloadAccountingCsv(`green-grin-invoices-${todayInputDate()}.csv`,
-        ["Invoice", "Customer ID", "Customer", "Email", "Phone", "Status", "Due", "Subtotal", "Discount", "Tax", "Total", "Line items", "Notes"],
+        ["Invoice", "Customer ID", "Customer", "Email", "Phone", "Project address", "Status", "Due", "Subtotal", "Discount", "Tax", "Total", "Line items", "Project scope", "Approved by", "Approved at", "Notes"],
         invoiceDrafts.map((invoice) => [
-          invoiceNumber(invoice), invoice.customer_code, invoice.customer_name, invoice.email, invoice.phone, invoice.status,
+          invoiceNumber(invoice), invoice.customer_code, invoice.customer_name, invoice.email, invoice.phone, invoice.service_address, invoice.status,
           invoice.due_date, invoice.subtotal ?? invoice.amount, invoice.discount || 0, invoice.tax_amount || 0, invoice.amount,
-          normalizedInvoiceLines(invoice.line_items).map((item) => `${item.description}: ${item.quantity} ${item.unit} @ ${item.rate}`).join(" | "), invoice.notes
+          normalizedInvoiceLines(invoice.line_items).map((item) => `${item.description}: ${item.quantity} ${item.unit} @ ${item.rate}`).join(" | "), invoice.project_scope, invoice.accepted_by, invoice.accepted_at, invoice.notes
         ])
       );
     });
@@ -8934,8 +9095,12 @@
 
       if (action === "invoice") {
         const index = invoiceCustomers.findIndex((item) => item === customer);
+        const property = customer.property || {};
         $("#invoice_id").value = "";
         $("#invoice_customer").value = index >= 0 ? String(index) : "";
+        $("#invoice_saved_address").value = property.address || newestCustomerJob?.address || "";
+        $("#invoice_project_scope").value = "";
+        toggleManualInvoiceCustomer();
         $("#invoice_amount").value = customerMonthlyPrice ? Number(customerMonthlyPrice).toFixed(2) : "";
         $("#invoice_due").value = "";
         $("#invoice_status").value = "Draft";
@@ -8976,6 +9141,8 @@
               due_date: dueDate,
               status: "Sent",
               service_line: customerPlan,
+              service_address: customer.property?.address || newestCustomerJob?.address || "",
+              project_scope: "",
               notes: customerMonthBilling.weeks === null
                 ? `Monthly service invoice for ${customerPlan}`
                 : `${customerMonthBilling.weeks} scheduled service week${customerMonthBilling.weeks === 1 ? "" : "s"} for ${customerPlan}`,
