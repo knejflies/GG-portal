@@ -1,11 +1,12 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { requireAccounting } = require("./accounting-auth");
 
 const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-admin-pin",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin, x-employee-pin",
   "Access-Control-Allow-Methods": "GET, PATCH, DELETE, OPTIONS"
 };
 
@@ -97,11 +98,9 @@ exports.handler = async (event) => {
   const setupError = requireSetup();
   if (setupError) return json(500, { error: setupError });
 
-  const adminError = requireAdmin(event);
-  if (adminError) return json(401, { error: adminError });
-
   try {
     if (event.httpMethod === "GET") {
+      await requireAccounting(event, supabase);
       const customers = await supabase("green_grin_customers?select=*&active=eq.true&order=customer_code.asc.nullslast,created_at.desc&limit=300");
       const properties = await supabase("green_grin_properties?select=*&active=eq.true&order=created_at.desc&limit=500");
       const jobs = await supabase("green_grin_jobs?select=*&order=created_at.desc&limit=500");
@@ -162,6 +161,8 @@ exports.handler = async (event) => {
     }
 
     const body = JSON.parse(event.body || "{}");
+    const adminError = requireAdmin(event);
+    if (adminError) return json(401, { error: adminError });
     const customerUserId = body.customer_user_id || null;
     const phone = body.phone || "";
     const email = body.email || "";

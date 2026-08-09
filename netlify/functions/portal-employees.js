@@ -204,6 +204,9 @@ exports.handler = async (event) => {
         const requested = Array.isArray(body.subcontractor_services) ? body.subcontractor_services : [];
         update.subcontractor_services = [...new Set(requested.filter((service) => SUBCONTRACTOR_SERVICES.includes(service)))];
       }
+      if (Object.prototype.hasOwnProperty.call(body, "role")) {
+        update.role = body.role === "Bookkeeper" ? "Bookkeeper" : "Crew";
+      }
       if (!Object.keys(update).length) return json(400, { error: "Nothing to update." });
       const rows = await supabase(`green_grin_employees?id=eq.${encodeURIComponent(body.id)}`, {
         method: "PATCH",

@@ -287,6 +287,15 @@
       display: none;
     }
 
+    .bookkeeper-mode #portal-app .tabs .tab:not([data-tab="invoices"]):not([data-tab="expenses"]) {
+      display: none !important;
+    }
+
+    body.employee-site.bookkeeper-mode .tab.owner-only[data-tab="invoices"],
+    body.employee-site.bookkeeper-mode .tab.owner-only[data-tab="expenses"] {
+      display: block;
+    }
+
     main {
       padding: 28px 0 80px;
     }
@@ -3219,6 +3228,53 @@
       }
     }
 
+    .invoice-line-builder {
+      margin: 18px 0;
+      padding: 14px;
+      border: 1px solid rgba(210, 232, 204, 0.16);
+      border-radius: 8px;
+      background: rgba(1, 10, 6, 0.38);
+    }
+
+    .invoice-line-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .invoice-line-heading p { margin: 3px 0 0; }
+    .invoice-line-items { display: grid; gap: 10px; }
+
+    .invoice-line-row {
+      display: grid;
+      grid-template-columns: minmax(170px, 2fr) 120px 90px 110px 110px 100px 44px;
+      gap: 8px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid rgba(210, 232, 204, 0.14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.035);
+    }
+
+    .invoice-line-row label { font-size: 0.72rem; }
+    .invoice-line-total { min-height: 46px; display: flex; align-items: center; justify-content: flex-end; font-weight: 950; color: var(--role-accent); }
+    .invoice-line-remove { width: 44px; min-width: 44px; padding: 0; }
+
+    .invoice-calculation {
+      display: grid;
+      justify-content: end;
+      gap: 5px;
+      padding: 12px 0;
+      text-align: right;
+      color: var(--muted);
+    }
+
+    .invoice-calculation strong { color: var(--role-accent); font-size: 1.35rem; }
+    .invoice-items-summary { margin: 10px 0; padding: 10px; border-left: 3px solid var(--role-accent); background: rgba(var(--role-accent-rgb), 0.08); }
+    .invoice-items-summary p { margin: 4px 0; }
+
     /* Final phone command-center layout. Keep this last so older theme layers cannot override it. */
     @media (max-width: 700px) {
       html { scroll-padding-top: 128px; }
@@ -3308,6 +3364,10 @@
       .admin-actions > *,
       .notification-actions > * { width: 100%; min-width: 0; }
       .chat-bubble { max-width: 92%; overflow-wrap: anywhere; }
+      .invoice-line-heading { align-items: stretch; flex-direction: column; }
+      .invoice-line-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .invoice-line-row .invoice-line-description { grid-column: 1 / -1; }
+      .invoice-line-total { justify-content: flex-start; }
       .install-prompt { width: calc(100% - 20px); bottom: max(10px, env(safe-area-inset-bottom)); }
     }
 
@@ -3372,16 +3432,34 @@
             <label for="auth-password">Password</label>
             <input id="auth-password" type="password" required minlength="6" placeholder="At least 6 characters" />
           </div>
-          <div>
-            <label for="auth-phone">Phone <span class="muted">(required for new accounts)</span></label>
-            <input id="auth-phone" type="tel" autocomplete="tel" placeholder="(208) 555-0199" />
-          </div>
+          <details class="signup-profile">
+            <summary>New customer details</summary>
+            <div><label for="auth-name">Full name</label><input id="auth-name" autocomplete="name" placeholder="First and last name" /></div>
+            <div><label for="auth-phone">Phone</label><input id="auth-phone" type="tel" autocomplete="tel" placeholder="(208) 555-0199" /></div>
+            <div><label for="auth-address">Service address</label><input id="auth-address" autocomplete="street-address" placeholder="Street, city, state, ZIP" /></div>
+            <div class="two">
+              <div><label for="auth-gate">Gate code</label><input id="auth-gate" placeholder="Optional" /></div>
+              <div><label for="auth-pets">Pets</label><input id="auth-pets" placeholder="Dogs in backyard, etc." /></div>
+            </div>
+            <div><label for="auth-yard-notes">Yard details</label><textarea id="auth-yard-notes" placeholder="Sprinklers, locked gates, soft spots, access instructions, or anything the crew should know"></textarea></div>
+          </details>
           <div class="two">
             <button class="button" type="submit" data-auth-action="signin">Sign In</button>
             <button class="button ghost" type="submit" data-auth-action="signup">Create Account</button>
           </div>
+          <button id="forgot-password" class="button ghost" type="button">Forgot Password</button>
         </form>
         <div id="auth-result" aria-live="polite"></div>
+      </div>
+
+      <div id="password-reset-card" class="auth-card" hidden>
+        <h2>Choose a new password</h2>
+        <form id="password-reset-form">
+          <div><label for="new-password">New password</label><input id="new-password" type="password" minlength="8" required autocomplete="new-password" /></div>
+          <div><label for="confirm-password">Confirm password</label><input id="confirm-password" type="password" minlength="8" required autocomplete="new-password" /></div>
+          <button class="button" type="submit">Save New Password</button>
+        </form>
+        <div id="password-reset-result" aria-live="polite"></div>
       </div>
 
       <div id="team-access" class="team-access" hidden>
@@ -3651,6 +3729,11 @@
         <div class="card">
           <h2>Property details</h2>
           <form id="property-form">
+            <div class="two">
+              <div><label for="profile_name">Account name</label><input id="profile_name" autocomplete="name" required /></div>
+              <div><label for="profile_phone">Phone</label><input id="profile_phone" type="tel" autocomplete="tel" required /></div>
+            </div>
+            <div><label for="profile_email">Account email</label><input id="profile_email" type="email" autocomplete="email" /><p class="muted">Changing email requires confirmation from the new address.</p></div>
             <div class="two">
               <div>
                 <label for="property_address">Property address</label>
@@ -4121,6 +4204,29 @@
           </form>
         </details>
       </div>
+      <details class="bid-settings saved-rate-library">
+        <summary>Saved Square-Foot Price Library</summary>
+        <div class="grid">
+          <form id="saved-rate-form">
+            <input id="saved-rate-id" type="hidden" />
+            <div class="two">
+              <div><label for="saved-rate-service">Service</label><input id="saved-rate-service" required placeholder="Mulch install, spray, cleanup" /></div>
+              <div><label for="saved-rate-property">Property type</label><input id="saved-rate-property" value="Any" placeholder="Residential, HOA, commercial" /></div>
+            </div>
+            <div class="two">
+              <div><label for="saved-rate-basis">Price basis</label><select id="saved-rate-basis"><option value="sqft">Per sq. ft.</option><option value="1000sqft">Per 1,000 sq. ft.</option><option value="flat">Flat price</option></select></div>
+              <div><label for="saved-rate-price">Rate</label><input id="saved-rate-price" type="number" min="0" step="0.0001" required /></div>
+            </div>
+            <div class="two">
+              <div><label for="saved-rate-minimum">Minimum charge</label><input id="saved-rate-minimum" type="number" min="0" step="0.01" value="0" /></div>
+              <div><label for="saved-rate-sqft">Test square footage</label><input id="saved-rate-sqft" type="number" min="0" step="1" value="5000" /></div>
+            </div>
+            <div class="row-actions"><button class="button" type="submit">Save Rate</button><button id="saved-rate-clear" class="button ghost" type="button">Clear</button></div>
+            <div id="saved-rate-result" aria-live="polite"></div>
+          </form>
+          <div><h3>Your saved rates</h3><div id="saved-rate-list" class="status-box"></div></div>
+        </div>
+      </details>
     </section>
 
     <section id="fert-bids" class="panel owner-only">
@@ -4303,6 +4409,15 @@
     </section>
 
     <section id="invoices" class="panel">
+      <div id="invoice-bookkeeping-summary" class="three owner-only">
+        <div class="metric"><span>Total billed</span><strong id="books-total-billed">$0.00</strong><p class="muted">All active invoices</p></div>
+        <div class="metric"><span>Outstanding</span><strong id="books-outstanding">$0.00</strong><p class="muted">Sent, pending, and overdue</p></div>
+        <div class="metric"><span>Collected</span><strong id="books-collected">$0.00</strong><p class="muted">Invoices marked paid</p></div>
+      </div>
+      <div class="row-actions owner-only" style="margin: 12px 0 18px;">
+        <button id="export-invoices-csv" class="button ghost" type="button">Export Invoices CSV</button>
+        <button id="export-expenses-csv" class="button ghost" type="button">Export Expenses CSV</button>
+      </div>
       <div class="grid">
         <div class="card owner-only">
           <h2>Invoice center</h2>
@@ -4318,7 +4433,7 @@
               </div>
               <div>
                 <label for="invoice_amount">Amount</label>
-                <input id="invoice_amount" type="number" min="0" step="0.01" placeholder="Invoice amount" />
+                <input id="invoice_amount" type="number" min="0" step="0.01" readonly value="0.00" />
               </div>
             </div>
             <div class="two">
@@ -4341,6 +4456,21 @@
               <label for="invoice_custom_service">Custom service line</label>
               <input id="invoice_custom_service" placeholder="Optional: mulch install, sprinkler repair, spring cleanup, one-time project" />
             </div>
+            <div class="invoice-line-builder">
+              <div class="invoice-line-heading">
+                <div><strong>Invoice items</strong><p class="muted">Services, spray, fertilizer, materials, or other charges.</p></div>
+                <div class="row-actions">
+                  <button class="button small ghost" data-add-invoice-line="Service" type="button">Add Service</button>
+                  <button class="button small secondary" data-add-invoice-line="Spray" type="button">Add Spray Used</button>
+                </div>
+              </div>
+              <div id="invoice-line-items" class="invoice-line-items"></div>
+            </div>
+            <div class="two">
+              <div><label for="invoice_discount">Discount</label><input id="invoice_discount" type="number" min="0" step="0.01" value="0" /></div>
+              <div><label for="invoice_tax_rate">Tax rate %</label><input id="invoice_tax_rate" type="number" min="0" step="0.01" value="0" /></div>
+            </div>
+            <div id="invoice-calculation" class="invoice-calculation" aria-live="polite"></div>
             <div>
               <label for="invoice_notes">Notes</label>
               <textarea id="invoice_notes" placeholder="Monthly mowing, cleanup, landscape project, payment note"></textarea>
@@ -4348,6 +4478,7 @@
             <div class="row-actions">
               <button id="invoice-submit" class="button ghost" data-invoice-intent="draft" type="submit">Save Draft</button>
               <button id="invoice-send" class="button" data-invoice-intent="send" type="submit">Send Invoice</button>
+              <button id="invoice-print-draft" class="button secondary" type="button">Print Preview</button>
             </div>
           </form>
           <div id="invoice-result" aria-live="polite"></div>
@@ -4921,6 +5052,7 @@
     function setSignedIn(account = {}) {
       activeAccount = account || {};
       document.body.classList.toggle("employee-mode", activeAccount.id === "employee");
+      document.body.classList.toggle("bookkeeper-mode", activeAccount.id === "bookkeeper");
       $("#auth-gate").classList.remove("active");
       $("#portal-app").classList.add("active");
       $("#account-pill").textContent = activeAccount.email || "Customer account";
@@ -4943,6 +5075,15 @@
     }
 
     async function setEmployeeSignedIn(employee, remember = true) {
+      if (employee?.role === "Bookkeeper") {
+        if (remember) saveValue(sessionKeys.employeeLogin, "auth");
+        setSignedIn({ id: "bookkeeper", email: `Bookkeeper: ${employee.full_name || employee.email || "Account"}` });
+        openTab("invoices");
+        await loadInvoiceCustomers();
+        await loadInvoices();
+        await loadExpenses();
+        return;
+      }
       if (remember) saveValue(sessionKeys.employeeLogin, "auth");
       setSignedIn({ id: "employee", email: `Welcome, ${employee.full_name || employee.email || "Employee"}` });
       configureMarketingAccess(employee);
@@ -4981,6 +5122,15 @@
         saveValue(sessionKeys.employeePin, pin);
         saveValue(sessionKeys.employeeLogin, "pin");
       }
+      if (data.employee?.role === "Bookkeeper") {
+        $("#employee-pin").value = pin;
+        setSignedIn({ id: "bookkeeper", email: `Bookkeeper: ${employeeName}` });
+        openTab("invoices");
+        await loadInvoiceCustomers();
+        await loadInvoices();
+        await loadExpenses();
+        return;
+      }
       setSignedIn({ id: "employee", email: `Welcome, ${employeeName}` });
       configureMarketingAccess(data.employee);
       $("#employee-welcome").textContent = `Welcome, ${employeeName}.`;
@@ -4999,6 +5149,7 @@
       adminSessionPin = "";
       if (shouldClearSaved) clearSavedPortalSessions();
       document.body.classList.remove("employee-mode");
+      document.body.classList.remove("bookkeeper-mode");
       $("#auth-gate").classList.add("active");
       $("#portal-app").classList.remove("active");
       $("#account-pill").classList.remove("active");
@@ -5090,6 +5241,13 @@
           await restoreSavedPortalSession();
         }
         supabaseClient.auth.onAuthStateChange((eventName, session) => {
+          if (eventName === "PASSWORD_RECOVERY") {
+            $("#auth-gate").classList.add("active");
+            $("#portal-app").classList.remove("active");
+            $("#password-reset-card").hidden = false;
+            document.querySelector(".customer-login-card").hidden = true;
+            return;
+          }
           if (session?.user) {
             handleAuthSession(session);
           } else if (eventName === "SIGNED_OUT") {
@@ -5197,6 +5355,8 @@
       const email = $("#auth-email").value.trim();
       const password = $("#auth-password").value;
       const phone = $("#auth-phone").value.replace(/\D/g, "");
+      const name = $("#auth-name").value.trim();
+      const address = $("#auth-address").value.trim();
       const action = event.submitter?.dataset.authAction || "signin";
       $("#auth-result").innerHTML = notice(action === "signup" ? "Creating account..." : "Signing in...");
       if (!supabaseClient) {
@@ -5204,10 +5364,23 @@
         return;
       }
 
-      if (action === "signup" && phone.length < 10) {
-        $("#auth-result").innerHTML = notice("Enter a valid phone number to create an account.", true);
-        $("#auth-phone").focus();
-        return;
+      if (action === "signup") {
+        $(".signup-profile").open = true;
+        if (!name) {
+          $("#auth-result").innerHTML = notice("Enter your full name to create an account.", true);
+          $("#auth-name").focus();
+          return;
+        }
+        if (phone.length < 10) {
+          $("#auth-result").innerHTML = notice("Enter a valid phone number to create an account.", true);
+          $("#auth-phone").focus();
+          return;
+        }
+        if (!address) {
+          $("#auth-result").innerHTML = notice("Enter the property address Green Grin will service.", true);
+          $("#auth-address").focus();
+          return;
+        }
       }
 
       try {
@@ -5217,7 +5390,14 @@
               password,
               options: {
                 emailRedirectTo: window.location.href.split("#")[0],
-                data: { phone }
+                data: {
+                  name,
+                  phone,
+                  address,
+                  gate_code: $("#auth-gate").value.trim(),
+                  pets: $("#auth-pets").value.trim(),
+                  yard_notes: $("#auth-yard-notes").value.trim()
+                }
               }
             })
           : await supabaseClient.auth.signInWithPassword({ email, password });
@@ -5295,6 +5475,116 @@
     $("#owner_job_end_date").addEventListener("change", syncOwnerSeasonTotalFromWeekly);
     $("#owner_job_annual_price").addEventListener("input", syncOwnerWeeklyFromSeasonTotal);
 
+    $("#saved-rate-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!bidPricingConfig) await loadBidPricing(true);
+      const id = $("#saved-rate-id").value || `rate-${Date.now()}`;
+      const rate = {
+        id,
+        service: $("#saved-rate-service").value.trim(),
+        propertyType: $("#saved-rate-property").value.trim() || "Any",
+        basis: $("#saved-rate-basis").value,
+        rate: Number($("#saved-rate-price").value) || 0,
+        minimum: Number($("#saved-rate-minimum").value) || 0
+      };
+      if (!rate.service || rate.rate <= 0) {
+        $("#saved-rate-result").innerHTML = notice("Enter a service and a rate greater than zero.", true);
+        return;
+      }
+      const rates = Array.isArray(bidPricingConfig.savedRates) ? [...bidPricingConfig.savedRates] : [];
+      const index = rates.findIndex((item) => item.id === id);
+      if (index >= 0) rates[index] = rate;
+      else rates.push(rate);
+      bidPricingConfig.savedRates = rates;
+      try {
+        await persistSavedRates(index >= 0 ? "Saved rate updated." : "Saved rate added to your library.");
+        clearSavedRateForm();
+      } catch (error) {
+        $("#saved-rate-result").innerHTML = notice(error.message, true);
+      }
+    });
+
+    $("#forgot-password").addEventListener("click", async () => {
+      const email = $("#auth-email").value.trim();
+      if (!email) {
+        $("#auth-result").innerHTML = notice("Enter your email above, then tap Forgot Password again.", true);
+        $("#auth-email").focus();
+        return;
+      }
+      if (!supabaseClient) {
+        $("#auth-result").innerHTML = notice("Password reset is temporarily unavailable.", true);
+        return;
+      }
+      $("#auth-result").innerHTML = notice("Sending password reset email...");
+      const redirectTo = `${window.location.origin}/portal/`;
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo });
+      $("#auth-result").innerHTML = error
+        ? notice(error.message, true)
+        : notice("Password reset email sent. Open the link in that email to choose a new password.");
+    });
+
+    $("#password-reset-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const password = $("#new-password").value;
+      const confirmation = $("#confirm-password").value;
+      if (password.length < 8) {
+        $("#password-reset-result").innerHTML = notice("Use at least 8 characters.", true);
+        return;
+      }
+      if (password !== confirmation) {
+        $("#password-reset-result").innerHTML = notice("The passwords do not match.", true);
+        return;
+      }
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      if (error) {
+        $("#password-reset-result").innerHTML = notice(error.message, true);
+        return;
+      }
+      $("#password-reset-result").innerHTML = notice("Password updated. You are signed in.");
+      $("#password-reset-card").hidden = true;
+      document.querySelector(".customer-login-card").hidden = false;
+      const { data } = await supabaseClient.auth.getSession();
+      if (data.session) await handleAuthSession(data.session);
+    });
+
+    $("#saved-rate-clear").addEventListener("click", clearSavedRateForm);
+    $("#saved-rate-sqft").addEventListener("input", renderSavedRates);
+    $("#saved-rate-list").addEventListener("click", async (event) => {
+      const card = event.target.closest("[data-saved-rate-id]");
+      if (!card) return;
+      const rates = Array.isArray(bidPricingConfig?.savedRates) ? bidPricingConfig.savedRates : [];
+      const rate = rates.find((item) => item.id === card.dataset.savedRateId);
+      if (!rate) return;
+      if (event.target.closest("[data-saved-rate-edit]")) {
+        $("#saved-rate-id").value = rate.id;
+        $("#saved-rate-service").value = rate.service;
+        $("#saved-rate-property").value = rate.propertyType;
+        $("#saved-rate-basis").value = rate.basis;
+        $("#saved-rate-price").value = rate.rate;
+        $("#saved-rate-minimum").value = rate.minimum || 0;
+        return;
+      }
+      if (event.target.closest("[data-saved-rate-invoice]")) {
+        const sqft = Number($("#saved-rate-sqft").value) || 0;
+        const total = savedRateQuote(rate, sqft);
+        $("#invoice_id").value = "";
+        $("#invoice_custom_service").value = rate.service;
+        $("#invoice_notes").value = `${rate.service} quote for ${sqft.toLocaleString()} sq. ft.`;
+        renderInvoiceLines([{ description: rate.service, category: "Service", quantity: rate.basis === "flat" ? 1 : sqft, unit: rate.basis === "1000sqft" ? "1,000 sq ft" : rate.basis === "flat" ? "each" : "sq ft", rate: rate.basis === "1000sqft" ? Number(rate.rate) / 1000 : Number(rate.rate) }]);
+        if (total > Number($("#invoice_amount").value)) {
+          renderInvoiceLines([{ description: rate.service, category: "Service", quantity: 1, unit: "each", rate: total }]);
+        }
+        openTab("invoices");
+        return;
+      }
+      if (event.target.closest("[data-saved-rate-delete]")) {
+        if (!confirm(`Delete saved rate for ${rate.service}?`)) return;
+        bidPricingConfig.savedRates = rates.filter((item) => item.id !== rate.id);
+        try { await persistSavedRates("Saved rate deleted."); }
+        catch (error) { $("#saved-rate-result").innerHTML = notice(error.message, true); }
+      }
+    });
+
     $("#bid-form").addEventListener("submit", (event) => {
       event.preventDefault();
       try {
@@ -5360,6 +5650,7 @@
       $("#invoice_status").value = "Draft";
       $("#invoice_custom_service").value = bid.serviceName;
       $("#invoice_notes").value = bidNotes(bid);
+      renderInvoiceLines([{ description: bid.serviceName, category: "Service", quantity: 1, unit: "each", rate: bid.monthlyPayment }]);
       $("#invoice-submit").textContent = "Save Draft";
       $("#bid-result").innerHTML = notice("Bid copied to a draft invoice.");
       openTab("invoices");
@@ -5430,6 +5721,7 @@
       $("#invoice_status").value = "Draft";
       $("#invoice_custom_service").value = "Fertilizer application";
       $("#invoice_notes").value = fertilizerBidNotes(bid);
+      renderInvoiceLines([{ description: "Fertilizer application", category: "Fertilizer", quantity: 1, unit: "visit", rate: bid.averageApplicationCharge }]);
       $("#invoice-submit").textContent = "Save Draft";
       $("#fert-result").innerHTML = notice("Average application charge copied to a draft invoice.");
       openTab("invoices");
@@ -5444,7 +5736,12 @@
     }
 
     function adminHeaders() {
+      if (activeAccount?.id === "bookkeeper") return employeeTimeHeaders();
       return { "x-admin-pin": adminPin() };
+    }
+
+    function hasAccountingAccess() {
+      return Boolean(adminPin() || activeAccount?.id === "bookkeeper");
     }
 
     function cleanText(value) {
@@ -5645,6 +5942,43 @@
       };
     }
 
+    function savedRateQuote(rate, squareFeet) {
+      const sqft = Math.max(0, Number(squareFeet) || 0);
+      const raw = rate.basis === "flat" ? Number(rate.rate) : rate.basis === "1000sqft" ? sqft / 1000 * Number(rate.rate) : sqft * Number(rate.rate);
+      return Math.max(Number(rate.minimum) || 0, raw || 0);
+    }
+
+    function renderSavedRates() {
+      const rates = Array.isArray(bidPricingConfig?.savedRates) ? bidPricingConfig.savedRates : [];
+      const sqft = Number($("#saved-rate-sqft")?.value) || 0;
+      $("#saved-rate-list").innerHTML = rates.length ? rates.map((rate) => `
+        <div class="message" data-saved-rate-id="${cleanText(rate.id)}">
+          <div class="message-head"><strong>${cleanText(rate.service)}</strong><span class="badge">${cleanText(rate.propertyType || "Any")}</span></div>
+          <p class="muted">${rate.basis === "flat" ? "Flat" : rate.basis === "1000sqft" ? "Per 1,000 sq. ft." : "Per sq. ft."}: ${cleanText(money(rate.rate))} | Minimum ${cleanText(money(rate.minimum || 0))}</p>
+          <p><strong>${cleanText(String(sqft.toLocaleString()))} sq. ft. quote: ${cleanText(money(savedRateQuote(rate, sqft)))}</strong></p>
+          <div class="row-actions"><button class="button small ghost" data-saved-rate-edit type="button">Edit</button><button class="button small ghost" data-saved-rate-delete type="button">Delete</button><button class="button small secondary" data-saved-rate-invoice type="button">Copy To Invoice</button></div>
+        </div>`).join("") : notice("No saved square-foot rates yet.");
+    }
+
+    function clearSavedRateForm() {
+      $("#saved-rate-form").reset();
+      $("#saved-rate-id").value = "";
+      $("#saved-rate-property").value = "Any";
+      $("#saved-rate-minimum").value = "0";
+      $("#saved-rate-sqft").value = "5000";
+    }
+
+    async function persistSavedRates(message) {
+      const data = await requestJson("portal-pricing", {
+        method: "PATCH",
+        headers: adminHeaders(),
+        body: JSON.stringify({ config: bidPricingConfig })
+      });
+      bidPricingConfig = mergeBidPricingConfig(data.config);
+      renderSavedRates();
+      $("#saved-rate-result").innerHTML = notice(message);
+    }
+
     async function loadBidPricing(force = false) {
       if (bidPricingConfig && !force) return bidPricingConfig;
       try {
@@ -5660,6 +5994,7 @@
         const data = await requestJson("portal-pricing", { headers: adminHeaders() });
         bidPricingConfig = mergeBidPricingConfig(data.config || bidDefaultPricingConfig);
         populateBidPricingForm();
+        renderSavedRates();
         calculateBid();
         calculateFertBid();
         $("#bid-pricing-result").innerHTML = data.warning
@@ -5670,6 +6005,7 @@
         if (bidDefaultPricingConfig) {
           bidPricingConfig = mergeBidPricingConfig(bidDefaultPricingConfig);
           populateBidPricingForm();
+          renderSavedRates();
           calculateBid();
           calculateFertBid();
         }
@@ -6317,6 +6653,7 @@
           <div class="invoice-head"><strong>${cleanText(invoice.service_line || invoice.notes || "Green Grin invoice")}</strong><span class="badge">${cleanText(status)}</span></div>
           <p class="muted">${cleanText(amount || "$0.00")} - Due ${cleanText(due)}</p>
           <p class="muted">${cleanText(invoice.customer_code || "")}${invoice.customer_code ? " - " : ""}${cleanText(invoice.customer_name || "Customer")}</p>
+          ${invoiceItemsMarkup(invoice)}
           ${invoice.notes ? `<p>${cleanText(invoice.notes)}</p>` : ""}
           ${paymentOptionsMarkup(invoice)}
         </div>
@@ -6379,6 +6716,85 @@
       return raw ? `INV-${raw.slice(0, 8).toUpperCase()}` : "INV-DRAFT";
     }
 
+    function normalizedInvoiceLines(lines) {
+      return (Array.isArray(lines) ? lines : []).map((item) => ({
+        description: String(item?.description || ""),
+        category: String(item?.category || "Service"),
+        quantity: Math.max(0, Number(item?.quantity) || 0),
+        unit: String(item?.unit || "each"),
+        rate: Math.max(0, Number(item?.rate) || 0)
+      })).filter((item) => item.description || item.quantity || item.rate);
+    }
+
+    function invoiceLineRow(item = {}) {
+      const line = normalizedInvoiceLines([item])[0] || { description: "", category: item.category || "Service", quantity: 1, unit: item.unit || "each", rate: 0 };
+      const total = line.quantity * line.rate;
+      const units = ["each", "visit", "hour", "sq ft", "1,000 sq ft", "oz", "gal", "lb", "bag", "yard"];
+      return `
+        <div class="invoice-line-row">
+          <div class="invoice-line-description"><label>Description</label><input class="invoice-item-description" value="${cleanText(line.description)}" placeholder="Weekly mowing or product name" /></div>
+          <div><label>Category</label><select class="invoice-item-category">${["Service", "Spray", "Fertilizer", "Material", "Labor", "Other"].map((category) => `<option${category === line.category ? " selected" : ""}>${category}</option>`).join("")}</select></div>
+          <div><label>Quantity</label><input class="invoice-item-quantity" type="number" min="0" step="0.01" value="${line.quantity || 1}" /></div>
+          <div><label>Unit</label><select class="invoice-item-unit">${units.map((unit) => `<option${unit === line.unit ? " selected" : ""}>${unit}</option>`).join("")}</select></div>
+          <div><label>Rate</label><input class="invoice-item-rate" type="number" min="0" step="0.01" value="${line.rate || 0}" /></div>
+          <div class="invoice-line-total">${money(total) || "$0.00"}</div>
+          <button class="button ghost invoice-line-remove" type="button" aria-label="Remove invoice item">&times;</button>
+        </div>`;
+    }
+
+    function invoiceLinesFromForm() {
+      return [...document.querySelectorAll("#invoice-line-items .invoice-line-row")].map((row) => ({
+        description: row.querySelector(".invoice-item-description")?.value.trim() || "Service",
+        category: row.querySelector(".invoice-item-category")?.value || "Service",
+        quantity: Number(row.querySelector(".invoice-item-quantity")?.value) || 0,
+        unit: row.querySelector(".invoice-item-unit")?.value || "each",
+        rate: Number(row.querySelector(".invoice-item-rate")?.value) || 0
+      })).filter((item) => item.quantity > 0 && item.description);
+    }
+
+    function calculateInvoiceForm() {
+      const lines = invoiceLinesFromForm();
+      const subtotal = lines.reduce((sum, item) => sum + item.quantity * item.rate, 0);
+      const discount = Math.max(0, Number($("#invoice_discount")?.value) || 0);
+      const taxRate = Math.max(0, Number($("#invoice_tax_rate")?.value) || 0);
+      const taxable = Math.max(0, subtotal - discount);
+      const tax = taxable * taxRate / 100;
+      const total = taxable + tax;
+      $("#invoice_amount").value = total.toFixed(2);
+      document.querySelectorAll("#invoice-line-items .invoice-line-row").forEach((row) => {
+        const quantity = Number(row.querySelector(".invoice-item-quantity")?.value) || 0;
+        const rate = Number(row.querySelector(".invoice-item-rate")?.value) || 0;
+        row.querySelector(".invoice-line-total").textContent = money(quantity * rate) || "$0.00";
+      });
+      $("#invoice-calculation").innerHTML = `<span>Subtotal: ${money(subtotal)}</span>${discount ? `<span>Discount: -${money(discount)}</span>` : ""}${tax ? `<span>Tax: ${money(tax)}</span>` : ""}<strong>Total: ${money(total)}</strong>`;
+      return { lines, subtotal, discount, taxRate, tax, total };
+    }
+
+    function renderInvoiceLines(lines = []) {
+      const normalized = normalizedInvoiceLines(lines);
+      $("#invoice-line-items").innerHTML = (normalized.length ? normalized : [{ description: "Monthly lawn service", category: "Service", quantity: 1, unit: "each", rate: 0 }]).map(invoiceLineRow).join("");
+      calculateInvoiceForm();
+    }
+
+    function invoiceItemsMarkup(invoice) {
+      const lines = normalizedInvoiceLines(invoice.line_items);
+      if (!lines.length) return "";
+      return `<div class="invoice-items-summary">${lines.map((item) => `<p><strong>${cleanText(item.description)}</strong> - ${cleanText(String(item.quantity))} ${cleanText(item.unit)} at ${cleanText(money(item.rate))} = ${cleanText(money(item.quantity * item.rate))}</p>`).join("")}</div>`;
+    }
+
+    function printInvoice(invoice) {
+      const lines = normalizedInvoiceLines(invoice.line_items);
+      const popup = window.open("", "_blank", "width=820,height=900");
+      if (!popup) {
+        $("#invoice-result").innerHTML = notice("Allow pop-ups once to print this invoice.", true);
+        return;
+      }
+      const rows = lines.map((item) => `<tr><td>${cleanText(item.description)}</td><td>${cleanText(item.quantity)} ${cleanText(item.unit)}</td><td>${cleanText(money(item.rate))}</td><td>${cleanText(money(item.quantity * item.rate))}</td></tr>`).join("");
+      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawn &amp; Landscape</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p><p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p><table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button></body></html>`);
+      popup.document.close();
+      popup.focus();
+    }
+
     function isPaidInvoice(invoice) {
       return String(invoice.status || "").toLowerCase() === "paid";
     }
@@ -6409,10 +6825,12 @@
             <p class="muted">${cleanText(money(invoice.amount) || "$0.00")} - Due ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "No due date")}</p>
             <p class="muted">${cleanText(invoiceNumber(invoice))}</p>
             <p>${cleanText(invoice.service_line || invoice.notes || "")}</p>
+            ${invoiceItemsMarkup(invoice)}
             ${invoice.service_line && invoice.notes ? `<p class="muted">${cleanText(invoice.notes)}</p>` : ""}
             ${isPaymentPending(invoice) ? `<div class="payment-pending"><strong>${cleanText(paymentMethod(invoice))} payment reported.</strong> Verify the payment before selecting Mark Paid.<br><span class="muted">Memo: ${cleanText(paymentReference(invoice))}</span></div>` : ""}
             <div class="row-actions">
               <button class="button small ghost" data-invoice-action="edit" type="button">Edit</button>
+              <button class="button small ghost" data-invoice-action="print" type="button">Print</button>
               ${invoice.status === "Draft" ? `<button class="button small" data-invoice-action="send" type="button">Send</button>` : ""}
               ${isPaidInvoice(invoice) ? `<button class="button small ghost" data-invoice-action="reopen" type="button">Move To Open</button>` : `<button class="button small secondary" data-invoice-action="paid" type="button">Mark Paid</button>`}
               <button class="button small ghost" data-invoice-action="delete" type="button">Delete</button>
@@ -6435,6 +6853,12 @@
 
     function renderInvoiceDrafts() {
       const openInvoices = invoiceDrafts.filter((invoice) => !isPaidInvoice(invoice));
+      const billed = invoiceDrafts.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+      const collected = invoiceDrafts.filter(isPaidInvoice).reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+      const outstanding = invoiceDrafts.filter((invoice) => !isPaidInvoice(invoice) && invoice.status !== "Draft").reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
+      $("#books-total-billed").textContent = money(billed);
+      $("#books-collected").textContent = money(collected);
+      $("#books-outstanding").textContent = money(outstanding);
       $("#invoice-list").innerHTML = openInvoices.length
         ? openInvoices.map((invoice) => invoiceListCard(invoice)).join("")
         : `<div class="invoice"><div class="invoice-head"><strong>No invoices yet</strong><span class="badge warn">Draft</span></div></div>`;
@@ -6452,7 +6876,7 @@
     }
 
     async function loadInvoiceCustomers() {
-      if (!adminPin()) return;
+      if (!hasAccountingAccess()) return;
       try {
         const data = await requestJson("portal-customers?admin=1", { headers: adminHeaders() });
         invoiceCustomers = data.customers || [];
@@ -6463,7 +6887,7 @@
     }
 
     async function loadInvoices() {
-      if (!adminPin()) return;
+      if (!hasAccountingAccess()) return;
       $("#invoice-list").innerHTML = notice("Loading invoices...");
       try {
         const data = await requestJson("portal-invoices?admin=1", { headers: adminHeaders() });
@@ -6702,7 +7126,7 @@
     }
 
     async function loadExpenses() {
-      if (!adminPin()) return;
+      if (!hasAccountingAccess()) return;
       $("#expense-list").innerHTML = notice("Loading expenses...");
       try {
         const data = await requestJson("portal-expenses?admin=1", { headers: adminHeaders() });
@@ -6889,6 +7313,9 @@
       $("#customer_name").value = customer.full_name || activeAccount?.user_metadata?.name || "";
       $("#phone").value = customer.phone || "";
       $("#email").value = customer.email || activeAccount?.email || "";
+      $("#profile_name").value = customer.full_name || activeAccount?.user_metadata?.name || "";
+      $("#profile_phone").value = customer.phone || "";
+      $("#profile_email").value = customer.email || activeAccount?.email || "";
       $("#address").value = property.address || "";
       $("#property_address").value = property.address || "";
       $("#gate_code").value = property.gate_code || "";
@@ -7144,6 +7571,7 @@
           <p class="muted">Hourly rate: ${employee.hourly_rate ? money(employee.hourly_rate) : "Not set"}</p>
           <p class="muted">Marketing access: ${employee.is_marketer ? "Marketer" : "Crew only"}</p>
           <p class="muted">Work type: ${employee.is_subcontractor ? `Subcontractor${services.length ? ` - ${cleanText(services.join(", "))}` : ""}` : "Employee"}</p>
+          <p class="muted">Portal role: ${cleanText(employee.role || "Crew")}</p>
           <div class="two" style="margin-top: 12px;">
             <input class="employee-pin-input" type="password" value="${employee.employee_pin || ""}" placeholder="Set employee PIN" />
             <button class="button small" data-employee-pin="1" type="button">Save PIN</button>
@@ -7163,6 +7591,7 @@
             <button class="button small ghost" data-employee-status="Inactive" type="button">Deactivate</button>
             <button class="button small ${employee.is_marketer ? "ghost" : "secondary"}" data-employee-marketer="${employee.is_marketer ? "false" : "true"}" type="button">${employee.is_marketer ? "Remove Marketer" : "Make Marketer"}</button>
             <button class="button small ${employee.is_subcontractor ? "ghost" : "secondary"}" data-employee-subcontractor="${employee.is_subcontractor ? "false" : "true"}" type="button">${employee.is_subcontractor ? "Remove Subcontractor" : "Make Subcontractor"}</button>
+            <button class="button small ${employee.role === "Bookkeeper" ? "ghost" : "secondary"}" data-employee-bookkeeper="${employee.role === "Bookkeeper" ? "false" : "true"}" type="button">${employee.role === "Bookkeeper" ? "Remove Bookkeeper" : "Make Bookkeeper"}</button>
             <button class="button small ghost" data-employee-delete="1" type="button">Delete Employee</button>
           </div>
         </div>
@@ -7898,12 +8327,17 @@
 
       $("#property-result").innerHTML = notice("Saving property notes...");
       try {
+        const nextEmail = $("#profile_email").value.trim();
+        if (nextEmail && nextEmail.toLowerCase() !== String(activeAccount?.email || "").toLowerCase()) {
+          const { error: emailError } = await supabaseClient.auth.updateUser({ email: nextEmail });
+          if (emailError) throw emailError;
+        }
         const data = await requestJson("portal-account", {
           method: "PATCH",
           body: JSON.stringify({
             profile: {
-              full_name: $("#customer_name").value,
-              phone: $("#phone").value
+              full_name: $("#profile_name").value,
+              phone: $("#profile_phone").value
             },
             property: {
               id: accountData?.property?.id,
@@ -7915,7 +8349,7 @@
           })
         });
         renderAccount(data);
-        $("#property-result").innerHTML = notice("Saved to this customer account.");
+        $("#property-result").innerHTML = notice(nextEmail && nextEmail.toLowerCase() !== String(activeAccount?.email || "").toLowerCase() ? "Details saved. Check the new email address to confirm the email change." : "Account and property details saved.");
       } catch (error) {
         $("#property-result").innerHTML = notice(error.message, true);
       }
@@ -7983,6 +8417,48 @@
       }
     });
 
+    $("#invoice-line-items").addEventListener("input", calculateInvoiceForm);
+    $("#invoice-line-items").addEventListener("change", calculateInvoiceForm);
+    $("#invoice_discount").addEventListener("input", calculateInvoiceForm);
+    $("#invoice_tax_rate").addEventListener("input", calculateInvoiceForm);
+    $("#invoice-form").addEventListener("click", (event) => {
+      const addButton = event.target.closest("button[data-add-invoice-line]");
+      if (addButton) {
+        const category = addButton.dataset.addInvoiceLine || "Service";
+        $("#invoice-line-items").insertAdjacentHTML("beforeend", invoiceLineRow({
+          description: category === "Spray" ? "Weed spray application" : "",
+          category,
+          quantity: 1,
+          unit: category === "Spray" ? "oz" : "each",
+          rate: 0
+        }));
+        calculateInvoiceForm();
+        return;
+      }
+      const removeButton = event.target.closest(".invoice-line-remove");
+      if (removeButton) {
+        removeButton.closest(".invoice-line-row")?.remove();
+        if (!$("#invoice-line-items").children.length) renderInvoiceLines();
+        calculateInvoiceForm();
+      }
+    });
+    $("#invoice-print-draft").addEventListener("click", () => {
+      const selectedCustomer = invoiceCustomers[Number($("#invoice_customer").value)] || {};
+      const calculation = calculateInvoiceForm();
+      printInvoice({
+        id: $("#invoice_id").value,
+        customer_name: selectedCustomer.name || "Customer",
+        email: selectedCustomer.email || "",
+        phone: selectedCustomer.phone || "",
+        due_date: $("#invoice_due").value,
+        service_line: $("#invoice_custom_service").value,
+        notes: $("#invoice_notes").value,
+        amount: calculation.total,
+        line_items: calculation.lines
+      });
+    });
+    renderInvoiceLines();
+
     $("#invoice-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = event.currentTarget || $("#invoice-form");
@@ -7994,6 +8470,11 @@
         $("#invoice-result").innerHTML = notice("Choose a customer before saving an invoice.", true);
         return;
       }
+      const calculation = calculateInvoiceForm();
+      if (!calculation.lines.length || calculation.total <= 0) {
+        $("#invoice-result").innerHTML = notice("Add at least one invoice item with a quantity and rate.", true);
+        return;
+      }
       const payload = {
         id,
         customer_user_id: selectedCustomer.customer_user_id || selectedCustomer.id || null,
@@ -8001,7 +8482,12 @@
         customer_name: selectedCustomer.name || "Customer",
         phone: selectedCustomer.phone || "",
         email: selectedCustomer.email || "",
-        amount: $("#invoice_amount").value || 0,
+        amount: calculation.total,
+        subtotal: calculation.subtotal,
+        discount: calculation.discount,
+        tax_rate: calculation.taxRate,
+        tax_amount: calculation.tax,
+        line_items: calculation.lines,
         due_date: $("#invoice_due").value || null,
         status: intent === "send" ? "Sent" : ($("#invoice_status").value === "Sent" ? "Draft" : ($("#invoice_status").value || "Draft")),
         service_line: $("#invoice_custom_service").value || $("#invoice_notes").value || "Monthly service",
@@ -8023,6 +8509,7 @@
         form?.reset();
         $("#invoice_id").value = "";
         $("#invoice-submit").textContent = "Save Draft";
+        renderInvoiceLines();
         renderInvoiceCustomerOptions();
         await loadInvoices();
         $("#invoice-result").innerHTML = notice(intent === "send" ? invoiceDeliveryText(data, "Invoice sent to that customer account.") : "Invoice saved as a draft.");
@@ -8048,6 +8535,13 @@
       if (!$("#invoice_custom_service").value) {
         $("#invoice_custom_service").value = selectedCustomer.plan || "";
       }
+      renderInvoiceLines([{
+        description: selectedCustomer.plan || selectedJob?.service_type || "Monthly lawn service",
+        category: "Service",
+        quantity: 1,
+        unit: "each",
+        rate: Number(amount) || 0
+      }]);
     });
 
     async function handleInvoiceAction(event) {
@@ -8056,6 +8550,10 @@
       const id = button.closest(".invoice")?.dataset.id;
       const invoice = invoiceDrafts.find((item) => item.id === id);
       if (!invoice) return;
+      if (button.dataset.invoiceAction === "print") {
+        printInvoice(invoice);
+        return;
+      }
       if (button.dataset.invoiceAction === "delete") {
         if (!confirm("Delete this invoice forever?")) return;
         try {
@@ -8114,6 +8612,15 @@
       $("#invoice_status").value = invoice.status;
       $("#invoice_custom_service").value = invoice.service_line || "";
       $("#invoice_notes").value = invoice.notes || "";
+      $("#invoice_discount").value = Number(invoice.discount || 0);
+      $("#invoice_tax_rate").value = Number(invoice.tax_rate || 0);
+      renderInvoiceLines(invoice.line_items?.length ? invoice.line_items : [{
+        description: invoice.service_line || invoice.notes || "Service",
+        category: "Service",
+        quantity: 1,
+        unit: "each",
+        rate: Number(invoice.amount || 0)
+      }]);
       $("#invoice-submit").textContent = "Save Draft";
       $("#invoice-result").innerHTML = notice("Editing invoice.");
     }
@@ -8121,6 +8628,38 @@
     $("#invoice-list").addEventListener("click", handleInvoiceAction);
     $("#paid-invoice-list").addEventListener("click", handleInvoiceAction);
     $("#paid-invoice-search").addEventListener("input", renderPaidInvoices);
+
+    function downloadAccountingCsv(filename, headers, rows) {
+      const escapeCell = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+      const csv = [headers, ...rows].map((row) => row.map(escapeCell).join(",")).join("\r\n");
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      URL.revokeObjectURL(link.href);
+      link.remove();
+    }
+
+    $("#export-invoices-csv").addEventListener("click", async () => {
+      if (!invoiceDrafts.length) await loadInvoices();
+      downloadAccountingCsv(`green-grin-invoices-${todayInputDate()}.csv`,
+        ["Invoice", "Customer ID", "Customer", "Email", "Phone", "Status", "Due", "Subtotal", "Discount", "Tax", "Total", "Line items", "Notes"],
+        invoiceDrafts.map((invoice) => [
+          invoiceNumber(invoice), invoice.customer_code, invoice.customer_name, invoice.email, invoice.phone, invoice.status,
+          invoice.due_date, invoice.subtotal ?? invoice.amount, invoice.discount || 0, invoice.tax_amount || 0, invoice.amount,
+          normalizedInvoiceLines(invoice.line_items).map((item) => `${item.description}: ${item.quantity} ${item.unit} @ ${item.rate}`).join(" | "), invoice.notes
+        ])
+      );
+    });
+
+    $("#export-expenses-csv").addEventListener("click", async () => {
+      if (!expenseRows.length) await loadExpenses();
+      downloadAccountingCsv(`green-grin-expenses-${todayInputDate()}.csv`,
+        ["Date", "Type", "Vendor", "Category", "Amount", "Miles", "Mileage rate", "Payment method", "Notes"],
+        expenseRows.map((expense) => [expense.expense_date, expense.expense_type, expense.vendor, expense.category, expense.amount, expense.mileage_miles, expense.mileage_rate, expense.payment_method, expense.notes])
+      );
+    });
 
     $("#expense-clear").addEventListener("click", () => {
       clearExpenseForm();
@@ -8402,6 +8941,7 @@
         $("#invoice_status").value = "Draft";
         $("#invoice_custom_service").value = customerPlan || "";
         $("#invoice_notes").value = customerPlan || "Monthly service";
+        renderInvoiceLines([{ description: customerPlan || "Monthly service", category: "Service", quantity: 1, unit: "each", rate: Number(customerMonthlyPrice) || 0 }]);
         $("#invoice-submit").textContent = "Save Draft";
         openTab("invoices");
         return;
@@ -8428,6 +8968,11 @@
               phone: customer.phone || "",
               email: customer.email || "",
               amount: Number(customerMonthlyPrice).toFixed(2),
+              subtotal: Number(customerMonthlyPrice).toFixed(2),
+              discount: 0,
+              tax_rate: 0,
+              tax_amount: 0,
+              line_items: [{ description: customerPlan || "Monthly service", category: "Service", quantity: 1, unit: "each", rate: Number(customerMonthlyPrice) }],
               due_date: dueDate,
               status: "Sent",
               service_line: customerPlan,
@@ -8796,7 +9341,7 @@
     });
 
     async function handleEmployeeAdminClick(event) {
-      const button = event.target.closest("button[data-employee-status], button[data-employee-pin], button[data-employee-rate], button[data-employee-marketer], button[data-employee-subcontractor], button[data-employee-sub-services], button[data-employee-delete]");
+      const button = event.target.closest("button[data-employee-status], button[data-employee-pin], button[data-employee-rate], button[data-employee-marketer], button[data-employee-subcontractor], button[data-employee-bookkeeper], button[data-employee-sub-services], button[data-employee-delete]");
       if (!button) return;
       const card = button.closest(".job");
       const id = card.dataset.id;
@@ -8818,6 +9363,8 @@
                 ? { id, is_marketer: button.dataset.employeeMarketer === "true" }
                 : Object.prototype.hasOwnProperty.call(button.dataset, "employeeSubcontractor")
                   ? { id, is_subcontractor: button.dataset.employeeSubcontractor === "true" }
+                  : Object.prototype.hasOwnProperty.call(button.dataset, "employeeBookkeeper")
+                    ? { id, role: button.dataset.employeeBookkeeper === "true" ? "Bookkeeper" : "Crew" }
                   : button.dataset.employeeSubServices
                     ? { id, subcontractor_services: [...card.querySelectorAll(".employee-sub-service:checked")].map((input) => input.value) }
                     : { id, status: button.dataset.employeeStatus };

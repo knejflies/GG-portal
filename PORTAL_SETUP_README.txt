@@ -108,6 +108,13 @@ INVOICE EMAIL
 3. Save Draft never emails a customer. Send Invoice emails the customer and sends the existing app notification.
 4. Customers see Green Grin Lawn & Landscape <ken@greengrinlawns.com> as the sender.
 
+BOOKKEEPING CONSOLE
+1. Run the latest portal-setup.sql once to add invoice line items, discounts, tax, and the employee role field.
+2. In Admin -> Invoices, add service, spray, fertilizer, material, or labor lines. Quantity times rate calculates the bill.
+3. Print Preview produces a clean paper/PDF invoice. Send Invoice saves it, emails it, and sends the app notification.
+4. In Bidders -> Saved Square-Foot Price Library, save reusable rates and minimum charges as your pricing library grows.
+5. To add a bookkeeper, have them request employee access, approve the request, then select Make Bookkeeper. Their portal only exposes Invoices and Expenses.
+
 GOOGLE SHEETS CUSTOMER FEED
 1. Add GREEN_GRIN_SHEETS_SYNC_KEY in Netlify using a long private value.
 2. Follow google-sheets/SETUP.txt to connect a Google Sheet.

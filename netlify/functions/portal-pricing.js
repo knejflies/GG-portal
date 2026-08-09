@@ -95,7 +95,15 @@ function normalizePricing(input, nextVersion) {
     monthlyPaymentsPerYear: positiveInteger(source.monthlyPaymentsPerYear, "Monthly payments per year", 24),
     manualReviewAboveLawnSqFt: finiteNumber(source.manualReviewAboveLawnSqFt, "Manual review threshold", { minimum: 1, maximum: 10000000 }),
     plans: {},
-    addOns: {}
+    addOns: {},
+    savedRates: (Array.isArray(source.savedRates) ? source.savedRates : []).slice(0, 100).map((rate, index) => ({
+      id: cleanShortText(rate.id, `rate-${index + 1}`, 60),
+      service: cleanName(rate.service, `Custom service ${index + 1}`),
+      propertyType: cleanShortText(rate.propertyType, "Any", 40),
+      basis: ["sqft", "1000sqft", "flat"].includes(rate.basis) ? rate.basis : "sqft",
+      rate: finiteNumber(rate.rate, `Saved rate ${index + 1}`, { minimum: 0, maximum: 1000000 }),
+      minimum: finiteNumber(rate.minimum || 0, `Saved rate minimum ${index + 1}`, { minimum: 0, maximum: 1000000 })
+    }))
   };
 
   const mowingDefaults = DEFAULT_PRICING.mowingBid;

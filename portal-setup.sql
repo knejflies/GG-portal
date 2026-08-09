@@ -204,6 +204,9 @@ alter table public.green_grin_employees
 alter table public.green_grin_employees
   add column if not exists subcontractor_services text[] not null default '{}'::text[];
 
+alter table public.green_grin_employees
+  add column if not exists role text not null default 'Crew';
+
 create table if not exists public.green_grin_daily_route_assignments (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
@@ -355,6 +358,12 @@ alter table public.green_grin_invoices
 
 alter table public.green_grin_invoices
   add column if not exists active boolean not null default true;
+
+alter table public.green_grin_invoices add column if not exists subtotal numeric(10, 2) not null default 0;
+alter table public.green_grin_invoices add column if not exists discount numeric(10, 2) not null default 0;
+alter table public.green_grin_invoices add column if not exists tax_rate numeric(7, 4) not null default 0;
+alter table public.green_grin_invoices add column if not exists tax_amount numeric(10, 2) not null default 0;
+alter table public.green_grin_invoices add column if not exists line_items jsonb not null default '[]'::jsonb;
 
 create table if not exists public.green_grin_expenses (
   id uuid primary key default gen_random_uuid(),

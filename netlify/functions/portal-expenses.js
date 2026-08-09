@@ -5,11 +5,12 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const DEFAULT_RECEIPT_MODEL = ["gpt", "4o", "mini"].join("-");
 const OPENAI_RECEIPT_MODEL = process.env.OPENAI_RECEIPT_MODEL || DEFAULT_RECEIPT_MODEL;
 const DEFAULT_MILEAGE_RATE = 0.76;
+const { requireAccounting } = require("./accounting-auth");
 
 const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-admin-pin",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin, x-employee-pin",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS"
 };
 
@@ -217,10 +218,8 @@ exports.handler = async (event) => {
   const setupError = requireSetup();
   if (setupError) return json(500, { error: setupError });
 
-  const adminError = requireAdmin(event);
-  if (adminError) return json(401, { error: adminError });
-
   try {
+    await requireAccounting(event, supabase);
     if (event.httpMethod === "GET") {
       const expenses = await activeExpenses();
       return json(200, { expenses, totals: totalsFor(expenses) });

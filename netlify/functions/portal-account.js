@@ -271,10 +271,10 @@ async function loadAccount(user) {
       method: "POST",
       body: JSON.stringify({
         customer_user_id: user.id,
-        address: "",
-        gate_code: "",
-        pets: "",
-        yard_notes: "",
+        address: user.user_metadata?.address || "",
+        gate_code: user.user_metadata?.gate_code || "",
+        pets: user.user_metadata?.pets || "",
+        yard_notes: user.user_metadata?.yard_notes || "",
         service_preferences: ""
       })
     });
