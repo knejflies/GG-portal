@@ -42,6 +42,8 @@ create table if not exists public.green_grin_jobs (
   cleanup_reminder_time time not null default '08:00',
   assigned_employee_id uuid references public.green_grin_employees(id) on delete set null,
   assigned_employee_name text,
+  latitude double precision,
+  longitude double precision,
   monthly_price numeric(10, 2),
   annual_price numeric(10, 2),
   status text not null default 'New',
@@ -83,6 +85,12 @@ alter table public.green_grin_jobs
 
 alter table public.green_grin_jobs
   add column if not exists schedule_end_date date;
+
+alter table public.green_grin_jobs
+  add column if not exists latitude double precision;
+
+alter table public.green_grin_jobs
+  add column if not exists longitude double precision;
 
 create table if not exists public.green_grin_customers (
   id uuid primary key references auth.users(id) on delete cascade,
@@ -215,8 +223,12 @@ create table if not exists public.green_grin_daily_route_assignments (
   job_id uuid not null references public.green_grin_jobs(id) on delete cascade,
   assigned_employee_id uuid not null references public.green_grin_employees(id) on delete cascade,
   assigned_employee_name text,
+  stop_order integer not null default 0,
   unique (route_date, job_id)
 );
+
+alter table public.green_grin_daily_route_assignments
+  add column if not exists stop_order integer not null default 0;
 
 create table if not exists public.green_grin_marketing_routes (
   id uuid primary key default gen_random_uuid(),
@@ -583,6 +595,7 @@ create index if not exists green_grin_employees_pin_idx on public.green_grin_emp
 create index if not exists green_grin_daily_routes_date_idx on public.green_grin_daily_route_assignments(route_date);
 create index if not exists green_grin_daily_routes_employee_date_idx on public.green_grin_daily_route_assignments(assigned_employee_id, route_date);
 create index if not exists green_grin_daily_routes_job_date_idx on public.green_grin_daily_route_assignments(job_id, route_date);
+create index if not exists green_grin_daily_routes_order_idx on public.green_grin_daily_route_assignments(assigned_employee_id, route_date, stop_order);
 create index if not exists green_grin_time_entries_employee_idx on public.green_grin_time_entries(employee_id);
 create index if not exists green_grin_time_entries_clock_in_idx on public.green_grin_time_entries(clock_in_at desc);
 create index if not exists green_grin_time_entries_open_idx

@@ -214,3 +214,8 @@ EXPENSE SCANNER
 Admin -> Expenses can scan receipt photos after OPENAI_API_KEY is added in Netlify.
 The scan fills the form only. Review the vendor, date, category, and total before saving.
 Receipt photos are not saved in Supabase by this version; only the reviewed expense details are saved.
+DAILY ROUTE OPTIMIZER
+---------------------
+Run the latest portal-setup.sql once so jobs can save map coordinates and daily routes can save stop order.
+In Admin > Jobs > Daily Route Builder, choose the date and employee, enter the starting address, select the properties, then press Optimize by Drive Time. Press Save Daily Route to send that ordered route to the employee.
+The planner uses OpenStreetMap address lookup and road travel times. It requires internet access and does not include live traffic. Previously located customer addresses are saved so later route planning is faster.

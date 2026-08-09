@@ -854,14 +854,74 @@
 
     .daily-route-choice {
       display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-columns: auto 34px minmax(0, 1fr) auto;
       gap: 10px;
       align-items: center;
-      min-height: 50px;
-      padding: 10px 12px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      background: var(--white);
+      min-height: 62px;
+      padding: 11px 13px;
+      border: 1px solid #3d6850;
+      border-radius: 8px;
+      background: #102219;
+      color: #f7fff8;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, .16);
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .daily-route-choice:hover {
+      border-color: #7fcb68;
+      transform: translateY(-1px);
+    }
+
+    .daily-route-choice:has(input:checked) {
+      border-color: #7fcb68;
+      background: #163322;
+    }
+
+    .route-stop-number {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #72c94f;
+      color: #07110c;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .route-stop-copy {
+      min-width: 0;
+    }
+
+    .route-stop-copy strong {
+      display: block;
+      color: #ffffff;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+
+    .route-stop-address {
+      display: block;
+      margin-top: 3px;
+      color: #d3e7d8;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .daily-route-start {
+      margin-top: 14px;
+    }
+
+    .daily-route-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .daily-route-summary {
+      margin-top: 12px;
     }
 
     .daily-route-choice input,
@@ -872,8 +932,10 @@
     }
 
     .daily-route-choice small {
-      color: var(--muted);
+      max-width: 180px;
+      color: #b9d0c0;
       text-align: right;
+      line-height: 1.35;
     }
 
     .subcontractor-services {
@@ -1143,7 +1205,7 @@
 
       .subcontractor-services,
       .daily-route-choice {
-        grid-template-columns: 1fr;
+        grid-template-columns: auto 34px minmax(0, 1fr);
       }
 
       .daily-route-choice input {
@@ -1151,6 +1213,7 @@
       }
 
       .daily-route-choice small {
+        grid-column: 2 / -1;
         text-align: left;
       }
 
@@ -4230,12 +4293,19 @@
               </select>
             </div>
           </div>
-          <div class="admin-actions">
+          <div class="daily-route-start">
+            <label for="daily-route-start-address">Starting address</label>
+            <input id="daily-route-start-address" type="text" autocomplete="street-address" placeholder="Shop, home, or first departure address" />
+          </div>
+          <div class="daily-route-actions">
             <button id="load-daily-route" class="button ghost" type="button">Load Date</button>
+            <button id="select-all-route-jobs" class="button ghost" type="button">Select All</button>
+            <button id="clear-route-jobs" class="button ghost" type="button">Clear</button>
+            <button id="optimize-daily-route" class="button" type="button">Optimize by Drive Time</button>
             <button id="save-daily-route" class="button secondary" type="button">Save Daily Route</button>
           </div>
           <div id="daily-route-job-list" class="daily-route-job-list" aria-live="polite"></div>
-          <div id="daily-route-result" aria-live="polite"></div>
+          <div id="daily-route-result" class="daily-route-summary" aria-live="polite"></div>
         </div>
       </div>
     </section>
@@ -5042,6 +5112,7 @@
     let employeeDirectory = [];
     let adminJobRows = [];
     let adminDailyRouteRows = [];
+    let optimizedDailyRouteOrder = [];
     let activeEmployeeProfile = null;
     let marketingRoutes = [];
     let marketingLeads = [];
@@ -8064,9 +8135,20 @@
         return;
       }
       const dateAssignments = adminDailyRouteRows.filter((row) => jobDateKey(row.route_date) === routeDate);
-      const assignedJobIds = new Set(dateAssignments.filter((row) => row.assigned_employee_id === employeeId).map((row) => row.job_id));
+      const employeeAssignments = dateAssignments
+        .filter((row) => row.assigned_employee_id === employeeId)
+        .sort((left, right) => Number(left.stop_order || 0) - Number(right.stop_order || 0));
+      const assignedJobIds = new Set(employeeAssignments.map((row) => row.job_id));
       const visibleJobIds = new Set(assignedJobIds);
-      const candidates = adminJobRows.filter((job) => job.status !== "Completed" && (jobRunsOnDate(job, routeDate) || visibleJobIds.has(job.id)));
+      const savedOrder = new Map(employeeAssignments.map((row, index) => [row.job_id, Number(row.stop_order || index + 1)]));
+      const optimizedOrder = new Map(optimizedDailyRouteOrder.map((id, index) => [id, index + 1]));
+      const candidates = adminJobRows
+        .filter((job) => job.status !== "Completed" && (jobRunsOnDate(job, routeDate) || visibleJobIds.has(job.id)))
+        .sort((left, right) => {
+          const leftOrder = optimizedOrder.get(left.id) || savedOrder.get(left.id) || 9999;
+          const rightOrder = optimizedOrder.get(right.id) || savedOrder.get(right.id) || 9999;
+          return leftOrder - rightOrder || String(left.customer_name || "").localeCompare(String(right.customer_name || ""));
+        });
       list.innerHTML = candidates.length
         ? candidates.map((job) => {
             const existing = dateAssignments.find((row) => row.job_id === job.id);
@@ -8075,14 +8157,31 @@
               ? `Currently: ${existing.assigned_employee_name || "another employee"}`
               : scheduleLine(job);
             return `
-              <label class="daily-route-choice">
+              <label class="daily-route-choice" data-job-id="${cleanText(job.id)}">
                 <input class="daily-route-job-checkbox" type="checkbox" value="${cleanText(job.id)}"${checked} />
-                <span><strong>${cleanText(job.customer_name || "Customer")}</strong><br><span class="muted">${cleanText(job.address || job.service_type || "Service")}</span></span>
+                <span class="route-stop-number" aria-hidden="true">-</span>
+                <span class="route-stop-copy"><strong>${cleanText(job.customer_name || "Customer")}</strong><span class="route-stop-address">${cleanText(job.address || job.service_type || "Service")}</span></span>
                 <small>${cleanText(assignee)}</small>
               </label>
             `;
           }).join("")
         : notice("No scheduled jobs fall on this date.");
+      refreshDailyRouteNumbers();
+    }
+
+    function dailyRouteSelectedIds() {
+      return [...document.querySelectorAll("#daily-route-job-list .daily-route-job-checkbox:checked")].map((input) => input.value);
+    }
+
+    function refreshDailyRouteNumbers() {
+      let stopNumber = 0;
+      document.querySelectorAll("#daily-route-job-list .daily-route-choice").forEach((choice) => {
+        const checked = choice.querySelector(".daily-route-job-checkbox")?.checked;
+        const number = choice.querySelector(".route-stop-number");
+        if (!number) return;
+        number.textContent = checked ? String(++stopNumber) : "-";
+        number.style.opacity = checked ? "1" : ".42";
+      });
     }
 
     function renderMarketingEmployeeOptions() {
@@ -9839,7 +9938,7 @@
         $("#daily-route-result").innerHTML = notice("Choose a date and employee first.", true);
         return;
       }
-      const jobIds = [...document.querySelectorAll(".daily-route-job-checkbox:checked")].map((input) => input.value);
+      const jobIds = dailyRouteSelectedIds();
       $("#save-daily-route").disabled = true;
       $("#daily-route-result").innerHTML = notice("Saving daily route...");
       try {
@@ -9863,10 +9962,85 @@
       }
     }
 
-    $("#daily-route-date").addEventListener("change", renderDailyRouteBuilder);
-    $("#daily-route-employee").addEventListener("change", renderDailyRouteBuilder);
+    async function optimizeDailyRoute() {
+      const routeDate = $("#daily-route-date").value;
+      const employeeId = $("#daily-route-employee").value;
+      const startAddress = $("#daily-route-start-address").value.trim();
+      const jobIds = dailyRouteSelectedIds();
+      if (!routeDate || !employeeId) {
+        $("#daily-route-result").innerHTML = notice("Choose a date and employee first.", true);
+        return;
+      }
+      if (!startAddress) {
+        $("#daily-route-result").innerHTML = notice("Enter the address where the route starts.", true);
+        $("#daily-route-start-address").focus();
+        return;
+      }
+      if (!jobIds.length) {
+        $("#daily-route-result").innerHTML = notice("Select at least one property first.", true);
+        return;
+      }
+
+      const cacheKey = startAddress.toLowerCase();
+      let startCache = {};
+      try { startCache = JSON.parse(localStorage.getItem("greenGrinRouteStartCache") || "{}"); } catch (_error) { startCache = {}; }
+      const cachedStart = startCache[cacheKey] || {};
+      $("#optimize-daily-route").disabled = true;
+      $("#daily-route-result").innerHTML = notice("Calculating the most efficient drive order...");
+      try {
+        const data = await requestJson("portal-route-optimize", {
+          method: "POST",
+          headers: adminHeaders(),
+          body: JSON.stringify({
+            route_date: routeDate,
+            job_ids: jobIds,
+            start_address: startAddress,
+            start_latitude: cachedStart.latitude,
+            start_longitude: cachedStart.longitude
+          })
+        });
+        const list = $("#daily-route-job-list");
+        const choices = [...list.querySelectorAll(".daily-route-choice")];
+        const choicesById = new Map(choices.map((choice) => [choice.dataset.jobId, choice]));
+        data.job_ids.forEach((jobId) => {
+          const choice = choicesById.get(jobId);
+          if (choice) list.appendChild(choice);
+        });
+        choices.filter((choice) => !choice.querySelector(".daily-route-job-checkbox")?.checked).forEach((choice) => list.appendChild(choice));
+        optimizedDailyRouteOrder = data.job_ids;
+        refreshDailyRouteNumbers();
+        localStorage.setItem("greenGrinRouteStartAddress", startAddress);
+        if (data.start?.latitude && data.start?.longitude) {
+          startCache[cacheKey] = { latitude: data.start.latitude, longitude: data.start.longitude };
+          localStorage.setItem("greenGrinRouteStartCache", JSON.stringify(startCache));
+        }
+        const miles = (Number(data.total_distance_meters || 0) / 1609.344).toFixed(1);
+        const minutes = Math.max(1, Math.round(Number(data.total_drive_seconds || 0) / 60));
+        $("#daily-route-result").innerHTML = notice(`Route optimized: ${data.job_ids.length} stops, about ${miles} driving miles and ${minutes} minutes of estimated drive time. Save the route to send this order to the employee.`);
+      } catch (error) {
+        $("#daily-route-result").innerHTML = notice(error.message, true);
+      } finally {
+        $("#optimize-daily-route").disabled = false;
+      }
+    }
+
+    $("#daily-route-date").addEventListener("change", () => { optimizedDailyRouteOrder = []; renderDailyRouteBuilder(); });
+    $("#daily-route-employee").addEventListener("change", () => { optimizedDailyRouteOrder = []; renderDailyRouteBuilder(); });
     $("#load-daily-route").addEventListener("click", loadAdminJobs);
+    $("#select-all-route-jobs").addEventListener("click", () => {
+      document.querySelectorAll("#daily-route-job-list .daily-route-job-checkbox").forEach((input) => { input.checked = true; });
+      optimizedDailyRouteOrder = [];
+      refreshDailyRouteNumbers();
+    });
+    $("#clear-route-jobs").addEventListener("click", () => {
+      document.querySelectorAll("#daily-route-job-list .daily-route-job-checkbox").forEach((input) => { input.checked = false; });
+      optimizedDailyRouteOrder = [];
+      refreshDailyRouteNumbers();
+    });
+    $("#daily-route-job-list").addEventListener("change", () => { optimizedDailyRouteOrder = []; refreshDailyRouteNumbers(); });
+    $("#optimize-daily-route").addEventListener("click", optimizeDailyRoute);
     $("#save-daily-route").addEventListener("click", saveDailyRoute);
+    $("#daily-route-start-address").value = localStorage.getItem("greenGrinRouteStartAddress") || "";
 
     $("#admin-result").addEventListener("click", async (event) => {
       const button = event.target.closest("button[data-action], button[data-customer-action]");
