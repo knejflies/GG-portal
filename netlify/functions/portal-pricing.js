@@ -96,6 +96,19 @@ function normalizePricing(input, nextVersion) {
     manualReviewAboveLawnSqFt: finiteNumber(source.manualReviewAboveLawnSqFt, "Manual review threshold", { minimum: 1, maximum: 10000000 }),
     plans: {},
     addOns: {},
+    estimateItems: (Array.isArray(source.estimateItems) ? source.estimateItems : []).slice(0, 250).map((item, index) => {
+      const unitCost = finiteNumber(item.unitCost || 0, `Estimate item cost ${index + 1}`, { minimum: 0, maximum: 1000000 });
+      const markupPercent = finiteNumber(item.markupPercent || 0, `Estimate item markup ${index + 1}`, { minimum: 0, maximum: 1000 });
+      return {
+        id: cleanShortText(item.id, `estimate-item-${index + 1}`, 80),
+        name: cleanName(item.name, `Project item ${index + 1}`),
+        category: cleanShortText(item.category, "Material", 40),
+        unit: cleanShortText(item.unit, "each", 24),
+        unitCost,
+        markupPercent,
+        defaultRate: finiteNumber(item.defaultRate ?? unitCost * (1 + markupPercent / 100), `Estimate item price ${index + 1}`, { minimum: 0, maximum: 1000000 })
+      };
+    }),
     savedRates: (Array.isArray(source.savedRates) ? source.savedRates : []).slice(0, 100).map((rate, index) => ({
       id: cleanShortText(rate.id, `rate-${index + 1}`, 60),
       service: cleanName(rate.service, `Custom service ${index + 1}`),

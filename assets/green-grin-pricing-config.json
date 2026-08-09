@@ -6,6 +6,7 @@
   "annualAgreementDiscount": 0.05,
   "monthlyPaymentsPerYear": 12,
   "manualReviewAboveLawnSqFt": 20000,
+  "estimateItems": [],
   "mowingBid": {
     "serviceName": "Mowing service",
     "minimumPerVisit": 50,

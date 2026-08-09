@@ -47,10 +47,15 @@ const project = invoicePayload({
   customer_name: "One-time Customer",
   service_address: "456 Rock Road",
   project_scope: "Remove old mulch and install decorative rock.",
-  line_items: [{ description: "Decorative rock", quantity: 3, unit: "ton", rate: 275 }]
+  source_estimate_id: "8e38cd3a-471f-44ce-99b2-ae93be297dc4",
+  source_estimate_number: "EST-ROCK-1",
+  line_items: [{ description: "Decorative rock", quantity: 3, unit: "ton", rate: 275, unit_cost: 140, markup_percent: 96.4 }]
 });
 assert.equal(project.service_address, "456 Rock Road");
 assert.equal(project.project_scope, "Remove old mulch and install decorative rock.");
 assert.equal(project.amount, 825);
+assert.equal(project.source_estimate_number, "EST-ROCK-1");
+assert.equal("unit_cost" in project.line_items[0], false);
+assert.equal("markup_percent" in project.line_items[0], false);
 
 console.log("Invoice email tests passed.");

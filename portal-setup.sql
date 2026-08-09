@@ -342,6 +342,8 @@ create table if not exists public.green_grin_invoices (
   acceptance_terms text,
   acceptance_ip text,
   acceptance_user_agent text,
+  source_estimate_id uuid,
+  source_estimate_number text,
   active boolean not null default true
 );
 
@@ -390,6 +392,46 @@ alter table public.green_grin_invoices add column if not exists accepted_at time
 alter table public.green_grin_invoices add column if not exists acceptance_terms text;
 alter table public.green_grin_invoices add column if not exists acceptance_ip text;
 alter table public.green_grin_invoices add column if not exists acceptance_user_agent text;
+alter table public.green_grin_invoices add column if not exists source_estimate_id uuid;
+alter table public.green_grin_invoices add column if not exists source_estimate_number text;
+
+create table if not exists public.green_grin_estimates (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  estimate_number text not null unique,
+  customer_user_id uuid references auth.users(id) on delete set null,
+  customer_code text,
+  customer_name text not null,
+  phone text,
+  email text,
+  project_title text not null,
+  service_address text,
+  project_scope text,
+  valid_until date,
+  invoice_due_date date,
+  customer_notes text,
+  status text not null default 'Draft',
+  line_items jsonb not null default '[]'::jsonb,
+  subtotal numeric(12, 2) not null default 0,
+  internal_cost numeric(12, 2) not null default 0,
+  gross_profit numeric(12, 2) not null default 0,
+  discount numeric(12, 2) not null default 0,
+  tax_rate numeric(7, 4) not null default 0,
+  tax_amount numeric(12, 2) not null default 0,
+  total numeric(12, 2) not null default 0,
+  invoice_id uuid,
+  invoice_number text,
+  invoiced_at timestamptz,
+  notes text
+);
+
+alter table public.green_grin_estimates add column if not exists valid_until date;
+alter table public.green_grin_estimates add column if not exists invoice_due_date date;
+alter table public.green_grin_estimates add column if not exists customer_notes text;
+alter table public.green_grin_estimates add column if not exists invoice_id uuid;
+alter table public.green_grin_estimates add column if not exists invoice_number text;
+alter table public.green_grin_estimates add column if not exists invoiced_at timestamptz;
 
 create table if not exists public.green_grin_expenses (
   id uuid primary key default gen_random_uuid(),
@@ -523,6 +565,7 @@ alter table public.green_grin_time_entries enable row level security;
 alter table public.green_grin_push_subscriptions enable row level security;
 alter table public.green_grin_expenses enable row level security;
 alter table public.green_grin_pricing_config enable row level security;
+alter table public.green_grin_estimates enable row level security;
 alter table public.green_grin_marketing_routes enable row level security;
 alter table public.green_grin_marketing_leads enable row level security;
 alter table public.green_grin_daily_route_assignments enable row level security;
@@ -607,6 +650,10 @@ create index if not exists green_grin_customer_chat_customer_idx on public.green
 create index if not exists green_grin_invoices_customer_user_idx on public.green_grin_invoices(customer_user_id);
 create index if not exists green_grin_invoices_customer_code_idx on public.green_grin_invoices(customer_code);
 create index if not exists green_grin_invoices_status_idx on public.green_grin_invoices(status);
+create index if not exists green_grin_invoices_source_estimate_idx on public.green_grin_invoices(source_estimate_id);
+create index if not exists green_grin_estimates_updated_idx on public.green_grin_estimates(updated_at desc);
+create index if not exists green_grin_estimates_customer_idx on public.green_grin_estimates(customer_user_id);
+create index if not exists green_grin_estimates_invoice_idx on public.green_grin_estimates(invoice_id);
 create index if not exists green_grin_push_subscriptions_owner_type_idx on public.green_grin_push_subscriptions(owner_type);
 create index if not exists green_grin_push_subscriptions_customer_user_idx on public.green_grin_push_subscriptions(customer_user_id);
 create index if not exists green_grin_push_subscriptions_customer_code_idx on public.green_grin_push_subscriptions(customer_code);

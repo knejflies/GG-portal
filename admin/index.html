@@ -3325,6 +3325,146 @@
     .invoice-line-total { min-height: 46px; display: flex; align-items: center; justify-content: flex-end; font-weight: 950; color: var(--role-accent); }
     .invoice-line-remove { width: 44px; min-width: 44px; padding: 0; }
 
+    .project-estimator-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+
+    .estimator-workspace-nav {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin: 18px 0;
+      padding: 6px;
+      border: 1px solid rgba(210, 232, 204, .14);
+      border-radius: 8px;
+      background: rgba(1, 10, 6, .42);
+    }
+
+    .estimator-workspace-button {
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .estimator-workspace-button.active {
+      border-color: rgba(var(--role-accent-rgb), .42);
+      background: rgba(var(--role-accent-rgb), .14);
+      color: #f3fff0;
+    }
+
+    .estimator-workspace-panel[hidden],
+    [data-legacy-bidder][hidden] { display: none !important; }
+
+    .estimator-builder-card { max-width: 1120px; margin: 0 auto; }
+
+    .estimator-section-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 22px 0 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(210, 232, 204, .14);
+    }
+
+    .estimator-section-heading:first-of-type { margin-top: 0; }
+    .estimator-section-heading > div { display: flex; align-items: center; gap: 10px; }
+    .estimator-section-heading > div > span {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      place-items: center;
+      flex: 0 0 32px;
+      border: 1px solid rgba(var(--role-accent-rgb), .42);
+      border-radius: 50%;
+      color: var(--role-accent);
+      font-weight: 950;
+    }
+    .estimator-section-heading strong,
+    .estimator-section-heading small { display: block; }
+    .estimator-section-heading small { margin-top: 2px; color: var(--muted); }
+
+    .estimate-primary-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .estimate-internal-notes {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(210, 232, 204, .14);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .025);
+    }
+
+    .estimate-internal-notes summary { color: var(--muted); font-weight: 900; cursor: pointer; }
+    .estimate-internal-notes label { margin-top: 12px; }
+
+    .estimate-line-items,
+    .estimate-catalog-list,
+    .estimate-list { display: grid; gap: 10px; }
+
+    .estimate-list { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 14px; }
+
+    .estimate-line-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.8fr) 120px 100px 110px 44px;
+      gap: 8px;
+      align-items: end;
+      padding: 10px;
+      border: 1px solid rgba(210, 232, 204, .16);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .estimate-line-row label { font-size: .72rem; }
+    .estimate-line-remove { grid-column: 5; grid-row: 1; }
+    .estimate-line-cost { grid-column: 1; grid-row: 2; }
+    .estimate-line-markup { grid-column: 2; grid-row: 2; }
+    .estimate-line-rate { grid-column: 3; grid-row: 2; }
+    .estimate-line-total { min-height: 46px; display: grid; align-content: center; text-align: right; }
+    .estimate-line-total { grid-column: 4 / 6; grid-row: 2; }
+    .estimate-line-total strong { color: var(--role-accent); }
+    .estimate-line-total small { color: var(--muted); }
+
+    .estimate-catalog-picker {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto auto;
+      gap: 9px;
+      margin: 14px 0;
+    }
+
+    .estimate-profit-strip {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+      margin: 14px 0;
+    }
+
+    .estimate-profit-strip > div {
+      padding: 12px;
+      border: 1px solid rgba(210, 232, 204, .14);
+      border-radius: 8px;
+      background: rgba(1, 10, 6, .38);
+    }
+
+    .estimate-profit-strip span { display: block; color: var(--muted); font-size: .75rem; }
+    .estimate-profit-strip strong { display: block; margin-top: 4px; color: #f3fff0; font-size: 1.08rem; }
+    .estimate-card { padding: 13px; border: 1px solid rgba(210, 232, 204, .15); border-radius: 8px; background: rgba(255, 255, 255, .035); }
+    .estimate-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .estimate-card p { margin: 5px 0; }
+    .estimate-card[data-invoiced="true"] { border-color: rgba(var(--role-accent-rgb), .35); }
+    .estimate-card-status { display: flex; flex-wrap: wrap; gap: 6px; margin: 9px 0; }
+
     .invoice-calculation {
       display: grid;
       justify-content: end;
@@ -3624,6 +3764,18 @@
       .invoice-line-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .invoice-line-row .invoice-line-description { grid-column: 1 / -1; }
       .invoice-line-total { justify-content: flex-start; }
+      .project-estimator-grid { grid-template-columns: 1fr; }
+      .estimator-workspace-nav { grid-template-columns: 1fr; }
+      .estimator-section-heading { align-items: flex-start; }
+      .estimator-section-heading > .button { width: auto; }
+      .estimate-primary-actions { display: grid; grid-template-columns: 1fr; }
+      .estimate-primary-actions > * { width: 100%; }
+      .estimate-list { grid-template-columns: 1fr; }
+      .estimate-line-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .estimate-line-row > * { grid-column: auto; grid-row: auto; }
+      .estimate-line-row .estimate-line-description { grid-column: 1 / -1; }
+      .estimate-catalog-picker { grid-template-columns: 1fr; }
+      .estimate-profit-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .install-prompt { width: calc(100% - 20px); bottom: max(10px, env(safe-area-inset-bottom)); }
     }
 
@@ -3863,7 +4015,7 @@
       <button class="tab owner-only" data-tab="customers" type="button">Customers</button>
       <button class="tab owner-only" data-tab="owner" type="button">Jobs</button>
       <span class="tab-section-label owner-only">Quoting tools</span>
-      <button class="tab owner-only" data-tab="bids" type="button">Bidders</button>
+      <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
       <span class="tab-section-label owner-only">Team</span>
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
@@ -4488,10 +4640,11 @@
       </div>
     </section>
 
-    <section id="bids" class="panel owner-only">
+    <section id="bids" class="panel owner-only" data-legacy-bidder="mowing" hidden>
       <div class="bidder-subnav" role="tablist" aria-label="Bidders">
         <button class="bidder-subnav-button active" data-bidder-section="bids" type="button" role="tab" aria-selected="true">Mowing Bidder</button>
         <button class="bidder-subnav-button" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="false">Fertilizer Bidder</button>
+        <button class="bidder-subnav-button" data-bidder-section="project-bids" type="button" role="tab" aria-selected="false">Project Estimator</button>
       </div>
       <div class="bid-page-head">
         <div>
@@ -4632,10 +4785,11 @@
       </details>
     </section>
 
-    <section id="fert-bids" class="panel owner-only">
+    <section id="fert-bids" class="panel owner-only" data-legacy-bidder="fertilizer" hidden>
       <div class="bidder-subnav" role="tablist" aria-label="Bidders">
         <button class="bidder-subnav-button" data-bidder-section="bids" type="button" role="tab" aria-selected="false">Mowing Bidder</button>
         <button class="bidder-subnav-button active" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="true">Fertilizer Bidder</button>
+        <button class="bidder-subnav-button" data-bidder-section="project-bids" type="button" role="tab" aria-selected="false">Project Estimator</button>
       </div>
       <div class="bid-page-head">
         <div>
@@ -4781,6 +4935,130 @@
             <div id="fert-pricing-result" aria-live="polite"></div>
           </form>
         </details>
+      </div>
+    </section>
+
+    <section id="project-bids" class="panel owner-only">
+      <div class="bid-page-head">
+        <div>
+          <p class="eyebrow">Landscape sales</p>
+          <h2>Landscape Estimates</h2>
+          <p class="muted">Price the work, protect your margin, and turn the approved scope into a real customer invoice.</p>
+        </div>
+        <span class="badge">Owner only</span>
+      </div>
+
+      <div class="estimator-workspace-nav" role="tablist" aria-label="Landscape estimating workspace">
+        <button class="estimator-workspace-button active" data-estimator-view="builder" type="button" role="tab" aria-selected="true">Build Estimate</button>
+        <button class="estimator-workspace-button" data-estimator-view="catalog" type="button" role="tab" aria-selected="false">Cost Library</button>
+        <button class="estimator-workspace-button" data-estimator-view="saved" type="button" role="tab" aria-selected="false">Saved Estimates</button>
+      </div>
+
+      <div class="estimator-workspace-panel active" data-estimator-panel="builder">
+        <div class="card estimator-builder-card">
+          <form id="estimate-form">
+            <input id="estimate-id" type="hidden" />
+            <input id="estimate-number" type="hidden" />
+
+            <div class="estimator-section-heading">
+              <div><span>1</span><div><strong>Customer and project</strong><small>Choose an account or enter a one-time customer.</small></div></div>
+              <span id="estimate-current-number" class="badge">New estimate</span>
+            </div>
+            <div class="three">
+              <div><label for="estimate-customer">Customer</label><select id="estimate-customer"><option value="manual">One-time customer</option></select></div>
+              <div><label for="estimate-status">Estimate status</label><select id="estimate-status"><option>Draft</option><option>Quoted</option><option>Approved</option><option>Declined</option><option>Converted</option></select></div>
+              <div><label for="estimate-valid-until">Estimate valid until</label><input id="estimate-valid-until" type="date" /></div>
+            </div>
+            <div id="estimate-manual-customer">
+              <div class="three">
+                <div><label for="estimate-customer-name">Customer name</label><input id="estimate-customer-name" autocomplete="name" required /></div>
+                <div><label for="estimate-customer-phone">Phone</label><input id="estimate-customer-phone" type="tel" autocomplete="tel" required /></div>
+                <div><label for="estimate-customer-email">Email</label><input id="estimate-customer-email" type="email" autocomplete="email" /></div>
+              </div>
+            </div>
+            <div class="two">
+              <div><label for="estimate-project-title">Project title</label><input id="estimate-project-title" required placeholder="Rock bed refresh" /></div>
+              <div><label for="estimate-service-address">Project address</label><input id="estimate-service-address" autocomplete="street-address" required /></div>
+            </div>
+            <div><label for="estimate-project-scope">Customer-facing scope of work</label><textarea id="estimate-project-scope" rows="6" required placeholder="Describe preparation, materials, installation, cleanup, exclusions, and what completion includes."></textarea></div>
+
+            <div class="estimator-section-heading">
+              <div><span>2</span><div><strong>Build the price</strong><small>Add saved costs or create a one-off line.</small></div></div>
+              <button class="button small ghost" data-estimator-go="catalog" type="button">Manage Cost Library</button>
+            </div>
+            <div class="invoice-line-builder">
+              <div class="estimate-catalog-picker">
+                <select id="estimate-catalog-select"><option value="">Choose a saved cost item</option></select>
+                <button id="estimate-add-catalog" class="button secondary" type="button">Add Saved Item</button>
+                <button id="estimate-add-custom" class="button ghost" type="button">Add Custom Item</button>
+              </div>
+              <div id="estimate-line-items" class="estimate-line-items"></div>
+            </div>
+
+            <div class="estimator-section-heading">
+              <div><span>3</span><div><strong>Totals and invoicing</strong><small>Internal costs stay private. The customer receives only scope, quantities, rates, and totals.</small></div></div>
+            </div>
+            <div class="three">
+              <div><label for="estimate-discount">Customer discount</label><input id="estimate-discount" type="number" min="0" step="0.01" value="0" /></div>
+              <div><label for="estimate-tax-rate">Tax rate %</label><input id="estimate-tax-rate" type="number" min="0" max="100" step="0.01" value="0" /></div>
+              <div><label for="estimate-invoice-due">Invoice due date</label><input id="estimate-invoice-due" type="date" /></div>
+            </div>
+            <div id="estimate-profit-strip" class="estimate-profit-strip" aria-live="polite"></div>
+            <div><label for="estimate-customer-notes">Customer invoice notes</label><textarea id="estimate-customer-notes" rows="3" placeholder="Payment terms, scheduling note, warranty, or other customer-facing details."></textarea></div>
+            <details class="estimate-internal-notes">
+              <summary>Internal notes</summary>
+              <label for="estimate-notes">Private owner notes</label>
+              <textarea id="estimate-notes" rows="3" placeholder="Crew plan, supplier, measurements, or anything the customer should not see."></textarea>
+            </details>
+            <div class="estimate-primary-actions">
+              <button class="button secondary" data-estimate-intent="save" type="submit">Save Estimate</button>
+              <button class="button ghost" data-estimate-intent="print" type="submit">Save &amp; Print Estimate</button>
+              <button class="button ghost" data-estimate-intent="draft-invoice" type="submit">Create Invoice Draft</button>
+              <button class="button" data-estimate-intent="send-invoice" type="submit">Send Invoice</button>
+              <button id="estimate-clear" class="button ghost" type="button">New Estimate</button>
+            </div>
+          </form>
+          <div id="estimate-result" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="estimator-workspace-panel" data-estimator-panel="catalog" hidden>
+        <div class="project-estimator-grid">
+          <div class="card">
+            <div class="estimator-section-heading"><div><span>$</span><div><strong>Saved cost item</strong><small>Set your cost once, then drop it into future bids.</small></div></div></div>
+            <form id="estimate-catalog-form">
+              <input id="estimate-catalog-id" type="hidden" />
+              <div><label for="estimate-catalog-name">Item name</label><input id="estimate-catalog-name" required placeholder="Weed fabric" /></div>
+              <div class="two">
+                <div><label for="estimate-catalog-category">Category</label><select id="estimate-catalog-category"><option>Material</option><option>Labor</option><option>Equipment</option><option>Disposal</option><option>Service</option><option>Other</option></select></div>
+                <div><label for="estimate-catalog-unit">Unit</label><select id="estimate-catalog-unit"><option>sq ft</option><option>1,000 sq ft</option><option>each</option><option>hour</option><option>day</option><option>yard</option><option>ton</option><option>bag</option><option>gal</option><option>lb</option><option>visit</option></select></div>
+              </div>
+              <div class="two">
+                <div><label for="estimate-catalog-cost">Your cost per unit</label><input id="estimate-catalog-cost" type="number" min="0" step="0.0001" required /></div>
+                <div><label for="estimate-catalog-markup">Markup %</label><input id="estimate-catalog-markup" type="number" min="0" max="1000" step="0.1" value="50" required /></div>
+              </div>
+              <div><label for="estimate-catalog-price">Customer price per unit</label><input id="estimate-catalog-price" type="number" min="0" step="0.0001" required /></div>
+              <div class="row-actions"><button class="button" type="submit">Save Cost Item</button><button id="estimate-catalog-clear" class="button ghost" type="button">Clear</button></div>
+            </form>
+            <div id="estimate-catalog-result" aria-live="polite"></div>
+          </div>
+          <div class="card">
+            <h2>Cost Library</h2>
+            <div id="estimate-catalog-list" class="estimate-catalog-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="estimator-workspace-panel" data-estimator-panel="saved" hidden>
+        <div class="card">
+          <div class="invoice-line-heading">
+            <div><h2>Saved Estimates</h2><p class="muted">Open a bid, print the customer copy, or invoice the complete project.</p></div>
+            <button class="button secondary" data-estimator-go="builder" type="button">New Estimate</button>
+          </div>
+          <input id="estimate-search" type="search" placeholder="Search customer, estimate number, address, or project" />
+          <div id="estimate-list-result" aria-live="polite"></div>
+          <div id="estimate-list" class="estimate-list"></div>
+        </div>
       </div>
     </section>
 
@@ -5108,6 +5386,7 @@
     let bidPlanEstimates = [];
     let bidSelectedPlan = "fresh";
     let latestFertBid = null;
+    let savedEstimates = [];
     let expenseRows = [];
     let employeeDirectory = [];
     let adminJobRows = [];
@@ -5688,7 +5967,7 @@
     }
 
     function openTab(tabId) {
-      const mainTabId = ["bids", "fert-bids"].includes(tabId) ? "bids" : tabId;
+      const mainTabId = ["bids", "fert-bids", "project-bids"].includes(tabId) ? "bids" : tabId;
       document.querySelectorAll(".tab").forEach((tab) => {
         tab.classList.toggle("active", tab.dataset.tab === mainTabId);
       });
@@ -5712,17 +5991,39 @@
       if (tabId === "admin-home" || tabId === "field-mode") renderOwnerHome();
     }
 
+    function openEstimatorView(view = "builder") {
+      const validView = ["builder", "catalog", "saved"].includes(view) ? view : "builder";
+      document.querySelectorAll("[data-estimator-view]").forEach((button) => {
+        const active = button.dataset.estimatorView === validView;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-selected", String(active));
+      });
+      document.querySelectorAll("[data-estimator-panel]").forEach((panel) => {
+        const active = panel.dataset.estimatorPanel === validView;
+        panel.hidden = !active;
+        panel.classList.toggle("active", active);
+      });
+      if (validView === "saved") loadEstimates();
+      if (validView === "catalog") renderEstimateCatalog();
+    }
+
     document.querySelectorAll(".tab").forEach((button) => {
       button.addEventListener("click", () => {
-        openTab(button.dataset.tab);
+        const requestedTab = button.dataset.tab;
+        const destinationTab = requestedTab === "bids" ? "project-bids" : requestedTab;
+        openTab(destinationTab);
         if (button.dataset.tab === "invoices") {
           loadInvoiceCustomers();
           loadInvoices();
         }
         if (button.dataset.tab === "expenses") loadExpenses();
-        if (button.dataset.tab === "bids") loadBidPricing();
+        if (requestedTab === "bids") {
+          openEstimatorView("builder");
+          loadProjectEstimator();
+        }
         if (button.dataset.tab === "plans") loadCustomerPlanOptions();
         if (button.dataset.tab === "fert-bids") loadBidPricing();
+        if (button.dataset.tab === "project-bids") loadProjectEstimator();
         if (button.dataset.tab === "customers") loadCustomers();
         if (button.dataset.tab === "employee-admin") loadEmployees();
         if (button.dataset.tab === "activity") loadActivity();
@@ -5799,6 +6100,7 @@
       button.addEventListener("click", () => {
         openTab(button.dataset.bidderSection);
         loadBidPricing();
+        if (button.dataset.bidderSection === "project-bids") loadProjectEstimator();
       });
     });
     $("#customer-plan-options").addEventListener("click", async (event) => {
@@ -6080,6 +6382,187 @@
         bidPricingConfig.savedRates = rates.filter((item) => item.id !== rate.id);
         try { await persistSavedRates("Saved rate deleted."); }
         catch (error) { $("#saved-rate-result").innerHTML = notice(error.message, true); }
+      }
+    });
+
+    ["#estimate-catalog-cost", "#estimate-catalog-markup"].forEach((selector) => $(selector).addEventListener("input", syncEstimateCatalogPrice));
+    $("#estimate-catalog-clear").addEventListener("click", clearEstimateCatalogForm);
+    $("#estimate-catalog-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!bidPricingConfig) await loadBidPricing(true);
+      const id = $("#estimate-catalog-id").value || `estimate-item-${Date.now()}`;
+      const item = {
+        id,
+        name: $("#estimate-catalog-name").value.trim(),
+        category: $("#estimate-catalog-category").value,
+        unit: $("#estimate-catalog-unit").value,
+        unitCost: Math.max(0, Number($("#estimate-catalog-cost").value) || 0),
+        markupPercent: Math.max(0, Number($("#estimate-catalog-markup").value) || 0),
+        defaultRate: Math.max(0, Number($("#estimate-catalog-price").value) || 0)
+      };
+      if (!item.name || item.defaultRate <= 0) {
+        $("#estimate-catalog-result").innerHTML = notice("Enter an item name and customer price greater than zero.", true);
+        return;
+      }
+      const items = [...estimateCatalogItems()];
+      const index = items.findIndex((entry) => entry.id === id);
+      if (index >= 0) items[index] = item;
+      else items.push(item);
+      bidPricingConfig.estimateItems = items;
+      try {
+        await persistEstimateCatalog(index >= 0 ? "Cost item updated." : "Cost item saved and ready for bids.");
+        clearEstimateCatalogForm();
+      } catch (error) {
+        $("#estimate-catalog-result").innerHTML = notice(error.message, true);
+      }
+    });
+
+    $("#estimate-catalog-list").addEventListener("click", async (event) => {
+      const card = event.target.closest("[data-estimate-catalog-id]");
+      if (!card) return;
+      const item = estimateCatalogItems().find((entry) => entry.id === card.dataset.estimateCatalogId);
+      if (!item) return;
+      if (event.target.closest("[data-catalog-add]")) {
+        $("#estimate-line-items").insertAdjacentHTML("beforeend", estimateLineRow(item));
+        calculateEstimateForm();
+        openEstimatorView("builder");
+        return;
+      }
+      if (event.target.closest("[data-catalog-edit]")) {
+        $("#estimate-catalog-id").value = item.id;
+        $("#estimate-catalog-name").value = item.name;
+        $("#estimate-catalog-category").value = item.category;
+        $("#estimate-catalog-unit").value = item.unit;
+        $("#estimate-catalog-cost").value = item.unitCost;
+        $("#estimate-catalog-markup").value = item.markupPercent;
+        $("#estimate-catalog-price").value = item.defaultRate;
+        return;
+      }
+      if (event.target.closest("[data-catalog-delete]")) {
+        if (!confirm(`Delete ${item.name} from the cost catalog?`)) return;
+        bidPricingConfig.estimateItems = estimateCatalogItems().filter((entry) => entry.id !== item.id);
+        try { await persistEstimateCatalog("Cost item deleted."); }
+        catch (error) { $("#estimate-catalog-result").innerHTML = notice(error.message, true); }
+      }
+    });
+
+    $("#estimate-add-catalog").addEventListener("click", () => {
+      const item = estimateCatalogItems().find((entry) => entry.id === $("#estimate-catalog-select").value);
+      if (!item) {
+        $("#estimate-result").innerHTML = notice("Choose a saved cost item first.", true);
+        return;
+      }
+      $("#estimate-line-items").insertAdjacentHTML("beforeend", estimateLineRow(item));
+      calculateEstimateForm();
+      openEstimatorView("builder");
+    });
+
+    $("#estimate-add-custom").addEventListener("click", () => {
+      $("#estimate-line-items").insertAdjacentHTML("beforeend", estimateLineRow({ description: "Custom project item", category: "Material", quantity: 1, unit: "each", unit_cost: 0, markup_percent: 50, rate: 0 }));
+      calculateEstimateForm();
+    });
+
+    $("#estimate-line-items").addEventListener("click", (event) => {
+      const remove = event.target.closest(".estimate-line-remove");
+      if (!remove) return;
+      remove.closest(".estimate-line-row")?.remove();
+      calculateEstimateForm();
+    });
+
+    $("#estimate-line-items").addEventListener("input", (event) => {
+      const row = event.target.closest(".estimate-line-row");
+      if (!row) return;
+      if (event.target.matches(".estimate-item-cost, .estimate-item-markup")) {
+        const cost = Math.max(0, Number(row.querySelector(".estimate-item-cost").value) || 0);
+        const markup = Math.max(0, Number(row.querySelector(".estimate-item-markup").value) || 0);
+        row.querySelector(".estimate-item-rate").value = (cost * (1 + markup / 100)).toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+      }
+      calculateEstimateForm();
+    });
+
+    ["#estimate-discount", "#estimate-tax-rate"].forEach((selector) => $(selector).addEventListener("input", calculateEstimateForm));
+    $("#estimate-clear").addEventListener("click", clearEstimateForm);
+    $("#estimate-search").addEventListener("input", renderSavedEstimates);
+    $("#estimate-customer").addEventListener("change", () => {
+      const customer = selectedEstimateCustomer();
+      if (!customer) return;
+      const job = newestJob(customer.jobs || []);
+      $("#estimate-customer-name").value = customer.name || "";
+      $("#estimate-customer-phone").value = customer.phone || "";
+      $("#estimate-customer-email").value = customer.email || "";
+      $("#estimate-service-address").value = customer.property?.address || job?.address || "";
+    });
+
+    $("#estimate-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const intent = event.submitter?.dataset.estimateIntent || "save";
+      const submitter = event.submitter;
+      const payload = estimatePayloadFromForm();
+      const calculation = calculateEstimateForm();
+      if (!payload.customer_name || !payload.phone || !payload.project_title || !payload.service_address || !payload.project_scope || !payload.line_items.length) {
+        $("#estimate-result").innerHTML = notice("Customer name, phone, project title, address, scope, and at least one line item are required.", true);
+        return;
+      }
+      if (calculation.total <= 0) {
+        $("#estimate-result").innerHTML = notice("The customer total must be greater than zero before saving the estimate.", true);
+        return;
+      }
+      if (intent === "send-invoice" && !payload.email) {
+        $("#estimate-result").innerHTML = notice("Add the customer's email before sending the invoice.", true);
+        return;
+      }
+      if (submitter) submitter.disabled = true;
+      $("#estimate-result").innerHTML = notice(intent === "send-invoice" ? "Saving estimate and sending invoice..." : intent === "draft-invoice" ? "Saving estimate and creating invoice..." : "Saving estimate...");
+      try {
+        const estimate = await saveEstimateRecord(payload);
+        if (intent === "print") {
+          printEstimate(estimate);
+          $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved and opened for printing.`);
+        } else if (intent === "draft-invoice" || intent === "send-invoice") {
+          await invoiceLandscapeEstimate(estimate, intent === "send-invoice");
+        } else {
+          $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved.`);
+        }
+        await loadEstimates();
+      } catch (error) {
+        $("#estimate-result").innerHTML = notice(error.message, true);
+      } finally {
+        if (submitter) submitter.disabled = false;
+      }
+    });
+
+    $("#estimate-list").addEventListener("click", async (event) => {
+      const card = event.target.closest("[data-estimate-id]");
+      if (!card) return;
+      const estimate = savedEstimates.find((entry) => entry.id === card.dataset.estimateId);
+      const action = event.target.closest("[data-estimate-action]")?.dataset.estimateAction;
+      if (!estimate || !action) return;
+      if (action === "edit") return fillEstimateForm(estimate);
+      if (action === "print") return printEstimate(estimate);
+      if (action === "open-invoice") {
+        try { await openEstimateInvoice(estimate); }
+        catch (error) { showEstimateNotice(error.message, true); }
+        return;
+      }
+      if (action === "draft-invoice" || action === "send-invoice") {
+        try {
+          showEstimateNotice(action === "send-invoice" ? "Sending project invoice..." : "Creating project invoice...");
+          await invoiceLandscapeEstimate(estimate, action === "send-invoice");
+        } catch (error) {
+          showEstimateNotice(error.message, true);
+        }
+        return;
+      }
+      if (action === "delete") {
+        const linkedWarning = estimate.invoice_id ? " The linked invoice will remain in Invoice Center." : "";
+        if (!confirm(`Delete estimate ${estimate.estimate_number} forever?${linkedWarning}`)) return;
+        try {
+          await requestJson("portal-estimates", { method: "DELETE", headers: adminHeaders(), body: JSON.stringify({ id: estimate.id }) });
+          if ($("#estimate-id").value === estimate.id) clearEstimateForm();
+          await loadEstimates();
+        } catch (error) {
+          showEstimateNotice(error.message, true);
+        }
       }
     });
 
@@ -6464,6 +6947,356 @@
       $("#saved-rate-property").value = "Any";
       $("#saved-rate-minimum").value = "0";
       $("#saved-rate-sqft").value = "5000";
+    }
+
+    function estimateCatalogItems() {
+      return Array.isArray(bidPricingConfig?.estimateItems) ? bidPricingConfig.estimateItems : [];
+    }
+
+    function renderEstimateCatalog() {
+      const items = estimateCatalogItems();
+      const picker = $("#estimate-catalog-select");
+      if (!picker) return;
+      const previous = picker.value;
+      picker.innerHTML = `<option value="">Choose a saved cost item</option>` + items.map((item) =>
+        `<option value="${cleanText(item.id)}">${cleanText(item.name)} - ${cleanText(money(item.defaultRate))}/${cleanText(item.unit)}</option>`
+      ).join("");
+      if (items.some((item) => item.id === previous)) picker.value = previous;
+      $("#estimate-catalog-list").innerHTML = items.length ? items.map((item) => `
+        <div class="estimate-card" data-estimate-catalog-id="${cleanText(item.id)}">
+          <div class="estimate-card-head"><strong>${cleanText(item.name)}</strong><span class="badge">${cleanText(item.category)}</span></div>
+          <p>Your cost: <strong>${cleanText(money(item.unitCost))}/${cleanText(item.unit)}</strong></p>
+          <p class="muted">${cleanText(String(item.markupPercent))}% markup | Customer price ${cleanText(money(item.defaultRate))}/${cleanText(item.unit)}</p>
+          <div class="row-actions"><button class="button small secondary" data-catalog-add type="button">Add To Bid</button><button class="button small ghost" data-catalog-edit type="button">Edit</button><button class="button small ghost" data-catalog-delete type="button">Delete</button></div>
+        </div>`).join("") : notice("No cost items saved yet.");
+    }
+
+    function clearEstimateCatalogForm() {
+      $("#estimate-catalog-form").reset();
+      $("#estimate-catalog-id").value = "";
+      $("#estimate-catalog-category").value = "Material";
+      $("#estimate-catalog-unit").value = "sq ft";
+      $("#estimate-catalog-markup").value = "50";
+      $("#estimate-catalog-price").value = "";
+    }
+
+    function syncEstimateCatalogPrice() {
+      const cost = Math.max(0, Number($("#estimate-catalog-cost")?.value) || 0);
+      const markup = Math.max(0, Number($("#estimate-catalog-markup")?.value) || 0);
+      $("#estimate-catalog-price").value = (cost * (1 + markup / 100)).toFixed(4).replace(/0+$/, "").replace(/\.$/, "");
+    }
+
+    async function persistEstimateCatalog(message) {
+      const data = await requestJson("portal-pricing", {
+        method: "PATCH",
+        headers: adminHeaders(),
+        body: JSON.stringify({ config: bidPricingConfig })
+      });
+      bidPricingConfig = mergeBidPricingConfig(data.config);
+      renderEstimateCatalog();
+      $("#estimate-catalog-result").innerHTML = notice(message);
+    }
+
+    function estimateLineRow(item = {}) {
+      const unitCost = Math.max(0, Number(item.unit_cost ?? item.unitCost) || 0);
+      const markup = Math.max(0, Number(item.markup_percent ?? item.markupPercent) || 0);
+      const rate = Math.max(0, Number(item.rate ?? item.defaultRate) || unitCost * (1 + markup / 100));
+      const quantity = Math.max(0, Number(item.quantity) || 1);
+      const categories = ["Material", "Labor", "Equipment", "Disposal", "Service", "Other"];
+      const units = ["sq ft", "1,000 sq ft", "each", "hour", "day", "yard", "ton", "bag", "gal", "lb", "visit"];
+      return `
+        <div class="estimate-line-row" data-catalog-id="${cleanText(item.catalog_id || item.id || "")}">
+          <div class="estimate-line-description"><label>Description</label><input class="estimate-item-description" value="${cleanText(item.description || item.name || "Custom project item")}" /></div>
+          <div><label>Category</label><select class="estimate-item-category">${categories.map((category) => `<option${category === (item.category || "Material") ? " selected" : ""}>${category}</option>`).join("")}</select></div>
+          <div><label>Quantity</label><input class="estimate-item-quantity" type="number" min="0" step="0.01" value="${quantity}" /></div>
+          <div><label>Unit</label><select class="estimate-item-unit">${units.map((unit) => `<option${unit === (item.unit || "each") ? " selected" : ""}>${unit}</option>`).join("")}</select></div>
+          <div class="estimate-line-cost"><label>Your cost</label><input class="estimate-item-cost" type="number" min="0" step="0.0001" value="${unitCost}" /></div>
+          <div class="estimate-line-markup"><label>Markup %</label><input class="estimate-item-markup" type="number" min="0" max="1000" step="0.1" value="${markup}" /></div>
+          <div class="estimate-line-rate"><label>Customer rate</label><input class="estimate-item-rate" type="number" min="0" step="0.0001" value="${rate}" /></div>
+          <div class="estimate-line-total"><strong>${cleanText(money(quantity * rate))}</strong><small>${cleanText(money(quantity * unitCost))} cost</small></div>
+          <button class="button ghost invoice-line-remove estimate-line-remove" type="button" aria-label="Remove estimate item">&times;</button>
+        </div>`;
+    }
+
+    function estimateLinesFromForm() {
+      return [...document.querySelectorAll("#estimate-line-items .estimate-line-row")].map((row) => ({
+        catalog_id: row.dataset.catalogId || "",
+        description: row.querySelector(".estimate-item-description")?.value.trim() || "Project item",
+        category: row.querySelector(".estimate-item-category")?.value || "Material",
+        quantity: Math.max(0, Number(row.querySelector(".estimate-item-quantity")?.value) || 0),
+        unit: row.querySelector(".estimate-item-unit")?.value || "each",
+        unit_cost: Math.max(0, Number(row.querySelector(".estimate-item-cost")?.value) || 0),
+        markup_percent: Math.max(0, Number(row.querySelector(".estimate-item-markup")?.value) || 0),
+        rate: Math.max(0, Number(row.querySelector(".estimate-item-rate")?.value) || 0)
+      })).filter((item) => item.quantity > 0 && item.description);
+    }
+
+    function calculateEstimateForm() {
+      const lines = estimateLinesFromForm();
+      const cost = lines.reduce((sum, item) => sum + item.quantity * item.unit_cost, 0);
+      const subtotal = lines.reduce((sum, item) => sum + item.quantity * item.rate, 0);
+      const discount = Math.max(0, Number($("#estimate-discount")?.value) || 0);
+      const taxRate = Math.max(0, Number($("#estimate-tax-rate")?.value) || 0);
+      const taxable = Math.max(0, subtotal - discount);
+      const tax = taxable * taxRate / 100;
+      const total = taxable + tax;
+      const profit = taxable - cost;
+      document.querySelectorAll("#estimate-line-items .estimate-line-row").forEach((row) => {
+        const quantity = Number(row.querySelector(".estimate-item-quantity")?.value) || 0;
+        const unitCost = Number(row.querySelector(".estimate-item-cost")?.value) || 0;
+        const rate = Number(row.querySelector(".estimate-item-rate")?.value) || 0;
+        row.querySelector(".estimate-line-total").innerHTML = `<strong>${cleanText(money(quantity * rate))}</strong><small>${cleanText(money(quantity * unitCost))} cost</small>`;
+      });
+      $("#estimate-profit-strip").innerHTML = `
+        <div><span>Your cost</span><strong>${cleanText(money(cost))}</strong></div>
+        <div><span>Customer subtotal</span><strong>${cleanText(money(subtotal))}</strong></div>
+        <div><span>Expected profit</span><strong>${cleanText(money(profit))}</strong></div>
+        <div><span>Customer total</span><strong>${cleanText(money(total))}</strong></div>`;
+      return { lines, cost, subtotal, discount, taxRate, tax, total, profit };
+    }
+
+    function renderEstimateLines(lines = []) {
+      $("#estimate-line-items").innerHTML = (lines.length ? lines : [{ description: "Custom project item", category: "Material", quantity: 1, unit: "each", unit_cost: 0, markup_percent: 50, rate: 0 }]).map(estimateLineRow).join("");
+      calculateEstimateForm();
+    }
+
+    function renderEstimateCustomerOptions() {
+      const select = $("#estimate-customer");
+      if (!select) return;
+      const previous = select.value;
+      select.innerHTML = `<option value="manual">One-time customer</option>` + invoiceCustomers.map((customer, index) => {
+        const code = customer.customer_code ? `${customer.customer_code} - ` : "";
+        return `<option value="${index}">${cleanText(`${code}${customer.name}${customer.phone ? ` (${customer.phone})` : ""}`)}</option>`;
+      }).join("");
+      if (previous === "manual" || invoiceCustomers[Number(previous)]) select.value = previous;
+    }
+
+    function selectedEstimateCustomer() {
+      const value = $("#estimate-customer").value;
+      return value === "manual" ? null : invoiceCustomers[Number(value)] || null;
+    }
+
+    function estimatePayloadFromForm() {
+      const customer = selectedEstimateCustomer();
+      const calculation = calculateEstimateForm();
+      return {
+        id: $("#estimate-id").value || "",
+        estimate_number: $("#estimate-number").value || "",
+        customer_user_id: customer?.customer_user_id || customer?.id || null,
+        customer_code: customer?.customer_code || "",
+        customer_name: $("#estimate-customer-name").value.trim(),
+        phone: $("#estimate-customer-phone").value.trim(),
+        email: $("#estimate-customer-email").value.trim(),
+        project_title: $("#estimate-project-title").value.trim(),
+        service_address: $("#estimate-service-address").value.trim(),
+        project_scope: $("#estimate-project-scope").value.trim(),
+        valid_until: $("#estimate-valid-until").value || null,
+        invoice_due_date: $("#estimate-invoice-due").value || null,
+        customer_notes: $("#estimate-customer-notes").value.trim(),
+        status: $("#estimate-status").value,
+        line_items: calculation.lines,
+        discount: calculation.discount,
+        tax_rate: calculation.taxRate,
+        invoice_id: $("#estimate-form").dataset.invoiceId || null,
+        invoice_number: $("#estimate-form").dataset.invoiceNumber || "",
+        invoiced_at: $("#estimate-form").dataset.invoicedAt || null,
+        notes: $("#estimate-notes").value.trim()
+      };
+    }
+
+    function estimateDateOffset(days) {
+      const date = new Date();
+      date.setDate(date.getDate() + days);
+      return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    }
+
+    function clearEstimateForm() {
+      $("#estimate-form").reset();
+      delete $("#estimate-form").dataset.invoiceId;
+      delete $("#estimate-form").dataset.invoiceNumber;
+      delete $("#estimate-form").dataset.invoicedAt;
+      $("#estimate-id").value = "";
+      $("#estimate-number").value = "";
+      $("#estimate-current-number").textContent = "New estimate";
+      $("#estimate-customer").value = "manual";
+      $("#estimate-status").value = "Draft";
+      $("#estimate-valid-until").value = estimateDateOffset(30);
+      $("#estimate-invoice-due").value = estimateDateOffset(7);
+      $("#estimate-discount").value = "0";
+      $("#estimate-tax-rate").value = "0";
+      renderEstimateLines();
+      $("#estimate-result").innerHTML = "";
+    }
+
+    function renderSavedEstimates() {
+      const query = $("#estimate-search")?.value.trim().toLowerCase() || "";
+      const rows = savedEstimates.filter((estimate) => !query || [estimate.estimate_number, estimate.customer_code, estimate.customer_name, estimate.project_title, estimate.service_address].join(" ").toLowerCase().includes(query));
+      $("#estimate-list").innerHTML = rows.length ? rows.map((estimate) => `
+        <div class="estimate-card" data-estimate-id="${cleanText(estimate.id)}" data-invoiced="${estimate.invoice_id ? "true" : "false"}">
+          <div class="estimate-card-head"><strong>${cleanText(estimate.estimate_number)}</strong><span class="badge">${cleanText(estimate.status)}</span></div>
+          <p><strong>${cleanText(estimate.customer_name)}</strong> | ${cleanText(estimate.project_title)}</p>
+          <p class="muted">${cleanText(estimate.service_address || "No project address")}</p>
+          <div class="estimate-card-status"><span class="badge">Customer ${cleanText(money(estimate.total))}</span><span class="badge">Cost ${cleanText(money(estimate.internal_cost))}</span><span class="badge">Profit ${cleanText(money(estimate.gross_profit))}</span>${estimate.invoice_number ? `<span class="badge">Invoice ${cleanText(estimate.invoice_number)}</span>` : ""}</div>
+          <div class="row-actions">
+            ${estimate.invoice_id ? `<button class="button small secondary" data-estimate-action="open-invoice" type="button">Open Invoice</button>` : `<button class="button small secondary" data-estimate-action="draft-invoice" type="button">Create Invoice</button><button class="button small" data-estimate-action="send-invoice" type="button">Send Invoice</button>`}
+            <button class="button small ghost" data-estimate-action="edit" type="button">Edit</button>
+            <button class="button small ghost" data-estimate-action="print" type="button">Print</button>
+            <button class="button small ghost" data-estimate-action="delete" type="button">Delete</button>
+          </div>
+        </div>`).join("") : notice(query ? "No estimates match that search." : "No saved estimates yet.");
+    }
+
+    function showEstimateNotice(message, isError = false) {
+      const markup = notice(message, isError);
+      if ($("#estimate-result")) $("#estimate-result").innerHTML = markup;
+      if ($("#estimate-list-result")) $("#estimate-list-result").innerHTML = markup;
+    }
+
+    async function loadEstimates() {
+      $("#estimate-list").innerHTML = notice("Loading estimates...");
+      try {
+        const data = await requestJson("portal-estimates", { headers: adminHeaders() });
+        savedEstimates = data.estimates || [];
+        renderSavedEstimates();
+      } catch (error) {
+        $("#estimate-list").innerHTML = notice(error.message, true);
+      }
+    }
+
+    async function loadProjectEstimator() {
+      await loadBidPricing();
+      if (!invoiceCustomers.length) await loadInvoiceCustomers();
+      renderEstimateCustomerOptions();
+      renderEstimateCatalog();
+      if (!$("#estimate-line-items").children.length) clearEstimateForm();
+      await loadEstimates();
+    }
+
+    function fillEstimateForm(estimate) {
+      const customerIndex = invoiceCustomers.findIndex((customer) => (customer.customer_user_id || customer.id) === estimate.customer_user_id || (estimate.customer_code && customer.customer_code === estimate.customer_code));
+      $("#estimate-id").value = estimate.id || "";
+      $("#estimate-number").value = estimate.estimate_number || "";
+      $("#estimate-current-number").textContent = estimate.estimate_number || "New estimate";
+      $("#estimate-form").dataset.invoiceId = estimate.invoice_id || "";
+      $("#estimate-form").dataset.invoiceNumber = estimate.invoice_number || "";
+      $("#estimate-form").dataset.invoicedAt = estimate.invoiced_at || "";
+      $("#estimate-customer").value = customerIndex >= 0 ? String(customerIndex) : "manual";
+      $("#estimate-customer-name").value = estimate.customer_name || "";
+      $("#estimate-customer-phone").value = estimate.phone || "";
+      $("#estimate-customer-email").value = estimate.email || "";
+      $("#estimate-project-title").value = estimate.project_title || "";
+      $("#estimate-service-address").value = estimate.service_address || "";
+      $("#estimate-project-scope").value = estimate.project_scope || "";
+      $("#estimate-valid-until").value = estimate.valid_until || "";
+      $("#estimate-invoice-due").value = estimate.invoice_due_date || "";
+      $("#estimate-customer-notes").value = estimate.customer_notes || "";
+      $("#estimate-status").value = estimate.status || "Draft";
+      $("#estimate-discount").value = Number(estimate.discount || 0);
+      $("#estimate-tax-rate").value = Number(estimate.tax_rate || 0);
+      $("#estimate-notes").value = estimate.notes || "";
+      renderEstimateLines(Array.isArray(estimate.line_items) ? estimate.line_items : []);
+      openEstimatorView("builder");
+      window.scrollTo({ top: $("#project-bids").offsetTop, behavior: "smooth" });
+    }
+
+    function printEstimate(estimate) {
+      const popup = window.open("", "_blank", "width=820,height=900");
+      if (!popup) return;
+      const rows = (estimate.line_items || []).map((item) => `<tr><td>${cleanText(item.description)}</td><td>${cleanText(item.quantity)} ${cleanText(item.unit)}</td><td>${cleanText(money(item.rate))}</td><td>${cleanText(money(item.amount || item.quantity * item.rate))}</td></tr>`).join("");
+      const validUntil = estimate.valid_until ? displayScheduleDate(estimate.valid_until) : "30 days from issue";
+      popup.document.write(`<!doctype html><html><head><title>${cleanText(estimate.estimate_number)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px;line-height:1.45}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:nth-child(n+2),td:nth-child(n+2){text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.summary{text-align:right}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.meta{text-align:right;color:#526458}@media print{button{display:none}}</style></head><body><header><div><h1>Green Grin Lawn &amp; Landscape</h1><strong>Landscape Project Estimate</strong></div><div class="meta"><strong>${cleanText(estimate.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}</div></header><h2>${cleanText(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${cleanText(estimate.customer_name)}</p><p>${cleanText(estimate.service_address || "")}</p>${estimate.project_scope ? `<h2>Scope of work</h2><div class="scope">${cleanText(estimate.project_scope)}</div>` : ""}<table><thead><tr><th>Item</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="summary"><p>Subtotal: ${cleanText(money(estimate.subtotal))}</p>${Number(estimate.discount || 0) ? `<p>Discount: -${cleanText(money(estimate.discount))}</p>` : ""}${Number(estimate.tax_amount || 0) ? `<p>Tax: ${cleanText(money(estimate.tax_amount))}</p>` : ""}<p class="total">Estimate total: ${cleanText(money(estimate.total))}</p></div>${estimate.customer_notes ? `<div class="notes"><strong>Project notes and terms</strong><br>${cleanText(estimate.customer_notes)}</div>` : ""}<button onclick="window.print()">Print Estimate</button></body></html>`);
+      popup.document.close();
+      popup.focus();
+    }
+
+    async function saveEstimateRecord(payload) {
+      const data = await requestJson("portal-estimates", {
+        method: payload.id ? "PATCH" : "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const estimate = data.estimate;
+      $("#estimate-id").value = estimate.id || "";
+      $("#estimate-number").value = estimate.estimate_number || "";
+      $("#estimate-current-number").textContent = estimate.estimate_number || "New estimate";
+      $("#estimate-form").dataset.invoiceId = estimate.invoice_id || "";
+      $("#estimate-form").dataset.invoiceNumber = estimate.invoice_number || "";
+      $("#estimate-form").dataset.invoicedAt = estimate.invoiced_at || "";
+      return estimate;
+    }
+
+    function projectInvoicePayload(estimate, sendNow = false, existingInvoice = null) {
+      return {
+        id: existingInvoice?.id || "",
+        customer_user_id: estimate.customer_user_id || null,
+        customer_code: estimate.customer_code || "",
+        customer_name: estimate.customer_name || "Customer",
+        phone: estimate.phone || "",
+        email: estimate.email || "",
+        amount: Number(estimate.total || 0),
+        subtotal: Number(estimate.subtotal || 0),
+        discount: Number(estimate.discount || 0),
+        tax_rate: Number(estimate.tax_rate || 0),
+        tax_amount: Number(estimate.tax_amount || 0),
+        line_items: (estimate.line_items || []).map((item) => ({
+          description: item.description,
+          category: item.category,
+          quantity: item.quantity,
+          unit: item.unit,
+          rate: item.rate
+        })),
+        due_date: estimate.invoice_due_date || null,
+        status: sendNow ? "Sent" : "Draft",
+        service_line: estimate.project_title || "Landscape project",
+        service_address: estimate.service_address || "",
+        project_scope: estimate.project_scope || "",
+        notes: estimate.customer_notes || `Created from estimate ${estimate.estimate_number}.`,
+        payment_url: existingInvoice?.payment_url || "",
+        payment_method: existingInvoice?.payment_method || "",
+        payment_reference: existingInvoice?.payment_reference || "",
+        payment_reported_at: existingInvoice?.payment_reported_at || null,
+        payment_confirmed_at: existingInvoice?.payment_confirmed_at || null,
+        source_estimate_id: estimate.id,
+        source_estimate_number: estimate.estimate_number,
+        notify_customer: sendNow
+      };
+    }
+
+    async function invoiceLandscapeEstimate(estimate, sendNow = false) {
+      if (sendNow && !estimate.email) throw new Error("Add the customer's email before sending the invoice.");
+      if (sendNow && !estimate.invoice_due_date) throw new Error("Choose an invoice due date before sending.");
+      if (!invoiceDrafts.length) await loadInvoices();
+      const existingInvoice = estimate.invoice_id ? invoiceDrafts.find((invoice) => invoice.id === estimate.invoice_id) : null;
+      if (existingInvoice?.status === "Paid") throw new Error("This project invoice is already paid and cannot be replaced from the estimate.");
+      const payload = projectInvoicePayload(estimate, sendNow, existingInvoice);
+      const data = await requestJson("portal-invoices", {
+        method: existingInvoice ? "PATCH" : "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const invoice = data.invoice;
+      if (!invoice?.id) throw new Error("The invoice could not be created.");
+      const linkedEstimate = await saveEstimateRecord({
+        ...estimate,
+        status: "Converted",
+        invoice_id: invoice.id,
+        invoice_number: invoiceNumber(invoice),
+        invoiced_at: estimate.invoiced_at || new Date().toISOString()
+      });
+      await Promise.all([loadInvoices(), loadEstimates()]);
+      showEstimateNotice(sendNow
+        ? invoiceDeliveryText(data, `Invoice ${invoiceNumber(invoice)} sent to ${estimate.customer_name}.`)
+        : `Invoice ${invoiceNumber(invoice)} saved as a draft. Internal costs and profit stayed private.`);
+      return { estimate: linkedEstimate, invoice, delivery: data };
+    }
+
+    async function openEstimateInvoice(estimate) {
+      await loadInvoices();
+      const invoice = invoiceDrafts.find((entry) => entry.id === estimate.invoice_id);
+      if (!invoice) throw new Error("That linked invoice was deleted. Edit the estimate and create a new invoice.");
+      openTab("invoices");
+      fillInvoiceForm(invoice);
+      $("#invoice-form").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     async function persistSavedRates(message) {
@@ -7271,11 +8104,11 @@
     function invoiceLineRow(item = {}) {
       const line = normalizedInvoiceLines([item])[0] || { description: "", category: item.category || "Service", quantity: 1, unit: item.unit || "each", rate: 0 };
       const total = line.quantity * line.rate;
-      const units = ["each", "visit", "hour", "sq ft", "1,000 sq ft", "oz", "gal", "lb", "bag", "yard"];
+      const units = ["each", "visit", "hour", "sq ft", "1,000 sq ft", "oz", "gal", "lb", "bag", "yard", "ton"];
       return `
         <div class="invoice-line-row">
           <div class="invoice-line-description"><label>Description</label><input class="invoice-item-description" value="${cleanText(line.description)}" placeholder="Weekly mowing or product name" /></div>
-          <div><label>Category</label><select class="invoice-item-category">${["Service", "Spray", "Fertilizer", "Material", "Labor", "Other"].map((category) => `<option${category === line.category ? " selected" : ""}>${category}</option>`).join("")}</select></div>
+          <div><label>Category</label><select class="invoice-item-category">${["Service", "Spray", "Fertilizer", "Material", "Labor", "Equipment", "Disposal", "Other"].map((category) => `<option${category === line.category ? " selected" : ""}>${category}</option>`).join("")}</select></div>
           <div><label>Quantity</label><input class="invoice-item-quantity" type="number" min="0" step="0.01" value="${line.quantity || 1}" /></div>
           <div><label>Unit</label><select class="invoice-item-unit">${units.map((unit) => `<option${unit === line.unit ? " selected" : ""}>${unit}</option>`).join("")}</select></div>
           <div><label>Rate</label><input class="invoice-item-rate" type="number" min="0" step="0.01" value="${line.rate || 0}" /></div>
@@ -7372,6 +8205,7 @@
             <div class="invoice-head"><strong>${cleanText(invoice.customer_code || invoiceNumber(invoice))}${invoice.customer_code ? " - " : ""}${cleanText(invoice.customer_name || "Customer")}</strong><span class="badge">${cleanText(invoice.status)}</span></div>
             <p class="muted">${cleanText(money(invoice.amount) || "$0.00")} - Due ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "No due date")}</p>
             <p class="muted">${cleanText(invoiceNumber(invoice))}</p>
+            ${invoice.source_estimate_number ? `<p class="muted">From estimate ${cleanText(invoice.source_estimate_number)}</p>` : ""}
             <p>${cleanText(invoice.service_line || invoice.notes || "")}</p>
             ${invoice.service_address ? `<p class="muted">${cleanText(invoice.service_address)}</p>` : ""}
             ${invoice.project_scope ? `<div class="project-scope"><strong>Project scope</strong><p>${cleanText(invoice.project_scope)}</p></div>` : ""}
@@ -9174,6 +10008,10 @@
         line_items: calculation.lines
       });
     });
+
+    document.querySelectorAll("[data-estimator-view], [data-estimator-go]").forEach((button) => {
+      button.addEventListener("click", () => openEstimatorView(button.dataset.estimatorView || button.dataset.estimatorGo));
+    });
     renderInvoiceLines();
 
     $("#invoice-form").addEventListener("submit", async (event) => {
@@ -9220,6 +10058,8 @@
         payment_reference: existingInvoice.payment_reference || "",
         payment_reported_at: existingInvoice.payment_reported_at || null,
         payment_confirmed_at: existingInvoice.payment_confirmed_at || null,
+        source_estimate_id: existingInvoice.source_estimate_id || null,
+        source_estimate_number: existingInvoice.source_estimate_number || "",
         notify_customer: intent === "send"
       };
       $("#invoice-result").innerHTML = notice(intent === "send" ? "Sending invoice..." : "Saving draft...");
@@ -9268,6 +10108,39 @@
         rate: Number(amount) || 0
       }]);
     });
+
+    function fillInvoiceForm(invoice) {
+      $("#invoice_id").value = invoice.id || "";
+      const index = invoiceCustomers.findIndex((customer) =>
+        (invoice.customer_user_id && (customer.customer_user_id || customer.id) === invoice.customer_user_id) ||
+        (invoice.customer_code && customer.customer_code === invoice.customer_code) ||
+        (invoice.email && customer.email === invoice.email)
+      );
+      $("#invoice_customer").value = index >= 0 ? String(index) : "manual";
+      $("#invoice_manual_name").value = index >= 0 ? "" : (invoice.customer_name || "");
+      $("#invoice_manual_email").value = index >= 0 ? "" : (invoice.email || "");
+      $("#invoice_manual_phone").value = index >= 0 ? "" : (invoice.phone || "");
+      $("#invoice_service_address").value = index >= 0 ? "" : (invoice.service_address || "");
+      $("#invoice_saved_address").value = index >= 0 ? (invoice.service_address || invoiceCustomers[index]?.property?.address || "") : "";
+      toggleManualInvoiceCustomer();
+      $("#invoice_amount").value = invoice.amount || "";
+      $("#invoice_due").value = invoice.due_date || "";
+      $("#invoice_status").value = invoice.status;
+      $("#invoice_custom_service").value = invoice.service_line || "";
+      $("#invoice_project_scope").value = invoice.project_scope || "";
+      $("#invoice_notes").value = invoice.notes || "";
+      $("#invoice_discount").value = Number(invoice.discount || 0);
+      $("#invoice_tax_rate").value = Number(invoice.tax_rate || 0);
+      renderInvoiceLines(invoice.line_items?.length ? invoice.line_items : [{
+        description: invoice.service_line || invoice.notes || "Service",
+        category: "Service",
+        quantity: 1,
+        unit: "each",
+        rate: Number(invoice.amount || 0)
+      }]);
+      $("#invoice-submit").textContent = "Save Draft";
+      $("#invoice-result").innerHTML = notice(`Editing ${invoiceNumber(invoice)}.`);
+    }
 
     async function handleInvoiceAction(event) {
       const button = event.target.closest("button[data-invoice-action]");
@@ -9325,36 +10198,7 @@
         }
         return;
       }
-      $("#invoice_id").value = invoice.id;
-      const index = invoiceCustomers.findIndex((customer) =>
-        (invoice.customer_user_id && (customer.customer_user_id || customer.id) === invoice.customer_user_id) ||
-        (invoice.customer_code && customer.customer_code === invoice.customer_code) ||
-        (invoice.email && customer.email === invoice.email)
-      );
-      $("#invoice_customer").value = index >= 0 ? String(index) : "manual";
-      $("#invoice_manual_name").value = index >= 0 ? "" : (invoice.customer_name || "");
-      $("#invoice_manual_email").value = index >= 0 ? "" : (invoice.email || "");
-      $("#invoice_manual_phone").value = index >= 0 ? "" : (invoice.phone || "");
-      $("#invoice_service_address").value = index >= 0 ? "" : (invoice.service_address || "");
-      $("#invoice_saved_address").value = index >= 0 ? (invoice.service_address || invoiceCustomers[index]?.property?.address || "") : "";
-      toggleManualInvoiceCustomer();
-      $("#invoice_amount").value = invoice.amount || "";
-      $("#invoice_due").value = invoice.due_date || "";
-      $("#invoice_status").value = invoice.status;
-      $("#invoice_custom_service").value = invoice.service_line || "";
-      $("#invoice_project_scope").value = invoice.project_scope || "";
-      $("#invoice_notes").value = invoice.notes || "";
-      $("#invoice_discount").value = Number(invoice.discount || 0);
-      $("#invoice_tax_rate").value = Number(invoice.tax_rate || 0);
-      renderInvoiceLines(invoice.line_items?.length ? invoice.line_items : [{
-        description: invoice.service_line || invoice.notes || "Service",
-        category: "Service",
-        quantity: 1,
-        unit: "each",
-        rate: Number(invoice.amount || 0)
-      }]);
-      $("#invoice-submit").textContent = "Save Draft";
-      $("#invoice-result").innerHTML = notice("Editing invoice.");
+      fillInvoiceForm(invoice);
     }
 
     $("#invoice-list").addEventListener("click", handleInvoiceAction);
@@ -9376,9 +10220,9 @@
     $("#export-invoices-csv").addEventListener("click", async () => {
       if (!invoiceDrafts.length) await loadInvoices();
       downloadAccountingCsv(`green-grin-invoices-${todayInputDate()}.csv`,
-        ["Invoice", "Customer ID", "Customer", "Email", "Phone", "Project address", "Status", "Due", "Subtotal", "Discount", "Tax", "Total", "Line items", "Project scope", "Approved by", "Approved at", "Notes"],
+        ["Invoice", "Source Estimate", "Customer ID", "Customer", "Email", "Phone", "Project address", "Status", "Due", "Subtotal", "Discount", "Tax", "Total", "Line items", "Project scope", "Approved by", "Approved at", "Notes"],
         invoiceDrafts.map((invoice) => [
-          invoiceNumber(invoice), invoice.customer_code, invoice.customer_name, invoice.email, invoice.phone, invoice.service_address, invoice.status,
+          invoiceNumber(invoice), invoice.source_estimate_number || "", invoice.customer_code, invoice.customer_name, invoice.email, invoice.phone, invoice.service_address, invoice.status,
           invoice.due_date, invoice.subtotal ?? invoice.amount, invoice.discount || 0, invoice.tax_amount || 0, invoice.amount,
           normalizedInvoiceLines(invoice.line_items).map((item) => `${item.description}: ${item.quantity} ${item.unit} @ ${item.rate}`).join(" | "), invoice.project_scope, invoice.accepted_by, invoice.accepted_at, invoice.notes
         ])

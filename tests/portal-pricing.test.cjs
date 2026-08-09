@@ -43,12 +43,15 @@ const event = (method, body) => ({
   changed.plans.fresh.minimumWeekly = 65;
   changed.mowingBid.minimumPerVisit = 60;
   changed.fertilizerBid.targetGrossMargin = 0.55;
+  changed.estimateItems = [{ id: "weed-fabric", name: "Weed fabric", category: "Material", unit: "sq ft", unitCost: 0.18, markupPercent: 60, defaultRate: 0.29 }];
   const saveResponse = await handler(event("PATCH", { config: changed }));
   const saveBody = JSON.parse(saveResponse.body);
   assert.equal(saveResponse.statusCode, 200);
   assert.equal(saveBody.config.plans.fresh.minimumWeekly, 65);
   assert.equal(saveBody.config.mowingBid.minimumPerVisit, 60);
   assert.equal(saveBody.config.fertilizerBid.targetGrossMargin, 0.55);
+  assert.equal(saveBody.config.estimateItems[0].name, "Weed fabric");
+  assert.equal(saveBody.config.estimateItems[0].unitCost, 0.18);
   assert.equal(saveBody.version, 2);
 
   delete savedRow.config.fertilizerBid;

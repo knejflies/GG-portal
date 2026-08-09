@@ -219,3 +219,12 @@ DAILY ROUTE OPTIMIZER
 Run the latest portal-setup.sql once so jobs can save map coordinates and daily routes can save stop order.
 In Admin > Jobs > Daily Route Builder, choose the date and employee, enter the starting address, select the properties, then press Optimize by Drive Time. Press Save Daily Route to send that ordered route to the employee.
 The planner uses OpenStreetMap address lookup and road travel times. It requires internet access and does not include live traffic. Previously located customer addresses are saved so later route planning is faster.
+
+PROJECT ESTIMATOR
+-----------------
+Run the latest portal-setup.sql once to create green_grin_estimates and install the estimate-to-invoice link fields.
+In Admin -> Landscape Estimates, use Build Estimate, Cost Library, and Saved Estimates.
+Cost Library saves reusable materials, labor, equipment, disposal, and service rates. Each item stores the owner's unit cost, markup, customer rate, and unit such as sq ft, yard, hour, day, or ton.
+Build Estimate stores the customer, scope, validity date, invoice due date, customer notes, line items, internal cost, customer total, and expected profit.
+Save & Print creates a customer-facing estimate without exposing owner costs. Create Invoice Draft makes a linked project invoice. Send Invoice saves the linked invoice, emails it, adds it to the customer Billing portal, and sends an app notification when a customer device is registered.
+The older mowing and fertilizer bidder sections remain in admin/index.html as hidden legacy modules and can be restored later.

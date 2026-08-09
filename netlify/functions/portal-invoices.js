@@ -99,6 +99,8 @@ function invoicePayload(body) {
     payment_confirmed_at: isPaid
       ? (body.payment_confirmed_at || new Date().toISOString())
       : null,
+    source_estimate_id: body.source_estimate_id || null,
+    source_estimate_number: String(body.source_estimate_number || "").trim().slice(0, 80),
     active: body.active !== false
   };
 }
@@ -116,11 +118,13 @@ function legacyInvoicePayload(payload) {
   delete legacy.line_items;
   delete legacy.service_address;
   delete legacy.project_scope;
+  delete legacy.source_estimate_id;
+  delete legacy.source_estimate_number;
   return legacy;
 }
 
 function isMissingPaymentColumn(error) {
-  return /payment_method|payment_reference|payment_reported_at|payment_confirmed_at|subtotal|discount|tax_rate|tax_amount|line_items|service_address|project_scope|schema cache/i.test(error?.message || "");
+  return /payment_method|payment_reference|payment_reported_at|payment_confirmed_at|subtotal|discount|tax_rate|tax_amount|line_items|service_address|project_scope|source_estimate_id|source_estimate_number|schema cache/i.test(error?.message || "");
 }
 
 function escapeHtml(value) {
