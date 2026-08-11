@@ -3228,6 +3228,12 @@
       }
     }
 
+    .work-phase-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+    .work-phase-grid button { min-height: 44px; }
+    .work-running { padding: 13px; border-left: 4px solid var(--role-accent); border-radius: 7px; background: rgba(var(--role-accent-rgb), .1); }
+    .work-session-list { display: grid; gap: 8px; margin-top: 12px; }
+    @media (max-width: 620px) { .work-phase-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
     .invoice-line-builder {
       margin: 18px 0;
       padding: 14px;
@@ -3975,6 +3981,22 @@
             <button id="load-timeclock" class="button ghost" type="button">Refresh Time</button>
           </div>
           <div id="timeclock-result" class="status-box" aria-live="polite"></div>
+        </div>
+        <div id="employee-work-tracker" class="card">
+          <h2>Job time</h2>
+          <p class="muted">Choose the customer, then tap the work you are starting.</p>
+          <label for="work-job-select">Customer job</label>
+          <select id="work-job-select"><option value="">Load your assigned jobs</option></select>
+          <div class="work-phase-grid" aria-label="Project work phases">
+            <button class="button ghost" data-work-phase="Travel / Mobilization" type="button">Travel</button>
+            <button class="button ghost" data-work-phase="Demo" type="button">Demo</button>
+            <button class="button ghost" data-work-phase="Preparation" type="button">Preparation</button>
+            <button class="button ghost" data-work-phase="Installation" type="button">Installation</button>
+            <button class="button ghost" data-work-phase="Cleanup" type="button">Cleanup</button>
+            <button class="button ghost" data-work-phase="Mow / Edge / Blow" type="button">Mow / Edge / Blow</button>
+          </div>
+          <div class="admin-actions"><button id="stop-work-timer" class="button secondary" type="button">Stop Job Timer</button></div>
+          <div id="work-timer-result" class="status-box" aria-live="polite"></div>
         </div>
         <div class="card">
           <h2>Employee job list</h2>
@@ -4741,6 +4763,7 @@
     let employeeDirectory = [];
     let adminJobRows = [];
     let adminDailyRouteRows = [];
+    let employeeAssignedJobs = [];
     let activeEmployeeProfile = null;
     let marketingRoutes = [];
     let marketingLeads = [];
@@ -7798,6 +7821,35 @@
         : notice("No time entries yet.");
     }
 
+    function renderWorkTracker(data = {}) {
+      const select = $("#work-job-select");
+      const previous = select.value;
+      select.innerHTML = `<option value="">Choose assigned job</option>` + employeeAssignedJobs.map((job) => `<option value="${cleanText(job.id)}">${cleanText(`${job.customer_name || "Customer"} - ${job.service_type || "Service"}`)}</option>`).join("");
+      if (employeeAssignedJobs.some((job) => job.id === previous)) select.value = previous;
+      const open = data.work_open || null;
+      const recent = data.work_recent || [];
+      $("#stop-work-timer").disabled = !open;
+      $("#work-timer-result").innerHTML = `${open ? `<div class="work-running"><strong>${cleanText(open.phase)}</strong><p>${cleanText(open.customer_name || "Customer")} - ${cleanText(open.project_title || "Project")}</p><p class="muted">Started ${cleanText(formatDateTime(open.started_at))}</p></div>` : notice("No job timer is running.")}${recent.length ? `<div class="work-session-list">${recent.slice(0, 10).map((session) => `<div class="message"><div class="message-head"><strong>${cleanText(session.phase)}</strong><span class="badge">${cleanText(session.total_minutes == null ? "Open" : formatMinutes(session.total_minutes))}</span></div><p>${cleanText(session.customer_name || "Customer")} - ${cleanText(session.project_title || "Project")}</p><p class="muted">${cleanText(formatDateTime(session.started_at))}</p></div>`).join("")}</div>` : ""}`;
+    }
+
+    async function setWorkTimer(action, jobId = "", phase = "", quiet = false) {
+      const target = $("#work-timer-result");
+      if (!quiet) target.innerHTML = notice(action === "start-work" ? `Starting ${phase}...` : "Stopping job timer...");
+      try {
+        const data = await requestJson("portal-timeclock", { method: "POST", headers: employeeTimeHeaders(), body: JSON.stringify({ action, job_id: jobId || undefined, phase: phase || undefined, count: $("#timeclock-count").value || 1, unit: $("#timeclock-unit").value || "weeks" }) });
+        renderTimeClock(data);
+        renderWorkTracker(data);
+        return { ok: true, data };
+      } catch (error) {
+        if (!quiet) target.innerHTML = notice(error.message, true);
+        return { ok: false, error };
+      }
+    }
+
+    function isMaintenanceJob(job) {
+      return /mow|mowing|lawn maintenance|weekly|fresh grin|sharp grin|full grin|edge|blow/i.test(`${job?.service_type || ""} ${job?.notes || ""}`);
+    }
+
     function renderTimeReportEmployeeOptions() {
       const select = $("#time-report-employee");
       if (!select) return;
@@ -7830,6 +7882,7 @@
           </div>
         `).join("") : notice("No time entries for that range.")}
         ${entries.length ? `<div class="status-box">${entries.slice(0, 30).map((entry) => timeEntryCard(entry)).join("")}</div>` : ""}
+        ${(data.work_summary?.projects || []).length ? `<h3>Project time by customer</h3>${data.work_summary.projects.map((project) => `<div class="message"><div class="message-head"><strong>${cleanText(project.customer_name)}</strong><span class="badge">${cleanText(`${project.total_hours}h`)}</span></div><p>${cleanText(project.project_title)}</p>${project.phases.map((phase) => `<p class="muted">${cleanText(phase.phase)}: ${cleanText(`${phase.actual_hours}h actual`)}${phase.estimated_hours ? ` / ${cleanText(`${phase.estimated_hours}h estimated`)}` : ""}</p>`).join("")}</div>`).join("")}` : ""}
       `;
     }
 
@@ -9003,6 +9056,14 @@
     $("#clock-in").addEventListener("click", () => punchTimeClock("clock-in"));
     $("#clock-out").addEventListener("click", () => punchTimeClock("clock-out"));
     $("#load-time-report").addEventListener("click", loadTimeClockReport);
+    $("#employee-work-tracker").addEventListener("click", (event) => {
+      const phaseButton = event.target.closest("[data-work-phase]");
+      if (!phaseButton) return;
+      const jobId = $("#work-job-select").value;
+      if (!jobId) return $("#work-timer-result").innerHTML = notice("Choose a customer job first.", true);
+      setWorkTimer("start-work", jobId, phaseButton.dataset.workPhase);
+    });
+    $("#stop-work-timer").addEventListener("click", () => setWorkTimer("stop-work"));
     $("#load-expenses").addEventListener("click", loadExpenses);
 
     $("#admin-result").addEventListener("input", (event) => {
@@ -9254,6 +9315,8 @@
       try {
         const headers = pin ? { "x-employee-pin": pin } : {};
         const data = await requestJson("portal-jobs?employee=1", { headers });
+        const routedJobs = (data.daily_routes || []).map((row) => row.green_grin_jobs).filter(Boolean);
+        employeeAssignedJobs = [...new Map([...(data.jobs || []), ...routedJobs].map((job) => [job.id, job])).values()];
         if (data.employee) {
           configureMarketingAccess(data.employee);
           const employeeName = data.employee.full_name || data.employee.email || "Employee";
@@ -9263,6 +9326,8 @@
           $("#account-pill").textContent = `Welcome, ${employeeName}`;
         }
         $("#employee-result").innerHTML = renderEmployeeJobs(data);
+        renderWorkTracker({});
+        if (!data.employee?.is_subcontractor) await loadTimeClock();
       } catch (error) {
         $("#employee-result").innerHTML = notice(error.message, true);
       }
@@ -9276,6 +9341,7 @@
         const unit = $("#timeclock-unit").value || "weeks";
         const data = await requestJson(`portal-timeclock?count=${encodeURIComponent(count)}&unit=${encodeURIComponent(unit)}`, { headers: employeeTimeHeaders() });
         renderTimeClock(data);
+        renderWorkTracker(data);
       } catch (error) {
         $("#timeclock-result").innerHTML = notice(error.message, true);
       }
@@ -9297,6 +9363,7 @@
         });
         $("#timeclock-notes").value = "";
         renderTimeClock(data);
+        renderWorkTracker(data);
       } catch (error) {
         $("#timeclock-result").innerHTML = notice(error.message, true);
       }
@@ -9492,12 +9559,22 @@
       button.disabled = true;
       try {
         const headers = pin ? { "x-employee-pin": pin } : {};
+        const job = employeeAssignedJobs.find((entry) => entry.id === id);
+        let timerFeedback = "";
+        if (action === "arrived" && isMaintenanceJob(job)) {
+          const timer = await setWorkTimer("start-work", id, "Mow / Edge / Blow", true);
+          if (!timer.ok) timerFeedback = ` Job timer did not start: ${timer.error.message}`;
+        }
+        if (action === "completed" && isMaintenanceJob(job)) {
+          const timer = await setWorkTimer("stop-work", id, "", true);
+          if (!timer.ok) timerFeedback = ` Job timer did not stop: ${timer.error.message}`;
+        }
         const data = await requestJson("portal-message", {
           method: "POST",
           headers,
           body: JSON.stringify({ id, template: action, route_date: routeDate || undefined })
         });
-        const employeeFeedback = pushDeliveryText(data.push, action === "arrived" ? "Arrival notification saved." : "Done message saved.");
+        const employeeFeedback = pushDeliveryText(data.push, action === "arrived" ? "Arrival notification saved." : "Done message saved.") + timerFeedback;
         await loadEmployeeJobs();
         $("#employee-result").insertAdjacentHTML("afterbegin", notice(employeeFeedback));
       } catch (error) {

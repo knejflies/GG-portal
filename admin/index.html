@@ -3445,7 +3445,7 @@
 
     .estimate-profit-strip {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
       gap: 9px;
       margin: 14px 0;
     }
@@ -3464,6 +3464,45 @@
     .estimate-card p { margin: 5px 0; }
     .estimate-card[data-invoiced="true"] { border-color: rgba(var(--role-accent-rgb), .35); }
     .estimate-card-status { display: flex; flex-wrap: wrap; gap: 6px; margin: 9px 0; }
+
+    .quick-project-estimator {
+      margin: 0 0 18px;
+      padding: 16px;
+      border: 1px solid rgba(var(--role-accent-rgb), .34);
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(var(--role-accent-rgb), .11), rgba(1, 10, 6, .7));
+    }
+
+    .quick-project-estimator h3 { margin: 0 0 4px; }
+    .quick-project-estimator > p { margin: 0 0 14px; color: var(--muted); }
+    .quick-project-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .quick-project-field[hidden], .quick-labor-fields[hidden] { display: none !important; }
+    .quick-project-toggle { display: flex; align-items: center; gap: 9px; min-height: 46px; }
+    .quick-project-toggle input { width: 20px; min-height: 20px; }
+    .quick-project-result { margin-top: 14px; }
+    .quick-project-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .quick-project-summary > div { padding: 11px; border: 1px solid rgba(210, 232, 204, .14); border-radius: 7px; background: rgba(1, 10, 6, .48); }
+    .quick-project-summary span { display: block; color: var(--muted); font-size: .74rem; }
+    .quick-project-summary strong { display: block; margin-top: 3px; color: #f3fff0; }
+    .quick-material-list { display: grid; gap: 6px; margin: 12px 0; }
+    .quick-material-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px; border-bottom: 1px solid rgba(210, 232, 204, .12); }
+    .quick-material-row span:last-child { text-align: right; color: var(--role-accent); font-weight: 900; }
+    .estimate-alert { margin-top: 10px; padding: 10px 12px; border-left: 4px solid #e69a45; border-radius: 6px; background: rgba(230, 154, 69, .1); color: #ffe6c4; }
+    .estimate-alert.good { border-left-color: var(--role-accent); background: rgba(var(--role-accent-rgb), .1); color: #eeffe9; }
+    .estimator-defaults { margin-bottom: 16px; }
+    .estimator-defaults-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+    .estimator-defaults details { margin-top: 12px; }
+    .estimate-line-details > summary { cursor: pointer; color: var(--muted); font-weight: 900; }
+
+    @media (max-width: 900px) {
+      .quick-project-grid, .estimator-defaults-grid, .quick-project-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 560px) {
+      .quick-project-grid, .estimator-defaults-grid, .quick-project-summary { grid-template-columns: 1fr; }
+      .quick-project-estimator { padding: 13px; }
+      .quick-material-row { align-items: flex-start; }
+    }
 
     .invoice-calculation {
       display: grid;
@@ -4983,8 +5022,51 @@
             <div><label for="estimate-project-scope">Customer-facing scope of work</label><textarea id="estimate-project-scope" rows="6" required placeholder="Describe preparation, materials, installation, cleanup, exclusions, and what completion includes."></textarea></div>
 
             <div class="estimator-section-heading">
-              <div><span>2</span><div><strong>Build the price</strong><small>Add saved costs or create a one-off line.</small></div></div>
+              <div><span>2</span><div><strong>Build the price</strong><small>Enter the measurements once and let Green Grin calculate the job.</small></div></div>
               <button class="button small ghost" data-estimator-go="catalog" type="button">Manage Cost Library</button>
+            </div>
+            <div class="quick-project-estimator">
+              <h3>Quick Project Calculator</h3>
+              <p>Choose the work, enter the field measurements, and get the complete material order and selling price.</p>
+              <div class="quick-project-grid">
+                <div><label for="project-service">Project type</label><select id="project-service"><option value="rock">Decorative rock</option><option value="mulch">Mulch</option><option value="fabric">Weed fabric</option><option value="edging">Edging</option><option value="sod">Sod</option><option value="irrigation">Irrigation</option><option value="retaining">Decorative retaining wall</option><option value="firepit">Firepit</option><option value="demo">Demo and removal</option></select></div>
+                <div class="quick-project-field" data-project-services="rock,mulch,fabric,sod,demo"><label for="project-area">Area (sq. ft.)</label><input id="project-area" type="number" min="0" step="1" inputmode="decimal" placeholder="1200" /></div>
+                <div class="quick-project-field" data-project-services="rock"><label for="project-install-type">Installation</label><select id="project-install-type"><option value="new">New installation</option><option value="topoff">Top-off existing rock</option></select></div>
+                <div class="quick-project-field" data-project-services="rock"><label for="project-rock-size">Rock size</label><select id="project-rock-size"><option value="small">1/2 in. or smaller</option><option value="medium" selected>3/4 to 1 in.</option><option value="large">Larger than 1 in.</option></select></div>
+                <div class="quick-project-field" data-project-services="rock,mulch"><label for="project-depth">Depth (inches)</label><input id="project-depth" type="number" min="0.25" max="12" step="0.25" inputmode="decimal" placeholder="Automatic" /></div>
+                <div class="quick-project-field" data-project-services="rock,mulch,edging"><label for="project-linear-feet">Edging / length (linear ft.)</label><input id="project-linear-feet" type="number" min="0" step="1" inputmode="decimal" placeholder="Optional" /></div>
+                <div class="quick-project-field" data-project-services="retaining"><label for="project-wall-length">Wall length (ft.)</label><input id="project-wall-length" type="number" min="0" step="0.1" inputmode="decimal" /></div>
+                <div class="quick-project-field" data-project-services="retaining"><label for="project-wall-height">Average wall height (ft.)</label><input id="project-wall-height" type="number" min="0" step="0.1" inputmode="decimal" /></div>
+                <div class="quick-project-field" data-project-services="firepit"><label for="project-quantity">Firepit quantity</label><input id="project-quantity" type="number" min="1" step="1" value="1" inputmode="numeric" /></div>
+                <div class="quick-project-field" data-project-services="irrigation"><label for="project-zones">Zones</label><input id="project-zones" type="number" min="0" step="1" inputmode="numeric" /></div>
+                <div class="quick-project-field" data-project-services="irrigation"><label for="project-heads">Sprinkler heads</label><input id="project-heads" type="number" min="0" step="1" inputmode="numeric" /></div>
+                <div class="quick-project-field" data-project-services="irrigation"><label for="project-pipe-feet">Pipe (linear ft.)</label><input id="project-pipe-feet" type="number" min="0" step="1" inputmode="decimal" /></div>
+                <div><label for="project-disposal-loads">Disposal loads</label><input id="project-disposal-loads" type="number" min="0" step="1" value="0" inputmode="numeric" /></div>
+                <label class="quick-project-toggle quick-project-field" data-project-services="rock"><input id="project-include-fabric" type="checkbox" checked /> Include weed fabric</label>
+              </div>
+
+              <div class="estimator-section-heading"><div><span>H</span><div><strong>Labor</strong><small>Use whichever measurement is fastest for this job.</small></div></div></div>
+              <div class="quick-project-grid">
+                <div><label for="project-labor-mode">Labor method</label><select id="project-labor-mode"><option value="crew">Crew size x hours</option><option value="manual">Total man-hours</option><option value="production">Production rate</option></select></div>
+                <div class="quick-labor-fields" data-labor-mode="crew"><label for="project-crew-size">Crew size</label><input id="project-crew-size" type="number" min="1" step="1" value="2" inputmode="numeric" /></div>
+                <div class="quick-labor-fields" data-labor-mode="crew"><label for="project-crew-hours">Hours on site</label><input id="project-crew-hours" type="number" min="0" step="0.25" value="8" inputmode="decimal" /></div>
+                <div class="quick-labor-fields" data-labor-mode="manual" hidden><label for="project-man-hours">Total man-hours</label><input id="project-man-hours" type="number" min="0" step="0.25" inputmode="decimal" /></div>
+                <div class="quick-labor-fields" data-labor-mode="production" hidden><label for="project-production-rate">Sq. ft. / linear ft. per man-hour</label><input id="project-production-rate" type="number" min="0.01" step="0.01" value="100" inputmode="decimal" /></div>
+              </div>
+
+              <div class="estimator-section-heading"><div><span>R</span><div><strong>Rental and risk</strong><small>Rental pricing and markup fill automatically.</small></div></div></div>
+              <div class="quick-project-grid">
+                <div><label for="project-equipment">Rental equipment</label><select id="project-equipment"><option value="none">No rental equipment</option></select></div>
+                <div><label for="project-rental-period">Rental period</label><select id="project-rental-period"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option></select></div>
+                <div><label for="project-rental-count">Number of periods</label><input id="project-rental-count" type="number" min="1" step="1" value="1" inputmode="numeric" /></div>
+                <div><label for="project-contingency">Contingency %</label><input id="project-contingency" type="number" min="0" max="100" step="0.5" value="5" inputmode="decimal" /></div>
+              </div>
+              <div class="estimate-primary-actions">
+                <button id="project-calculate" class="button secondary" type="button">Calculate Project</button>
+                <button id="project-add-assembly" class="button" type="button">Add Complete Project</button>
+                <button id="project-clear" class="button ghost" type="button">Clear Measurements</button>
+              </div>
+              <div id="quick-project-result" class="quick-project-result" aria-live="polite"></div>
             </div>
             <div class="invoice-line-builder">
               <div class="estimate-catalog-picker">
@@ -4996,7 +5078,7 @@
             </div>
 
             <div class="estimator-section-heading">
-              <div><span>3</span><div><strong>Totals and invoicing</strong><small>Internal costs stay private. The customer receives only scope, quantities, rates, and totals.</small></div></div>
+              <div><span>3</span><div><strong>Totals and proposal</strong><small>Internal costs stay private. Customers see broad project totals only.</small></div></div>
             </div>
             <div class="three">
               <div><label for="estimate-discount">Customer discount</label><input id="estimate-discount" type="number" min="0" step="0.01" value="0" /></div>
@@ -5012,6 +5094,7 @@
             </details>
             <div class="estimate-primary-actions">
               <button class="button secondary" data-estimate-intent="save" type="submit">Save Estimate</button>
+              <button class="button" data-estimate-intent="send-proposal" type="submit">Send Proposal</button>
               <button class="button ghost" data-estimate-intent="print" type="submit">Save &amp; Print Estimate</button>
               <button class="button ghost" data-estimate-intent="draft-invoice" type="submit">Create Invoice Draft</button>
               <button class="button" data-estimate-intent="send-invoice" type="submit">Send Invoice</button>
@@ -5023,6 +5106,33 @@
       </div>
 
       <div class="estimator-workspace-panel" data-estimator-panel="catalog" hidden>
+        <div class="card estimator-defaults">
+          <div class="estimator-section-heading"><div><span>$</span><div><strong>Estimator defaults</strong><small>Set these once. Every quick project will use them automatically.</small></div></div></div>
+          <div class="estimator-defaults-grid">
+            <div><label for="estimator-labor-sell">Customer labor / man-hour</label><input id="estimator-labor-sell" type="number" min="0" step="0.01" /></div>
+            <div><label for="estimator-labor-cost">Loaded labor cost / man-hour</label><input id="estimator-labor-cost" type="number" min="0" step="0.01" /></div>
+            <div><label for="estimator-target-margin">Target gross margin %</label><input id="estimator-target-margin" type="number" min="0" max="99" step="0.1" /></div>
+            <div><label for="estimator-margin-warning">Warn below margin %</label><input id="estimator-margin-warning" type="number" min="0" max="99" step="0.1" /></div>
+            <div><label for="estimator-equipment-markup">Rental markup %</label><input id="estimator-equipment-markup" type="number" min="0" step="0.1" /></div>
+            <div><label for="estimator-contingency">Standard contingency %</label><input id="estimator-contingency" type="number" min="0" max="100" step="0.5" /></div>
+            <div><label for="estimator-risk-contingency">Demo / irrigation contingency %</label><input id="estimator-risk-contingency" type="number" min="0" max="100" step="0.5" /></div>
+            <div><label for="estimator-mulch-depth">Default mulch depth (in.)</label><input id="estimator-mulch-depth" type="number" min="0.25" max="12" step="0.25" /></div>
+          </div>
+          <details>
+            <summary>Material waste allowances</summary>
+            <div class="estimator-defaults-grid">
+              <div><label for="estimator-waste-rock">Rock %</label><input id="estimator-waste-rock" type="number" min="0" max="100" step="0.5" /></div>
+              <div><label for="estimator-waste-mulch">Mulch %</label><input id="estimator-waste-mulch" type="number" min="0" max="100" step="0.5" /></div>
+              <div><label for="estimator-waste-fabric">Fabric %</label><input id="estimator-waste-fabric" type="number" min="0" max="100" step="0.5" /></div>
+              <div><label for="estimator-waste-sod">Sod %</label><input id="estimator-waste-sod" type="number" min="0" max="100" step="0.5" /></div>
+              <div><label for="estimator-waste-edging">Edging %</label><input id="estimator-waste-edging" type="number" min="0" max="100" step="0.5" /></div>
+              <div><label for="estimator-waste-irrigation">Irrigation parts %</label><input id="estimator-waste-irrigation" type="number" min="0" max="100" step="0.5" /></div>
+              <div><label for="estimator-waste-retaining">Retaining material %</label><input id="estimator-waste-retaining" type="number" min="0" max="100" step="0.5" /></div>
+            </div>
+          </details>
+          <div class="row-actions"><button id="save-estimator-defaults" class="button" type="button">Save Estimator Defaults</button></div>
+          <div id="estimator-defaults-result" aria-live="polite"></div>
+        </div>
         <div class="project-estimator-grid">
           <div class="card">
             <div class="estimator-section-heading"><div><span>$</span><div><strong>Saved cost item</strong><small>Set your cost once, then drop it into future bids.</small></div></div></div>
@@ -5031,13 +5141,17 @@
               <div><label for="estimate-catalog-name">Item name</label><input id="estimate-catalog-name" required placeholder="Weed fabric" /></div>
               <div class="two">
                 <div><label for="estimate-catalog-category">Category</label><select id="estimate-catalog-category"><option>Material</option><option>Labor</option><option>Equipment</option><option>Disposal</option><option>Service</option><option>Other</option></select></div>
-                <div><label for="estimate-catalog-unit">Unit</label><select id="estimate-catalog-unit"><option>sq ft</option><option>1,000 sq ft</option><option>each</option><option>hour</option><option>day</option><option>yard</option><option>ton</option><option>bag</option><option>gal</option><option>lb</option><option>visit</option></select></div>
+                <div><label for="estimate-catalog-unit">Unit</label><select id="estimate-catalog-unit"><option>sq ft</option><option>linear ft</option><option>wall sq ft</option><option>1,000 sq ft</option><option>each</option><option>man-hour</option><option>hour</option><option>day</option><option>yard</option><option>ton</option><option>load</option><option>bag</option><option>gal</option><option>lb</option><option>visit</option></select></div>
               </div>
               <div class="two">
                 <div><label for="estimate-catalog-cost">Your cost per unit</label><input id="estimate-catalog-cost" type="number" min="0" step="0.0001" required /></div>
                 <div><label for="estimate-catalog-markup">Markup %</label><input id="estimate-catalog-markup" type="number" min="0" max="1000" step="0.1" value="50" required /></div>
               </div>
               <div><label for="estimate-catalog-price">Customer price per unit</label><input id="estimate-catalog-price" type="number" min="0" step="0.0001" required /></div>
+              <div class="two">
+                <div><label for="estimate-catalog-increment">Purchase rounding</label><input id="estimate-catalog-increment" type="number" min="0.0001" step="0.0001" value="1" /></div>
+                <div><label for="estimate-catalog-density">Rock tons per cubic yard</label><input id="estimate-catalog-density" type="number" min="0.01" step="0.01" value="1.4" /></div>
+              </div>
               <div class="row-actions"><button class="button" type="submit">Save Cost Item</button><button id="estimate-catalog-clear" class="button ghost" type="button">Clear</button></div>
             </form>
             <div id="estimate-catalog-result" aria-live="polite"></div>
@@ -5368,6 +5482,7 @@
   </nav>
 
   <script src="/assets/green-grin-calculator.js"></script>
+  <script src="/assets/green-grin-project-estimator.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const $ = (selector) => document.querySelector(selector);
@@ -6398,10 +6513,12 @@
         unit: $("#estimate-catalog-unit").value,
         unitCost: Math.max(0, Number($("#estimate-catalog-cost").value) || 0),
         markupPercent: Math.max(0, Number($("#estimate-catalog-markup").value) || 0),
-        defaultRate: Math.max(0, Number($("#estimate-catalog-price").value) || 0)
+        defaultRate: Math.max(0, Number($("#estimate-catalog-price").value) || 0),
+        purchaseIncrement: Math.max(0.0001, Number($("#estimate-catalog-increment").value) || 1),
+        tonsPerCubicYard: Math.max(0.01, Number($("#estimate-catalog-density").value) || 1.4)
       };
-      if (!item.name || item.defaultRate <= 0) {
-        $("#estimate-catalog-result").innerHTML = notice("Enter an item name and customer price greater than zero.", true);
+      if (!item.name) {
+        $("#estimate-catalog-result").innerHTML = notice("Enter an item name.", true);
         return;
       }
       const items = [...estimateCatalogItems()];
@@ -6436,6 +6553,8 @@
         $("#estimate-catalog-cost").value = item.unitCost;
         $("#estimate-catalog-markup").value = item.markupPercent;
         $("#estimate-catalog-price").value = item.defaultRate;
+        $("#estimate-catalog-increment").value = item.purchaseIncrement || 1;
+        $("#estimate-catalog-density").value = item.tonsPerCubicYard || 1.4;
         return;
       }
       if (event.target.closest("[data-catalog-delete]")) {
@@ -6461,6 +6580,16 @@
       $("#estimate-line-items").insertAdjacentHTML("beforeend", estimateLineRow({ description: "Custom project item", category: "Material", quantity: 1, unit: "each", unit_cost: 0, markup_percent: 50, rate: 0 }));
       calculateEstimateForm();
     });
+
+    $("#project-service").addEventListener("change", updateQuickProjectFields);
+    $("#project-install-type").addEventListener("change", updateQuickProjectFields);
+    $("#project-rock-size").addEventListener("change", updateQuickProjectFields);
+    $("#project-labor-mode").addEventListener("change", updateQuickProjectFields);
+    $("#project-contingency").addEventListener("input", () => { $("#project-contingency").dataset.edited = "true"; });
+    $("#project-calculate").addEventListener("click", () => calculateQuickProject(true));
+    $("#project-add-assembly").addEventListener("click", addQuickProjectAssembly);
+    $("#project-clear").addEventListener("click", clearQuickProject);
+    $("#save-estimator-defaults").addEventListener("click", saveProjectEstimatorDefaults);
 
     $("#estimate-line-items").addEventListener("click", (event) => {
       const remove = event.target.closest(".estimate-line-remove");
@@ -6507,15 +6636,17 @@
         $("#estimate-result").innerHTML = notice("The customer total must be greater than zero before saving the estimate.", true);
         return;
       }
-      if (intent === "send-invoice" && !payload.email) {
-        $("#estimate-result").innerHTML = notice("Add the customer's email before sending the invoice.", true);
+      if (["send-invoice", "send-proposal"].includes(intent) && !payload.email) {
+        $("#estimate-result").innerHTML = notice(`Add the customer's email before sending the ${intent === "send-proposal" ? "proposal" : "invoice"}.`, true);
         return;
       }
       if (submitter) submitter.disabled = true;
-      $("#estimate-result").innerHTML = notice(intent === "send-invoice" ? "Saving estimate and sending invoice..." : intent === "draft-invoice" ? "Saving estimate and creating invoice..." : "Saving estimate...");
+      $("#estimate-result").innerHTML = notice(intent === "send-proposal" ? "Saving and emailing the secure proposal..." : intent === "send-invoice" ? "Saving estimate and sending invoice..." : intent === "draft-invoice" ? "Saving estimate and creating invoice..." : "Saving estimate...");
       try {
         const estimate = await saveEstimateRecord(payload);
-        if (intent === "print") {
+        if (intent === "send-proposal") {
+          await sendEstimateProposal(estimate);
+        } else if (intent === "print") {
           printEstimate(estimate);
           $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved and opened for printing.`);
         } else if (intent === "draft-invoice" || intent === "send-invoice") {
@@ -6539,6 +6670,11 @@
       if (!estimate || !action) return;
       if (action === "edit") return fillEstimateForm(estimate);
       if (action === "print") return printEstimate(estimate);
+      if (action === "send-proposal") {
+        try { await sendEstimateProposal(estimate); }
+        catch (error) { showEstimateNotice(error.message, true); }
+        return;
+      }
       if (action === "open-invoice") {
         try { await openEstimateInvoice(estimate); }
         catch (error) { showEstimateNotice(error.message, true); }
@@ -6909,11 +7045,28 @@
         ...application,
         ...(incomingFertilizer.applications?.[index] || {})
       }));
+      const incomingItems = Array.isArray(incoming.estimateItems) ? incoming.estimateItems : [];
+      const incomingItemsById = new Map(incomingItems.filter((item) => item?.id).map((item) => [item.id, item]));
+      const defaultItems = Array.isArray(defaults.estimateItems) ? defaults.estimateItems : [];
+      const estimateItems = defaultItems.map((item) => ({ ...item, ...(incomingItemsById.get(item.id) || {}) }));
+      const defaultItemIds = new Set(defaultItems.map((item) => item.id));
+      estimateItems.push(...incomingItems.filter((item) => !defaultItemIds.has(item.id)));
+      const defaultProjectEstimator = defaults.projectEstimator || {};
+      const incomingProjectEstimator = incoming.projectEstimator || {};
       return {
         ...defaults,
         ...incoming,
         plans: { ...(defaults.plans || {}), ...(incoming.plans || {}) },
         addOns: { ...(defaults.addOns || {}), ...(incoming.addOns || {}) },
+        estimateItems,
+        projectEstimator: {
+          ...defaultProjectEstimator,
+          ...incomingProjectEstimator,
+          waste: { ...(defaultProjectEstimator.waste || {}), ...(incomingProjectEstimator.waste || {}) },
+          equipment: Array.isArray(incomingProjectEstimator.equipment) && incomingProjectEstimator.equipment.length
+            ? incomingProjectEstimator.equipment
+            : (defaultProjectEstimator.equipment || [])
+        },
         fertilizerBid: {
           ...defaultFertilizer,
           ...incomingFertilizer,
@@ -6953,6 +7106,193 @@
       return Array.isArray(bidPricingConfig?.estimateItems) ? bidPricingConfig.estimateItems : [];
     }
 
+    let quickProjectCalculation = null;
+
+    function projectEstimatorSettings() {
+      const defaults = window.GreenGrinProjectEstimator?.DEFAULT_SETTINGS || {};
+      const saved = bidPricingConfig?.projectEstimator || {};
+      return { ...defaults, ...saved, waste: { ...(defaults.waste || {}), ...(saved.waste || {}) } };
+    }
+
+    function projectEquipment() {
+      const saved = bidPricingConfig?.projectEstimator?.equipment;
+      return Array.isArray(saved) && saved.length ? saved : (window.GreenGrinProjectEstimator?.DEFAULT_EQUIPMENT || []);
+    }
+
+    function populateProjectEstimatorDefaults() {
+      const settings = projectEstimatorSettings();
+      const values = {
+        "#estimator-labor-sell": settings.laborSellRate,
+        "#estimator-labor-cost": settings.loadedLaborCost,
+        "#estimator-target-margin": Number(settings.targetGrossMargin || 0) * 100,
+        "#estimator-margin-warning": Number(settings.marginWarning || 0) * 100,
+        "#estimator-equipment-markup": settings.equipmentMarkup,
+        "#estimator-contingency": settings.defaultContingency,
+        "#estimator-risk-contingency": settings.highRiskContingency,
+        "#estimator-mulch-depth": settings.mulchDepthInches,
+        "#estimator-waste-rock": settings.waste?.rock,
+        "#estimator-waste-mulch": settings.waste?.mulch,
+        "#estimator-waste-fabric": settings.waste?.fabric,
+        "#estimator-waste-sod": settings.waste?.sod,
+        "#estimator-waste-edging": settings.waste?.edging,
+        "#estimator-waste-irrigation": settings.waste?.irrigation,
+        "#estimator-waste-retaining": settings.waste?.retaining
+      };
+      Object.entries(values).forEach(([selector, value]) => { if ($(selector)) $(selector).value = value ?? ""; });
+      const select = $("#project-equipment");
+      const previous = select.value;
+      select.innerHTML = projectEquipment().map((item) => `<option value="${cleanText(item.id)}">${cleanText(item.name)}${item.id === "none" ? "" : ` - ${cleanText(money(item.day))}/day`}</option>`).join("");
+      if (projectEquipment().some((item) => item.id === previous)) select.value = previous;
+      updateQuickProjectFields();
+    }
+
+    async function saveProjectEstimatorDefaults() {
+      if (!bidPricingConfig) await loadBidPricing(true);
+      bidPricingConfig.projectEstimator = {
+        ...(bidPricingConfig.projectEstimator || {}),
+        laborSellRate: Math.max(0, Number($("#estimator-labor-sell").value) || 0),
+        loadedLaborCost: Math.max(0, Number($("#estimator-labor-cost").value) || 0),
+        targetGrossMargin: Math.max(0, Number($("#estimator-target-margin").value) || 0) / 100,
+        marginWarning: Math.max(0, Number($("#estimator-margin-warning").value) || 0) / 100,
+        equipmentMarkup: Math.max(0, Number($("#estimator-equipment-markup").value) || 0),
+        defaultContingency: Math.max(0, Number($("#estimator-contingency").value) || 0),
+        highRiskContingency: Math.max(0, Number($("#estimator-risk-contingency").value) || 0),
+        mulchDepthInches: Math.max(.25, Number($("#estimator-mulch-depth").value) || 2),
+        waste: Object.fromEntries(["rock", "mulch", "fabric", "sod", "edging", "irrigation", "retaining"].map((key) => [key, Math.max(0, Number($(`#estimator-waste-${key}`).value) || 0)]))
+      };
+      $("#estimator-defaults-result").innerHTML = notice("Saving estimator defaults...");
+      try {
+        const data = await requestJson("portal-pricing", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ config: bidPricingConfig }) });
+        bidPricingConfig = mergeBidPricingConfig(data.config);
+        populateProjectEstimatorDefaults();
+        $("#estimator-defaults-result").innerHTML = notice("Estimator defaults saved. New projects will use these numbers.");
+      } catch (error) {
+        $("#estimator-defaults-result").innerHTML = notice(error.message, true);
+      }
+    }
+
+    function updateQuickProjectFields() {
+      const service = $("#project-service")?.value || "rock";
+      document.querySelectorAll("[data-project-services]").forEach((field) => {
+        field.hidden = !String(field.dataset.projectServices || "").split(",").includes(service);
+      });
+      const laborMode = $("#project-labor-mode")?.value || "crew";
+      document.querySelectorAll("[data-labor-mode]").forEach((field) => { field.hidden = field.dataset.laborMode !== laborMode; });
+      const depth = $("#project-depth");
+      if (depth && !depth.value) {
+        const automaticDepth = service === "mulch"
+          ? projectEstimatorSettings().mulchDepthInches || 2
+          : window.GreenGrinProjectEstimator?.rockDepthForSize($("#project-rock-size").value, $("#project-install-type").value) || 3;
+        depth.placeholder = `${automaticDepth} automatic`;
+      }
+      if (!$("#project-contingency")?.dataset.edited) {
+        $("#project-contingency").value = ["demo", "irrigation"].includes(service) ? projectEstimatorSettings().highRiskContingency : projectEstimatorSettings().defaultContingency;
+      }
+      quickProjectCalculation = null;
+    }
+
+    function quickProjectInput() {
+      const depth = Number($("#project-depth").value);
+      return {
+        service: $("#project-service").value,
+        areaSqFt: Number($("#project-area").value) || 0,
+        installType: $("#project-install-type").value,
+        rockSize: $("#project-rock-size").value,
+        depthInches: depth > 0 ? depth : undefined,
+        linearFeet: Number($("#project-linear-feet").value) || 0,
+        wallLength: Number($("#project-wall-length").value) || 0,
+        wallHeight: Number($("#project-wall-height").value) || 0,
+        itemQuantity: Number($("#project-quantity").value) || 1,
+        zones: Number($("#project-zones").value) || 0,
+        heads: Number($("#project-heads").value) || 0,
+        pipeFeet: Number($("#project-pipe-feet").value) || 0,
+        disposalLoads: Number($("#project-disposal-loads").value) || 0,
+        includeFabric: $("#project-include-fabric").checked,
+        laborMode: $("#project-labor-mode").value,
+        manualManHours: Number($("#project-man-hours").value) || 0,
+        productionRate: Number($("#project-production-rate").value) || 0,
+        crewSize: Number($("#project-crew-size").value) || 0,
+        crewHours: Number($("#project-crew-hours").value) || 0,
+        equipmentId: $("#project-equipment").value,
+        rentalPeriod: $("#project-rental-period").value,
+        rentalCount: Number($("#project-rental-count").value) || 1,
+        contingencyPercent: Number($("#project-contingency").value) || 0
+      };
+    }
+
+    function validateQuickProjectInput(input) {
+      if (["rock", "mulch", "fabric", "sod", "demo"].includes(input.service) && input.areaSqFt <= 0) return "Enter the project square footage.";
+      if (input.service === "edging" && input.linearFeet <= 0) return "Enter the edging linear feet.";
+      if (input.service === "retaining" && (input.wallLength <= 0 || input.wallHeight <= 0)) return "Enter the wall length and average height.";
+      if (input.service === "irrigation" && input.zones <= 0 && input.heads <= 0 && input.pipeFeet <= 0) return "Enter at least one irrigation measurement.";
+      if (input.laborMode === "crew" && (input.crewSize <= 0 || input.crewHours <= 0)) return "Enter crew size and hours.";
+      if (input.laborMode === "manual" && input.manualManHours <= 0) return "Enter the total man-hours.";
+      if (input.laborMode === "production" && input.productionRate <= 0) return "Enter a production rate.";
+      return "";
+    }
+
+    function renderQuickProject(calculation) {
+      const rows = calculation.lines.filter((line) => line.category !== "Other").map((line) => `<div class="quick-material-row"><span>${cleanText(line.description)}<br><small class="muted">${cleanText(String(line.quantity))} ${cleanText(line.unit)}</small></span><span>${cleanText(money(line.amount))}<br><small class="muted">${cleanText(money(line.cost_total))} cost</small></span></div>`).join("");
+      const margin = Number(calculation.grossMargin || 0) * 100;
+      const missing = calculation.missingCosts.length ? `<div class="estimate-alert"><strong>Costs needed before quoting:</strong> ${calculation.missingCosts.map(cleanText).join(", ")}. Enter what your supplier charges in Cost Library.</div>` : "";
+      const marginAlert = calculation.missingCosts.length
+        ? `<div class="estimate-alert"><strong>Margin pending:</strong> enter every supplier cost before trusting the profit or margin.</div>`
+        : `<div class="estimate-alert ${calculation.marginWarning ? "" : "good"}">${calculation.marginWarning ? `<strong>Margin warning:</strong> ${margin.toFixed(1)}% is below your ${(Number(projectEstimatorSettings().marginWarning || 0) * 100).toFixed(0)}% floor.` : `<strong>Margin protected:</strong> ${margin.toFixed(1)}% gross margin.`}</div>`;
+      $("#quick-project-result").innerHTML = `<div class="quick-project-summary"><div><span>Material items</span><strong>${calculation.lines.filter((line) => line.category === "Material").length}</strong></div><div><span>Your estimated cost</span><strong>${cleanText(money(calculation.internalCost))}</strong></div><div><span>Customer price</span><strong>${cleanText(money(calculation.subtotal))}</strong></div><div><span>Deposit to collect</span><strong>${cleanText(money(calculation.depositAmount))}</strong></div></div><div class="quick-material-list">${rows}</div>${missing}${marginAlert}`;
+    }
+
+    function calculateQuickProject(showErrors = false) {
+      if (!window.GreenGrinProjectEstimator) {
+        if (showErrors) $("#quick-project-result").innerHTML = notice("The project calculator could not load. Refresh this page.", true);
+        return null;
+      }
+      const input = quickProjectInput();
+      const validation = validateQuickProjectInput(input);
+      if (validation) {
+        if (showErrors) $("#quick-project-result").innerHTML = notice(validation, true);
+        return null;
+      }
+      try {
+        quickProjectCalculation = window.GreenGrinProjectEstimator.calculateProject(input, { settings: projectEstimatorSettings(), catalog: estimateCatalogItems(), equipment: projectEquipment() });
+        quickProjectCalculation.input = input;
+        renderQuickProject(quickProjectCalculation);
+        return quickProjectCalculation;
+      } catch (error) {
+        if (showErrors) $("#quick-project-result").innerHTML = notice(error.message, true);
+        return null;
+      }
+    }
+
+    function addQuickProjectAssembly() {
+      const calculation = calculateQuickProject(true);
+      if (!calculation) return;
+      if (calculation.missingCosts.length) {
+        $("#quick-project-result").insertAdjacentHTML("beforeend", notice("Enter the missing supplier costs before adding this project.", true));
+        return;
+      }
+      renderEstimateLines(calculation.lines);
+      $("#estimate-form").dataset.calculationInputs = JSON.stringify({ ...calculation.input, phase_hours: calculation.phaseHours });
+      $("#estimate-form").dataset.depositAmount = String(calculation.depositAmount);
+      const titles = { rock: "Decorative Rock Installation", mulch: "Mulch Installation", fabric: "Weed Fabric Installation", edging: "Landscape Edging", sod: "Sod Installation", irrigation: "Irrigation Project", retaining: "Decorative Retaining Wall", firepit: "Firepit Project", demo: "Landscape Demo and Removal" };
+      if (!$("#estimate-project-title").value.trim()) $("#estimate-project-title").value = titles[calculation.service] || "Landscape Project";
+      if (!$("#estimate-project-scope").value.trim()) $("#estimate-project-scope").value = calculation.scope;
+      $("#estimate-customer-notes").value ||= "Materials are due before ordering. Installation balance is due according to the accepted proposal. Extra work requires an approved change order.";
+      $("#estimate-result").innerHTML = notice("Complete project added. Review it, then save or send the proposal.");
+    }
+
+    function clearQuickProject() {
+      ["#project-area", "#project-depth", "#project-linear-feet", "#project-wall-length", "#project-wall-height", "#project-zones", "#project-heads", "#project-pipe-feet", "#project-man-hours"].forEach((selector) => { if ($(selector)) $(selector).value = ""; });
+      $("#project-disposal-loads").value = "0";
+      $("#project-crew-size").value = "2";
+      $("#project-crew-hours").value = "8";
+      $("#project-equipment").value = "none";
+      $("#project-rental-count").value = "1";
+      delete $("#project-contingency").dataset.edited;
+      $("#quick-project-result").innerHTML = "";
+      quickProjectCalculation = null;
+      updateQuickProjectFields();
+    }
+
     function renderEstimateCatalog() {
       const items = estimateCatalogItems();
       const picker = $("#estimate-catalog-select");
@@ -6965,7 +7305,7 @@
       $("#estimate-catalog-list").innerHTML = items.length ? items.map((item) => `
         <div class="estimate-card" data-estimate-catalog-id="${cleanText(item.id)}">
           <div class="estimate-card-head"><strong>${cleanText(item.name)}</strong><span class="badge">${cleanText(item.category)}</span></div>
-          <p>Your cost: <strong>${cleanText(money(item.unitCost))}/${cleanText(item.unit)}</strong></p>
+          <p>Your cost: <strong>${Number(item.unitCost) > 0 ? `${cleanText(money(item.unitCost))}/${cleanText(item.unit)}` : "Not set"}</strong></p>
           <p class="muted">${cleanText(String(item.markupPercent))}% markup | Customer price ${cleanText(money(item.defaultRate))}/${cleanText(item.unit)}</p>
           <div class="row-actions"><button class="button small secondary" data-catalog-add type="button">Add To Bid</button><button class="button small ghost" data-catalog-edit type="button">Edit</button><button class="button small ghost" data-catalog-delete type="button">Delete</button></div>
         </div>`).join("") : notice("No cost items saved yet.");
@@ -6978,6 +7318,8 @@
       $("#estimate-catalog-unit").value = "sq ft";
       $("#estimate-catalog-markup").value = "50";
       $("#estimate-catalog-price").value = "";
+      $("#estimate-catalog-increment").value = "1";
+      $("#estimate-catalog-density").value = "1.4";
     }
 
     function syncEstimateCatalogPrice() {
@@ -7003,9 +7345,9 @@
       const rate = Math.max(0, Number(item.rate ?? item.defaultRate) || unitCost * (1 + markup / 100));
       const quantity = Math.max(0, Number(item.quantity) || 1);
       const categories = ["Material", "Labor", "Equipment", "Disposal", "Service", "Other"];
-      const units = ["sq ft", "1,000 sq ft", "each", "hour", "day", "yard", "ton", "bag", "gal", "lb", "visit"];
+      const units = ["sq ft", "linear ft", "wall sq ft", "1,000 sq ft", "each", "man-hour", "hour", "day", "yard", "ton", "load", "bag", "gal", "lb", "visit"];
       return `
-        <div class="estimate-line-row" data-catalog-id="${cleanText(item.catalog_id || item.id || "")}">
+        <div class="estimate-line-row" data-catalog-id="${cleanText(item.catalog_id || item.id || "")}" data-deposit-eligible="${item.deposit_eligible ?? ["Material", "Equipment"].includes(item.category) ? "true" : "false"}">
           <div class="estimate-line-description"><label>Description</label><input class="estimate-item-description" value="${cleanText(item.description || item.name || "Custom project item")}" /></div>
           <div><label>Category</label><select class="estimate-item-category">${categories.map((category) => `<option${category === (item.category || "Material") ? " selected" : ""}>${category}</option>`).join("")}</select></div>
           <div><label>Quantity</label><input class="estimate-item-quantity" type="number" min="0" step="0.01" value="${quantity}" /></div>
@@ -7027,7 +7369,8 @@
         unit: row.querySelector(".estimate-item-unit")?.value || "each",
         unit_cost: Math.max(0, Number(row.querySelector(".estimate-item-cost")?.value) || 0),
         markup_percent: Math.max(0, Number(row.querySelector(".estimate-item-markup")?.value) || 0),
-        rate: Math.max(0, Number(row.querySelector(".estimate-item-rate")?.value) || 0)
+        rate: Math.max(0, Number(row.querySelector(".estimate-item-rate")?.value) || 0),
+        deposit_eligible: row.dataset.depositEligible === "true"
       })).filter((item) => item.quantity > 0 && item.description);
     }
 
@@ -7041,6 +7384,9 @@
       const tax = taxable * taxRate / 100;
       const total = taxable + tax;
       const profit = taxable - cost;
+      const margin = taxable > 0 ? profit / taxable : 0;
+      const depositAmount = lines.filter((item) => item.deposit_eligible).reduce((sum, item) => sum + item.quantity * item.rate, 0);
+      const groupedTotals = window.GreenGrinProjectEstimator?.groupedTotals(lines.map((item) => ({ ...item, amount: item.quantity * item.rate }))) || {};
       document.querySelectorAll("#estimate-line-items .estimate-line-row").forEach((row) => {
         const quantity = Number(row.querySelector(".estimate-item-quantity")?.value) || 0;
         const unitCost = Number(row.querySelector(".estimate-item-cost")?.value) || 0;
@@ -7051,8 +7397,10 @@
         <div><span>Your cost</span><strong>${cleanText(money(cost))}</strong></div>
         <div><span>Customer subtotal</span><strong>${cleanText(money(subtotal))}</strong></div>
         <div><span>Expected profit</span><strong>${cleanText(money(profit))}</strong></div>
+        <div><span>Gross margin</span><strong>${cleanText(`${(margin * 100).toFixed(1)}%`)}</strong></div>
+        <div><span>Material deposit</span><strong>${cleanText(money(depositAmount))}</strong></div>
         <div><span>Customer total</span><strong>${cleanText(money(total))}</strong></div>`;
-      return { lines, cost, subtotal, discount, taxRate, tax, total, profit };
+      return { lines, cost, subtotal, discount, taxRate, tax, total, profit, margin, depositAmount, groupedTotals };
     }
 
     function renderEstimateLines(lines = []) {
@@ -7097,6 +7445,11 @@
         line_items: calculation.lines,
         discount: calculation.discount,
         tax_rate: calculation.taxRate,
+        grouped_totals: calculation.groupedTotals,
+        deposit_amount: calculation.depositAmount,
+        gross_margin: calculation.margin,
+        contingency_percent: Number($("#project-contingency")?.value) || 0,
+        calculation_inputs: (() => { try { return JSON.parse($("#estimate-form").dataset.calculationInputs || "{}"); } catch { return {}; } })(),
         invoice_id: $("#estimate-form").dataset.invoiceId || null,
         invoice_number: $("#estimate-form").dataset.invoiceNumber || "",
         invoiced_at: $("#estimate-form").dataset.invoicedAt || null,
@@ -7115,6 +7468,8 @@
       delete $("#estimate-form").dataset.invoiceId;
       delete $("#estimate-form").dataset.invoiceNumber;
       delete $("#estimate-form").dataset.invoicedAt;
+      delete $("#estimate-form").dataset.calculationInputs;
+      delete $("#estimate-form").dataset.depositAmount;
       $("#estimate-id").value = "";
       $("#estimate-number").value = "";
       $("#estimate-current-number").textContent = "New estimate";
@@ -7125,6 +7480,7 @@
       $("#estimate-discount").value = "0";
       $("#estimate-tax-rate").value = "0";
       renderEstimateLines();
+      clearQuickProject();
       $("#estimate-result").innerHTML = "";
     }
 
@@ -7136,8 +7492,9 @@
           <div class="estimate-card-head"><strong>${cleanText(estimate.estimate_number)}</strong><span class="badge">${cleanText(estimate.status)}</span></div>
           <p><strong>${cleanText(estimate.customer_name)}</strong> | ${cleanText(estimate.project_title)}</p>
           <p class="muted">${cleanText(estimate.service_address || "No project address")}</p>
-          <div class="estimate-card-status"><span class="badge">Customer ${cleanText(money(estimate.total))}</span><span class="badge">Cost ${cleanText(money(estimate.internal_cost))}</span><span class="badge">Profit ${cleanText(money(estimate.gross_profit))}</span>${estimate.invoice_number ? `<span class="badge">Invoice ${cleanText(estimate.invoice_number)}</span>` : ""}</div>
+          <div class="estimate-card-status"><span class="badge">Customer ${cleanText(money(estimate.total))}</span><span class="badge">Cost ${cleanText(money(estimate.internal_cost))}</span><span class="badge">Margin ${cleanText(`${(Number(estimate.gross_margin || 0) * 100).toFixed(1)}%`)}</span><span class="badge">Deposit ${cleanText(money(estimate.deposit_amount))}</span>${estimate.invoice_number ? `<span class="badge">Invoice ${cleanText(estimate.invoice_number)}</span>` : ""}</div>
           <div class="row-actions">
+            ${estimate.approved_at ? `<span class="badge">Approved by ${cleanText(estimate.approved_by || "customer")}</span>` : `<button class="button small" data-estimate-action="send-proposal" type="button">Send Proposal</button>`}
             ${estimate.invoice_id ? `<button class="button small secondary" data-estimate-action="open-invoice" type="button">Open Invoice</button>` : `<button class="button small secondary" data-estimate-action="draft-invoice" type="button">Create Invoice</button><button class="button small" data-estimate-action="send-invoice" type="button">Send Invoice</button>`}
             <button class="button small ghost" data-estimate-action="edit" type="button">Edit</button>
             <button class="button small ghost" data-estimate-action="print" type="button">Print</button>
@@ -7168,6 +7525,7 @@
       if (!invoiceCustomers.length) await loadInvoiceCustomers();
       renderEstimateCustomerOptions();
       renderEstimateCatalog();
+      populateProjectEstimatorDefaults();
       if (!$("#estimate-line-items").children.length) clearEstimateForm();
       await loadEstimates();
     }
@@ -7194,6 +7552,8 @@
       $("#estimate-discount").value = Number(estimate.discount || 0);
       $("#estimate-tax-rate").value = Number(estimate.tax_rate || 0);
       $("#estimate-notes").value = estimate.notes || "";
+      $("#estimate-form").dataset.calculationInputs = JSON.stringify(estimate.calculation_inputs || {});
+      $("#estimate-form").dataset.depositAmount = String(estimate.deposit_amount || 0);
       renderEstimateLines(Array.isArray(estimate.line_items) ? estimate.line_items : []);
       openEstimatorView("builder");
       window.scrollTo({ top: $("#project-bids").offsetTop, behavior: "smooth" });
@@ -7202,9 +7562,14 @@
     function printEstimate(estimate) {
       const popup = window.open("", "_blank", "width=820,height=900");
       if (!popup) return;
-      const rows = (estimate.line_items || []).map((item) => `<tr><td>${cleanText(item.description)}</td><td>${cleanText(item.quantity)} ${cleanText(item.unit)}</td><td>${cleanText(money(item.rate))}</td><td>${cleanText(money(item.amount || item.quantity * item.rate))}</td></tr>`).join("");
+      const grouped = estimate.grouped_totals && Object.keys(estimate.grouped_totals).length
+        ? estimate.grouped_totals
+        : (window.GreenGrinProjectEstimator?.groupedTotals((estimate.line_items || []).map((item) => ({ ...item, amount: item.amount || item.quantity * item.rate }))) || {});
+      const rows = Object.entries(grouped).map(([label, amount]) => `<tr><td>${cleanText(label)}</td><td>${cleanText(money(amount))}</td></tr>`).join("");
       const validUntil = estimate.valid_until ? displayScheduleDate(estimate.valid_until) : "30 days from issue";
-      popup.document.write(`<!doctype html><html><head><title>${cleanText(estimate.estimate_number)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px;line-height:1.45}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:nth-child(n+2),td:nth-child(n+2){text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.summary{text-align:right}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.meta{text-align:right;color:#526458}@media print{button{display:none}}</style></head><body><header><div><h1>Green Grin Lawn &amp; Landscape</h1><strong>Landscape Project Estimate</strong></div><div class="meta"><strong>${cleanText(estimate.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}</div></header><h2>${cleanText(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${cleanText(estimate.customer_name)}</p><p>${cleanText(estimate.service_address || "")}</p>${estimate.project_scope ? `<h2>Scope of work</h2><div class="scope">${cleanText(estimate.project_scope)}</div>` : ""}<table><thead><tr><th>Item</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="summary"><p>Subtotal: ${cleanText(money(estimate.subtotal))}</p>${Number(estimate.discount || 0) ? `<p>Discount: -${cleanText(money(estimate.discount))}</p>` : ""}${Number(estimate.tax_amount || 0) ? `<p>Tax: ${cleanText(money(estimate.tax_amount))}</p>` : ""}<p class="total">Estimate total: ${cleanText(money(estimate.total))}</p></div>${estimate.customer_notes ? `<div class="notes"><strong>Project notes and terms</strong><br>${cleanText(estimate.customer_notes)}</div>` : ""}<button onclick="window.print()">Print Estimate</button></body></html>`);
+      const deposit = Number(estimate.deposit_amount || 0);
+      const schedule = Number(estimate.total || 0) > 5000 ? "Remaining installation balance: 50% at project midpoint and 50% at completion." : "Remaining installation balance is due at completion.";
+      popup.document.write(`<!doctype html><html><head><title>${cleanText(estimate.estimate_number)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px;line-height:1.45}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.summary{text-align:right}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms{margin-top:24px;padding:15px;border:1px solid #ccd8c9}.meta{text-align:right;color:#526458}@media print{button{display:none}}</style></head><body><header><div><h1>Green Grin Lawn &amp; Landscape</h1><strong>Landscape Project Proposal</strong></div><div class="meta"><strong>${cleanText(estimate.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}</div></header><h2>${cleanText(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${cleanText(estimate.customer_name)}</p><p>${cleanText(estimate.service_address || "")}</p>${estimate.project_scope ? `<h2>Scope of work</h2><div class="scope">${cleanText(estimate.project_scope)}</div>` : ""}<table><thead><tr><th>Project group</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="summary"><p>Subtotal: ${cleanText(money(estimate.subtotal))}</p>${Number(estimate.discount || 0) ? `<p>Discount: -${cleanText(money(estimate.discount))}</p>` : ""}${Number(estimate.tax_amount || 0) ? `<p>Tax: ${cleanText(money(estimate.tax_amount))}</p>` : ""}<p class="total">Project total: ${cleanText(money(estimate.total))}</p></div><div class="terms"><strong>Payment schedule</strong><p>Material and reserved equipment deposit: ${cleanText(money(deposit))}</p><p>${cleanText(schedule)}</p><p>Additional work requires an approved change order. This proposal expires on ${cleanText(validUntil)}.</p></div>${estimate.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(estimate.customer_notes)}</div>` : ""}<button onclick="window.print()">Print Proposal</button></body></html>`);
       popup.document.close();
       popup.focus();
     }
@@ -7223,6 +7588,16 @@
       $("#estimate-form").dataset.invoiceNumber = estimate.invoice_number || "";
       $("#estimate-form").dataset.invoicedAt = estimate.invoiced_at || "";
       return estimate;
+    }
+
+    async function sendEstimateProposal(estimate) {
+      if (!estimate?.id) throw new Error("Save the estimate before sending the proposal.");
+      if (!estimate.email) throw new Error("Add the customer's email before sending the proposal.");
+      showEstimateNotice("Emailing the secure proposal...");
+      const data = await requestJson("portal-proposals", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send", estimate_id: estimate.id }) });
+      await loadEstimates();
+      showEstimateNotice(data.message || `Proposal ${estimate.estimate_number} emailed to ${estimate.email}.`);
+      return data;
     }
 
     function projectInvoicePayload(estimate, sendNow = false, existingInvoice = null) {
@@ -9235,6 +9610,7 @@
           </div>
         `).join("") : notice("No time entries for that range.")}
         ${entries.length ? `<div class="status-box">${entries.slice(0, 30).map((entry) => timeEntryCard(entry)).join("")}</div>` : ""}
+        ${(data.work_summary?.projects || []).length ? `<h3>Project time by customer</h3>${data.work_summary.projects.map((project) => `<div class="message"><div class="message-head"><strong>${cleanText(project.customer_name)}</strong><span class="badge">${cleanText(`${project.total_hours}h`)}</span></div><p>${cleanText(project.project_title)}</p>${project.phases.map((phase) => `<p class="muted">${cleanText(phase.phase)}: ${cleanText(`${phase.actual_hours}h actual`)}${phase.estimated_hours ? ` / ${cleanText(`${phase.estimated_hours}h estimated`)}` : ""}</p>`).join("")}</div>`).join("")}` : ""}
       `;
     }
 

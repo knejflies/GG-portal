@@ -295,6 +295,30 @@ alter table public.green_grin_time_entries
 alter table public.green_grin_time_entries
   add column if not exists notes text;
 
+create table if not exists public.green_grin_work_sessions (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  employee_id uuid not null references public.green_grin_employees(id) on delete cascade,
+  time_entry_id uuid references public.green_grin_time_entries(id) on delete set null,
+  job_id uuid references public.green_grin_jobs(id) on delete set null,
+  estimate_id uuid,
+  customer_code text,
+  customer_name text,
+  project_title text,
+  work_type text not null default 'Project',
+  phase text not null,
+  started_at timestamptz not null default now(),
+  ended_at timestamptz,
+  total_minutes integer,
+  notes text
+);
+
+alter table public.green_grin_work_sessions add column if not exists estimate_id uuid;
+alter table public.green_grin_work_sessions add column if not exists work_type text not null default 'Project';
+alter table public.green_grin_work_sessions add column if not exists phase text;
+alter table public.green_grin_work_sessions add column if not exists total_minutes integer;
+alter table public.green_grin_work_sessions add column if not exists notes text;
+
 create table if not exists public.green_grin_message_log (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
@@ -423,6 +447,21 @@ create table if not exists public.green_grin_estimates (
   invoice_id uuid,
   invoice_number text,
   invoiced_at timestamptz,
+  grouped_totals jsonb not null default '{}'::jsonb,
+  deposit_amount numeric(12, 2) not null default 0,
+  gross_margin numeric(7, 4) not null default 0,
+  contingency_percent numeric(7, 4) not null default 0,
+  calculation_inputs jsonb not null default '{}'::jsonb,
+  proposal_token_hash text,
+  proposal_code_hash text,
+  proposal_code_expires_at timestamptz,
+  proposal_sent_at timestamptz,
+  proposal_expires_at timestamptz,
+  approved_at timestamptz,
+  approved_by text,
+  approval_document_hash text,
+  project_job_id uuid,
+  deposit_invoice_id uuid,
   notes text
 );
 
@@ -432,6 +471,37 @@ alter table public.green_grin_estimates add column if not exists customer_notes 
 alter table public.green_grin_estimates add column if not exists invoice_id uuid;
 alter table public.green_grin_estimates add column if not exists invoice_number text;
 alter table public.green_grin_estimates add column if not exists invoiced_at timestamptz;
+alter table public.green_grin_estimates add column if not exists grouped_totals jsonb not null default '{}'::jsonb;
+alter table public.green_grin_estimates add column if not exists deposit_amount numeric(12, 2) not null default 0;
+alter table public.green_grin_estimates add column if not exists gross_margin numeric(7, 4) not null default 0;
+alter table public.green_grin_estimates add column if not exists contingency_percent numeric(7, 4) not null default 0;
+alter table public.green_grin_estimates add column if not exists calculation_inputs jsonb not null default '{}'::jsonb;
+alter table public.green_grin_estimates add column if not exists proposal_token_hash text;
+alter table public.green_grin_estimates add column if not exists proposal_code_hash text;
+alter table public.green_grin_estimates add column if not exists proposal_code_expires_at timestamptz;
+alter table public.green_grin_estimates add column if not exists proposal_sent_at timestamptz;
+alter table public.green_grin_estimates add column if not exists proposal_expires_at timestamptz;
+alter table public.green_grin_estimates add column if not exists approved_at timestamptz;
+alter table public.green_grin_estimates add column if not exists approved_by text;
+alter table public.green_grin_estimates add column if not exists approval_document_hash text;
+alter table public.green_grin_estimates add column if not exists project_job_id uuid;
+alter table public.green_grin_estimates add column if not exists deposit_invoice_id uuid;
+
+create table if not exists public.green_grin_estimate_signatures (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  estimate_id uuid not null references public.green_grin_estimates(id) on delete cascade,
+  signer_name text not null,
+  signer_email text,
+  signature_type text not null default 'typed',
+  signature_data text,
+  consent_text text not null,
+  signed_at timestamptz not null default now(),
+  document_hash text not null,
+  document_snapshot jsonb not null,
+  ip_address text,
+  user_agent text
+);
 
 create table if not exists public.green_grin_expenses (
   id uuid primary key default gen_random_uuid(),
@@ -562,10 +632,12 @@ alter table public.green_grin_properties enable row level security;
 alter table public.green_grin_employees enable row level security;
 alter table public.green_grin_invoices enable row level security;
 alter table public.green_grin_time_entries enable row level security;
+alter table public.green_grin_work_sessions enable row level security;
 alter table public.green_grin_push_subscriptions enable row level security;
 alter table public.green_grin_expenses enable row level security;
 alter table public.green_grin_pricing_config enable row level security;
 alter table public.green_grin_estimates enable row level security;
+alter table public.green_grin_estimate_signatures enable row level security;
 alter table public.green_grin_marketing_routes enable row level security;
 alter table public.green_grin_marketing_leads enable row level security;
 alter table public.green_grin_daily_route_assignments enable row level security;
@@ -644,6 +716,9 @@ create index if not exists green_grin_time_entries_clock_in_idx on public.green_
 create index if not exists green_grin_time_entries_open_idx
   on public.green_grin_time_entries(employee_id)
   where clock_out_at is null;
+create index if not exists green_grin_work_sessions_employee_idx on public.green_grin_work_sessions(employee_id, started_at desc);
+create index if not exists green_grin_work_sessions_job_idx on public.green_grin_work_sessions(job_id, started_at desc);
+create unique index if not exists green_grin_work_sessions_open_idx on public.green_grin_work_sessions(employee_id) where ended_at is null;
 create index if not exists green_grin_message_log_created_at_idx on public.green_grin_message_log(created_at desc);
 create index if not exists green_grin_customers_customer_code_idx on public.green_grin_customers(customer_code);
 create index if not exists green_grin_customer_chat_customer_idx on public.green_grin_customer_chat(customer_user_id, created_at);
@@ -654,6 +729,8 @@ create index if not exists green_grin_invoices_source_estimate_idx on public.gre
 create index if not exists green_grin_estimates_updated_idx on public.green_grin_estimates(updated_at desc);
 create index if not exists green_grin_estimates_customer_idx on public.green_grin_estimates(customer_user_id);
 create index if not exists green_grin_estimates_invoice_idx on public.green_grin_estimates(invoice_id);
+create index if not exists green_grin_estimates_proposal_token_idx on public.green_grin_estimates(proposal_token_hash);
+create index if not exists green_grin_estimate_signatures_estimate_idx on public.green_grin_estimate_signatures(estimate_id, signed_at desc);
 create index if not exists green_grin_push_subscriptions_owner_type_idx on public.green_grin_push_subscriptions(owner_type);
 create index if not exists green_grin_push_subscriptions_customer_user_idx on public.green_grin_push_subscriptions(customer_user_id);
 create index if not exists green_grin_push_subscriptions_customer_code_idx on public.green_grin_push_subscriptions(customer_code);

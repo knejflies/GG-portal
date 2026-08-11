@@ -97,6 +97,7 @@ OPENAI_API_KEY=your OpenAI API key for receipt scanning
 RESEND_API_KEY=your private Resend API key
 GREEN_GRIN_INVOICE_FROM=Green Grin Lawn & Landscape <ken@greengrinlawns.com>
 GREEN_GRIN_PORTAL_URL=https://portal.greengrinlawns.com/portal/
+GREEN_GRIN_PROPOSAL_URL=https://portal.greengrinlawns.com/proposal/
 
 Do not put the notification keys text file in GitHub.
 Do not share the service_role key, private notification key, OpenAI API key, or admin PIN.
@@ -110,6 +111,13 @@ INVOICE EMAIL
 2. Add the three invoice email variables above in Netlify, then redeploy.
 3. Save Draft never emails a customer. Send Invoice emails the customer and sends the existing app notification.
 4. Customers see Green Grin Lawn & Landscape <ken@greengrinlawns.com> as the sender.
+
+LANDSCAPE PROPOSALS
+1. Run the latest portal-setup.sql once to add estimate calculations, secure proposal approvals, signatures, and project work sessions.
+2. Add GREEN_GRIN_PROPOSAL_URL in Netlify exactly as shown above.
+3. In Admin -> Lawn Bidder -> Project Estimator, enter your supplier costs in Cost Library before sending a proposal.
+4. Send Proposal emails an expiring link. The customer requests a one-time email code and can sign without creating an account.
+5. Approval creates the project and its material/equipment deposit invoice automatically.
 
 BOOKKEEPING CONSOLE
 1. Run the latest portal-setup.sql once to add invoice line items, discounts, tax, and the employee role field.

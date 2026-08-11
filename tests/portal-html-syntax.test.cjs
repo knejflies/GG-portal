@@ -46,3 +46,12 @@ for (const [file, expectedManifest] of Object.entries(files)) {
   for (const code of inlineScripts) new Function(code);
   console.log(`${file}: ${inlineScripts.length} inline script(s) passed syntax validation.`);
 }
+
+const proposalHtml = fs.readFileSync("proposal/index.html", "utf8");
+for (const requiredMarkup of ["Project investment", "Email My Approval Code", "Approve &amp; Sign Proposal", "signature-pad"]) {
+  if (!proposalHtml.includes(requiredMarkup)) throw new Error(`proposal/index.html: missing ${requiredMarkup}`);
+}
+for (const code of [...proposalHtml.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map((match) => match[1]).filter((code) => code.trim())) {
+  new Function(code);
+}
+console.log("proposal/index.html: approval page passed syntax validation.");

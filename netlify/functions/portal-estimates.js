@@ -59,7 +59,8 @@ function normalizeEstimateLines(value) {
       markup_percent: markupPercent,
       rate,
       cost_total: moneyNumber(quantity * unitCost),
-      amount: moneyNumber(quantity * rate)
+      amount: moneyNumber(quantity * rate),
+      deposit_eligible: item?.deposit_eligible === true || ["Material", "Equipment"].includes(clean(item?.category, 40))
     };
   }).filter((item) => item.description && item.quantity > 0);
 }
@@ -73,6 +74,17 @@ function estimatePayload(body, current = {}) {
   const taxable = Math.max(0, subtotal - discount);
   const taxAmount = moneyNumber(taxable * taxRate / 100);
   const total = moneyNumber(taxable + taxAmount);
+  const grossProfit = signedMoneyNumber(taxable - internalCost);
+  const grossMargin = taxable > 0 ? Math.round((grossProfit / taxable) * 10000) / 10000 : 0;
+  const depositAmount = moneyNumber(lineItems.filter((item) => item.deposit_eligible).reduce((sum, item) => sum + item.amount, 0));
+  const groupedTotals = lineItems.reduce((groups, item) => {
+    const group = item.category === "Material" ? "Materials"
+      : ["Labor", "Service"].includes(item.category) ? "Installation & Labor"
+        : item.category === "Equipment" ? "Equipment & Hauling"
+          : "Site Preparation & Disposal";
+    groups[group] = moneyNumber((groups[group] || 0) + item.amount);
+    return groups;
+  }, {});
   const statuses = ["Draft", "Quoted", "Approved", "Declined", "Converted"];
   return {
     estimate_number: clean(body.estimate_number || current.estimate_number || `EST-${Date.now().toString(36).toUpperCase()}`, 40),
@@ -91,7 +103,12 @@ function estimatePayload(body, current = {}) {
     line_items: lineItems,
     subtotal,
     internal_cost: internalCost,
-    gross_profit: signedMoneyNumber(Math.max(0, subtotal - discount) - internalCost),
+    gross_profit: grossProfit,
+    gross_margin: grossMargin,
+    grouped_totals: groupedTotals,
+    deposit_amount: depositAmount,
+    contingency_percent: Math.min(100, moneyNumber(body.contingency_percent)),
+    calculation_inputs: body.calculation_inputs && typeof body.calculation_inputs === "object" ? body.calculation_inputs : (current.calculation_inputs || {}),
     discount,
     tax_rate: taxRate,
     tax_amount: taxAmount,

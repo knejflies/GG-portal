@@ -29,6 +29,9 @@ const estimate = estimatePayload({
 assert.equal(estimate.internal_cost, 180);
 assert.equal(estimate.subtotal, 290);
 assert.equal(estimate.gross_profit, 100);
+assert.equal(estimate.deposit_amount, 290);
+assert.equal(estimate.grouped_totals.Materials, 290);
+assert.equal(estimate.gross_margin, 0.3571);
 assert.equal(estimate.tax_amount, 16.8);
 assert.equal(estimate.total, 296.8);
 assert.equal(estimate.valid_until, "2026-09-08");

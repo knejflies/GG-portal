@@ -73,6 +73,38 @@ function cleanShortText(value, fallback, maximum = 100) {
   return text || fallback;
 }
 
+function normalizeProjectEstimator(value = {}) {
+  const fallback = DEFAULT_PRICING.projectEstimator || {};
+  const source = { ...fallback, ...value };
+  const fallbackWaste = fallback.waste || {};
+  const sourceWaste = source.waste || {};
+  const equipment = (Array.isArray(source.equipment) ? source.equipment : (fallback.equipment || [])).slice(0, 100).map((item, index) => ({
+    id: cleanShortText(item.id, `equipment-${index + 1}`, 80),
+    name: cleanName(item.name, `Rental equipment ${index + 1}`),
+    day: finiteNumber(item.day || 0, `Equipment daily rate ${index + 1}`, { minimum: 0, maximum: 1000000 }),
+    week: finiteNumber(item.week || 0, `Equipment weekly rate ${index + 1}`, { minimum: 0, maximum: 1000000 }),
+    month: finiteNumber(item.month || 0, `Equipment monthly rate ${index + 1}`, { minimum: 0, maximum: 1000000 })
+  }));
+  return {
+    laborSellRate: finiteNumber(source.laborSellRate ?? 65, "Landscape labor selling rate", { minimum: 0, maximum: 10000 }),
+    loadedLaborCost: finiteNumber(source.loadedLaborCost ?? 35, "Loaded labor cost", { minimum: 0, maximum: 10000 }),
+    targetGrossMargin: finiteNumber(source.targetGrossMargin ?? 0.4, "Project target gross margin", { minimum: 0, maximum: 0.99 }),
+    marginWarning: finiteNumber(source.marginWarning ?? 0.35, "Project margin warning", { minimum: 0, maximum: 0.99 }),
+    equipmentMarkup: finiteNumber(source.equipmentMarkup ?? 20, "Equipment markup", { minimum: 0, maximum: 1000 }),
+    defaultContingency: finiteNumber(source.defaultContingency ?? 5, "Default contingency", { minimum: 0, maximum: 100 }),
+    highRiskContingency: finiteNumber(source.highRiskContingency ?? 10, "High-risk contingency", { minimum: 0, maximum: 100 }),
+    mulchDepthInches: finiteNumber(source.mulchDepthInches ?? 2, "Mulch depth", { minimum: 0.25, maximum: 12 }),
+    waste: Object.fromEntries(["rock", "mulch", "fabric", "sod", "edging", "irrigation", "retaining"].map((key) => [
+      key,
+      finiteNumber(sourceWaste[key] ?? fallbackWaste[key] ?? 0, `${key} waste`, { minimum: 0, maximum: 100 })
+    ])),
+    equipment,
+    equipmentSource: cleanShortText(source.equipmentSource, "Idaho Tractor, Nampa", 120),
+    equipmentSourceUrl: cleanShortText(source.equipmentSourceUrl, "https://www.idahotractor.com/rentals/rental-equipment", 300),
+    equipmentRatesChecked: cleanShortText(source.equipmentRatesChecked, "", 10)
+  };
+}
+
 function cleanAnalysis(value, fallback) {
   const analysis = cleanShortText(value, fallback, 24);
   if (!/^\d+(?:\.\d+)?-\d+(?:\.\d+)?-\d+(?:\.\d+)?$/.test(analysis)) {
@@ -96,6 +128,7 @@ function normalizePricing(input, nextVersion) {
     manualReviewAboveLawnSqFt: finiteNumber(source.manualReviewAboveLawnSqFt, "Manual review threshold", { minimum: 1, maximum: 10000000 }),
     plans: {},
     addOns: {},
+    projectEstimator: normalizeProjectEstimator(source.projectEstimator),
     estimateItems: (Array.isArray(source.estimateItems) ? source.estimateItems : []).slice(0, 250).map((item, index) => {
       const unitCost = finiteNumber(item.unitCost || 0, `Estimate item cost ${index + 1}`, { minimum: 0, maximum: 1000000 });
       const markupPercent = finiteNumber(item.markupPercent || 0, `Estimate item markup ${index + 1}`, { minimum: 0, maximum: 1000 });
@@ -106,7 +139,9 @@ function normalizePricing(input, nextVersion) {
         unit: cleanShortText(item.unit, "each", 24),
         unitCost,
         markupPercent,
-        defaultRate: finiteNumber(item.defaultRate ?? unitCost * (1 + markupPercent / 100), `Estimate item price ${index + 1}`, { minimum: 0, maximum: 1000000 })
+        defaultRate: finiteNumber(item.defaultRate ?? unitCost * (1 + markupPercent / 100), `Estimate item price ${index + 1}`, { minimum: 0, maximum: 1000000 }),
+        purchaseIncrement: finiteNumber(item.purchaseIncrement || 1, `Estimate purchase increment ${index + 1}`, { minimum: 0.0001, maximum: 1000000 }),
+        tonsPerCubicYard: finiteNumber(item.tonsPerCubicYard || 1.4, `Estimate density ${index + 1}`, { minimum: 0.01, maximum: 100 })
       };
     }),
     savedRates: (Array.isArray(source.savedRates) ? source.savedRates : []).slice(0, 100).map((rate, index) => ({

@@ -152,6 +152,50 @@ async function employeeStatus(employee, unit = "weeks", count = 1) {
   return { open: open?.[0] || null, recent, unit, count, summary: summarize(period, rates) };
 }
 
+async function employeeWorkStatus(employee, unit = "weeks", count = 1) {
+  const employeeId = encodeURIComponent(employee.id);
+  const open = await supabase(`green_grin_work_sessions?select=*&employee_id=eq.${employeeId}&ended_at=is.null&order=started_at.desc&limit=1`);
+  const recent = await supabase(`green_grin_work_sessions?select=*&employee_id=eq.${employeeId}&started_at=gte.${encodeURIComponent(rangeStart(unit, count))}&order=started_at.desc&limit=40`);
+  return { work_open: open?.[0] || null, work_recent: recent || [], work_summary: summarizeWork(recent || []) };
+}
+
+function summarizeWork(sessions, estimates = []) {
+  const estimateMap = new Map((estimates || []).map((estimate) => [estimate.id, estimate]));
+  const projects = new Map();
+  let totalMinutes = 0;
+  for (const session of sessions || []) {
+    const minutes = session.total_minutes ?? (session.ended_at ? minutesBetween(session.started_at, session.ended_at) : 0);
+    totalMinutes += minutes;
+    const key = session.job_id || `${session.customer_code}:${session.project_title}`;
+    const project = projects.get(key) || { job_id: session.job_id, estimate_id: session.estimate_id, customer_code: session.customer_code || "", customer_name: session.customer_name || "Customer", project_title: session.project_title || "Project", total_minutes: 0, phases: {} };
+    project.total_minutes += minutes;
+    project.phases[session.phase] = (project.phases[session.phase] || 0) + minutes;
+    projects.set(key, project);
+  }
+  return {
+    total_minutes: totalMinutes,
+    total_hours: Math.round(totalMinutes / 60 * 100) / 100,
+    projects: [...projects.values()].map((project) => {
+      const estimate = estimateMap.get(project.estimate_id);
+      const phaseHours = estimate?.calculation_inputs?.phase_hours || {};
+      return {
+        ...project,
+        total_hours: Math.round(project.total_minutes / 60 * 100) / 100,
+        phases: Object.entries(project.phases).map(([phase, minutes]) => ({ phase, actual_minutes: minutes, actual_hours: Math.round(minutes / 60 * 100) / 100, estimated_hours: Number(phaseHours[phase] || 0) }))
+      };
+    })
+  };
+}
+
+async function closeOpenWork(employeeId, now = new Date().toISOString(), expectedJobId = "") {
+  const open = await supabase(`green_grin_work_sessions?select=*&employee_id=eq.${encodeURIComponent(employeeId)}&ended_at=is.null&order=started_at.desc&limit=1`);
+  const session = open?.[0];
+  if (!session) return null;
+  if (expectedJobId && session.job_id !== expectedJobId) throw new Error("A different job timer is running. Stop it before completing this job.");
+  const rows = await supabase(`green_grin_work_sessions?id=eq.${encodeURIComponent(session.id)}`, { method: "PATCH", body: JSON.stringify({ ended_at: now, total_minutes: minutesBetween(session.started_at, now) }) });
+  return rows?.[0] || null;
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
   const setupError = requireSetup();
@@ -171,14 +215,18 @@ exports.handler = async (event) => {
         const filters = [`clock_in_at=gte.${encodeURIComponent(rangeStart(unit, count))}`];
         if (employeeId) filters.push(`employee_id=eq.${encodeURIComponent(employeeId)}`);
         const entries = await supabase(`green_grin_time_entries?select=*&${filters.join("&")}&order=clock_in_at.desc&limit=1000`);
-        return json(200, { unit, count, entries, summary: summarize(entries, rates) });
+        const workFilters = [`started_at=gte.${encodeURIComponent(rangeStart(unit, count))}`];
+        if (employeeId) workFilters.push(`employee_id=eq.${encodeURIComponent(employeeId)}`);
+        const workSessions = await supabase(`green_grin_work_sessions?select=*&${workFilters.join("&")}&order=started_at.desc&limit=2000`);
+        const estimates = await supabase("green_grin_estimates?select=id,calculation_inputs&limit=1000");
+        return json(200, { unit, count, entries, summary: summarize(entries, rates), work_sessions: workSessions, work_summary: summarizeWork(workSessions, estimates) });
       }
 
       const employee = await activeEmployee(event) || await activeEmployeeByPin(event);
       if (!employee) return json(401, { error: "Employee access was not found. Sign in or use the PIN the owner set for you." });
       if (employee.is_subcontractor) return json(403, { error: "The time clock is not available for subcontractors." });
       const { unit, count } = cleanPeriod(params.get("unit"), params.get("count"));
-      return json(200, { employee, ...(await employeeStatus(employee, unit, count)) });
+      return json(200, { employee, ...(await employeeStatus(employee, unit, count)), ...(await employeeWorkStatus(employee, unit, count)) });
     }
 
     if (event.httpMethod === "POST") {
@@ -187,6 +235,32 @@ exports.handler = async (event) => {
       if (!employee) return json(401, { error: "Employee access was not found. Sign in or use the PIN the owner set for you." });
       if (employee.is_subcontractor) return json(403, { error: "The time clock is not available for subcontractors." });
       const status = await employeeStatus(employee);
+
+      if (body.action === "start-work") {
+        if (!status.open) return json(400, { error: "Clock in for your shift before starting job time." });
+        if (!body.job_id) return json(400, { error: "Choose a customer job." });
+        const jobs = await supabase(`green_grin_jobs?select=*&id=eq.${encodeURIComponent(body.job_id)}&limit=1`);
+        const job = jobs?.[0];
+        if (!job) return json(404, { error: "That job could not be found." });
+        const assigned = job.assigned_employee_id === employee.id || (await supabase(`green_grin_daily_route_assignments?select=id&job_id=eq.${encodeURIComponent(job.id)}&assigned_employee_id=eq.${encodeURIComponent(employee.id)}&limit=1`))?.length;
+        if (!assigned) return json(403, { error: "That job is not assigned to you." });
+        await closeOpenWork(employee.id);
+        const estimates = await supabase(`green_grin_estimates?select=id,project_title&project_job_id=eq.${encodeURIComponent(job.id)}&limit=1`);
+        const estimate = estimates?.[0] || null;
+        const phase = String(body.phase || "Installation").trim().slice(0, 80);
+        const allowed = ["Travel / Mobilization", "Demo", "Preparation", "Installation", "Cleanup", "Mow / Edge / Blow"];
+        if (!allowed.includes(phase)) return json(400, { error: "Choose a valid work phase." });
+        const rows = await supabase("green_grin_work_sessions", { method: "POST", body: JSON.stringify({ employee_id: employee.id, time_entry_id: status.open.id, job_id: job.id, estimate_id: estimate?.id || null, customer_code: job.customer_code || "", customer_name: job.customer_name || "Customer", project_title: estimate?.project_title || job.service_type || "Project", work_type: phase === "Mow / Edge / Blow" ? "General Maintenance" : "Project", phase, started_at: new Date().toISOString(), notes: String(body.notes || "").slice(0, 1000) }) });
+        const { unit, count } = cleanPeriod(body.unit, body.count);
+        return json(200, { session: rows?.[0] || null, ...(await employeeStatus(employee, unit, count)), ...(await employeeWorkStatus(employee, unit, count)) });
+      }
+
+      if (body.action === "stop-work") {
+        const session = await closeOpenWork(employee.id, new Date().toISOString(), body.job_id || "");
+        if (!session) return json(400, { error: "No job timer is running." });
+        const { unit, count } = cleanPeriod(body.unit, body.count);
+        return json(200, { session, ...(await employeeStatus(employee, unit, count)), ...(await employeeWorkStatus(employee, unit, count)) });
+      }
 
       if (body.action === "clock-in") {
         if (status.open) return json(409, { error: "You are already clocked in." });
@@ -211,6 +285,7 @@ exports.handler = async (event) => {
         const now = new Date().toISOString();
         const totalMinutes = minutesBetween(status.open.clock_in_at, now);
         const hourlyRate = Number(status.open.hourly_rate ?? employee.hourly_rate ?? 0);
+        await closeOpenWork(employee.id, now);
         const rows = await supabase(`green_grin_time_entries?id=eq.${encodeURIComponent(status.open.id)}`, {
           method: "PATCH",
           body: JSON.stringify({
@@ -233,3 +308,5 @@ exports.handler = async (event) => {
     return json(500, { error: error.message });
   }
 };
+
+exports._test = { minutesBetween, moneyForMinutes, rangeStart, cleanPeriod, summarize, summarizeWork };
