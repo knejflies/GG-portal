@@ -432,6 +432,61 @@ create trigger green_grin_customer_signup
   after insert on auth.users
   for each row execute function public.green_grin_create_customer_on_signup();
 
+do $$
+declare
+  signup_user record;
+  next_number integer;
+  next_code text;
+  metadata jsonb;
+begin
+  perform pg_advisory_xact_lock(hashtext('green_grin_customer_code'));
+  select greatest(
+    coalesce((select last_value from public.green_grin_counters where name = 'customer_code'), 0),
+    coalesce((select max(substring(customer_code from 'GG-([0-9]+)$')::integer) from public.green_grin_customers where customer_code ~ '^GG-[0-9]+$'), 0),
+    coalesce((select max(substring(customer_code from 'GG-([0-9]+)$')::integer) from public.green_grin_jobs where customer_code ~ '^GG-[0-9]+$'), 0)
+  ) into next_number;
+
+  for signup_user in
+    select users.*
+    from auth.users as users
+    where not exists (select 1 from public.green_grin_customers as customers where customers.id = users.id)
+    order by users.created_at asc
+  loop
+    next_number := next_number + 1;
+    next_code := 'GG-' || lpad(next_number::text, 4, '0');
+    metadata := coalesce(signup_user.raw_user_meta_data, '{}'::jsonb);
+
+    insert into public.green_grin_customers (id, customer_code, full_name, phone, email, active, billing_status)
+    values (
+      signup_user.id,
+      next_code,
+      coalesce(nullif(trim(metadata ->> 'name'), ''), split_part(coalesce(signup_user.email, ''), '@', 1)),
+      regexp_replace(coalesce(metadata ->> 'phone', ''), '[^0-9]', '', 'g'),
+      lower(coalesce(signup_user.email, '')),
+      true,
+      'Not connected'
+    );
+
+    if nullif(trim(coalesce(metadata ->> 'address', '')), '') is not null then
+      insert into public.green_grin_properties (customer_user_id, address, gate_code, pets, yard_notes, service_preferences, active)
+      values (
+        signup_user.id,
+        metadata ->> 'address',
+        coalesce(metadata ->> 'gate_code', ''),
+        coalesce(metadata ->> 'pets', ''),
+        coalesce(metadata ->> 'yard_notes', ''),
+        '',
+        true
+      );
+    end if;
+  end loop;
+
+  insert into public.green_grin_counters (name, last_value)
+  values ('customer_code', next_number)
+  on conflict (name) do update set last_value = greatest(public.green_grin_counters.last_value, excluded.last_value);
+end;
+$$;
+
 alter table public.green_grin_invoices
   add column if not exists customer_user_id uuid references auth.users(id) on delete cascade;
 
