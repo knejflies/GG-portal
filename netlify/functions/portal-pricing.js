@@ -158,6 +158,11 @@ function normalizePricing(input, nextVersion) {
     plans: {},
     addOns: {},
     projectEstimator: normalizeProjectEstimator(source.projectEstimator),
+    deletedEstimateItemIds: [...new Set(
+      (Array.isArray(source.deletedEstimateItemIds) ? source.deletedEstimateItemIds : [])
+        .map((id) => cleanShortText(id, "", 80))
+        .filter(Boolean)
+    )].slice(0, 250),
     estimateItems: (Array.isArray(source.estimateItems) ? source.estimateItems : []).slice(0, 250).map((item, index) => {
       const unitCost = finiteNumber(item.unitCost || 0, `Estimate item cost ${index + 1}`, { minimum: 0, maximum: 1000000 });
       const markupPercent = finiteNumber(item.markupPercent || 0, `Estimate item markup ${index + 1}`, { minimum: 0, maximum: 1000 });

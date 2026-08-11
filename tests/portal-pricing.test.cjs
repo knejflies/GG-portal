@@ -45,6 +45,7 @@ const event = (method, body) => ({
   changed.fertilizerBid.targetGrossMargin = 0.55;
   changed.projectEstimator.autoBid.productionRates.rock.perCrewHour = 3.25;
   changed.projectEstimator.autoBid.overheadPercent = 15;
+  changed.deletedEstimateItemIds = ["decorative-rock", "decorative-rock"];
   changed.estimateItems = [{ id: "weed-fabric", name: "Weed fabric", category: "Material", unit: "sq ft", unitCost: 0.18, markupPercent: 60, defaultRate: 0.29 }];
   const saveResponse = await handler(event("PATCH", { config: changed }));
   const saveBody = JSON.parse(saveResponse.body);
@@ -54,6 +55,7 @@ const event = (method, body) => ({
   assert.equal(saveBody.config.fertilizerBid.targetGrossMargin, 0.55);
   assert.equal(saveBody.config.estimateItems[0].name, "Weed fabric");
   assert.equal(saveBody.config.estimateItems[0].unitCost, 0.18);
+  assert.deepEqual(saveBody.config.deletedEstimateItemIds, ["decorative-rock"]);
   assert.equal(saveBody.config.projectEstimator.autoBid.productionRates.rock.perCrewHour, 3.25);
   assert.equal(saveBody.config.projectEstimator.autoBid.overheadPercent, 15);
   assert.equal(saveBody.version, 2);

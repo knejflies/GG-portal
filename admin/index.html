@@ -5203,7 +5203,7 @@
                 <div><label for="estimate-catalog-increment">Purchase rounding</label><input id="estimate-catalog-increment" type="number" min="0.0001" step="0.0001" value="1" /></div>
                 <div><label for="estimate-catalog-density">Rock tons per cubic yard</label><input id="estimate-catalog-density" type="number" min="0.01" step="0.01" value="1.4" /></div>
               </div>
-              <div class="row-actions"><button class="button" type="submit">Save Cost Item</button><button id="estimate-catalog-clear" class="button ghost" type="button">Clear</button></div>
+              <div class="row-actions"><button class="button" type="submit">Save Cost Item</button><button id="estimate-catalog-clear" class="button ghost" type="button">Clear</button><button id="estimate-catalog-restore" class="button ghost" type="button">Restore Built-In Items</button></div>
             </form>
             <div id="estimate-catalog-result" aria-live="polite"></div>
           </div>
@@ -6577,6 +6577,7 @@
       const index = items.findIndex((entry) => entry.id === id);
       if (index >= 0) items[index] = item;
       else items.push(item);
+      bidPricingConfig.deletedEstimateItemIds = (bidPricingConfig.deletedEstimateItemIds || []).filter((deletedId) => deletedId !== id);
       bidPricingConfig.estimateItems = items;
       try {
         await persistEstimateCatalog(index >= 0 ? "Cost item updated." : "Cost item saved and ready for bids.");
@@ -6611,10 +6612,19 @@
       }
       if (event.target.closest("[data-catalog-delete]")) {
         if (!confirm(`Delete ${item.name} from the cost catalog?`)) return;
+        bidPricingConfig.deletedEstimateItemIds = [...new Set([...(bidPricingConfig.deletedEstimateItemIds || []), item.id])];
         bidPricingConfig.estimateItems = estimateCatalogItems().filter((entry) => entry.id !== item.id);
         try { await persistEstimateCatalog("Cost item deleted."); }
         catch (error) { $("#estimate-catalog-result").innerHTML = notice(error.message, true); }
       }
+    });
+
+    $("#estimate-catalog-restore").addEventListener("click", async () => {
+      if (!confirm("Restore every built-in cost item you previously deleted? Your custom prices will be kept.")) return;
+      if (!bidPricingConfig) await loadBidPricing(true);
+      bidPricingConfig.deletedEstimateItemIds = [];
+      try { await persistEstimateCatalog("Built-in cost items restored."); }
+      catch (error) { $("#estimate-catalog-result").innerHTML = notice(error.message, true); }
     });
 
     $("#estimate-add-catalog").addEventListener("click", () => {
@@ -7126,9 +7136,17 @@
       const incomingItems = Array.isArray(incoming.estimateItems) ? incoming.estimateItems : [];
       const incomingItemsById = new Map(incomingItems.filter((item) => item?.id).map((item) => [item.id, item]));
       const defaultItems = Array.isArray(defaults.estimateItems) ? defaults.estimateItems : [];
-      const estimateItems = defaultItems.map((item) => ({ ...item, ...(incomingItemsById.get(item.id) || {}) }));
+      const deletedEstimateItemIds = [...new Set(
+        (Array.isArray(incoming.deletedEstimateItemIds) ? incoming.deletedEstimateItemIds : [])
+          .map((id) => String(id || "").trim())
+          .filter(Boolean)
+      )];
+      const deletedEstimateItemIdSet = new Set(deletedEstimateItemIds);
+      const estimateItems = defaultItems
+        .filter((item) => !deletedEstimateItemIdSet.has(item.id))
+        .map((item) => ({ ...item, ...(incomingItemsById.get(item.id) || {}) }));
       const defaultItemIds = new Set(defaultItems.map((item) => item.id));
-      estimateItems.push(...incomingItems.filter((item) => !defaultItemIds.has(item.id)));
+      estimateItems.push(...incomingItems.filter((item) => !defaultItemIds.has(item.id) && !deletedEstimateItemIdSet.has(item.id)));
       const defaultProjectEstimator = defaults.projectEstimator || {};
       const incomingProjectEstimator = incoming.projectEstimator || {};
       return {
@@ -7136,6 +7154,7 @@
         ...incoming,
         plans: { ...(defaults.plans || {}), ...(incoming.plans || {}) },
         addOns: { ...(defaults.addOns || {}), ...(incoming.addOns || {}) },
+        deletedEstimateItemIds,
         estimateItems,
         projectEstimator: {
           ...defaultProjectEstimator,

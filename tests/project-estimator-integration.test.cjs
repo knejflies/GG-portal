@@ -5,6 +5,7 @@ const admin = fs.readFileSync("admin/index.html", "utf8");
 for (const marker of [
   'id="project-bids"',
   'id="estimate-catalog-form"',
+  'id="estimate-catalog-restore"',
   'id="estimate-catalog-select"',
   'id="estimate-line-items"',
   'id="estimate-profit-strip"',
@@ -14,6 +15,7 @@ for (const marker of [
   'id="project-material-quantity"',
   '/assets/green-grin-auto-bid-engine.js',
   'function approveHistoricalProductionRate',
+  'deletedEstimateItemIds',
   'data-estimator-view="catalog"',
   'data-estimate-intent="draft-invoice"',
   'data-estimate-intent="send-invoice"',

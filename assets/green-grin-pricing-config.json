@@ -6,6 +6,7 @@
   "annualAgreementDiscount": 0.05,
   "monthlyPaymentsPerYear": 12,
   "manualReviewAboveLawnSqFt": 20000,
+  "deletedEstimateItemIds": [],
   "estimateItems": [
     { "id": "decorative-rock", "name": "Decorative landscape rock", "category": "Material", "unit": "ton", "unitCost": 0, "markupPercent": 30, "defaultRate": 0, "purchaseIncrement": 0.5, "tonsPerCubicYard": 1.4 },
     { "id": "mulch", "name": "Landscape mulch", "category": "Material", "unit": "yard", "unitCost": 0, "markupPercent": 30, "defaultRate": 0, "purchaseIncrement": 0.5 },
