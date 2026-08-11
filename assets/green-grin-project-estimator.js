@@ -59,6 +59,7 @@
   ]);
 
   function number(value, fallback = 0) {
+    if (value === "" || value === null || value === undefined) return fallback;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
   }
@@ -101,6 +102,36 @@
       map.set(item.id, { ...(map.get(item.id) || {}), ...item });
     }
     return map;
+  }
+
+  function primaryMaterialId(service) {
+    return ({
+      rock: "decorative-rock",
+      mulch: "mulch",
+      fabric: "weed-fabric",
+      edging: "landscape-edging",
+      sod: "sod",
+      retaining: "retaining-material",
+      firepit: "firepit-material",
+      demo: "disposal-load"
+    })[service] || "";
+  }
+
+  function applyLiveMaterialQuote(catalog, service, quote = {}) {
+    const id = primaryMaterialId(service);
+    if (!id || !catalog.has(id)) return;
+    const current = catalog.get(id);
+    const unit = service === "rock" && ["ton", "yard"].includes(quote.unit) ? quote.unit : current.unit;
+    catalog.set(id, {
+      ...current,
+      name: String(quote.name || current.name).trim() || current.name,
+      unit,
+      unitCost: number(quote.unitCost, current.unitCost),
+      defaultRate: quote.unitCost !== "" && quote.unitCost !== null && quote.unitCost !== undefined ? 0 : current.defaultRate,
+      markupPercent: number(quote.markupPercent, current.markupPercent),
+      purchaseIncrement: number(quote.purchaseIncrement, current.purchaseIncrement),
+      tonsPerCubicYard: number(quote.tonsPerCubicYard, current.tonsPerCubicYard)
+    });
   }
 
   function sellRate(item) {
@@ -183,8 +214,12 @@
 
   function defaultScope(service, input, details) {
     const area = number(input.areaSqFt).toLocaleString();
-    if (service === "rock") return `Prepare approximately ${area} sq. ft. and install decorative landscape rock at ${details.depth}" depth${input.includeFabric ? " over commercial landscape fabric" : ""}. Final grading and cleanup included.`;
-    if (service === "mulch") return `Prepare approximately ${area} sq. ft. and install landscape mulch at ${details.depth}" depth. Final raking and cleanup included.`;
+    if (service === "rock") return number(input.areaSqFt) > 0
+      ? `Prepare approximately ${area} sq. ft. and install ${details.materialName || "decorative landscape rock"} at ${details.depth}" depth${input.includeFabric ? " over commercial landscape fabric" : ""}. Final grading and cleanup included.`
+      : `Install approximately ${number(input.materialQuantity).toLocaleString()} cubic yards of ${details.materialName || "decorative landscape rock"}. Final grading and cleanup included.`;
+    if (service === "mulch") return number(input.areaSqFt) > 0
+      ? `Prepare approximately ${area} sq. ft. and install landscape mulch at ${details.depth}" depth. Final raking and cleanup included.`
+      : `Install approximately ${number(input.materialQuantity).toLocaleString()} cubic yards of landscape mulch. Final raking and cleanup included.`;
     if (service === "fabric") return `Prepare approximately ${area} sq. ft. and install commercial landscape fabric with secured overlaps and staples.`;
     if (service === "edging") return `Install approximately ${number(input.linearFeet).toLocaleString()} linear ft. of landscape edging, including layout and cleanup.`;
     if (service === "sod") return `Prepare and install approximately ${area} sq. ft. of fresh sod, including final grading and cleanup.`;
@@ -207,17 +242,22 @@
     const settings = mergedSettings(options.settings);
     const catalog = catalogMap(options.catalog);
     const service = input.service || "rock";
+    applyLiveMaterialQuote(catalog, service, input.primaryMaterial);
     const lines = [];
     const details = {};
     let measurement = number(input.areaSqFt);
 
     if (service === "rock") {
       const depth = number(input.depthInches, rockDepthForSize(input.rockSize, input.installType));
-      const cubicYards = number(input.areaSqFt) * (depth / 12) / 27;
+      const calculatedCubicYards = number(input.areaSqFt) * (depth / 12) / 27;
+      const cubicYards = number(input.materialQuantity) > 0 ? number(input.materialQuantity) : calculatedCubicYards;
       const rock = catalog.get("decorative-rock");
       const rockQuantity = rock?.unit === "yard" ? cubicYards : cubicYards * number(rock?.tonsPerCubicYard, 1.4);
       details.depth = depth;
+      details.materialName = rock?.name || "Decorative landscape rock";
       details.rawCubicYards = quantity(cubicYards, 2);
+      details.calculatedCubicYards = quantity(calculatedCubicYards, 2);
+      details.quantityOverride = number(input.materialQuantity) > 0;
       lines.push(materialLine(catalog, "decorative-rock", rockQuantity, settings.waste.rock));
       if (input.includeFabric !== false) {
         lines.push(materialLine(catalog, "weed-fabric", input.areaSqFt, settings.waste.fabric));
@@ -225,9 +265,12 @@
       }
     } else if (service === "mulch") {
       const depth = number(input.depthInches, settings.mulchDepthInches);
-      const cubicYards = number(input.areaSqFt) * (depth / 12) / 27;
+      const calculatedCubicYards = number(input.areaSqFt) * (depth / 12) / 27;
+      const cubicYards = number(input.materialQuantity) > 0 ? number(input.materialQuantity) : calculatedCubicYards;
       details.depth = depth;
       details.rawCubicYards = quantity(cubicYards, 2);
+      details.calculatedCubicYards = quantity(calculatedCubicYards, 2);
+      details.quantityOverride = number(input.materialQuantity) > 0;
       lines.push(materialLine(catalog, "mulch", cubicYards, settings.waste.mulch));
     } else if (service === "fabric") {
       lines.push(materialLine(catalog, "weed-fabric", input.areaSqFt, settings.waste.fabric));
@@ -240,8 +283,8 @@
     } else if (service === "irrigation") {
       measurement = number(input.pipeFeet) || number(input.heads);
       lines.push(materialLine(catalog, "irrigation-pipe", input.pipeFeet, settings.waste.irrigation));
-      lines.push(materialLine(catalog, "sprinkler-head", input.heads, settings.waste.irrigation));
-      lines.push(materialLine(catalog, "irrigation-valve", input.zones, settings.waste.irrigation));
+      lines.push(materialLine(catalog, "sprinkler-head", input.heads, 0));
+      lines.push(materialLine(catalog, "irrigation-valve", input.zones, 0));
     } else if (service === "retaining") {
       const wallSquareFeet = number(input.wallLength) * number(input.wallHeight);
       measurement = wallSquareFeet;
@@ -262,6 +305,18 @@
       lines.push(materialLine(catalog, "disposal-load", input.disposalLoads, 0));
     }
 
+    if (number(input.deliveryCost) > 0) {
+      lines.push(makeLine({
+        id: "supplier-delivery",
+        name: input.deliveryDescription || "Material delivery and hauling",
+        category: "Equipment",
+        unit: "each",
+        unitCost: number(input.deliveryCost),
+        markupPercent: number(input.deliveryMarkupPercent, settings.equipmentMarkup),
+        defaultRate: 0
+      }, 1, { depositEligible: true }));
+    }
+
     const hours = laborHours(input, measurement);
     if (hours > 0) {
       lines.push(makeLine({
@@ -279,7 +334,6 @@
     if (rentalLine) lines.push(rentalLine);
 
     const directSubtotal = money(lines.reduce((sum, line) => sum + line.amount, 0));
-    const internalCost = money(lines.reduce((sum, line) => sum + line.cost_total, 0));
     const contingencyPercent = number(input.contingencyPercent,
       ["demo", "irrigation"].includes(service) ? settings.highRiskContingency : settings.defaultContingency);
     const contingencyAmount = money(directSubtotal * contingencyPercent / 100);
@@ -291,7 +345,9 @@
     const grossProfit = money(subtotal - cost);
     const grossMargin = subtotal > 0 ? grossProfit / subtotal : 0;
     const depositAmount = money(lines.filter((line) => line.deposit_eligible).reduce((sum, line) => sum + line.amount, 0));
-    const missingCosts = lines.filter((line) => line.category === "Material" && line.unit_cost <= 0).map((line) => line.description);
+    const missingCosts = lines
+      .filter((line) => ["Material", "Disposal"].includes(line.category) && line.unit_cost <= 0)
+      .map((line) => line.description);
 
     return {
       service,
@@ -316,6 +372,7 @@
     DEFAULT_EQUIPMENT,
     MATERIAL_DEFAULTS,
     rockDepthForSize,
+    primaryMaterialId,
     roundPurchase,
     groupedTotals,
     phaseHours,

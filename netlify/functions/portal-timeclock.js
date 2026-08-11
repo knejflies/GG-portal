@@ -178,9 +178,23 @@ function summarizeWork(sessions, estimates = []) {
     projects: [...projects.values()].map((project) => {
       const estimate = estimateMap.get(project.estimate_id);
       const phaseHours = estimate?.calculation_inputs?.phase_hours || {};
+      const inputs = estimate?.calculation_inputs || {};
+      const service = inputs.service || "";
+      const quantity = Number(inputs.materialQuantity) || (["rock", "mulch"].includes(service)
+        ? Number(inputs.areaSqFt) * ((Number(inputs.depthInches) || (service === "rock" ? 3 : 2)) / 12) / 27
+        : ["edging", "irrigation", "drainage"].includes(service) ? Number(inputs.linearFeet || inputs.pipeFeet)
+          : Number(inputs.areaSqFt));
       return {
         ...project,
         total_hours: Math.round(project.total_minutes / 60 * 100) / 100,
+        production: service && quantity > 0 ? {
+          service,
+          quantity: Math.round(quantity * 100) / 100,
+          actual_man_hours: Math.round(project.total_minutes / 60 * 100) / 100,
+          crew_size: Number(inputs.crewSize) || 1,
+          difficulty: inputs.difficulty || "normal",
+          equipment: Array.isArray(inputs.equipment) ? inputs.equipment : (inputs.equipmentId && inputs.equipmentId !== "none" ? [inputs.equipmentId] : [])
+        } : null,
         phases: Object.entries(project.phases).map(([phase, minutes]) => ({ phase, actual_minutes: minutes, actual_hours: Math.round(minutes / 60 * 100) / 100, estimated_hours: Number(phaseHours[phase] || 0) }))
       };
     })

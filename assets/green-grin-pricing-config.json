@@ -49,7 +49,34 @@
     ],
     "equipmentSource": "Idaho Tractor, Nampa",
     "equipmentSourceUrl": "https://www.idahotractor.com/rentals/rental-equipment",
-    "equipmentRatesChecked": "2026-08-09"
+    "equipmentRatesChecked": "2026-08-09",
+    "autoBid": {
+      "targetGrossMargin": 0.42,
+      "floorGrossMargin": 0.3,
+      "premiumGrossMargin": 0.5,
+      "overheadPercent": 12,
+      "defaultRiskPercent": 5,
+      "minimumProjectPrice": 350,
+      "defaultCrewSize": 2,
+      "setupCrewHours": 0.75,
+      "cleanupCrewHours": 1,
+      "difficulty": { "easy": 1.15, "normal": 1, "difficult": 0.8, "extreme": 0.6 },
+      "crewEfficiency": { "1": 1, "2": 1.75, "3": 2.35, "4": 2.85 },
+      "productionRates": {
+        "rock": { "unit": "cubic yard", "perCrewHour": 2.5, "confidence": "starter" },
+        "mulch": { "unit": "cubic yard", "perCrewHour": 4, "confidence": "starter" },
+        "fabric": { "unit": "sq ft", "perCrewHour": 900, "confidence": "starter" },
+        "sod": { "unit": "sq ft", "perCrewHour": 450, "confidence": "starter" },
+        "edging": { "unit": "linear ft", "perCrewHour": 100, "confidence": "starter" },
+        "irrigation": { "unit": "linear ft", "perCrewHour": 35, "confidence": "starter" },
+        "retaining": { "unit": "wall sq ft", "perCrewHour": 12, "confidence": "starter" },
+        "demo": { "unit": "sq ft", "perCrewHour": 250, "confidence": "starter" },
+        "cleanup": { "unit": "acre", "perCrewHour": 0.12, "confidence": "starter" },
+        "drainage": { "unit": "linear ft", "perCrewHour": 12, "confidence": "starter" },
+        "grading": { "unit": "sq ft", "perCrewHour": 500, "confidence": "starter" }
+      },
+      "equipmentModifiers": { "mini_ex": 1.45, "skid_steer": 1.4, "tractor": 1.25, "trencher": 1.5 }
+    }
   },
   "mowingBid": {
     "serviceName": "Mowing service",

@@ -3472,6 +3472,15 @@
       border-radius: 8px;
       background: linear-gradient(145deg, rgba(var(--role-accent-rgb), .11), rgba(1, 10, 6, .7));
     }
+    .auto-bid-shell { margin-bottom: 18px; padding: 16px; border: 1px solid rgba(120, 198, 83, .35); border-radius: 8px; background: linear-gradient(145deg, rgba(5, 35, 20, .94), rgba(2, 15, 9, .96)); }
+    .auto-bid-shell textarea { min-height: 112px; font-size: 1rem; line-height: 1.5; }
+    .auto-bid-headline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+    .auto-bid-headline > div { padding: 11px; border: 1px solid rgba(210, 232, 204, .14); border-radius: 7px; background: rgba(1, 10, 6, .55); }
+    .auto-bid-headline span, .auto-bid-headline small { display: block; color: var(--muted); font-size: .74rem; }
+    .auto-bid-headline strong { display: block; margin: 3px 0; color: #f3fff0; font-size: 1.08rem; }
+    .auto-bid-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .auto-bid-tags span { padding: 5px 8px; border: 1px solid rgba(120, 198, 83, .3); border-radius: 999px; color: #dfffd2; font-size: .78rem; }
+    .auto-bid-list { margin: 8px 0; padding-left: 20px; color: var(--muted); }
 
     .quick-project-estimator h3 { margin: 0 0 4px; }
     .quick-project-estimator > p { margin: 0 0 14px; color: var(--muted); }
@@ -3495,11 +3504,11 @@
     .estimate-line-details > summary { cursor: pointer; color: var(--muted); font-weight: 900; }
 
     @media (max-width: 900px) {
-      .quick-project-grid, .estimator-defaults-grid, .quick-project-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .quick-project-grid, .estimator-defaults-grid, .quick-project-summary, .auto-bid-headline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 
     @media (max-width: 560px) {
-      .quick-project-grid, .estimator-defaults-grid, .quick-project-summary { grid-template-columns: 1fr; }
+      .quick-project-grid, .estimator-defaults-grid, .quick-project-summary, .auto-bid-headline { grid-template-columns: 1fr; }
       .quick-project-estimator { padding: 13px; }
       .quick-material-row { align-items: flex-start; }
     }
@@ -4999,6 +5008,18 @@
             <input id="estimate-id" type="hidden" />
             <input id="estimate-number" type="hidden" />
 
+            <div class="auto-bid-shell">
+              <div class="estimator-section-heading"><div><span>A</span><div><strong>Auto Bid</strong><small>Describe the job normally. Green Grin will build the measurements, labor plan, assumptions, and warnings.</small></div></div><span class="badge">One input</span></div>
+              <label for="auto-bid-description">Job description</label>
+              <textarea id="auto-bid-description" rows="4" placeholder="6150 sqft rock, 67 yards, weed mat and staples, push through swale with mini ex and tractor, me and one other"></textarea>
+              <div class="estimate-primary-actions">
+                <button id="auto-bid-run" class="button" type="button">Build Smart Bid</button>
+                <button id="auto-bid-apply" class="button secondary" type="button" hidden>Use This Bid</button>
+                <button id="auto-bid-clear" class="button ghost" type="button">Clear</button>
+              </div>
+              <div id="auto-bid-result" class="quick-project-result" aria-live="polite"></div>
+            </div>
+
             <div class="estimator-section-heading">
               <div><span>1</span><div><strong>Customer and project</strong><small>Choose an account or enter a one-time customer.</small></div></div>
               <span id="estimate-current-number" class="badge">New estimate</span>
@@ -5034,6 +5055,7 @@
                 <div class="quick-project-field" data-project-services="rock"><label for="project-install-type">Installation</label><select id="project-install-type"><option value="new">New installation</option><option value="topoff">Top-off existing rock</option></select></div>
                 <div class="quick-project-field" data-project-services="rock"><label for="project-rock-size">Rock size</label><select id="project-rock-size"><option value="small">1/2 in. or smaller</option><option value="medium" selected>3/4 to 1 in.</option><option value="large">Larger than 1 in.</option></select></div>
                 <div class="quick-project-field" data-project-services="rock,mulch"><label for="project-depth">Depth (inches)</label><input id="project-depth" type="number" min="0.25" max="12" step="0.25" inputmode="decimal" placeholder="Automatic" /></div>
+                <div class="quick-project-field" data-project-services="rock,mulch"><label for="project-material-quantity">Known material quantity (cubic yards)</label><input id="project-material-quantity" type="number" min="0" step="0.1" inputmode="decimal" placeholder="Optional override" /></div>
                 <div class="quick-project-field" data-project-services="rock,mulch,edging"><label for="project-linear-feet">Edging / length (linear ft.)</label><input id="project-linear-feet" type="number" min="0" step="1" inputmode="decimal" placeholder="Optional" /></div>
                 <div class="quick-project-field" data-project-services="retaining"><label for="project-wall-length">Wall length (ft.)</label><input id="project-wall-length" type="number" min="0" step="0.1" inputmode="decimal" /></div>
                 <div class="quick-project-field" data-project-services="retaining"><label for="project-wall-height">Average wall height (ft.)</label><input id="project-wall-height" type="number" min="0" step="0.1" inputmode="decimal" /></div>
@@ -5043,6 +5065,20 @@
                 <div class="quick-project-field" data-project-services="irrigation"><label for="project-pipe-feet">Pipe (linear ft.)</label><input id="project-pipe-feet" type="number" min="0" step="1" inputmode="decimal" /></div>
                 <div><label for="project-disposal-loads">Disposal loads</label><input id="project-disposal-loads" type="number" min="0" step="1" value="0" inputmode="numeric" /></div>
                 <label class="quick-project-toggle quick-project-field" data-project-services="rock"><input id="project-include-fabric" type="checkbox" checked /> Include weed fabric</label>
+              </div>
+
+              <div id="project-live-quote">
+                <div class="estimator-section-heading"><div><span>$</span><div><strong>Today's supplier quote</strong><small>Use the exact product and price for this project. This does not change your saved Cost Library.</small></div></div></div>
+                <div class="quick-project-grid">
+                  <div><label for="project-material-name">Material / product</label><input id="project-material-name" maxlength="120" placeholder="Salt and Pepper 1-inch rock" /></div>
+                  <div><label for="project-material-unit">Supplier quote unit</label><select id="project-material-unit"></select></div>
+                  <div><label for="project-material-cost">Your cost per unit</label><input id="project-material-cost" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Required" /></div>
+                  <div><label for="project-material-markup">Material markup %</label><input id="project-material-markup" type="number" min="0" max="1000" step="1" inputmode="decimal" /></div>
+                  <div><label for="project-material-increment">Purchase rounding</label><input id="project-material-increment" type="number" min="0.0001" step="0.01" inputmode="decimal" /></div>
+                  <div id="project-rock-density-wrap"><label for="project-rock-density">Tons per cubic yard</label><input id="project-rock-density" type="number" min="0.1" step="0.05" inputmode="decimal" value="1.4" /></div>
+                  <div><label for="project-delivery-cost">Delivery / freight cost</label><input id="project-delivery-cost" type="number" min="0" step="0.01" inputmode="decimal" value="0" /></div>
+                  <div><label for="project-delivery-markup">Delivery markup %</label><input id="project-delivery-markup" type="number" min="0" max="1000" step="1" inputmode="decimal" value="20" /></div>
+                </div>
               </div>
 
               <div class="estimator-section-heading"><div><span>H</span><div><strong>Labor</strong><small>Use whichever measurement is fastest for this job.</small></div></div></div>
@@ -5056,6 +5092,7 @@
 
               <div class="estimator-section-heading"><div><span>R</span><div><strong>Rental and risk</strong><small>Rental pricing and markup fill automatically.</small></div></div></div>
               <div class="quick-project-grid">
+                <div><label for="project-difficulty">Site difficulty</label><select id="project-difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="difficult">Difficult</option><option value="extreme">Extreme</option></select></div>
                 <div><label for="project-equipment">Rental equipment</label><select id="project-equipment"><option value="none">No rental equipment</option></select></div>
                 <div><label for="project-rental-period">Rental period</label><select id="project-rental-period"><option value="day">Day</option><option value="week">Week</option><option value="month">Month</option></select></div>
                 <div><label for="project-rental-count">Number of periods</label><input id="project-rental-count" type="number" min="1" step="1" value="1" inputmode="numeric" /></div>
@@ -5129,6 +5166,20 @@
               <div><label for="estimator-waste-irrigation">Irrigation parts %</label><input id="estimator-waste-irrigation" type="number" min="0" max="100" step="0.5" /></div>
               <div><label for="estimator-waste-retaining">Retaining material %</label><input id="estimator-waste-retaining" type="number" min="0" max="100" step="0.5" /></div>
             </div>
+          </details>
+          <details open>
+            <summary>Auto Bid production and protection</summary>
+            <div class="estimator-defaults-grid">
+              <div><label for="estimator-auto-overhead">Overhead %</label><input id="estimator-auto-overhead" type="number" min="0" max="100" step="0.5" /></div>
+              <div><label for="estimator-auto-floor-margin">Cost-floor margin %</label><input id="estimator-auto-floor-margin" type="number" min="0" max="99" step="0.5" /></div>
+              <div><label for="estimator-auto-premium-margin">Premium margin %</label><input id="estimator-auto-premium-margin" type="number" min="0" max="99" step="0.5" /></div>
+              <div><label for="estimator-auto-minimum">Minimum project price</label><input id="estimator-auto-minimum" type="number" min="0" step="5" /></div>
+              <div><label for="estimator-auto-setup">Setup / mobilization crew-hours</label><input id="estimator-auto-setup" type="number" min="0" step="0.25" /></div>
+              <div><label for="estimator-auto-cleanup">Cleanup crew-hours</label><input id="estimator-auto-cleanup" type="number" min="0" step="0.25" /></div>
+            </div>
+            <h3>Base production rates</h3>
+            <p class="muted">These are your approved starting rates. Completed jobs create recommendations but never change these automatically.</p>
+            <div id="estimator-production-rates" class="estimator-defaults-grid"></div>
           </details>
           <div class="row-actions"><button id="save-estimator-defaults" class="button" type="button">Save Estimator Defaults</button></div>
           <div id="estimator-defaults-result" aria-live="polite"></div>
@@ -5483,6 +5534,7 @@
 
   <script src="/assets/green-grin-calculator.js"></script>
   <script src="/assets/green-grin-project-estimator.js"></script>
+  <script src="/assets/green-grin-auto-bid-engine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const $ = (selector) => document.querySelector(selector);
@@ -6585,10 +6637,36 @@
     $("#project-install-type").addEventListener("change", updateQuickProjectFields);
     $("#project-rock-size").addEventListener("change", updateQuickProjectFields);
     $("#project-labor-mode").addEventListener("change", updateQuickProjectFields);
+    $("#project-material-unit").addEventListener("change", () => {
+      $("#project-rock-density-wrap").hidden = $("#project-service").value !== "rock" || $("#project-material-unit").value !== "ton";
+      quickProjectCalculation = null;
+    });
+    $(".quick-project-estimator").addEventListener("input", (event) => {
+      if (event.target.matches("button")) return;
+      const input = quickProjectInput();
+      if (!validateQuickProjectInput(input)) calculateQuickProject(false);
+    });
     $("#project-contingency").addEventListener("input", () => { $("#project-contingency").dataset.edited = "true"; });
     $("#project-calculate").addEventListener("click", () => calculateQuickProject(true));
     $("#project-add-assembly").addEventListener("click", addQuickProjectAssembly);
     $("#project-clear").addEventListener("click", clearQuickProject);
+    $("#auto-bid-run").addEventListener("click", runAutoBid);
+    $("#auto-bid-apply").addEventListener("click", applyAutoBid);
+    $("#auto-bid-clear").addEventListener("click", () => {
+      $("#auto-bid-description").value = "";
+      $("#auto-bid-result").innerHTML = "";
+      $("#auto-bid-apply").hidden = true;
+      autoBidDraft = null;
+    });
+    $("#auto-bid-description").addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        runAutoBid();
+      }
+    });
+    $("#auto-bid-result").addEventListener("click", (event) => {
+      if (event.target.closest("#auto-bid-approve-rate")) approveHistoricalProductionRate();
+    });
     $("#save-estimator-defaults").addEventListener("click", saveProjectEstimatorDefaults);
 
     $("#estimate-line-items").addEventListener("click", (event) => {
@@ -7063,6 +7141,14 @@
           ...defaultProjectEstimator,
           ...incomingProjectEstimator,
           waste: { ...(defaultProjectEstimator.waste || {}), ...(incomingProjectEstimator.waste || {}) },
+          autoBid: {
+            ...(defaultProjectEstimator.autoBid || {}),
+            ...(incomingProjectEstimator.autoBid || {}),
+            productionRates: { ...(defaultProjectEstimator.autoBid?.productionRates || {}), ...(incomingProjectEstimator.autoBid?.productionRates || {}) },
+            crewEfficiency: { ...(defaultProjectEstimator.autoBid?.crewEfficiency || {}), ...(incomingProjectEstimator.autoBid?.crewEfficiency || {}) },
+            difficulty: { ...(defaultProjectEstimator.autoBid?.difficulty || {}), ...(incomingProjectEstimator.autoBid?.difficulty || {}) },
+            equipmentModifiers: { ...(defaultProjectEstimator.autoBid?.equipmentModifiers || {}), ...(incomingProjectEstimator.autoBid?.equipmentModifiers || {}) }
+          },
           equipment: Array.isArray(incomingProjectEstimator.equipment) && incomingProjectEstimator.equipment.length
             ? incomingProjectEstimator.equipment
             : (defaultProjectEstimator.equipment || [])
@@ -7107,11 +7193,133 @@
     }
 
     let quickProjectCalculation = null;
+    let autoBidDraft = null;
+    let estimatorHistory = [];
 
     function projectEstimatorSettings() {
       const defaults = window.GreenGrinProjectEstimator?.DEFAULT_SETTINGS || {};
       const saved = bidPricingConfig?.projectEstimator || {};
       return { ...defaults, ...saved, waste: { ...(defaults.waste || {}), ...(saved.waste || {}) } };
+    }
+
+    function autoBidSettings() {
+      const defaults = window.GreenGrinAutoBid?.DEFAULT_CONFIG || {};
+      const saved = bidPricingConfig?.projectEstimator?.autoBid || {};
+      return window.GreenGrinAutoBid?.mergeConfig({
+        ...saved,
+        targetGrossMargin: Number(saved.targetGrossMargin ?? projectEstimatorSettings().targetGrossMargin ?? defaults.targetGrossMargin),
+        productionRates: { ...(defaults.productionRates || {}), ...(saved.productionRates || {}) }
+      }) || defaults;
+    }
+
+    async function loadEstimatorHistory() {
+      if (!adminPin()) return;
+      try {
+        const data = await requestJson("portal-timeclock?admin=1&count=24&unit=months", { headers: adminHeaders() });
+        estimatorHistory = (data.work_summary?.projects || []).map((project) => project.production).filter(Boolean);
+      } catch {
+        estimatorHistory = [];
+      }
+    }
+
+    function autoBidServiceForForm(service) {
+      if (["rock", "mulch", "fabric", "edging", "sod", "irrigation", "retaining", "firepit", "demo"].includes(service)) return service;
+      if (["cleanup", "grading"].includes(service)) return "demo";
+      if (service === "drainage") return "irrigation";
+      return "";
+    }
+
+    function equipmentIdForAutoBid(equipment = []) {
+      const matches = { mini_ex: "kx018", skid_steer: "svl65", trencher: "trencher3", dump_trailer: "dump12", plate_compactor: "plate" };
+      return equipment.map((id) => matches[id]).find((id) => projectEquipment().some((item) => item.id === id)) || "none";
+    }
+
+    function renderAutoBid(parsed, labor) {
+      const history = window.GreenGrinAutoBid.historicalRecommendation(estimatorHistory, parsed.primaryService, autoBidSettings());
+      if (autoBidDraft) autoBidDraft.history = history;
+      const quantity = parsed.cubicYards ? `${parsed.cubicYards.toLocaleString()} cubic yards`
+        : parsed.squareFeet ? `${parsed.squareFeet.toLocaleString()} sq. ft.`
+          : parsed.linearFeet ? `${parsed.linearFeet.toLocaleString()} linear ft.` : "Needs measurement";
+      const confidenceLabel = parsed.confidence >= 80 ? "High" : parsed.confidence >= 60 ? "Moderate" : "Needs review";
+      const historyBlock = history.sampleSize
+        ? `<div class="estimate-alert good"><strong>Learned from ${cleanText(String(history.sampleSize))} completed job${history.sampleSize === 1 ? "" : "s"}:</strong> historical base production is ${cleanText(String(history.recommendedRate))} ${cleanText(labor.unit || "units")}/crew-hour. Current setting is ${cleanText(String(history.currentRate))}. The system will never change it without your approval.${Math.abs(history.recommendedRate - history.currentRate) >= 0.01 ? ` <button id="auto-bid-approve-rate" class="button small secondary" type="button">Approve ${cleanText(String(history.recommendedRate))}</button>` : ""}</div>`
+        : `<div class="estimate-alert"><strong>Learning starts now:</strong> no completed ${cleanText(parsed.primaryService || "matching")} jobs have enough measured quantity and clocked project time yet.</div>`;
+      const warnings = [...parsed.warnings, ...(labor.warnings || [])];
+      $("#auto-bid-result").innerHTML = `
+        <div class="auto-bid-headline">
+          <div><span>Recognized job</span><strong>${cleanText(parsed.primaryService || "Unclear")}</strong><small>${cleanText(parsed.jobTypes.join(" + ") || "Add more detail")}</small></div>
+          <div><span>Quantity</span><strong>${cleanText(quantity)}</strong><small>${parsed.squareFeet && parsed.cubicYards ? `${cleanText(parsed.squareFeet.toLocaleString())} sq. ft. measured` : "Parsed from description"}</small></div>
+          <div><span>Automatic labor</span><strong>${cleanText(labor.manHours ? `${labor.manHours} man-hours` : "Needs quantity")}</strong><small>${cleanText(`${labor.crewSize || parsed.crewSize}-person crew | ${labor.crewHours || 0} site hours`)}</small></div>
+          <div><span>Bid confidence</span><strong>${cleanText(`${parsed.confidence}% - ${confidenceLabel}`)}</strong><small>${cleanText(parsed.difficulty)} access</small></div>
+        </div>
+        <div class="auto-bid-tags">${[...parsed.equipment, ...parsed.jobTypes].map((tag) => `<span>${cleanText(tag.replaceAll("_", " "))}</span>`).join("")}</div>
+        ${historyBlock}
+        ${warnings.length ? `<div class="estimate-alert"><strong>Needs attention</strong><ul class="auto-bid-list">${warnings.map((warning) => `<li>${cleanText(warning)}</li>`).join("")}</ul></div>` : ""}
+        ${parsed.assumptions.length ? `<details><summary>Assumptions used</summary><ul class="auto-bid-list">${parsed.assumptions.map((assumption) => `<li>${cleanText(assumption)}</li>`).join("")}</ul></details>` : ""}`;
+      $("#auto-bid-apply").hidden = !autoBidServiceForForm(parsed.primaryService);
+    }
+
+    function runAutoBid() {
+      if (!window.GreenGrinAutoBid) {
+        $("#auto-bid-result").innerHTML = notice("The Auto Bid engine did not load. Refresh this page.", true);
+        return;
+      }
+      const description = $("#auto-bid-description").value.trim();
+      if (!description) {
+        $("#auto-bid-result").innerHTML = notice("Describe the job first.", true);
+        return;
+      }
+      const parsed = window.GreenGrinAutoBid.parseJob(description);
+      const labor = window.GreenGrinAutoBid.estimateLabor(parsed, autoBidSettings());
+      autoBidDraft = { parsed, labor };
+      renderAutoBid(parsed, labor);
+    }
+
+    function applyAutoBid() {
+      if (!autoBidDraft) return;
+      const { parsed, labor } = autoBidDraft;
+      const service = autoBidServiceForForm(parsed.primaryService);
+      if (!service) return;
+      $("#project-service").value = service;
+      delete $("#project-live-quote").dataset.service;
+      updateQuickProjectFields();
+      $("#project-area").value = parsed.squareFeet || "";
+      $("#project-material-quantity").value = parsed.cubicYards || "";
+      $("#project-linear-feet").value = parsed.linearFeet || "";
+      $("#project-pipe-feet").value = parsed.primaryService === "drainage" ? (parsed.linearFeet || "") : "";
+      $("#project-include-fabric").checked = parsed.includeFabric;
+      $("#project-disposal-loads").value = parsed.disposalLoads || (parsed.removal ? 1 : 0);
+      $("#project-difficulty").value = parsed.difficulty;
+      $("#project-labor-mode").value = "manual";
+      $("#project-man-hours").value = labor.manHours || "";
+      $("#project-crew-size").value = parsed.crewSize;
+      $("#project-equipment").value = equipmentIdForAutoBid(parsed.equipment);
+      $("#project-contingency").value = ({ easy: 3, normal: 5, difficult: 10, extreme: 15 })[parsed.difficulty] || 5;
+      $("#project-contingency").dataset.edited = "true";
+      updateQuickProjectFields();
+      $("#estimate-notes").value = `AUTO BID INPUT: ${parsed.source}\n\nAssumptions:\n${parsed.assumptions.map((item) => `- ${item}`).join("\n")}\n\nWarnings:\n${parsed.warnings.map((item) => `- ${item}`).join("\n")}`.trim();
+      if (!$("#estimate-project-title").value.trim()) $("#estimate-project-title").value = `${parsed.primaryService.charAt(0).toUpperCase()}${parsed.primaryService.slice(1)} Project`;
+      $("#project-live-quote").scrollIntoView({ behavior: "smooth", block: "center" });
+      if (!Number($("#project-material-cost").value)) $("#project-material-cost").focus({ preventScroll: true });
+    }
+
+    async function approveHistoricalProductionRate() {
+      const service = autoBidDraft?.parsed?.primaryService;
+      const recommendedRate = Number(autoBidDraft?.history?.recommendedRate);
+      if (!service || !(recommendedRate > 0)) return;
+      const currentAuto = autoBidSettings();
+      const productionRates = { ...(currentAuto.productionRates || {}) };
+      productionRates[service] = { ...(productionRates[service] || {}), perCrewHour: recommendedRate, confidence: "historical" };
+      bidPricingConfig.projectEstimator = { ...(bidPricingConfig.projectEstimator || {}), autoBid: { ...currentAuto, productionRates } };
+      $("#auto-bid-result").insertAdjacentHTML("beforeend", notice("Saving your approved production rate..."));
+      try {
+        const data = await requestJson("portal-pricing", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ config: bidPricingConfig }) });
+        bidPricingConfig = mergeBidPricingConfig(data.config);
+        populateProjectEstimatorDefaults();
+        runAutoBid();
+      } catch (error) {
+        $("#auto-bid-result").insertAdjacentHTML("beforeend", notice(error.message, true));
+      }
     }
 
     function projectEquipment() {
@@ -7121,6 +7329,7 @@
 
     function populateProjectEstimatorDefaults() {
       const settings = projectEstimatorSettings();
+      const auto = autoBidSettings();
       const values = {
         "#estimator-labor-sell": settings.laborSellRate,
         "#estimator-labor-cost": settings.loadedLaborCost,
@@ -7139,6 +7348,17 @@
         "#estimator-waste-retaining": settings.waste?.retaining
       };
       Object.entries(values).forEach(([selector, value]) => { if ($(selector)) $(selector).value = value ?? ""; });
+      const autoValues = {
+        "#estimator-auto-overhead": auto.overheadPercent,
+        "#estimator-auto-floor-margin": Number(auto.floorGrossMargin || 0) * 100,
+        "#estimator-auto-premium-margin": Number(auto.premiumGrossMargin || 0) * 100,
+        "#estimator-auto-minimum": auto.minimumProjectPrice,
+        "#estimator-auto-setup": auto.setupCrewHours,
+        "#estimator-auto-cleanup": auto.cleanupCrewHours
+      };
+      Object.entries(autoValues).forEach(([selector, value]) => { if ($(selector)) $(selector).value = value ?? ""; });
+      const productionLabels = { rock: "Rock install", mulch: "Mulch install", fabric: "Weed fabric", sod: "Sod install", edging: "Edging", irrigation: "Irrigation", retaining: "Retaining wall", demo: "Demo", cleanup: "Cleanup", drainage: "Drainage", grading: "Grading" };
+      $("#estimator-production-rates").innerHTML = Object.entries(auto.productionRates || {}).map(([service, rate]) => `<div><label for="production-${cleanText(service)}">${cleanText(productionLabels[service] || service)} (${cleanText(rate.unit)}/crew-hour)</label><input id="production-${cleanText(service)}" data-production-service="${cleanText(service)}" type="number" min="0.01" step="0.01" value="${cleanText(String(rate.perCrewHour))}" /></div>`).join("");
       const select = $("#project-equipment");
       const previous = select.value;
       select.innerHTML = projectEquipment().map((item) => `<option value="${cleanText(item.id)}">${cleanText(item.name)}${item.id === "none" ? "" : ` - ${cleanText(money(item.day))}/day`}</option>`).join("");
@@ -7148,6 +7368,12 @@
 
     async function saveProjectEstimatorDefaults() {
       if (!bidPricingConfig) await loadBidPricing(true);
+      const currentAuto = autoBidSettings();
+      const productionRates = { ...(currentAuto.productionRates || {}) };
+      document.querySelectorAll("[data-production-service]").forEach((input) => {
+        const service = input.dataset.productionService;
+        productionRates[service] = { ...(productionRates[service] || {}), perCrewHour: Math.max(0.01, Number(input.value) || 0.01) };
+      });
       bidPricingConfig.projectEstimator = {
         ...(bidPricingConfig.projectEstimator || {}),
         laborSellRate: Math.max(0, Number($("#estimator-labor-sell").value) || 0),
@@ -7158,7 +7384,18 @@
         defaultContingency: Math.max(0, Number($("#estimator-contingency").value) || 0),
         highRiskContingency: Math.max(0, Number($("#estimator-risk-contingency").value) || 0),
         mulchDepthInches: Math.max(.25, Number($("#estimator-mulch-depth").value) || 2),
-        waste: Object.fromEntries(["rock", "mulch", "fabric", "sod", "edging", "irrigation", "retaining"].map((key) => [key, Math.max(0, Number($(`#estimator-waste-${key}`).value) || 0)]))
+        waste: Object.fromEntries(["rock", "mulch", "fabric", "sod", "edging", "irrigation", "retaining"].map((key) => [key, Math.max(0, Number($(`#estimator-waste-${key}`).value) || 0)])),
+        autoBid: {
+          ...currentAuto,
+          targetGrossMargin: Math.max(0, Number($("#estimator-target-margin").value) || 0) / 100,
+          overheadPercent: Math.max(0, Number($("#estimator-auto-overhead").value) || 0),
+          floorGrossMargin: Math.max(0, Number($("#estimator-auto-floor-margin").value) || 0) / 100,
+          premiumGrossMargin: Math.max(0, Number($("#estimator-auto-premium-margin").value) || 0) / 100,
+          minimumProjectPrice: Math.max(0, Number($("#estimator-auto-minimum").value) || 0),
+          setupCrewHours: Math.max(0, Number($("#estimator-auto-setup").value) || 0),
+          cleanupCrewHours: Math.max(0, Number($("#estimator-auto-cleanup").value) || 0),
+          productionRates
+        }
       };
       $("#estimator-defaults-result").innerHTML = notice("Saving estimator defaults...");
       try {
@@ -7188,7 +7425,31 @@
       if (!$("#project-contingency")?.dataset.edited) {
         $("#project-contingency").value = ["demo", "irrigation"].includes(service) ? projectEstimatorSettings().highRiskContingency : projectEstimatorSettings().defaultContingency;
       }
+      populateLiveMaterialQuote(service);
       quickProjectCalculation = null;
+    }
+
+    function populateLiveMaterialQuote(service, force = false) {
+      const quote = $("#project-live-quote");
+      const materialId = window.GreenGrinProjectEstimator?.primaryMaterialId(service) || "";
+      quote.hidden = !materialId;
+      if (!materialId) return;
+      if (!force && quote.dataset.service === service) return;
+      const item = estimateCatalogItems().find((entry) => entry.id === materialId) || {};
+      quote.dataset.service = service;
+      $("#project-material-name").value = item.name || "";
+      const unit = item.unit || "each";
+      $("#project-material-unit").innerHTML = service === "rock"
+        ? `<option value="ton">Per ton</option><option value="yard">Per cubic yard</option>`
+        : `<option value="${cleanText(unit)}">Per ${cleanText(unit)}</option>`;
+      $("#project-material-unit").value = service === "rock" && unit === "yard" ? "yard" : unit;
+      $("#project-material-cost").value = Number(item.unitCost) > 0 ? item.unitCost : "";
+      $("#project-material-markup").value = Number(item.markupPercent ?? 30);
+      $("#project-material-increment").value = Number(item.purchaseIncrement || 1);
+      $("#project-rock-density").value = Number(item.tonsPerCubicYard || 1.4);
+      $("#project-rock-density-wrap").hidden = service !== "rock" || $("#project-material-unit").value !== "ton";
+      $("#project-delivery-cost").value = "0";
+      $("#project-delivery-markup").value = Number(projectEstimatorSettings().equipmentMarkup || 0);
     }
 
     function quickProjectInput() {
@@ -7199,6 +7460,7 @@
         installType: $("#project-install-type").value,
         rockSize: $("#project-rock-size").value,
         depthInches: depth > 0 ? depth : undefined,
+        materialQuantity: Number($("#project-material-quantity").value) || 0,
         linearFeet: Number($("#project-linear-feet").value) || 0,
         wallLength: Number($("#project-wall-length").value) || 0,
         wallHeight: Number($("#project-wall-height").value) || 0,
@@ -7214,20 +7476,35 @@
         crewSize: Number($("#project-crew-size").value) || 0,
         crewHours: Number($("#project-crew-hours").value) || 0,
         equipmentId: $("#project-equipment").value,
+        equipment: $("#project-equipment").value && $("#project-equipment").value !== "none" ? [$("#project-equipment").value] : [],
+        difficulty: $("#project-difficulty").value,
         rentalPeriod: $("#project-rental-period").value,
         rentalCount: Number($("#project-rental-count").value) || 1,
-        contingencyPercent: Number($("#project-contingency").value) || 0
+        contingencyPercent: Number($("#project-contingency").value) || 0,
+        primaryMaterial: $("#project-live-quote").hidden ? null : {
+          name: $("#project-material-name").value.trim(),
+          unit: $("#project-material-unit").value,
+          unitCost: $("#project-material-cost").value,
+          markupPercent: $("#project-material-markup").value,
+          purchaseIncrement: $("#project-material-increment").value,
+          tonsPerCubicYard: $("#project-rock-density").value
+        },
+        deliveryCost: Number($("#project-delivery-cost").value) || 0,
+        deliveryMarkupPercent: Number($("#project-delivery-markup").value) || 0
       };
     }
 
     function validateQuickProjectInput(input) {
-      if (["rock", "mulch", "fabric", "sod", "demo"].includes(input.service) && input.areaSqFt <= 0) return "Enter the project square footage.";
+      if (["rock", "mulch"].includes(input.service) && input.areaSqFt <= 0 && input.materialQuantity <= 0) return "Enter square footage or a known cubic-yard quantity.";
+      if (input.service === "rock" && input.includeFabric && input.areaSqFt <= 0) return "Enter square footage to calculate weed fabric, or turn fabric off.";
+      if (["fabric", "sod", "demo"].includes(input.service) && input.areaSqFt <= 0) return "Enter the project square footage.";
       if (input.service === "edging" && input.linearFeet <= 0) return "Enter the edging linear feet.";
       if (input.service === "retaining" && (input.wallLength <= 0 || input.wallHeight <= 0)) return "Enter the wall length and average height.";
       if (input.service === "irrigation" && input.zones <= 0 && input.heads <= 0 && input.pipeFeet <= 0) return "Enter at least one irrigation measurement.";
       if (input.laborMode === "crew" && (input.crewSize <= 0 || input.crewHours <= 0)) return "Enter crew size and hours.";
       if (input.laborMode === "manual" && input.manualManHours <= 0) return "Enter the total man-hours.";
       if (input.laborMode === "production" && input.productionRate <= 0) return "Enter a production rate.";
+      if (input.primaryMaterial && Number(input.primaryMaterial.unitCost) <= 0) return "Enter today's supplier cost for the primary material.";
       return "";
     }
 
@@ -7238,7 +7515,11 @@
       const marginAlert = calculation.missingCosts.length
         ? `<div class="estimate-alert"><strong>Margin pending:</strong> enter every supplier cost before trusting the profit or margin.</div>`
         : `<div class="estimate-alert ${calculation.marginWarning ? "" : "good"}">${calculation.marginWarning ? `<strong>Margin warning:</strong> ${margin.toFixed(1)}% is below your ${(Number(projectEstimatorSettings().marginWarning || 0) * 100).toFixed(0)}% floor.` : `<strong>Margin protected:</strong> ${margin.toFixed(1)}% gross margin.`}</div>`;
-      $("#quick-project-result").innerHTML = `<div class="quick-project-summary"><div><span>Material items</span><strong>${calculation.lines.filter((line) => line.category === "Material").length}</strong></div><div><span>Your estimated cost</span><strong>${cleanText(money(calculation.internalCost))}</strong></div><div><span>Customer price</span><strong>${cleanText(money(calculation.subtotal))}</strong></div><div><span>Deposit to collect</span><strong>${cleanText(money(calculation.depositAmount))}</strong></div></div><div class="quick-material-list">${rows}</div>${missing}${marginAlert}`;
+      const bands = window.GreenGrinAutoBid?.priceBands(calculation.internalCost, calculation.input?.contingencyPercent, autoBidSettings()) || {};
+      calculation.priceBands = bands;
+      const recommended = Math.max(Number(calculation.subtotal), Number(bands.recommended || 0));
+      calculation.recommendedBid = recommended;
+      $("#quick-project-result").innerHTML = `<div class="quick-project-summary"><div><span>Your direct cost</span><strong>${cleanText(money(calculation.internalCost))}</strong></div><div><span>Cost floor</span><strong>${cleanText(money(bands.costFloor || calculation.subtotal))}</strong></div><div><span>Recommended bid</span><strong>${cleanText(money(recommended))}</strong></div><div><span>Premium bid</span><strong>${cleanText(money(Math.max(recommended, bands.premium || 0)))}</strong></div></div><div class="quick-material-list">${rows}</div>${missing}${marginAlert}${!calculation.missingCosts.length ? `<details open><summary>Why this price?</summary><ul class="auto-bid-list"><li>${cleanText(money(calculation.internalCost))} direct labor, material, equipment, and disposal cost</li><li>${cleanText(money(bands.overhead || 0))} overhead allowance</li><li>${cleanText(money(bands.risk || 0))} risk allowance</li><li>${cleanText(`${(Number(autoBidSettings().targetGrossMargin || 0) * 100).toFixed(0)}%`)} target gross margin</li><li>${cleanText(money(calculation.depositAmount))} material and reserved-equipment deposit</li></ul></details>` : ""}`;
     }
 
     function calculateQuickProject(showErrors = false) {
@@ -7270,7 +7551,10 @@
         $("#quick-project-result").insertAdjacentHTML("beforeend", notice("Enter the missing supplier costs before adding this project.", true));
         return;
       }
-      renderEstimateLines(calculation.lines);
+      const lines = calculation.lines.map((line) => ({ ...line }));
+      const adjustment = Math.max(0, Number(calculation.recommendedBid || 0) - Number(calculation.subtotal || 0));
+      if (adjustment > 0.01) lines.push({ catalog_id: "pricing-protection", description: "Project management, overhead, and profit protection", category: "Service", quantity: 1, unit: "each", unit_cost: 0, markup_percent: 0, rate: Math.round(adjustment * 100) / 100, deposit_eligible: false });
+      renderEstimateLines(lines);
       $("#estimate-form").dataset.calculationInputs = JSON.stringify({ ...calculation.input, phase_hours: calculation.phaseHours });
       $("#estimate-form").dataset.depositAmount = String(calculation.depositAmount);
       const titles = { rock: "Decorative Rock Installation", mulch: "Mulch Installation", fabric: "Weed Fabric Installation", edging: "Landscape Edging", sod: "Sod Installation", irrigation: "Irrigation Project", retaining: "Decorative Retaining Wall", firepit: "Firepit Project", demo: "Landscape Demo and Removal" };
@@ -7281,7 +7565,7 @@
     }
 
     function clearQuickProject() {
-      ["#project-area", "#project-depth", "#project-linear-feet", "#project-wall-length", "#project-wall-height", "#project-zones", "#project-heads", "#project-pipe-feet", "#project-man-hours"].forEach((selector) => { if ($(selector)) $(selector).value = ""; });
+      ["#project-area", "#project-depth", "#project-material-quantity", "#project-linear-feet", "#project-wall-length", "#project-wall-height", "#project-zones", "#project-heads", "#project-pipe-feet", "#project-man-hours"].forEach((selector) => { if ($(selector)) $(selector).value = ""; });
       $("#project-disposal-loads").value = "0";
       $("#project-crew-size").value = "2";
       $("#project-crew-hours").value = "8";
@@ -7290,6 +7574,7 @@
       delete $("#project-contingency").dataset.edited;
       $("#quick-project-result").innerHTML = "";
       quickProjectCalculation = null;
+      delete $("#project-live-quote").dataset.service;
       updateQuickProjectFields();
     }
 
@@ -7522,6 +7807,7 @@
 
     async function loadProjectEstimator() {
       await loadBidPricing();
+      await loadEstimatorHistory();
       if (!invoiceCustomers.length) await loadInvoiceCustomers();
       renderEstimateCustomerOptions();
       renderEstimateCatalog();

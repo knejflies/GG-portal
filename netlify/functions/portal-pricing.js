@@ -78,6 +78,20 @@ function normalizeProjectEstimator(value = {}) {
   const source = { ...fallback, ...value };
   const fallbackWaste = fallback.waste || {};
   const sourceWaste = source.waste || {};
+  const fallbackAuto = fallback.autoBid || {};
+  const sourceAuto = { ...fallbackAuto, ...(source.autoBid || {}) };
+  const productionRates = Object.fromEntries(Object.entries({ ...(fallbackAuto.productionRates || {}), ...(sourceAuto.productionRates || {}) }).slice(0, 100).map(([service, rate]) => [
+    cleanShortText(service, "service", 40),
+    {
+      unit: cleanShortText(rate?.unit, "unit", 40),
+      perCrewHour: finiteNumber(rate?.perCrewHour ?? 1, `${service} production rate`, { minimum: 0.01, maximum: 10000000 }),
+      confidence: cleanShortText(rate?.confidence, "owner", 24)
+    }
+  ]));
+  const numberMap = (sourceMap, fallbackMap, name, minimum, maximum) => Object.fromEntries(Object.entries({ ...(fallbackMap || {}), ...(sourceMap || {}) }).slice(0, 100).map(([key, item]) => [
+    cleanShortText(key, "key", 40),
+    finiteNumber(item, `${name} ${key}`, { minimum, maximum })
+  ]));
   const equipment = (Array.isArray(source.equipment) ? source.equipment : (fallback.equipment || [])).slice(0, 100).map((item, index) => ({
     id: cleanShortText(item.id, `equipment-${index + 1}`, 80),
     name: cleanName(item.name, `Rental equipment ${index + 1}`),
@@ -101,7 +115,22 @@ function normalizeProjectEstimator(value = {}) {
     equipment,
     equipmentSource: cleanShortText(source.equipmentSource, "Idaho Tractor, Nampa", 120),
     equipmentSourceUrl: cleanShortText(source.equipmentSourceUrl, "https://www.idahotractor.com/rentals/rental-equipment", 300),
-    equipmentRatesChecked: cleanShortText(source.equipmentRatesChecked, "", 10)
+    equipmentRatesChecked: cleanShortText(source.equipmentRatesChecked, "", 10),
+    autoBid: {
+      targetGrossMargin: finiteNumber(sourceAuto.targetGrossMargin ?? 0.42, "Auto Bid target gross margin", { minimum: 0, maximum: 0.99 }),
+      floorGrossMargin: finiteNumber(sourceAuto.floorGrossMargin ?? 0.3, "Auto Bid floor gross margin", { minimum: 0, maximum: 0.99 }),
+      premiumGrossMargin: finiteNumber(sourceAuto.premiumGrossMargin ?? 0.5, "Auto Bid premium gross margin", { minimum: 0, maximum: 0.99 }),
+      overheadPercent: finiteNumber(sourceAuto.overheadPercent ?? 12, "Auto Bid overhead", { minimum: 0, maximum: 1000 }),
+      defaultRiskPercent: finiteNumber(sourceAuto.defaultRiskPercent ?? 5, "Auto Bid default risk", { minimum: 0, maximum: 100 }),
+      minimumProjectPrice: finiteNumber(sourceAuto.minimumProjectPrice ?? 350, "Auto Bid minimum project price", { minimum: 0, maximum: 10000000 }),
+      defaultCrewSize: finiteNumber(sourceAuto.defaultCrewSize ?? 2, "Auto Bid default crew size", { minimum: 1, maximum: 100 }),
+      setupCrewHours: finiteNumber(sourceAuto.setupCrewHours ?? 0.75, "Auto Bid setup hours", { minimum: 0, maximum: 1000 }),
+      cleanupCrewHours: finiteNumber(sourceAuto.cleanupCrewHours ?? 1, "Auto Bid cleanup hours", { minimum: 0, maximum: 1000 }),
+      difficulty: numberMap(sourceAuto.difficulty, fallbackAuto.difficulty, "difficulty factor", 0.01, 10),
+      crewEfficiency: numberMap(sourceAuto.crewEfficiency, fallbackAuto.crewEfficiency, "crew efficiency", 0.01, 100),
+      equipmentModifiers: numberMap(sourceAuto.equipmentModifiers, fallbackAuto.equipmentModifiers, "equipment modifier", 0.01, 100),
+      productionRates
+    }
   };
 }
 

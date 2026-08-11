@@ -45,4 +45,67 @@ const mulch = estimator.calculateProject({
 }, { catalog });
 assert.equal(mulch.details.depth, 2);
 
+const irrigationCatalog = estimator.MATERIAL_DEFAULTS.map((item) => ({ ...item, unitCost: 1 }));
+const irrigation = estimator.calculateProject({
+  service: "irrigation",
+  pipeFeet: 100,
+  heads: 5,
+  zones: 1,
+  laborMode: "manual",
+  manualManHours: 4,
+  contingencyPercent: 0
+}, { catalog: irrigationCatalog });
+assert.equal(irrigation.lines.find((line) => line.catalog_id === "irrigation-pipe").quantity, 120);
+assert.equal(irrigation.lines.find((line) => line.catalog_id === "sprinkler-head").quantity, 5);
+assert.equal(irrigation.lines.find((line) => line.catalog_id === "irrigation-valve").quantity, 1);
+
+const demo = estimator.calculateProject({
+  service: "demo",
+  areaSqFt: 500,
+  disposalLoads: 1,
+  laborMode: "manual",
+  manualManHours: 8,
+  contingencyPercent: 0
+});
+assert.deepEqual(demo.missingCosts, ["Disposal and dump fees"]);
+
+const blankDefaults = estimator.calculateProject({
+  service: "mulch",
+  areaSqFt: 540,
+  depthInches: "",
+  laborMode: "crew",
+  crewSize: "",
+  crewHours: 8,
+  contingencyPercent: 0
+}, { catalog });
+assert.equal(blankDefaults.details.depth, 2);
+assert.equal(blankDefaults.lines.find((line) => line.catalog_id === "installation-labor").quantity, 8);
+
+const liveRockQuote = estimator.calculateProject({
+  service: "rock",
+  areaSqFt: 1000,
+  depthInches: 3,
+  includeFabric: false,
+  primaryMaterial: {
+    name: "Salt and Pepper 1-inch rock",
+    unit: "yard",
+    unitCost: 52,
+    markupPercent: 35,
+    purchaseIncrement: 0.5
+  },
+  deliveryCost: 175,
+  deliveryMarkupPercent: 20,
+  laborMode: "manual",
+  manualManHours: 10,
+  contingencyPercent: 0
+}, { catalog });
+const quotedRock = liveRockQuote.lines.find((line) => line.catalog_id === "decorative-rock");
+assert.equal(quotedRock.description, "Salt and Pepper 1-inch rock");
+assert.equal(quotedRock.unit, "yard");
+assert.equal(quotedRock.quantity, 10.5);
+assert.equal(quotedRock.unit_cost, 52);
+assert.equal(quotedRock.rate, 70.2);
+assert.equal(liveRockQuote.lines.find((line) => line.catalog_id === "supplier-delivery").amount, 210);
+assert.match(liveRockQuote.scope, /Salt and Pepper/);
+
 console.log("Project assembly calculator tests passed.");
