@@ -244,6 +244,11 @@
     const service = input.service || "rock";
     applyLiveMaterialQuote(catalog, service, input.primaryMaterial);
     const lines = [];
+    const excludedCatalogIds = new Set((options.excludedCatalogIds || []).map((id) => String(id || "").trim()).filter(Boolean));
+    const addMaterialLine = (id, rawQuantity, wastePercent) => {
+      if (excludedCatalogIds.has(id)) return;
+      lines.push(materialLine(catalog, id, rawQuantity, wastePercent));
+    };
     const details = {};
     let measurement = number(input.areaSqFt);
 
@@ -258,10 +263,10 @@
       details.rawCubicYards = quantity(cubicYards, 2);
       details.calculatedCubicYards = quantity(calculatedCubicYards, 2);
       details.quantityOverride = number(input.materialQuantity) > 0;
-      lines.push(materialLine(catalog, "decorative-rock", rockQuantity, settings.waste.rock));
+      addMaterialLine("decorative-rock", rockQuantity, settings.waste.rock);
       if (input.includeFabric !== false) {
-        lines.push(materialLine(catalog, "weed-fabric", input.areaSqFt, settings.waste.fabric));
-        lines.push(materialLine(catalog, "fabric-staples", number(input.areaSqFt) / 25, settings.waste.fabric));
+        addMaterialLine("weed-fabric", input.areaSqFt, settings.waste.fabric);
+        addMaterialLine("fabric-staples", number(input.areaSqFt) / 25, settings.waste.fabric);
       }
     } else if (service === "mulch") {
       const depth = number(input.depthInches, settings.mulchDepthInches);
@@ -271,38 +276,38 @@
       details.rawCubicYards = quantity(cubicYards, 2);
       details.calculatedCubicYards = quantity(calculatedCubicYards, 2);
       details.quantityOverride = number(input.materialQuantity) > 0;
-      lines.push(materialLine(catalog, "mulch", cubicYards, settings.waste.mulch));
+      addMaterialLine("mulch", cubicYards, settings.waste.mulch);
     } else if (service === "fabric") {
-      lines.push(materialLine(catalog, "weed-fabric", input.areaSqFt, settings.waste.fabric));
-      lines.push(materialLine(catalog, "fabric-staples", number(input.areaSqFt) / 25, settings.waste.fabric));
+      addMaterialLine("weed-fabric", input.areaSqFt, settings.waste.fabric);
+      addMaterialLine("fabric-staples", number(input.areaSqFt) / 25, settings.waste.fabric);
     } else if (service === "edging") {
       measurement = number(input.linearFeet);
-      lines.push(materialLine(catalog, "landscape-edging", input.linearFeet, settings.waste.edging));
+      addMaterialLine("landscape-edging", input.linearFeet, settings.waste.edging);
     } else if (service === "sod") {
-      lines.push(materialLine(catalog, "sod", input.areaSqFt, settings.waste.sod));
+      addMaterialLine("sod", input.areaSqFt, settings.waste.sod);
     } else if (service === "irrigation") {
       measurement = number(input.pipeFeet) || number(input.heads);
-      lines.push(materialLine(catalog, "irrigation-pipe", input.pipeFeet, settings.waste.irrigation));
-      lines.push(materialLine(catalog, "sprinkler-head", input.heads, 0));
-      lines.push(materialLine(catalog, "irrigation-valve", input.zones, 0));
+      addMaterialLine("irrigation-pipe", input.pipeFeet, settings.waste.irrigation);
+      addMaterialLine("sprinkler-head", input.heads, 0);
+      addMaterialLine("irrigation-valve", input.zones, 0);
     } else if (service === "retaining") {
       const wallSquareFeet = number(input.wallLength) * number(input.wallHeight);
       measurement = wallSquareFeet;
       details.wallSquareFeet = quantity(wallSquareFeet, 2);
-      lines.push(materialLine(catalog, "retaining-material", wallSquareFeet, settings.waste.retaining));
+      addMaterialLine("retaining-material", wallSquareFeet, settings.waste.retaining);
     } else if (service === "firepit") {
       measurement = Math.max(1, number(input.itemQuantity, 1));
-      lines.push(materialLine(catalog, "firepit-material", measurement, 0));
+      addMaterialLine("firepit-material", measurement, 0);
     } else if (service === "demo") {
-      if (number(input.disposalLoads) > 0) lines.push(materialLine(catalog, "disposal-load", input.disposalLoads, 0));
+      if (number(input.disposalLoads) > 0) addMaterialLine("disposal-load", input.disposalLoads, 0);
     }
 
     if (["rock", "mulch"].includes(service) && number(input.linearFeet) > 0) {
-      lines.push(materialLine(catalog, "landscape-edging", input.linearFeet, settings.waste.edging));
+      addMaterialLine("landscape-edging", input.linearFeet, settings.waste.edging);
     }
 
     if (service !== "demo" && number(input.disposalLoads) > 0) {
-      lines.push(materialLine(catalog, "disposal-load", input.disposalLoads, 0));
+      addMaterialLine("disposal-load", input.disposalLoads, 0);
     }
 
     if (number(input.deliveryCost) > 0) {

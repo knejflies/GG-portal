@@ -36,6 +36,19 @@ assert.ok(rock.groupedTotals.Materials > 0);
 assert.ok(rock.groupedTotals["Installation & Labor"] > 0);
 assert.deepEqual(rock.missingCosts, []);
 
+const combinedFabricRock = estimator.calculateProject({
+  service: "rock",
+  areaSqFt: 1200,
+  rockSize: "small",
+  installType: "new",
+  includeFabric: true,
+  laborMode: "manual",
+  manualManHours: 8,
+  contingencyPercent: 0
+}, { catalog, excludedCatalogIds: ["fabric-staples"] });
+assert.ok(combinedFabricRock.lines.some((line) => line.catalog_id === "weed-fabric"));
+assert.ok(!combinedFabricRock.lines.some((line) => line.catalog_id === "fabric-staples"));
+
 const mulch = estimator.calculateProject({
   service: "mulch",
   areaSqFt: 540,

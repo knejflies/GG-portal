@@ -7553,7 +7553,12 @@
         return null;
       }
       try {
-        quickProjectCalculation = window.GreenGrinProjectEstimator.calculateProject(input, { settings: projectEstimatorSettings(), catalog: estimateCatalogItems(), equipment: projectEquipment() });
+        quickProjectCalculation = window.GreenGrinProjectEstimator.calculateProject(input, {
+          settings: projectEstimatorSettings(),
+          catalog: estimateCatalogItems(),
+          excludedCatalogIds: bidPricingConfig?.deletedEstimateItemIds || [],
+          equipment: projectEquipment()
+        });
         quickProjectCalculation.input = input;
         renderQuickProject(quickProjectCalculation);
         return quickProjectCalculation;

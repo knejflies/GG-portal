@@ -16,6 +16,7 @@ for (const marker of [
   '/assets/green-grin-auto-bid-engine.js',
   'function approveHistoricalProductionRate',
   'deletedEstimateItemIds',
+  'excludedCatalogIds: bidPricingConfig?.deletedEstimateItemIds || []',
   'data-estimator-view="catalog"',
   'data-estimate-intent="draft-invoice"',
   'data-estimate-intent="send-invoice"',
