@@ -5409,6 +5409,8 @@
 
     $("#auth-form").addEventListener("submit", async (event) => {
       event.preventDefault();
+      const authForm = event.currentTarget;
+      if (authForm.dataset.busy === "true") return;
       saveValue(sessionKeys.employeeLogin, "");
       const email = $("#auth-email").value.trim();
       const password = $("#auth-password").value;
@@ -5441,6 +5443,9 @@
         }
       }
 
+      const authButtons = [...authForm.querySelectorAll("button[type='submit']")];
+      authForm.dataset.busy = "true";
+      authButtons.forEach((button) => { button.disabled = true; });
       try {
         const result = action === "signup"
           ? await supabaseClient.auth.signUp({
@@ -5465,16 +5470,27 @@
           return;
         }
 
+        if (action === "signup" && Array.isArray(result?.data?.user?.identities) && result.data.user.identities.length === 0) {
+          $("#auth-result").innerHTML = notice("An account already uses this email. Choose Sign In or Forgot Password.", true);
+          return;
+        }
+
         if (result?.data?.session?.user) {
           saveValue(sessionKeys.lastEmail, email);
           setSignedIn(result.data.session.user);
         }
 
         $("#auth-result").innerHTML = notice(action === "signup"
-          ? "Account created. If Supabase asks for email confirmation, check your email once, then sign in here."
+          ? (result?.data?.session ? "Account created and signed in." : "Account created. Check your email to confirm it, then return here and sign in.")
           : "Signed in.");
       } catch (error) {
-        $("#auth-result").innerHTML = notice(error.message || "Sign-in did not work. Please try again.", true);
+        const message = /rate limit|too many requests/i.test(error.message || "")
+          ? "Too many account attempts were made. Wait a few minutes, then try once."
+          : (error.message || "Sign-in did not work. Please try again.");
+        $("#auth-result").innerHTML = notice(message, true);
+      } finally {
+        delete authForm.dataset.busy;
+        authButtons.forEach((button) => { button.disabled = false; });
       }
     });
 

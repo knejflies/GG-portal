@@ -371,6 +371,67 @@ create table if not exists public.green_grin_invoices (
   active boolean not null default true
 );
 
+create or replace function public.green_grin_create_customer_on_signup()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  next_number integer;
+  next_code text;
+  metadata jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+begin
+  perform pg_advisory_xact_lock(hashtext('green_grin_customer_code'));
+
+  select greatest(
+    coalesce((select last_value from public.green_grin_counters where name = 'customer_code'), 0),
+    coalesce((select max(substring(customer_code from 'GG-([0-9]+)$')::integer) from public.green_grin_customers where customer_code ~ '^GG-[0-9]+$'), 0),
+    coalesce((select max(substring(customer_code from 'GG-([0-9]+)$')::integer) from public.green_grin_jobs where customer_code ~ '^GG-[0-9]+$'), 0)
+  ) + 1 into next_number;
+
+  insert into public.green_grin_counters (name, last_value)
+  values ('customer_code', next_number)
+  on conflict (name) do update set last_value = excluded.last_value;
+
+  next_code := 'GG-' || lpad(next_number::text, 4, '0');
+
+  insert into public.green_grin_customers (id, customer_code, full_name, phone, email, active, billing_status)
+  values (
+    new.id,
+    next_code,
+    coalesce(nullif(trim(metadata ->> 'name'), ''), split_part(coalesce(new.email, ''), '@', 1)),
+    regexp_replace(coalesce(metadata ->> 'phone', ''), '[^0-9]', '', 'g'),
+    lower(coalesce(new.email, '')),
+    true,
+    'Not connected'
+  )
+  on conflict (id) do nothing;
+
+  if nullif(trim(coalesce(metadata ->> 'address', '')), '') is not null then
+    insert into public.green_grin_properties (customer_user_id, address, gate_code, pets, yard_notes, service_preferences, active)
+    select
+      new.id,
+      metadata ->> 'address',
+      coalesce(metadata ->> 'gate_code', ''),
+      coalesce(metadata ->> 'pets', ''),
+      coalesce(metadata ->> 'yard_notes', ''),
+      '',
+      true
+    where not exists (
+      select 1 from public.green_grin_properties where customer_user_id = new.id and active = true
+    );
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists green_grin_customer_signup on auth.users;
+create trigger green_grin_customer_signup
+  after insert on auth.users
+  for each row execute function public.green_grin_create_customer_on_signup();
+
 alter table public.green_grin_invoices
   add column if not exists customer_user_id uuid references auth.users(id) on delete cascade;
 
