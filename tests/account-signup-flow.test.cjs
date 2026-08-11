@@ -10,6 +10,9 @@ for (const html of [portal, portalFallback]) {
   assert.ok(html.includes("result.data.user.identities.length === 0"), "signup must identify an existing email response");
   assert.ok(html.includes("Check your email to confirm it"), "signup must explain email confirmation");
   assert.ok(html.includes("Too many account attempts were made"), "signup must explain rate limiting");
+  assert.ok(html.includes('id="auth-gate-code"'), "gate-code input must have its own unique id");
+  assert.ok(html.includes('$("#auth-gate-code").value.trim()'), "signup must read the gate-code input safely");
+  assert.equal((html.match(/id="auth-gate"/g) || []).length, 1, "auth-gate section id must be unique");
 }
 
 assert.ok(sql.includes("green_grin_create_customer_on_signup"), "database must create customer profiles on signup");

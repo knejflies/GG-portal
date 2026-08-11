@@ -3478,7 +3478,7 @@
             <div><label for="auth-phone">Phone</label><input id="auth-phone" type="tel" autocomplete="tel" placeholder="(208) 555-0199" /></div>
             <div><label for="auth-address">Service address</label><input id="auth-address" autocomplete="street-address" placeholder="Street, city, state, ZIP" /></div>
             <div class="two">
-              <div><label for="auth-gate">Gate code</label><input id="auth-gate" placeholder="Optional" /></div>
+              <div><label for="auth-gate-code">Gate code</label><input id="auth-gate-code" placeholder="Optional" /></div>
               <div><label for="auth-pets">Pets</label><input id="auth-pets" placeholder="Dogs in backyard, etc." /></div>
             </div>
             <div><label for="auth-yard-notes">Yard details</label><textarea id="auth-yard-notes" placeholder="Sprinklers, locked gates, soft spots, access instructions, or anything the crew should know"></textarea></div>
@@ -5457,7 +5457,7 @@
                   name,
                   phone,
                   address,
-                  gate_code: $("#auth-gate").value.trim(),
+                  gate_code: $("#auth-gate-code").value.trim(),
                   pets: $("#auth-pets").value.trim(),
                   yard_notes: $("#auth-yard-notes").value.trim()
                 }
