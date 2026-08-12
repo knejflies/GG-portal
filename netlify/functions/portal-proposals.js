@@ -6,6 +6,7 @@ const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawn & Landscape <ken@greengrinlawns.com>";
 const PROPOSAL_URL = process.env.GREEN_GRIN_PROPOSAL_URL || "https://portal.greengrinlawns.com/proposal/";
+const { groupedTotals } = require("../../assets/green-grin-project-estimator.js");
 
 const headers = {
   "Content-Type": "application/json",
@@ -34,6 +35,19 @@ function escapeHtml(value) {
 
 function money(value) {
   return `$${Number(value || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function customerGroupedTotals(estimate = {}) {
+  const lines = Array.isArray(estimate.line_items) ? estimate.line_items : [];
+  if (!lines.length) return estimate.grouped_totals || {};
+  const groups = groupedTotals(lines.map((item) => ({
+    ...item,
+    amount: Number(item.amount ?? (Number(item.quantity || 0) * Number(item.rate || 0)))
+  })));
+  const groupedSubtotal = Math.round(Object.values(groups).reduce((sum, amount) => sum + Number(amount || 0), 0) * 100) / 100;
+  const subtotal = Math.round(Number(estimate.subtotal || 0) * 100) / 100;
+  if (Math.abs(groupedSubtotal - subtotal) > 0.01) throw new Error("This proposal's project groups do not match its subtotal. Open and save the estimate again before sending it.");
+  return groups;
 }
 
 async function supabase(path, options = {}) {
@@ -75,7 +89,7 @@ function publicEstimate(estimate) {
     project_scope: estimate.project_scope,
     customer_notes: estimate.customer_notes,
     valid_until: estimate.valid_until,
-    grouped_totals: estimate.grouped_totals || {},
+    grouped_totals: customerGroupedTotals(estimate),
     subtotal: Number(estimate.subtotal || 0),
     discount: Number(estimate.discount || 0),
     tax_amount: Number(estimate.tax_amount || 0),
@@ -94,7 +108,7 @@ async function estimateForToken(token) {
 }
 
 function proposalEmail(estimate, link) {
-  const groups = Object.entries(estimate.grouped_totals || {}).map(([label, amount]) => `<tr><td style="padding:10px;border-bottom:1px solid #d7e4d4">${escapeHtml(label)}</td><td style="padding:10px;border-bottom:1px solid #d7e4d4;text-align:right;font-weight:700">${money(amount)}</td></tr>`).join("");
+  const groups = Object.entries(customerGroupedTotals(estimate)).map(([label, amount]) => `<tr><td style="padding:10px;border-bottom:1px solid #d7e4d4">${escapeHtml(label)}</td><td style="padding:10px;border-bottom:1px solid #d7e4d4;text-align:right;font-weight:700">${money(amount)}</td></tr>`).join("");
   return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">Green Grin Lawn &amp; Landscape</h1><p>Hello ${escapeHtml(estimate.customer_name)},</p><p>Your proposal for <strong>${escapeHtml(estimate.project_title)}</strong> is ready.</p><table style="width:100%;border-collapse:collapse">${groups}</table><p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(estimate.total)}</p><p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Approve Proposal</a></p><p style="color:#5c6e62">The secure link expires with the proposal. Extra work requires an approved change order.</p></div>`;
 }
 
@@ -105,7 +119,7 @@ function documentSnapshot(estimate) {
     project_title: estimate.project_title,
     service_address: estimate.service_address,
     project_scope: estimate.project_scope,
-    grouped_totals: estimate.grouped_totals || {},
+    grouped_totals: customerGroupedTotals(estimate),
     subtotal: Number(estimate.subtotal || 0),
     discount: Number(estimate.discount || 0),
     tax_amount: Number(estimate.tax_amount || 0),
@@ -244,4 +258,4 @@ exports.handler = async (event) => {
   }
 };
 
-exports._test = { hash, publicEstimate, documentSnapshot };
+exports._test = { hash, customerGroupedTotals, publicEstimate, documentSnapshot };

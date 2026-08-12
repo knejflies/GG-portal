@@ -76,6 +76,14 @@ function cleanupMessage(job) {
   return `Hi${name}, Green Grin is scheduled for your ${service} today. Please pick up toys, hoses, pet waste, and yard objects before we arrive.`;
 }
 
+function reminderDelivered(push) {
+  return Number(push?.sent || 0) > 0;
+}
+
+function customerAllowsReminder(customer) {
+  return !customer || (customer.active !== false && customer.text_cleanup_reminders !== false);
+}
+
 function normalizePhone(value) {
   return String(value || "").replace(/\D/g, "");
 }
@@ -121,9 +129,10 @@ exports.handler = async () => {
   const today = localDate();
   const nowTime = localTime();
   const jobs = await supabase("green_grin_jobs?select=*&status=neq.Completed&limit=200");
-  const customers = await supabase("green_grin_customers?select=id,customer_code,email,phone,service_weekday,text_cleanup_reminders&active=eq.true&limit=500").catch(() => []);
+  const customers = await supabase("green_grin_customers?select=id,customer_code,email,phone,active,service_weekday,text_cleanup_reminders&limit=500").catch(() => []);
 
   let sent = 0;
+  let failed = 0;
   let skipped = 0;
 
   for (const job of jobs || []) {
@@ -133,7 +142,7 @@ exports.handler = async () => {
       (job.email && String(row.email || "").toLowerCase() === String(job.email).toLowerCase()) ||
       (job.phone && normalizePhone(row.phone) === normalizePhone(job.phone))
     );
-    if (customer?.text_cleanup_reminders === false || !isServiceToday(job, today, customer?.service_weekday ?? null)) {
+    if (!customerAllowsReminder(customer) || !isServiceToday(job, today, customer?.service_weekday ?? null)) {
       skipped += 1;
       continue;
     }
@@ -157,14 +166,18 @@ exports.handler = async () => {
       tag: `green-grin-${job.id}-morning-reminder-${today}`
     });
 
-    await supabase(`green_grin_jobs?id=eq.${encodeURIComponent(job.id)}`, {
-      method: "PATCH",
-      body: JSON.stringify({
-        last_message_template: "objects",
-        last_message_sent_at: new Date().toISOString(),
-        last_cleanup_reminder_sent_at: new Date().toISOString()
-      })
-    });
+    const delivered = reminderDelivered(push);
+    if (delivered) {
+      const sentAt = new Date().toISOString();
+      await supabase(`green_grin_jobs?id=eq.${encodeURIComponent(job.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          last_message_template: "objects",
+          last_message_sent_at: sentAt,
+          last_cleanup_reminder_sent_at: sentAt
+        })
+      });
+    }
 
     await supabase("green_grin_message_log", {
       method: "POST",
@@ -174,18 +187,19 @@ exports.handler = async () => {
         template: "objects",
         message,
         actor_type: "System",
-        actor_name: push.sent ? `Morning app reminder ${reminderTime}` : `Morning app reminder attempted ${reminderTime}`,
+        actor_name: delivered ? `Morning app reminder ${reminderTime}` : `Morning app reminder attempted ${reminderTime}`,
         twilio_sid: null
       })
     });
 
-    sent += 1;
+    if (delivered) sent += 1;
+    else failed += 1;
   }
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ date: today, time: nowTime, sent, skipped })
+    body: JSON.stringify({ date: today, time: nowTime, sent, failed, skipped })
   };
 };
 
-exports._test = { isServiceToday, localWeekday };
+exports._test = { customerAllowsReminder, isServiceToday, localWeekday, reminderDelivered };

@@ -7872,9 +7872,9 @@
     function printEstimate(estimate) {
       const popup = window.open("", "_blank", "width=820,height=900");
       if (!popup) return;
-      const grouped = estimate.grouped_totals && Object.keys(estimate.grouped_totals).length
-        ? estimate.grouped_totals
-        : (window.GreenGrinProjectEstimator?.groupedTotals((estimate.line_items || []).map((item) => ({ ...item, amount: item.amount || item.quantity * item.rate }))) || {});
+      const grouped = Array.isArray(estimate.line_items) && estimate.line_items.length
+        ? (window.GreenGrinProjectEstimator?.groupedTotals(estimate.line_items.map((item) => ({ ...item, amount: item.amount ?? item.quantity * item.rate }))) || {})
+        : (estimate.grouped_totals || {});
       const rows = Object.entries(grouped).map(([label, amount]) => `<tr><td>${cleanText(label)}</td><td>${cleanText(money(amount))}</td></tr>`).join("");
       const validUntil = estimate.valid_until ? displayScheduleDate(estimate.valid_until) : "30 days from issue";
       const deposit = Number(estimate.deposit_amount || 0);

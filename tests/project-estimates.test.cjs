@@ -38,6 +38,27 @@ assert.equal(estimate.valid_until, "2026-09-08");
 assert.equal(estimate.invoice_due_date, "2026-09-15");
 assert.equal(estimate.customer_notes, "Materials and final cleanup included.");
 
+const mixedEstimate = estimatePayload({
+  customer_name: "Mixed Project",
+  project_title: "Complete landscape installation",
+  line_items: [
+    { description: "Rock", category: "Material", quantity: 1, rate: 100 },
+    { description: "Installation", category: "Labor", quantity: 1, rate: 200 },
+    { description: "Loader", category: "Equipment", quantity: 1, rate: 30 },
+    { description: "Dump fee", category: "Disposal", quantity: 1, rate: 10 },
+    { description: "Project coordination", category: "Service", quantity: 1, rate: 50 },
+    { description: "Contingency", category: "Other", quantity: 1, rate: 25 }
+  ]
+});
+assert.deepEqual(mixedEstimate.grouped_totals, {
+  Materials: 100,
+  "Installation & Labor": 200,
+  "Equipment & Hauling": 30,
+  "Site Preparation & Disposal": 10,
+  "Project Coordination & Allowance": 75
+});
+assert.equal(Object.values(mixedEstimate.grouped_totals).reduce((sum, amount) => sum + amount, 0), mixedEstimate.subtotal);
+
 const linked = estimatePayload({
   ...estimate,
   invoice_id: "8e38cd3a-471f-44ce-99b2-ae93be297dc4",

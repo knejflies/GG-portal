@@ -1,6 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { groupedTotals } = require("../../assets/green-grin-project-estimator.js");
 
 const headers = {
   "Content-Type": "application/json",
@@ -77,14 +78,9 @@ function estimatePayload(body, current = {}) {
   const grossProfit = signedMoneyNumber(taxable - internalCost);
   const grossMargin = taxable > 0 ? Math.round((grossProfit / taxable) * 10000) / 10000 : 0;
   const depositAmount = moneyNumber(lineItems.filter((item) => item.deposit_eligible).reduce((sum, item) => sum + item.amount, 0));
-  const groupedTotals = lineItems.reduce((groups, item) => {
-    const group = item.category === "Material" ? "Materials"
-      : ["Labor", "Service"].includes(item.category) ? "Installation & Labor"
-        : item.category === "Equipment" ? "Equipment & Hauling"
-          : "Site Preparation & Disposal";
-    groups[group] = moneyNumber((groups[group] || 0) + item.amount);
-    return groups;
-  }, {});
+  const customerGroups = groupedTotals(lineItems);
+  const groupedSubtotal = moneyNumber(Object.values(customerGroups).reduce((sum, amount) => sum + Number(amount || 0), 0));
+  if (Math.abs(groupedSubtotal - subtotal) > 0.01) throw new Error("Project groups do not match the estimate subtotal. Review the estimate before sending it.");
   const statuses = ["Draft", "Quoted", "Approved", "Declined", "Converted"];
   return {
     estimate_number: clean(body.estimate_number || current.estimate_number || `EST-${Date.now().toString(36).toUpperCase()}`, 40),
@@ -105,7 +101,7 @@ function estimatePayload(body, current = {}) {
     internal_cost: internalCost,
     gross_profit: grossProfit,
     gross_margin: grossMargin,
-    grouped_totals: groupedTotals,
+    grouped_totals: customerGroups,
     deposit_amount: depositAmount,
     contingency_percent: Math.min(100, moneyNumber(body.contingency_percent)),
     calculation_inputs: body.calculation_inputs && typeof body.calculation_inputs === "object" ? body.calculation_inputs : (current.calculation_inputs || {}),
