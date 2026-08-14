@@ -52,13 +52,12 @@ const amountFor = (category) => saved.line_items
   .filter((line) => line.category === category)
   .reduce((sum, line) => sum + line.amount, 0);
 
-assert.equal(customerGroups.Materials, amountFor("Material"));
+assert.equal(customerGroups.Materials, amountFor("Material") + amountFor("Service") + amountFor("Other"));
 assert.equal(customerGroups["Installation & Labor"], amountFor("Labor"));
 assert.equal(customerGroups["Equipment & Hauling"], amountFor("Equipment"));
 assert.equal(customerGroups["Site Preparation & Disposal"], amountFor("Disposal"));
-assert.equal(customerGroups["Project Coordination & Allowance"], amountFor("Service") + amountFor("Other"));
 assert.equal(Object.values(customerGroups).reduce((sum, amount) => sum + amount, 0), saved.subtotal);
-assert.ok(customerGroups["Project Coordination & Allowance"] > 350, "Contingency and pricing protection should remain outside labor.");
+assert.ok(customerGroups.Materials > amountFor("Material"), "Contingency and pricing protection should be included in materials.");
 assert.ok(saved.deposit_amount < saved.subtotal, "Labor and project coordination must not enter the material deposit.");
 
 console.log("Final customer bid category reconciliation passed.");

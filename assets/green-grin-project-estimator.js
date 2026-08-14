@@ -200,8 +200,7 @@
       Materials: 0,
       "Installation & Labor": 0,
       "Equipment & Hauling": 0,
-      "Site Preparation & Disposal": 0,
-      "Project Coordination & Allowance": 0
+      "Site Preparation & Disposal": 0
     };
     for (const line of lines) {
       const category = String(line.category || "").trim().toLowerCase();
@@ -209,7 +208,7 @@
       else if (category === "labor") groups["Installation & Labor"] += number(line.amount);
       else if (category === "equipment") groups["Equipment & Hauling"] += number(line.amount);
       else if (category === "disposal") groups["Site Preparation & Disposal"] += number(line.amount);
-      else groups["Project Coordination & Allowance"] += number(line.amount);
+      else groups.Materials += number(line.amount);
     }
     return Object.fromEntries(Object.entries(groups).map(([key, value]) => [key, money(value)]).filter(([, value]) => value > 0));
   }

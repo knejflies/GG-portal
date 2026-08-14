@@ -96,6 +96,7 @@ GREEN_GRIN_SHEETS_SYNC_KEY=make up a long private sync password
 OPENAI_API_KEY=your OpenAI API key for receipt scanning
 RESEND_API_KEY=your private Resend API key
 GREEN_GRIN_INVOICE_FROM=Green Grin Lawn & Landscape <ken@greengrinlawns.com>
+GREEN_GRIN_OWNER_EMAIL=ken@greengrinlawns.com
 GREEN_GRIN_PORTAL_URL=https://portal.greengrinlawns.com/portal/
 GREEN_GRIN_PROPOSAL_URL=https://portal.greengrinlawns.com/proposal/
 
@@ -118,6 +119,8 @@ LANDSCAPE PROPOSALS
 3. In Admin -> Lawn Bidder -> Project Estimator, enter your supplier costs in Cost Library before sending a proposal.
 4. Send Proposal emails an expiring link. The customer requests a one-time email code and can sign without creating an account.
 5. Approval creates the project and its material/equipment deposit invoice automatically.
+6. A signed customer copy is emailed to GREEN_GRIN_OWNER_EMAIL and remains available from the Signed Copy button in Saved Estimates.
+7. Preview Customer PDF shows the exact customer-facing scope and prices before sending. Use the Prices shown to customer selector to show only the final total or broad project group amounts.
 
 BOOKKEEPING CONSOLE
 1. Run the latest portal-setup.sql once to add invoice line items, discounts, tax, and the employee role field.

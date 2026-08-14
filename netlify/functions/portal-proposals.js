@@ -5,6 +5,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawn & Landscape <ken@greengrinlawns.com>";
+const OWNER_EMAIL = process.env.GREEN_GRIN_OWNER_EMAIL || "ken@greengrinlawns.com";
 const PROPOSAL_URL = process.env.GREEN_GRIN_PROPOSAL_URL || "https://portal.greengrinlawns.com/proposal/";
 const { groupedTotals } = require("../../assets/green-grin-project-estimator.js");
 
@@ -50,6 +51,16 @@ function customerGroupedTotals(estimate = {}) {
   return groups;
 }
 
+function proposalPriceDisplay(estimate = {}) {
+  const mode = estimate.price_display || estimate.calculation_inputs?.proposal_price_display;
+  return mode === "grouped" ? "grouped" : "total_only";
+}
+
+function customerVisibleGroups(estimate = {}) {
+  const groups = customerGroupedTotals(estimate);
+  return proposalPriceDisplay(estimate) === "grouped" ? groups : {};
+}
+
 async function supabase(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...options,
@@ -89,7 +100,8 @@ function publicEstimate(estimate) {
     project_scope: estimate.project_scope,
     customer_notes: estimate.customer_notes,
     valid_until: estimate.valid_until,
-    grouped_totals: customerGroupedTotals(estimate),
+    price_display: proposalPriceDisplay(estimate),
+    grouped_totals: customerVisibleGroups(estimate),
     subtotal: Number(estimate.subtotal || 0),
     discount: Number(estimate.discount || 0),
     tax_amount: Number(estimate.tax_amount || 0),
@@ -108,8 +120,9 @@ async function estimateForToken(token) {
 }
 
 function proposalEmail(estimate, link) {
-  const groups = Object.entries(customerGroupedTotals(estimate)).map(([label, amount]) => `<tr><td style="padding:10px;border-bottom:1px solid #d7e4d4">${escapeHtml(label)}</td><td style="padding:10px;border-bottom:1px solid #d7e4d4;text-align:right;font-weight:700">${money(amount)}</td></tr>`).join("");
-  return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">Green Grin Lawn &amp; Landscape</h1><p>Hello ${escapeHtml(estimate.customer_name)},</p><p>Your proposal for <strong>${escapeHtml(estimate.project_title)}</strong> is ready.</p><table style="width:100%;border-collapse:collapse">${groups}</table><p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(estimate.total)}</p><p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Approve Proposal</a></p><p style="color:#5c6e62">The secure link expires with the proposal. Extra work requires an approved change order.</p></div>`;
+  const rows = Object.entries(customerVisibleGroups(estimate)).map(([label, amount]) => `<tr><td style="padding:10px;border-bottom:1px solid #d7e4d4">${escapeHtml(label)}</td><td style="padding:10px;border-bottom:1px solid #d7e4d4;text-align:right;font-weight:700">${money(amount)}</td></tr>`).join("");
+  const groups = rows ? `<table style="width:100%;border-collapse:collapse">${rows}</table>` : "";
+  return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">Green Grin Lawn &amp; Landscape</h1><p>Hello ${escapeHtml(estimate.customer_name)},</p><p>Your proposal for <strong>${escapeHtml(estimate.project_title)}</strong> is ready.</p>${groups}<p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(estimate.total)}</p><p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Approve Proposal</a></p><p style="color:#5c6e62">The secure link expires with the proposal. Extra work requires an approved change order.</p></div>`;
 }
 
 function documentSnapshot(estimate) {
@@ -119,7 +132,8 @@ function documentSnapshot(estimate) {
     project_title: estimate.project_title,
     service_address: estimate.service_address,
     project_scope: estimate.project_scope,
-    grouped_totals: customerGroupedTotals(estimate),
+    price_display: proposalPriceDisplay(estimate),
+    grouped_totals: customerVisibleGroups(estimate),
     subtotal: Number(estimate.subtotal || 0),
     discount: Number(estimate.discount || 0),
     tax_amount: Number(estimate.tax_amount || 0),
@@ -132,6 +146,15 @@ function documentSnapshot(estimate) {
       : "Materials and reserved equipment due before ordering; remaining balance due at completion.",
     change_order_terms: "Additional work requires an approved change order."
   };
+}
+
+function signedProposalEmail(estimate, snapshot, signature) {
+  const rows = Object.entries(snapshot.grouped_totals || {}).map(([label, amount]) => `<tr><td style="padding:10px;border-bottom:1px solid #d7e4d4">${escapeHtml(label)}</td><td style="padding:10px;border-bottom:1px solid #d7e4d4;text-align:right;font-weight:700">${money(amount)}</td></tr>`).join("");
+  const groups = rows ? `<table style="width:100%;border-collapse:collapse;margin:18px 0">${rows}</table>` : "";
+  const signatureImage = signature.signature_type === "drawn" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature.signature_data || "")
+    ? `<img src="${signature.signature_data}" alt="Customer signature" style="display:block;max-width:420px;max-height:130px;margin:12px 0;border-bottom:1px solid #7a8a7d" />`
+    : `<p style="font-size:24px;font-style:italic;margin:12px 0">${escapeHtml(signature.signer_name)}</p>`;
+  return `<div style="font-family:Arial,sans-serif;max-width:700px;margin:auto;color:#102419"><h1 style="color:#07351d">Signed Green Grin Proposal</h1><p><strong>${escapeHtml(snapshot.estimate_number)}</strong> was approved by ${escapeHtml(signature.signer_name)} on ${escapeHtml(new Date(signature.signed_at).toLocaleString("en-US"))}.</p><hr style="border:0;border-top:3px solid #78c653"><h2>${escapeHtml(snapshot.project_title)}</h2><p><strong>Customer:</strong> ${escapeHtml(snapshot.customer_name)}</p><p><strong>Project address:</strong> ${escapeHtml(snapshot.service_address || "")}</p><h3>Scope of work</h3><div style="white-space:pre-wrap;padding:15px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(snapshot.project_scope || "")}</div>${groups}<p style="font-size:24px;font-weight:800;text-align:right">Project total: ${money(snapshot.total)}</p><div style="padding:15px;border:1px solid #cad8c9"><strong>Payment terms</strong><p>${escapeHtml(snapshot.payment_terms)}</p><p>${escapeHtml(snapshot.change_order_terms)}</p></div>${snapshot.customer_notes ? `<p style="white-space:pre-wrap"><strong>Project notes</strong><br>${escapeHtml(snapshot.customer_notes)}</p>` : ""}<h3>Customer acceptance</h3>${signatureImage}<p>${escapeHtml(signature.consent_text)}</p><p style="font-size:12px;color:#5c6e62">Signed by ${escapeHtml(signature.signer_name)} (${escapeHtml(signature.signer_email || "No email")})<br>Document reference: ${escapeHtml(signature.document_hash)}</p></div>`;
 }
 
 function dateOffset(days) {
@@ -207,6 +230,16 @@ exports.handler = async (event) => {
     if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed." });
     const body = JSON.parse(event.body || "{}");
 
+    if (body.action === "test-email") {
+      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Owner sign-in is required." });
+      const delivery = await sendEmail(
+        OWNER_EMAIL,
+        "Green Grin email test",
+        `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#102419"><h1 style="color:#07351d">Green Grin email is connected</h1><p>This test was sent from the live Green Grin portal through Resend.</p><p><strong>Sender:</strong> ${escapeHtml(EMAIL_FROM)}</p><p><strong>Delivered to:</strong> ${escapeHtml(OWNER_EMAIL)}</p><p style="color:#5c6e62">Tested ${escapeHtml(new Date().toLocaleString("en-US"))}</p></div>`
+      );
+      return json(200, { ok: true, id: delivery?.id || null, from: EMAIL_FROM, to: OWNER_EMAIL, message: `Test email accepted by Resend for ${OWNER_EMAIL}. Check Inbox and Spam.` });
+    }
+
     if (body.action === "send") {
       if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Owner sign-in is required." });
       const rows = await supabase(`green_grin_estimates?select=*&id=eq.${encodeURIComponent(body.estimate_id || "")}&limit=1`);
@@ -219,6 +252,16 @@ exports.handler = async (event) => {
       await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, { method: "PATCH", body: JSON.stringify({ proposal_token_hash: hash(token), proposal_sent_at: new Date().toISOString(), proposal_expires_at: expiry, status: "Quoted", updated_at: new Date().toISOString() }) });
       await sendEmail(estimate.email, `Proposal ${estimate.estimate_number} from Green Grin`, proposalEmail(estimate, link));
       return json(200, { ok: true, link, message: `Proposal emailed to ${estimate.email}.` });
+    }
+
+    if (body.action === "signed-copy") {
+      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Owner sign-in is required." });
+      const estimates = await supabase(`green_grin_estimates?select=*&id=eq.${encodeURIComponent(body.estimate_id || "")}&limit=1`);
+      const estimate = estimates?.[0];
+      if (!estimate) return json(404, { error: "Estimate not found." });
+      const signatures = await supabase(`green_grin_estimate_signatures?select=*&estimate_id=eq.${encodeURIComponent(estimate.id)}&order=signed_at.desc&limit=1`);
+      if (!signatures?.[0]) return json(404, { error: "No signed copy was found for this proposal." });
+      return json(200, { estimate, signature: signatures[0] });
     }
 
     const estimate = await estimateForToken(body.token || "");
@@ -244,11 +287,15 @@ exports.handler = async (event) => {
       const snapshot = documentSnapshot(estimate);
       const documentHash = hash(JSON.stringify(snapshot));
       const signedAt = new Date().toISOString();
-      await supabase("green_grin_estimate_signatures", { method: "POST", body: JSON.stringify({ estimate_id: estimate.id, signer_name: signerName, signer_email: estimate.email || "", signature_type: signatureType, signature_data: signatureData, consent_text: "I approve this proposal, payment schedule, and change-order terms and authorize Green Grin Lawn & Landscape to perform the described work.", signed_at: signedAt, document_hash: documentHash, document_snapshot: snapshot, ip_address: String(event.headers["x-forwarded-for"] || "").split(",")[0].trim(), user_agent: String(event.headers["user-agent"] || "").slice(0, 500) }) });
+      const signature = { estimate_id: estimate.id, signer_name: signerName, signer_email: estimate.email || "", signature_type: signatureType, signature_data: signatureData, consent_text: "I approve this proposal, payment schedule, and change-order terms and authorize Green Grin Lawn & Landscape to perform the described work.", signed_at: signedAt, document_hash: documentHash, document_snapshot: snapshot, ip_address: String(event.headers["x-forwarded-for"] || "").split(",")[0].trim(), user_agent: String(event.headers["user-agent"] || "").slice(0, 500) };
+      await supabase("green_grin_estimate_signatures", { method: "POST", body: JSON.stringify(signature) });
       const project = await createProjectAndDeposit(estimate);
       const updated = await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, { method: "PATCH", body: JSON.stringify({ status: "Approved", approved_at: signedAt, approved_by: signerName, approval_document_hash: documentHash, proposal_code_hash: null, proposal_code_expires_at: null, project_job_id: project.jobId, deposit_invoice_id: project.invoiceId, updated_at: signedAt }) });
-      if (estimate.email) await sendEmail(estimate.email, `Proposal ${estimate.estimate_number} approved`, `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto"><h1 style="color:#07351d">Thank you, ${escapeHtml(signerName)}.</h1><p>Your proposal for <strong>${escapeHtml(estimate.project_title)}</strong> was approved on ${new Date(signedAt).toLocaleString("en-US")}.</p><p>Green Grin will confirm materials, deposit, and scheduling with you.</p></div>`).catch(() => null);
-      return json(200, { ok: true, estimate: publicEstimate(updated?.[0] || { ...estimate, status: "Approved", approved_at: signedAt, approved_by: signerName }), deposit_created: Boolean(project.invoiceId) });
+      const ownerDelivery = await sendEmail(OWNER_EMAIL, `SIGNED: ${estimate.estimate_number} - ${estimate.customer_name}`, signedProposalEmail(estimate, snapshot, signature)).then((data) => ({ sent: true, id: data?.id || null })).catch((error) => ({ sent: false, error: error.message || "The owner copy could not be emailed." }));
+      const customerDelivery = estimate.email
+        ? await sendEmail(estimate.email, `Proposal ${estimate.estimate_number} approved`, `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto"><h1 style="color:#07351d">Thank you, ${escapeHtml(signerName)}.</h1><p>Your proposal for <strong>${escapeHtml(estimate.project_title)}</strong> was approved on ${new Date(signedAt).toLocaleString("en-US")}.</p><p>Green Grin will confirm materials, deposit, and scheduling with you.</p></div>`).then((data) => ({ sent: true, id: data?.id || null })).catch((error) => ({ sent: false, error: error.message || "The customer confirmation could not be emailed." }))
+        : { sent: false, skipped: true, reason: "No customer email address." };
+      return json(200, { ok: true, estimate: publicEstimate(updated?.[0] || { ...estimate, status: "Approved", approved_at: signedAt, approved_by: signerName }), deposit_created: Boolean(project.invoiceId), owner_email: ownerDelivery, customer_email: customerDelivery });
     }
 
     return json(400, { error: "Choose a valid proposal action." });
@@ -258,4 +305,4 @@ exports.handler = async (event) => {
   }
 };
 
-exports._test = { hash, customerGroupedTotals, publicEstimate, documentSnapshot };
+exports._test = { hash, customerGroupedTotals, proposalPriceDisplay, customerVisibleGroups, publicEstimate, documentSnapshot, signedProposalEmail };

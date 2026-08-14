@@ -51,11 +51,10 @@ const mixedEstimate = estimatePayload({
   ]
 });
 assert.deepEqual(mixedEstimate.grouped_totals, {
-  Materials: 100,
+  Materials: 175,
   "Installation & Labor": 200,
   "Equipment & Hauling": 30,
-  "Site Preparation & Disposal": 10,
-  "Project Coordination & Allowance": 75
+  "Site Preparation & Disposal": 10
 });
 assert.equal(Object.values(mixedEstimate.grouped_totals).reduce((sum, amount) => sum + amount, 0), mixedEstimate.subtotal);
 

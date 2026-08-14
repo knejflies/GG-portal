@@ -5122,6 +5122,14 @@
               <div><label for="estimate-tax-rate">Tax rate %</label><input id="estimate-tax-rate" type="number" min="0" max="100" step="0.01" value="0" /></div>
               <div><label for="estimate-invoice-due">Invoice due date</label><input id="estimate-invoice-due" type="date" /></div>
             </div>
+            <div>
+              <label for="estimate-price-display">Prices shown to customer</label>
+              <select id="estimate-price-display">
+                <option value="total_only">Final project total only</option>
+                <option value="grouped">Broad project group amounts and final total</option>
+              </select>
+              <small class="muted">Unit prices, markups, labor hours, internal costs, and profit never appear on the customer copy.</small>
+            </div>
             <div id="estimate-profit-strip" class="estimate-profit-strip" aria-live="polite"></div>
             <div><label for="estimate-customer-notes">Customer invoice notes</label><textarea id="estimate-customer-notes" rows="3" placeholder="Payment terms, scheduling note, warranty, or other customer-facing details."></textarea></div>
             <details class="estimate-internal-notes">
@@ -5132,7 +5140,7 @@
             <div class="estimate-primary-actions">
               <button class="button secondary" data-estimate-intent="save" type="submit">Save Estimate</button>
               <button class="button" data-estimate-intent="send-proposal" type="submit">Send Proposal</button>
-              <button class="button ghost" data-estimate-intent="print" type="submit">Save &amp; Print Estimate</button>
+              <button class="button ghost" data-estimate-intent="print" type="submit">Preview Customer PDF</button>
               <button class="button ghost" data-estimate-intent="draft-invoice" type="submit">Create Invoice Draft</button>
               <button class="button" data-estimate-intent="send-invoice" type="submit">Send Invoice</button>
               <button id="estimate-clear" class="button ghost" type="button">New Estimate</button>
@@ -5263,7 +5271,9 @@
       <div class="row-actions owner-only" style="margin: 12px 0 18px;">
         <button id="export-invoices-csv" class="button ghost" type="button">Export Invoices CSV</button>
         <button id="export-expenses-csv" class="button ghost" type="button">Export Expenses CSV</button>
+        <button id="test-owner-email" class="button secondary" type="button">Test Email to Owner</button>
       </div>
+      <div id="email-test-result" class="owner-only" aria-live="polite"></div>
       <div class="grid">
         <div class="card owner-only">
           <h2>Invoice center</h2>
@@ -6758,6 +6768,11 @@
       if (!estimate || !action) return;
       if (action === "edit") return fillEstimateForm(estimate);
       if (action === "print") return printEstimate(estimate);
+      if (action === "signed-copy") {
+        try { await openSignedEstimateCopy(estimate); }
+        catch (error) { showEstimateNotice(error.message, true); }
+        return;
+      }
       if (action === "send-proposal") {
         try { await sendEstimateProposal(estimate); }
         catch (error) { showEstimateNotice(error.message, true); }
@@ -7758,7 +7773,11 @@
         deposit_amount: calculation.depositAmount,
         gross_margin: calculation.margin,
         contingency_percent: Number($("#project-contingency")?.value) || 0,
-        calculation_inputs: (() => { try { return JSON.parse($("#estimate-form").dataset.calculationInputs || "{}"); } catch { return {}; } })(),
+        calculation_inputs: (() => {
+          let inputs = {};
+          try { inputs = JSON.parse($("#estimate-form").dataset.calculationInputs || "{}"); } catch { inputs = {}; }
+          return { ...inputs, proposal_price_display: $("#estimate-price-display").value || "total_only" };
+        })(),
         invoice_id: $("#estimate-form").dataset.invoiceId || null,
         invoice_number: $("#estimate-form").dataset.invoiceNumber || "",
         invoiced_at: $("#estimate-form").dataset.invoicedAt || null,
@@ -7788,6 +7807,7 @@
       $("#estimate-invoice-due").value = estimateDateOffset(7);
       $("#estimate-discount").value = "0";
       $("#estimate-tax-rate").value = "0";
+      $("#estimate-price-display").value = "total_only";
       renderEstimateLines();
       clearQuickProject();
       $("#estimate-result").innerHTML = "";
@@ -7803,10 +7823,10 @@
           <p class="muted">${cleanText(estimate.service_address || "No project address")}</p>
           <div class="estimate-card-status"><span class="badge">Customer ${cleanText(money(estimate.total))}</span><span class="badge">Cost ${cleanText(money(estimate.internal_cost))}</span><span class="badge">Margin ${cleanText(`${(Number(estimate.gross_margin || 0) * 100).toFixed(1)}%`)}</span><span class="badge">Deposit ${cleanText(money(estimate.deposit_amount))}</span>${estimate.invoice_number ? `<span class="badge">Invoice ${cleanText(estimate.invoice_number)}</span>` : ""}</div>
           <div class="row-actions">
-            ${estimate.approved_at ? `<span class="badge">Approved by ${cleanText(estimate.approved_by || "customer")}</span>` : `<button class="button small" data-estimate-action="send-proposal" type="button">Send Proposal</button>`}
+            ${estimate.approved_at ? `<span class="badge">Approved by ${cleanText(estimate.approved_by || "customer")}</span><button class="button small" data-estimate-action="signed-copy" type="button">Signed Copy</button>` : `<button class="button small" data-estimate-action="send-proposal" type="button">Send Proposal</button>`}
             ${estimate.invoice_id ? `<button class="button small secondary" data-estimate-action="open-invoice" type="button">Open Invoice</button>` : `<button class="button small secondary" data-estimate-action="draft-invoice" type="button">Create Invoice</button><button class="button small" data-estimate-action="send-invoice" type="button">Send Invoice</button>`}
             <button class="button small ghost" data-estimate-action="edit" type="button">Edit</button>
-            <button class="button small ghost" data-estimate-action="print" type="button">Print</button>
+            <button class="button small ghost" data-estimate-action="print" type="button">Customer Preview</button>
             <button class="button small ghost" data-estimate-action="delete" type="button">Delete</button>
           </div>
         </div>`).join("") : notice(query ? "No estimates match that search." : "No saved estimates yet.");
@@ -7861,6 +7881,7 @@
       $("#estimate-status").value = estimate.status || "Draft";
       $("#estimate-discount").value = Number(estimate.discount || 0);
       $("#estimate-tax-rate").value = Number(estimate.tax_rate || 0);
+      $("#estimate-price-display").value = estimate.calculation_inputs?.proposal_price_display === "grouped" ? "grouped" : "total_only";
       $("#estimate-notes").value = estimate.notes || "";
       $("#estimate-form").dataset.calculationInputs = JSON.stringify(estimate.calculation_inputs || {});
       $("#estimate-form").dataset.depositAmount = String(estimate.deposit_amount || 0);
@@ -7869,19 +7890,38 @@
       window.scrollTo({ top: $("#project-bids").offsetTop, behavior: "smooth" });
     }
 
-    function printEstimate(estimate) {
-      const popup = window.open("", "_blank", "width=820,height=900");
-      if (!popup) return;
-      const grouped = Array.isArray(estimate.line_items) && estimate.line_items.length
-        ? (window.GreenGrinProjectEstimator?.groupedTotals(estimate.line_items.map((item) => ({ ...item, amount: item.amount ?? item.quantity * item.rate }))) || {})
-        : (estimate.grouped_totals || {});
+    function printEstimate(estimate, signature = null) {
+      const popup = window.open("", "_blank", "width=900,height=950");
+      if (!popup) {
+        showEstimateNotice("Allow pop-ups for this site to open the customer PDF preview.", true);
+        return;
+      }
+      const snapshot = signature?.document_snapshot || null;
+      const document = snapshot ? { ...estimate, ...snapshot } : estimate;
+      const priceDisplay = document.price_display || estimate.calculation_inputs?.proposal_price_display || "total_only";
+      const allGroups = snapshot
+        ? (snapshot.grouped_totals || {})
+        : (Array.isArray(estimate.line_items) && estimate.line_items.length
+          ? (window.GreenGrinProjectEstimator?.groupedTotals(estimate.line_items.map((item) => ({ ...item, amount: item.amount ?? item.quantity * item.rate }))) || {})
+          : (estimate.grouped_totals || {}));
+      const grouped = priceDisplay === "grouped" ? allGroups : {};
       const rows = Object.entries(grouped).map(([label, amount]) => `<tr><td>${cleanText(label)}</td><td>${cleanText(money(amount))}</td></tr>`).join("");
-      const validUntil = estimate.valid_until ? displayScheduleDate(estimate.valid_until) : "30 days from issue";
-      const deposit = Number(estimate.deposit_amount || 0);
-      const schedule = Number(estimate.total || 0) > 5000 ? "Remaining installation balance: 50% at project midpoint and 50% at completion." : "Remaining installation balance is due at completion.";
-      popup.document.write(`<!doctype html><html><head><title>${cleanText(estimate.estimate_number)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px;line-height:1.45}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.summary{text-align:right}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms{margin-top:24px;padding:15px;border:1px solid #ccd8c9}.meta{text-align:right;color:#526458}@media print{button{display:none}}</style></head><body><header><div><h1>Green Grin Lawn &amp; Landscape</h1><strong>Landscape Project Proposal</strong></div><div class="meta"><strong>${cleanText(estimate.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}</div></header><h2>${cleanText(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${cleanText(estimate.customer_name)}</p><p>${cleanText(estimate.service_address || "")}</p>${estimate.project_scope ? `<h2>Scope of work</h2><div class="scope">${cleanText(estimate.project_scope)}</div>` : ""}<table><thead><tr><th>Project group</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="summary"><p>Subtotal: ${cleanText(money(estimate.subtotal))}</p>${Number(estimate.discount || 0) ? `<p>Discount: -${cleanText(money(estimate.discount))}</p>` : ""}${Number(estimate.tax_amount || 0) ? `<p>Tax: ${cleanText(money(estimate.tax_amount))}</p>` : ""}<p class="total">Project total: ${cleanText(money(estimate.total))}</p></div><div class="terms"><strong>Payment schedule</strong><p>Material and reserved equipment deposit: ${cleanText(money(deposit))}</p><p>${cleanText(schedule)}</p><p>Additional work requires an approved change order. This proposal expires on ${cleanText(validUntil)}.</p></div>${estimate.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(estimate.customer_notes)}</div>` : ""}<button onclick="window.print()">Print Proposal</button></body></html>`);
+      const groupTable = rows ? `<table><thead><tr><th>Project group</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table>` : "";
+      const validUntil = document.valid_until ? displayScheduleDate(document.valid_until) : "30 days from issue";
+      const deposit = Number(document.deposit_amount || 0);
+      const schedule = document.payment_terms || (Number(document.total || 0) > 5000 ? "Materials and reserved equipment are due before ordering. Half of the remaining balance is due at midpoint and the final balance at completion." : "Materials and reserved equipment are due before ordering. The remaining balance is due at completion.");
+      const drawnSignature = signature?.signature_type === "drawn" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature.signature_data || "") ? `<img class="signature-image" src="${signature.signature_data}" alt="Customer signature">` : "";
+      const signedBlock = signature ? `<section class="signed"><h2>Customer acceptance</h2>${drawnSignature || `<p class="typed-signature">${cleanText(signature.signer_name)}</p>`}<p>${cleanText(signature.consent_text || "I approve this proposal and authorize Green Grin Lawn & Landscape to perform the described work.")}</p><p class="meta-left">Signed by ${cleanText(signature.signer_name)} (${cleanText(signature.signer_email || "No email")})<br>${cleanText(new Date(signature.signed_at).toLocaleString())}<br>Document reference: ${cleanText(signature.document_hash)}</p></section>` : "";
+      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${cleanText(document.estimate_number)} Customer Copy</title><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#102419;margin:0;line-height:1.45;background:#edf3eb}.document{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff;box-shadow:0 16px 50px rgba(12,38,22,.15)}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:24px;font-weight:bold;margin:26px 0}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms,.signed{margin-top:24px;padding:18px;border:1px solid #ccd8c9}.meta{text-align:right;color:#526458}.meta-left{font-size:12px;color:#526458}.toolbar{position:sticky;top:0;display:flex;justify-content:center;padding:12px;background:#07351d}.toolbar button{padding:12px 18px;border:0;border-radius:5px;background:#8ed23e;color:#06170d;font-weight:800;cursor:pointer}.typed-signature{font-size:25px;font-style:italic;border-bottom:1px solid #7a8a7d;padding-bottom:8px}.signature-image{display:block;max-width:430px;max-height:140px;border-bottom:1px solid #7a8a7d}@media(max-width:620px){.document{padding:24px}header{display:block}.meta{text-align:left;margin-top:12px}}@media print{body{background:#fff}.toolbar{display:none}.document{width:auto;margin:0;padding:0;box-shadow:none}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="document"><header><div><h1>Green Grin Lawn &amp; Landscape</h1><strong>${signature ? "Signed Landscape Project Proposal" : "Customer Proposal Preview"}</strong></div><div class="meta"><strong>${cleanText(document.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}</div></header><h2>${cleanText(document.project_title)}</h2><p><strong>Prepared for:</strong> ${cleanText(document.customer_name)}</p><p>${cleanText(document.service_address || "")}</p>${document.project_scope ? `<h2>Scope of work</h2><div class="scope">${cleanText(document.project_scope)}</div>` : ""}${groupTable}<p class="total">Project total: ${cleanText(money(document.total))}</p><div class="terms"><strong>Payment schedule</strong><p>Material and reserved equipment deposit: ${cleanText(money(deposit))}</p><p>${cleanText(schedule)}</p><p>${cleanText(document.change_order_terms || "Additional work requires an approved change order.")}</p></div>${document.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(document.customer_notes)}</div>` : ""}${signedBlock}</main></body></html>`);
       popup.document.close();
       popup.focus();
+    }
+
+    async function openSignedEstimateCopy(estimate) {
+      showEstimateNotice("Opening the signed customer copy...");
+      const data = await requestJson("portal-proposals", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "signed-copy", estimate_id: estimate.id }) });
+      printEstimate(data.estimate || estimate, data.signature);
+      showEstimateNotice(`Signed copy ${estimate.estimate_number} opened. Use Print / Save as PDF to keep a PDF.`);
     }
 
     async function saveEstimateRecord(payload) {
@@ -10699,6 +10739,24 @@
       button.addEventListener("click", () => openEstimatorView(button.dataset.estimatorView || button.dataset.estimatorGo));
     });
     renderInvoiceLines();
+
+    $("#test-owner-email").addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      $("#email-test-result").innerHTML = notice("Sending a live email test to ken@greengrinlawns.com...");
+      try {
+        const data = await requestJson("portal-proposals", {
+          method: "POST",
+          headers: adminHeaders(),
+          body: JSON.stringify({ action: "test-email" })
+        });
+        $("#email-test-result").innerHTML = notice(`${data.message}${data.id ? ` Resend ID: ${data.id}` : ""}`);
+      } catch (error) {
+        $("#email-test-result").innerHTML = notice(`Email test failed: ${error.message}`, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
 
     $("#invoice-form").addEventListener("submit", async (event) => {
       event.preventDefault();
