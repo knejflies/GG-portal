@@ -9,7 +9,7 @@ const estimate = {
   project_title: "Decorative Rock Installation",
   service_address: "100 Test Road",
   project_scope: "Prepare and install decorative rock.",
-  grouped_totals: { Materials: 2000, "Installation & Labor": 1500 },
+  grouped_totals: { Materials: 2000, "Labor & Installation": 1500 },
   subtotal: 3500,
   total: 3500,
   deposit_amount: 2000,
@@ -59,8 +59,8 @@ const repairedGroups = customerGroupedTotals({
   ]
 });
 assert.deepEqual(repairedGroups, {
-  Materials: 250,
-  "Installation & Labor": 200
+  Materials: 100,
+  "Labor & Installation": 350
 });
 
 console.log("Project proposal tests passed.");

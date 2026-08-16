@@ -7951,6 +7951,16 @@
     }
 
     function projectInvoicePayload(estimate, sendNow = false, existingInvoice = null) {
+      const customerLines = window.GreenGrinProjectEstimator?.invoiceLines(
+        (estimate.line_items || []).map((item) => ({
+          ...item,
+          amount: Number(item.amount ?? (Number(item.quantity || 0) * Number(item.rate || 0)))
+        }))
+      ) || [];
+      const groupedSubtotal = customerLines.reduce((sum, item) => sum + Number(item.rate || 0), 0);
+      if (Math.abs(groupedSubtotal - Number(estimate.subtotal || 0)) > 0.01) {
+        throw new Error("The customer invoice groups do not match the project subtotal. Save the estimate again before invoicing.");
+      }
       return {
         id: existingInvoice?.id || "",
         customer_user_id: estimate.customer_user_id || null,
@@ -7963,13 +7973,7 @@
         discount: Number(estimate.discount || 0),
         tax_rate: Number(estimate.tax_rate || 0),
         tax_amount: Number(estimate.tax_amount || 0),
-        line_items: (estimate.line_items || []).map((item) => ({
-          description: item.description,
-          category: item.category,
-          quantity: item.quantity,
-          unit: item.unit,
-          rate: item.rate
-        })),
+        line_items: customerLines,
         due_date: estimate.invoice_due_date || null,
         status: sendNow ? "Sent" : "Draft",
         service_line: estimate.project_title || "Landscape project",

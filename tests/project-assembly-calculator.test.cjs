@@ -33,7 +33,9 @@ assert.equal(rock.lines.find((line) => line.catalog_id === "installation-labor")
 assert.equal(rock.lines.find((line) => line.catalog_id === "rental-svl65").unit_cost, 250);
 assert.ok(rock.depositAmount > 0);
 assert.ok(rock.groupedTotals.Materials > 0);
-assert.ok(rock.groupedTotals["Installation & Labor"] > 0);
+assert.ok(rock.groupedTotals["Labor & Installation"] > 0);
+assert.deepEqual(Object.keys(rock.groupedTotals), ["Materials", "Labor & Installation"]);
+assert.deepEqual(estimator.invoiceLines(rock.lines).map((line) => line.description), ["Materials", "Labor & Installation"]);
 assert.deepEqual(rock.missingCosts, []);
 
 const combinedFabricRock = estimator.calculateProject({

@@ -51,11 +51,11 @@ const mixedEstimate = estimatePayload({
   ]
 });
 assert.deepEqual(mixedEstimate.grouped_totals, {
-  Materials: 175,
-  "Installation & Labor": 200,
-  "Equipment & Hauling": 30,
-  "Site Preparation & Disposal": 10
+  Materials: 100,
+  "Labor & Installation": 315
 });
+assert.equal(Object.keys(mixedEstimate.grouped_totals).length, 2);
+assert.equal(Object.keys(mixedEstimate.grouped_totals).some((label) => /contingency/i.test(label)), false);
 assert.equal(Object.values(mixedEstimate.grouped_totals).reduce((sum, amount) => sum + amount, 0), mixedEstimate.subtotal);
 
 const linked = estimatePayload({
