@@ -18,14 +18,16 @@ for (const marker of [
   'deletedEstimateItemIds',
   'excludedCatalogIds: bidPricingConfig?.deletedEstimateItemIds || []',
   'data-estimator-view="catalog"',
-  'data-estimate-intent="draft-invoice"',
-  'data-estimate-intent="send-invoice"',
-  'function invoiceLandscapeEstimate',
+  'data-estimate-intent="send-proposal"',
+  'data-estimate-intent="print"',
   'requestJson("portal-estimates"',
-  'Internal costs and profit stayed private'
+  'Unit prices, markups, labor hours, internal costs, and profit never appear on the customer copy.'
 ]) {
   assert.ok(admin.includes(marker), `Admin Project Estimator is missing ${marker}`);
 }
+
+assert.ok(!admin.includes('data-estimate-intent="send-invoice"'), "Project estimates must not expose a duplicate Send Invoice action");
+assert.ok(!admin.includes('data-estimate-intent="draft-invoice"'), "Project estimates must not expose a duplicate invoice draft action");
 
 assert.match(admin, /id="bids"[^>]*data-legacy-bidder="mowing"[^>]*hidden/);
 assert.match(admin, /id="fert-bids"[^>]*data-legacy-bidder="fertilizer"[^>]*hidden/);

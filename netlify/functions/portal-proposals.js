@@ -100,6 +100,7 @@ function publicEstimate(estimate) {
     project_scope: estimate.project_scope,
     customer_notes: estimate.customer_notes,
     valid_until: estimate.valid_until,
+    invoice_due_date: estimate.invoice_due_date,
     price_display: proposalPriceDisplay(estimate),
     grouped_totals: customerVisibleGroups(estimate),
     subtotal: Number(estimate.subtotal || 0),
@@ -122,7 +123,11 @@ async function estimateForToken(token) {
 function proposalEmail(estimate, link) {
   const rows = Object.entries(customerVisibleGroups(estimate)).map(([label, amount]) => `<tr><td style="padding:10px;border-bottom:1px solid #d7e4d4">${escapeHtml(label)}</td><td style="padding:10px;border-bottom:1px solid #d7e4d4;text-align:right;font-weight:700">${money(amount)}</td></tr>`).join("");
   const groups = rows ? `<table style="width:100%;border-collapse:collapse">${rows}</table>` : "";
-  return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">Green Grin Lawn &amp; Landscape</h1><p>Hello ${escapeHtml(estimate.customer_name)},</p><p>Your proposal for <strong>${escapeHtml(estimate.project_title)}</strong> is ready.</p>${groups}<p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(estimate.total)}</p><p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Approve Proposal</a></p><p style="color:#5c6e62">The secure link expires with the proposal. Extra work requires an approved change order.</p></div>`;
+  const due = estimate.invoice_due_date ? new Date(`${estimate.invoice_due_date}T12:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Per the payment schedule below";
+  const paymentTerms = Number(estimate.total || 0) > 5000
+    ? "Materials and reserved equipment are due before ordering. Half of the remaining balance is due at midpoint and the final balance at completion."
+    : "Materials and reserved equipment are due before ordering. The remaining balance is due at completion.";
+  return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">Green Grin Lawn &amp; Landscape</h1><p style="color:#4f6556;font-weight:700">PROJECT PROPOSAL &amp; INVOICE | ${escapeHtml(estimate.estimate_number)}</p><h2 style="color:#07351d">${escapeHtml(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${escapeHtml(estimate.customer_name)}</p><p>${escapeHtml(estimate.service_address || "")}</p><h3 style="color:#07351d">Scope of work</h3><div style="white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(estimate.project_scope || "")}</div><h3 style="color:#07351d">Project investment</h3>${groups}<p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(estimate.total)}</p><p><strong>Material &amp; equipment deposit:</strong> ${money(estimate.deposit_amount)}</p><p><strong>Payment due:</strong> ${escapeHtml(due)}</p><p>${escapeHtml(paymentTerms)}</p>${estimate.customer_notes ? `<h3 style="color:#07351d">Project notes</h3><p style="white-space:pre-wrap">${escapeHtml(estimate.customer_notes)}</p>` : ""}<p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Approve Proposal</a></p><p style="color:#5c6e62">The secure link expires with the proposal. Extra work requires an approved change order.</p></div>`;
 }
 
 function documentSnapshot(estimate) {
@@ -140,6 +145,7 @@ function documentSnapshot(estimate) {
     total: Number(estimate.total || 0),
     deposit_amount: Number(estimate.deposit_amount || 0),
     valid_until: estimate.valid_until,
+    invoice_due_date: estimate.invoice_due_date,
     customer_notes: estimate.customer_notes,
     payment_terms: Number(estimate.total || 0) > 5000
       ? "Materials and reserved equipment due before ordering; half of remaining balance at midpoint; final balance at completion."
@@ -250,7 +256,7 @@ exports.handler = async (event) => {
       const expiry = estimate.valid_until ? new Date(`${estimate.valid_until}T23:59:59`).toISOString() : new Date(Date.now() + 30 * 86400000).toISOString();
       const link = `${PROPOSAL_URL}${PROPOSAL_URL.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
       await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, { method: "PATCH", body: JSON.stringify({ proposal_token_hash: hash(token), proposal_sent_at: new Date().toISOString(), proposal_expires_at: expiry, status: "Quoted", updated_at: new Date().toISOString() }) });
-      await sendEmail(estimate.email, `Proposal ${estimate.estimate_number} from Green Grin`, proposalEmail(estimate, link));
+      await sendEmail(estimate.email, `Project proposal & invoice ${estimate.estimate_number} from Green Grin`, proposalEmail(estimate, link));
       return json(200, { ok: true, link, message: `Proposal emailed to ${estimate.email}.` });
     }
 
@@ -305,4 +311,4 @@ exports.handler = async (event) => {
   }
 };
 
-exports._test = { hash, customerGroupedTotals, proposalPriceDisplay, customerVisibleGroups, publicEstimate, documentSnapshot, signedProposalEmail };
+exports._test = { hash, customerGroupedTotals, proposalPriceDisplay, customerVisibleGroups, publicEstimate, proposalEmail, documentSnapshot, signedProposalEmail };

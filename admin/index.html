@@ -5120,7 +5120,7 @@
             <div class="three">
               <div><label for="estimate-discount">Customer discount</label><input id="estimate-discount" type="number" min="0" step="0.01" value="0" /></div>
               <div><label for="estimate-tax-rate">Tax rate %</label><input id="estimate-tax-rate" type="number" min="0" max="100" step="0.01" value="0" /></div>
-              <div><label for="estimate-invoice-due">Invoice due date</label><input id="estimate-invoice-due" type="date" /></div>
+              <div><label for="estimate-invoice-due">Payment due date</label><input id="estimate-invoice-due" type="date" /></div>
             </div>
             <div>
               <label for="estimate-price-display">Prices shown to customer</label>
@@ -5131,7 +5131,7 @@
               <small class="muted">Unit prices, markups, labor hours, internal costs, and profit never appear on the customer copy.</small>
             </div>
             <div id="estimate-profit-strip" class="estimate-profit-strip" aria-live="polite"></div>
-            <div><label for="estimate-customer-notes">Customer invoice notes</label><textarea id="estimate-customer-notes" rows="3" placeholder="Payment terms, scheduling note, warranty, or other customer-facing details."></textarea></div>
+            <div><label for="estimate-customer-notes">Customer proposal notes</label><textarea id="estimate-customer-notes" rows="3" placeholder="Scheduling note, warranty, exclusions, or other customer-facing details."></textarea></div>
             <details class="estimate-internal-notes">
               <summary>Internal notes</summary>
               <label for="estimate-notes">Private owner notes</label>
@@ -5140,9 +5140,7 @@
             <div class="estimate-primary-actions">
               <button class="button secondary" data-estimate-intent="save" type="submit">Save Estimate</button>
               <button class="button" data-estimate-intent="send-proposal" type="submit">Send Proposal</button>
-              <button class="button ghost" data-estimate-intent="print" type="submit">Preview Customer PDF</button>
-              <button class="button ghost" data-estimate-intent="draft-invoice" type="submit">Create Invoice Draft</button>
-              <button class="button" data-estimate-intent="send-invoice" type="submit">Send Invoice</button>
+              <button class="button ghost" data-estimate-intent="print" type="submit">Preview Proposal</button>
               <button id="estimate-clear" class="button ghost" type="button">New Estimate</button>
             </div>
           </form>
@@ -6734,12 +6732,12 @@
         $("#estimate-result").innerHTML = notice("The customer total must be greater than zero before saving the estimate.", true);
         return;
       }
-      if (["send-invoice", "send-proposal"].includes(intent) && !payload.email) {
-        $("#estimate-result").innerHTML = notice(`Add the customer's email before sending the ${intent === "send-proposal" ? "proposal" : "invoice"}.`, true);
+      if (intent === "send-proposal" && !payload.email) {
+        $("#estimate-result").innerHTML = notice("Add the customer's email before sending the proposal.", true);
         return;
       }
       if (submitter) submitter.disabled = true;
-      $("#estimate-result").innerHTML = notice(intent === "send-proposal" ? "Saving and emailing the secure proposal..." : intent === "send-invoice" ? "Saving estimate and sending invoice..." : intent === "draft-invoice" ? "Saving estimate and creating invoice..." : "Saving estimate...");
+      $("#estimate-result").innerHTML = notice(intent === "send-proposal" ? "Saving and emailing the secure proposal..." : "Saving estimate...");
       try {
         const estimate = await saveEstimateRecord(payload);
         if (intent === "send-proposal") {
@@ -6747,8 +6745,6 @@
         } else if (intent === "print") {
           printEstimate(estimate);
           $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved and opened for printing.`);
-        } else if (intent === "draft-invoice" || intent === "send-invoice") {
-          await invoiceLandscapeEstimate(estimate, intent === "send-invoice");
         } else {
           $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved.`);
         }
@@ -6776,20 +6772,6 @@
       if (action === "send-proposal") {
         try { await sendEstimateProposal(estimate); }
         catch (error) { showEstimateNotice(error.message, true); }
-        return;
-      }
-      if (action === "open-invoice") {
-        try { await openEstimateInvoice(estimate); }
-        catch (error) { showEstimateNotice(error.message, true); }
-        return;
-      }
-      if (action === "draft-invoice" || action === "send-invoice") {
-        try {
-          showEstimateNotice(action === "send-invoice" ? "Sending project invoice..." : "Creating project invoice...");
-          await invoiceLandscapeEstimate(estimate, action === "send-invoice");
-        } catch (error) {
-          showEstimateNotice(error.message, true);
-        }
         return;
       }
       if (action === "delete") {
@@ -7824,7 +7806,6 @@
           <div class="estimate-card-status"><span class="badge">Customer ${cleanText(money(estimate.total))}</span><span class="badge">Cost ${cleanText(money(estimate.internal_cost))}</span><span class="badge">Margin ${cleanText(`${(Number(estimate.gross_margin || 0) * 100).toFixed(1)}%`)}</span><span class="badge">Deposit ${cleanText(money(estimate.deposit_amount))}</span>${estimate.invoice_number ? `<span class="badge">Invoice ${cleanText(estimate.invoice_number)}</span>` : ""}</div>
           <div class="row-actions">
             ${estimate.approved_at ? `<span class="badge">Approved by ${cleanText(estimate.approved_by || "customer")}</span><button class="button small" data-estimate-action="signed-copy" type="button">Signed Copy</button>` : `<button class="button small" data-estimate-action="send-proposal" type="button">Send Proposal</button>`}
-            ${estimate.invoice_id ? `<button class="button small secondary" data-estimate-action="open-invoice" type="button">Open Invoice</button>` : `<button class="button small secondary" data-estimate-action="draft-invoice" type="button">Create Invoice</button><button class="button small" data-estimate-action="send-invoice" type="button">Send Invoice</button>`}
             <button class="button small ghost" data-estimate-action="edit" type="button">Edit</button>
             <button class="button small ghost" data-estimate-action="print" type="button">Customer Preview</button>
             <button class="button small ghost" data-estimate-action="delete" type="button">Delete</button>
@@ -7908,11 +7889,12 @@
       const rows = Object.entries(grouped).map(([label, amount]) => `<tr><td>${cleanText(label)}</td><td>${cleanText(money(amount))}</td></tr>`).join("");
       const groupTable = rows ? `<table><thead><tr><th>Project group</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table>` : "";
       const validUntil = document.valid_until ? displayScheduleDate(document.valid_until) : "30 days from issue";
+      const paymentDue = document.invoice_due_date ? displayScheduleDate(document.invoice_due_date) : "Per payment schedule";
       const deposit = Number(document.deposit_amount || 0);
       const schedule = document.payment_terms || (Number(document.total || 0) > 5000 ? "Materials and reserved equipment are due before ordering. Half of the remaining balance is due at midpoint and the final balance at completion." : "Materials and reserved equipment are due before ordering. The remaining balance is due at completion.");
       const drawnSignature = signature?.signature_type === "drawn" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature.signature_data || "") ? `<img class="signature-image" src="${signature.signature_data}" alt="Customer signature">` : "";
       const signedBlock = signature ? `<section class="signed"><h2>Customer acceptance</h2>${drawnSignature || `<p class="typed-signature">${cleanText(signature.signer_name)}</p>`}<p>${cleanText(signature.consent_text || "I approve this proposal and authorize Green Grin Lawn & Landscape to perform the described work.")}</p><p class="meta-left">Signed by ${cleanText(signature.signer_name)} (${cleanText(signature.signer_email || "No email")})<br>${cleanText(new Date(signature.signed_at).toLocaleString())}<br>Document reference: ${cleanText(signature.document_hash)}</p></section>` : "";
-      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${cleanText(document.estimate_number)} Customer Copy</title><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#102419;margin:0;line-height:1.45;background:#edf3eb}.document{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff;box-shadow:0 16px 50px rgba(12,38,22,.15)}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:24px;font-weight:bold;margin:26px 0}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms,.signed{margin-top:24px;padding:18px;border:1px solid #ccd8c9}.meta{text-align:right;color:#526458}.meta-left{font-size:12px;color:#526458}.toolbar{position:sticky;top:0;display:flex;justify-content:center;padding:12px;background:#07351d}.toolbar button{padding:12px 18px;border:0;border-radius:5px;background:#8ed23e;color:#06170d;font-weight:800;cursor:pointer}.typed-signature{font-size:25px;font-style:italic;border-bottom:1px solid #7a8a7d;padding-bottom:8px}.signature-image{display:block;max-width:430px;max-height:140px;border-bottom:1px solid #7a8a7d}@media(max-width:620px){.document{padding:24px}header{display:block}.meta{text-align:left;margin-top:12px}}@media print{body{background:#fff}.toolbar{display:none}.document{width:auto;margin:0;padding:0;box-shadow:none}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="document"><header><div><h1>Green Grin Lawn &amp; Landscape</h1><strong>${signature ? "Signed Landscape Project Proposal" : "Customer Proposal Preview"}</strong></div><div class="meta"><strong>${cleanText(document.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}</div></header><h2>${cleanText(document.project_title)}</h2><p><strong>Prepared for:</strong> ${cleanText(document.customer_name)}</p><p>${cleanText(document.service_address || "")}</p>${document.project_scope ? `<h2>Scope of work</h2><div class="scope">${cleanText(document.project_scope)}</div>` : ""}${groupTable}<p class="total">Project total: ${cleanText(money(document.total))}</p><div class="terms"><strong>Payment schedule</strong><p>Material and reserved equipment deposit: ${cleanText(money(deposit))}</p><p>${cleanText(schedule)}</p><p>${cleanText(document.change_order_terms || "Additional work requires an approved change order.")}</p></div>${document.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(document.customer_notes)}</div>` : ""}${signedBlock}</main></body></html>`);
+      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${cleanText(document.estimate_number)} Project Proposal &amp; Invoice</title><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#102419;margin:0;line-height:1.45;background:#edf3eb}.document{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff;box-shadow:0 16px 50px rgba(12,38,22,.15)}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:24px;font-weight:bold;margin:26px 0}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms,.signed{margin-top:24px;padding:18px;border:1px solid #ccd8c9}.meta{text-align:right;color:#526458}.meta-left{font-size:12px;color:#526458}.toolbar{position:sticky;top:0;display:flex;justify-content:center;padding:12px;background:#07351d}.toolbar button{padding:12px 18px;border:0;border-radius:5px;background:#8ed23e;color:#06170d;font-weight:800;cursor:pointer}.typed-signature{font-size:25px;font-style:italic;border-bottom:1px solid #7a8a7d;padding-bottom:8px}.signature-image{display:block;max-width:430px;max-height:140px;border-bottom:1px solid #7a8a7d}@media(max-width:620px){.document{padding:24px}header{display:block}.meta{text-align:left;margin-top:12px}}@media print{body{background:#fff}.toolbar{display:none}.document{width:auto;margin:0;padding:0;box-shadow:none}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="document"><header><div><h1>Green Grin Lawn &amp; Landscape</h1><strong>${signature ? "Signed Project Proposal & Invoice" : "Project Proposal & Invoice"}</strong></div><div class="meta"><strong>${cleanText(document.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}<br>Payment due ${cleanText(paymentDue)}</div></header><h2>${cleanText(document.project_title)}</h2><p><strong>Prepared for:</strong> ${cleanText(document.customer_name)}</p><p>${cleanText(document.service_address || "")}</p>${document.project_scope ? `<h2>Scope of work</h2><div class="scope">${cleanText(document.project_scope)}</div>` : ""}<h2>Project investment</h2>${groupTable}<p class="total">Project total: ${cleanText(money(document.total))}</p><div class="terms"><strong>Payment schedule</strong><p>Material and reserved equipment deposit: ${cleanText(money(deposit))}</p><p>${cleanText(schedule)}</p><p>${cleanText(document.change_order_terms || "Additional work requires an approved change order.")}</p></div>${document.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(document.customer_notes)}</div>` : ""}${signedBlock}</main></body></html>`);
       popup.document.close();
       popup.focus();
     }
@@ -7948,84 +7930,6 @@
       await loadEstimates();
       showEstimateNotice(data.message || `Proposal ${estimate.estimate_number} emailed to ${estimate.email}.`);
       return data;
-    }
-
-    function projectInvoicePayload(estimate, sendNow = false, existingInvoice = null) {
-      const customerLines = window.GreenGrinProjectEstimator?.invoiceLines(
-        (estimate.line_items || []).map((item) => ({
-          ...item,
-          amount: Number(item.amount ?? (Number(item.quantity || 0) * Number(item.rate || 0)))
-        }))
-      ) || [];
-      const groupedSubtotal = customerLines.reduce((sum, item) => sum + Number(item.rate || 0), 0);
-      if (Math.abs(groupedSubtotal - Number(estimate.subtotal || 0)) > 0.01) {
-        throw new Error("The customer invoice groups do not match the project subtotal. Save the estimate again before invoicing.");
-      }
-      return {
-        id: existingInvoice?.id || "",
-        customer_user_id: estimate.customer_user_id || null,
-        customer_code: estimate.customer_code || "",
-        customer_name: estimate.customer_name || "Customer",
-        phone: estimate.phone || "",
-        email: estimate.email || "",
-        amount: Number(estimate.total || 0),
-        subtotal: Number(estimate.subtotal || 0),
-        discount: Number(estimate.discount || 0),
-        tax_rate: Number(estimate.tax_rate || 0),
-        tax_amount: Number(estimate.tax_amount || 0),
-        line_items: customerLines,
-        due_date: estimate.invoice_due_date || null,
-        status: sendNow ? "Sent" : "Draft",
-        service_line: estimate.project_title || "Landscape project",
-        service_address: estimate.service_address || "",
-        project_scope: estimate.project_scope || "",
-        notes: estimate.customer_notes || `Created from estimate ${estimate.estimate_number}.`,
-        payment_url: existingInvoice?.payment_url || "",
-        payment_method: existingInvoice?.payment_method || "",
-        payment_reference: existingInvoice?.payment_reference || "",
-        payment_reported_at: existingInvoice?.payment_reported_at || null,
-        payment_confirmed_at: existingInvoice?.payment_confirmed_at || null,
-        source_estimate_id: estimate.id,
-        source_estimate_number: estimate.estimate_number,
-        notify_customer: sendNow
-      };
-    }
-
-    async function invoiceLandscapeEstimate(estimate, sendNow = false) {
-      if (sendNow && !estimate.email) throw new Error("Add the customer's email before sending the invoice.");
-      if (sendNow && !estimate.invoice_due_date) throw new Error("Choose an invoice due date before sending.");
-      if (!invoiceDrafts.length) await loadInvoices();
-      const existingInvoice = estimate.invoice_id ? invoiceDrafts.find((invoice) => invoice.id === estimate.invoice_id) : null;
-      if (existingInvoice?.status === "Paid") throw new Error("This project invoice is already paid and cannot be replaced from the estimate.");
-      const payload = projectInvoicePayload(estimate, sendNow, existingInvoice);
-      const data = await requestJson("portal-invoices", {
-        method: existingInvoice ? "PATCH" : "POST",
-        headers: adminHeaders(),
-        body: JSON.stringify(payload)
-      });
-      const invoice = data.invoice;
-      if (!invoice?.id) throw new Error("The invoice could not be created.");
-      const linkedEstimate = await saveEstimateRecord({
-        ...estimate,
-        status: "Converted",
-        invoice_id: invoice.id,
-        invoice_number: invoiceNumber(invoice),
-        invoiced_at: estimate.invoiced_at || new Date().toISOString()
-      });
-      await Promise.all([loadInvoices(), loadEstimates()]);
-      showEstimateNotice(sendNow
-        ? invoiceDeliveryText(data, `Invoice ${invoiceNumber(invoice)} sent to ${estimate.customer_name}.`)
-        : `Invoice ${invoiceNumber(invoice)} saved as a draft. Internal costs and profit stayed private.`);
-      return { estimate: linkedEstimate, invoice, delivery: data };
-    }
-
-    async function openEstimateInvoice(estimate) {
-      await loadInvoices();
-      const invoice = invoiceDrafts.find((entry) => entry.id === estimate.invoice_id);
-      if (!invoice) throw new Error("That linked invoice was deleted. Edit the estimate and create a new invoice.");
-      openTab("invoices");
-      fillInvoiceForm(invoice);
-      $("#invoice-form").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     async function persistSavedRates(message) {

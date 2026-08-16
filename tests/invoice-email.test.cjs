@@ -58,4 +58,11 @@ assert.equal(project.source_estimate_number, "EST-ROCK-1");
 assert.equal("unit_cost" in project.line_items[0], false);
 assert.equal("markup_percent" in project.line_items[0], false);
 
+const projectEmail = invoiceEmailPayload(project);
+assert.match(projectEmail.html, /<th[^>]*>Description<\/th><th[^>]*>Amount<\/th>/);
+assert.doesNotMatch(projectEmail.html, />Quantity<\/th>/);
+assert.doesNotMatch(projectEmail.html, />Rate<\/th>/);
+assert.match(projectEmail.text, /Decorative rock: \$825\.00/);
+assert.doesNotMatch(projectEmail.text, /3 ton/);
+
 console.log("Invoice email tests passed.");
