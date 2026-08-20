@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Customer Portal | Green Grin Lawn & Landscape</title>
+  <title>Customer Portal | Green Grin Lawns</title>
   <meta name="theme-color" content="#123324" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Green Grin Portal" />
@@ -3423,7 +3423,7 @@
   <header>
     <div class="wrap nav">
       <a class="brand" href="/">
-        <img src="/assets/green-grin-logo.png" alt="Green Grin Lawn & Landscape" />
+        <img src="/assets/green-grin-logo.png" alt="Green Grin Lawns" />
       </a>
       <div class="nav-actions">
         <span id="account-pill" class="account-pill">Signed in</span>
@@ -4834,7 +4834,7 @@
       if (portalCardCopy) portalCardCopy.textContent = "Schedule, billing, messages, and property notes.";
       document.body.classList.add(`${mode}-site`);
       if (mode === "admin") {
-        document.title = "Admin Portal | Green Grin Lawn & Landscape";
+        document.title = "Admin Portal | Green Grin Lawns";
         $("#portal-title").textContent = "Admin Portal";
         $("#portal-subtitle").textContent = "Owner tools for jobs, scheduling, employee access, and activity logs.";
         if (portalCardTitle) portalCardTitle.textContent = "Command Center";
@@ -4842,7 +4842,7 @@
         $("#team-access").hidden = false;
       }
       if (mode === "employee") {
-        document.title = "Employee Portal | Green Grin Lawn & Landscape";
+        document.title = "Employee Portal | Green Grin Lawns";
         $("#portal-title").textContent = "Employee Portal";
         $("#portal-subtitle").textContent = "Crew access for assigned jobs, time, and marketing routes.";
         if (portalCardTitle) portalCardTitle.textContent = "Crew Board";
@@ -6727,7 +6727,7 @@
         <div class="project-approval">
           <div><strong>Approve this project</strong><p class="muted">Review the scope and total above before approving.</p></div>
           <label>Full legal name<input data-approval-name type="text" autocomplete="name" maxlength="120" placeholder="Type your full legal name" /></label>
-          <label class="approval-consent"><input data-approval-consent type="checkbox" /><span>I have reviewed the project scope and invoice total and authorize Green Grin Lawn &amp; Landscape to perform the described work.</span></label>
+          <label class="approval-consent"><input data-approval-consent type="checkbox" /><span>I have reviewed the project scope and invoice total and authorize Green Grin Lawns to perform the described work.</span></label>
           <button class="button" data-invoice-approve="${cleanText(invoice.id)}" type="button">Approve Project</button>
         </div>
       `;
@@ -6911,7 +6911,7 @@
       const address = invoice.service_address ? `<p><strong>Project address:</strong> ${cleanText(invoice.service_address)}</p>` : "";
       const scope = invoice.project_scope ? `<section class="scope"><h2>Project scope</h2><p>${cleanText(invoice.project_scope)}</p></section>` : "";
       const approval = invoice.accepted_at ? `<p class="approval"><strong>Approved by ${cleanText(invoice.accepted_by || "Customer")}</strong> on ${cleanText(new Date(invoice.accepted_at).toLocaleString())}</p>` : "";
-      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}.scope{margin:22px 0;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.scope p{white-space:pre-wrap}.approval{padding:12px;border:1px solid #78c653;background:#f4faef}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawn &amp; Landscape</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p>${address}<p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p>${scope}<table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${approval}${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button></body></html>`);
+      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}.scope{margin:22px 0;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.scope p{white-space:pre-wrap}.approval{padding:12px;border:1px solid #78c653;background:#f4faef}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawns</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p>${address}<p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p>${scope}<table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${approval}${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button></body></html>`);
       popup.document.close();
       popup.focus();
     }

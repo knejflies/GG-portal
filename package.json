@@ -1,10 +1,10 @@
 {
   "name": "green-grin-netlify-site",
-  "version": "1.91.0",
+  "version": "1.92.0",
   "private": true,
-  "description": "Green Grin Lawn & Landscape site and portals for Netlify.",
+  "description": "Green Grin Lawns site and portals for Netlify.",
   "scripts": {
-    "test": "npm run test:account-signup && npm run test:lawn-bidder && npm run test:mowing-simple && npm run test:weekly-jobs && npm run test:morning-reminders && npm run test:fert-bidder && npm run test:fert-portal && npm run test:portal-pricing && npm run test:zelle && npm run test:invoice-email && npm run test:customer-plans && npm run test:route-optimizer && npm run test:auto-bid && npm run test:project-estimates && npm run test:project-assemblies && npm run test:project-bid-scenarios && npm run test:project-final-bid && npm run test:project-proposals && npm run test:project-time && npm run test:project-estimator-integration && npm run test:portal-html",
+    "test": "npm run test:account-signup && npm run test:lawn-bidder && npm run test:mowing-simple && npm run test:weekly-jobs && npm run test:morning-reminders && npm run test:fert-bidder && npm run test:fert-portal && npm run test:portal-pricing && npm run test:zelle && npm run test:invoice-email && npm run test:customer-plans && npm run test:route-optimizer && npm run test:auto-bid && npm run test:project-estimates && npm run test:project-assemblies && npm run test:project-bid-scenarios && npm run test:project-final-bid && npm run test:project-proposals && npm run test:landscaping-contract && npm run test:project-time && npm run test:project-estimator-integration && npm run test:portal-html",
     "test:account-signup": "node tests/account-signup-flow.test.cjs",
     "test:lawn-bidder": "node tests/lawn-bidder.test.cjs",
     "test:mowing-simple": "node tests/mowing-bidder-simple.test.cjs",
@@ -24,6 +24,7 @@
     "test:project-bid-scenarios": "node tests/project-bid-scenarios.test.cjs",
     "test:project-final-bid": "node tests/project-final-bid.test.cjs",
     "test:project-proposals": "node tests/project-proposals.test.cjs",
+    "test:landscaping-contract": "node tests/landscaping-contract.test.cjs",
     "test:project-time": "node tests/project-time-tracking.test.cjs",
     "test:project-estimator-integration": "node tests/project-estimator-integration.test.cjs"
   },

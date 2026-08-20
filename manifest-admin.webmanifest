@@ -2,7 +2,7 @@
   "id": "/admin/",
   "name": "Green Grin Admin Portal",
   "short_name": "GGL Admin",
-  "description": "Owner dashboard for Green Grin Lawn & Landscape.",
+  "description": "Owner dashboard for Green Grin Lawns.",
   "start_url": "/admin/",
   "scope": "/admin/",
   "display": "standalone",

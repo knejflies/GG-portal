@@ -18,7 +18,7 @@ const payload = invoiceEmailPayload({
   notes: "Monthly mowing"
 });
 
-assert.equal(payload.from, "Green Grin Lawn & Landscape <ken@greengrinlawns.com>");
+assert.equal(payload.from, "Green Grin Lawns <ken@greengrinlawns.com>");
 assert.deepEqual(payload.to, ["customer@example.com"]);
 assert.match(payload.subject, /\$119\.00/);
 assert.match(payload.text, /View your invoice: https:\/\/portal\.greengrinlawns\.com\/portal\//);

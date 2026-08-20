@@ -94,7 +94,7 @@ function normalizePaymentMethod(value) {
   return "";
 }
 
-const PROJECT_APPROVAL_TERMS = "I have reviewed the project scope and invoice total and authorize Green Grin Lawn & Landscape to perform the described work.";
+const PROJECT_APPROVAL_TERMS = "I have reviewed the project scope and invoice total and authorize Green Grin Lawns to perform the described work.";
 
 function invoiceAcceptancePayload(event, signedName) {
   const forwarded = String(event?.headers?.["x-forwarded-for"] || "").split(",")[0].trim();

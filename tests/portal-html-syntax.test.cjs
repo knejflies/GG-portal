@@ -48,10 +48,10 @@ for (const [file, expectedManifest] of Object.entries(files)) {
 }
 
 const proposalHtml = fs.readFileSync("proposal/index.html", "utf8");
-for (const requiredMarkup of ["Project investment", "Email My Approval Code", "Approve &amp; Sign Proposal", "signature-pad"]) {
+for (const requiredMarkup of ["Project price", "Email My Signature Code", "Sign Landscaping Contract", "Contract terms", "signature-pad"]) {
   if (!proposalHtml.includes(requiredMarkup)) throw new Error(`proposal/index.html: missing ${requiredMarkup}`);
 }
 for (const code of [...proposalHtml.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map((match) => match[1]).filter((code) => code.trim())) {
   new Function(code);
 }
-console.log("proposal/index.html: approval page passed syntax validation.");
+console.log("proposal/index.html: contract signature page passed syntax validation.");

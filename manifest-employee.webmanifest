@@ -2,7 +2,7 @@
   "id": "/employee/",
   "name": "Green Grin Employee Portal",
   "short_name": "GGL Crew",
-  "description": "Crew jobs and time clock for Green Grin Lawn & Landscape.",
+  "description": "Crew jobs and time clock for Green Grin Lawns.",
   "start_url": "/employee/",
   "scope": "/employee/",
   "display": "standalone",

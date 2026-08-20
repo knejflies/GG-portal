@@ -95,7 +95,8 @@ GREEN_GRIN_VENMO_HANDLE=@greengrinlawns
 GREEN_GRIN_SHEETS_SYNC_KEY=make up a long private sync password
 OPENAI_API_KEY=your OpenAI API key for receipt scanning
 RESEND_API_KEY=your private Resend API key
-GREEN_GRIN_INVOICE_FROM=Green Grin Lawn & Landscape <ken@greengrinlawns.com>
+GREEN_GRIN_INVOICE_FROM=Green Grin Lawns <ken@greengrinlawns.com>
+GREEN_GRIN_CONTRACTOR_REGISTRATION_NUMBER=your active Idaho contractor registration number
 GREEN_GRIN_OWNER_EMAIL=ken@greengrinlawns.com
 GREEN_GRIN_PORTAL_URL=https://portal.greengrinlawns.com/portal/
 GREEN_GRIN_PROPOSAL_URL=https://portal.greengrinlawns.com/proposal/
@@ -111,16 +112,17 @@ INVOICE EMAIL
 1. Create a Resend account and verify greengrinlawns.com under Domains.
 2. Add the three invoice email variables above in Netlify, then redeploy.
 3. Save Draft never emails a customer. Send Invoice emails the customer and sends the existing app notification.
-4. Customers see Green Grin Lawn & Landscape <ken@greengrinlawns.com> as the sender.
+4. Customers see Green Grin Lawns <ken@greengrinlawns.com> as the sender.
 
 LANDSCAPE PROPOSALS
-1. Run the latest portal-setup.sql once to add estimate calculations, secure proposal approvals, signatures, and project work sessions.
+1. Run the latest portal-setup.sql once to add estimate calculations, secure contract approvals, signatures, and project work sessions.
 2. Add GREEN_GRIN_PROPOSAL_URL in Netlify exactly as shown above.
-3. In Admin -> Lawn Bidder -> Project Estimator, enter your supplier costs in Cost Library before sending a proposal.
-4. Send Proposal emails an expiring link. The customer requests a one-time email code and can sign without creating an account.
-5. Approval creates the project and its material/equipment deposit invoice automatically.
-6. A signed customer copy is emailed to GREEN_GRIN_OWNER_EMAIL and remains available from the Signed Copy button in Saved Estimates.
-7. Preview Customer PDF shows the exact customer-facing scope and prices before sending. Use the Prices shown to customer selector to show only the final total or broad project group amounts.
+3. Add GREEN_GRIN_CONTRACTOR_REGISTRATION_NUMBER using the active Idaho registration number shown on customer contracts.
+4. In Admin -> Lawn Bidder -> Project Estimator, enter supplier costs in Cost Library before sending a contract.
+5. Send Contract emails an expiring link. The customer requests a one-time email code and can sign without creating an account.
+6. Signing creates the project and a 50% initial-payment invoice automatically.
+7. A signed customer copy is emailed to GREEN_GRIN_OWNER_EMAIL and remains available from the Signed Contract button in Saved Estimates.
+8. Preview Contract shows the exact customer-facing scope and prices before sending. Contracts show only broad Materials and Labor & Installation amounts plus the final total; unit rates, markups, hours, costs, and profit stay private.
 
 BOOKKEEPING CONSOLE
 1. Run the latest portal-setup.sql once to add invoice line items, discounts, tax, and the employee role field.

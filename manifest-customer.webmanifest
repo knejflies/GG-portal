@@ -2,7 +2,7 @@
   "id": "/portal/",
   "name": "Green Grin Customer Portal",
   "short_name": "GGL Portal",
-  "description": "Customer portal for Green Grin Lawn & Landscape.",
+  "description": "Customer portal for Green Grin Lawns.",
   "start_url": "/portal/",
   "scope": "/portal/",
   "display": "standalone",

@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+process.env.GREEN_GRIN_CONTRACTOR_REGISTRATION_NUMBER = "RCE-TEST";
 const { hash, customerGroupedTotals, proposalPriceDisplay, customerVisibleGroups, publicEstimate, proposalEmail, documentSnapshot, signedProposalEmail } = require("../netlify/functions/portal-proposals.js")._test;
 
 const estimate = {
@@ -21,9 +22,14 @@ const estimate = {
 assert.equal(hash("same"), hash("same"));
 assert.notEqual(hash("same"), hash("different"));
 const publicCopy = publicEstimate(estimate);
-assert.equal(publicCopy.deposit_amount, 2000);
+assert.equal(publicCopy.deposit_amount, 1750);
 assert.equal(publicCopy.email_hint, "cu***@example.com");
 assert.equal(publicCopy.invoice_due_date, "2026-09-15");
+assert.equal(publicCopy.contract.business.name, "Green Grin Lawns");
+assert.equal(publicCopy.contract.business.contractor_registration_number, "RCE-TEST");
+assert.equal(publicCopy.contract.pricing.initial_payment, 1750);
+assert.equal(publicCopy.contract.pricing.final_payment, 1750);
+assert.equal(publicCopy.contract.disclosure_required, true);
 assert.equal(Object.hasOwn(publicCopy, "internal_cost"), false);
 assert.equal(Object.hasOwn(publicCopy, "line_items"), false);
 const snapshot = documentSnapshot(estimate);
@@ -32,17 +38,19 @@ assert.equal(snapshot.grouped_totals.Materials, 2000);
 assert.equal(proposalPriceDisplay(estimate), "grouped");
 
 const emailCopy = proposalEmail(estimate, "https://portal.example/proposal?token=test");
-assert.match(emailCopy, /PROJECT PROPOSAL &amp; INVOICE/);
+assert.match(emailCopy, /LANDSCAPING CUSTOMER CONTRACT/);
 assert.match(emailCopy, /Scope of work/);
-assert.match(emailCopy, /Project investment/);
+assert.match(emailCopy, /Project price/);
+assert.match(emailCopy, /50% initial payment/);
+assert.match(emailCopy, /Green Grin Lawns/);
 assert.match(emailCopy, /Payment due:/);
 assert.doesNotMatch(emailCopy, /Quantity|Rate/);
 
 const privateEstimate = { ...estimate, calculation_inputs: { proposal_price_display: "total_only" } };
-assert.equal(proposalPriceDisplay(privateEstimate), "total_only");
-assert.deepEqual(customerVisibleGroups(privateEstimate), {});
-assert.deepEqual(publicEstimate(privateEstimate).grouped_totals, {});
-assert.deepEqual(documentSnapshot(privateEstimate).grouped_totals, {});
+assert.equal(proposalPriceDisplay(privateEstimate), "grouped");
+assert.deepEqual(customerVisibleGroups(privateEstimate), { Materials: 2000, "Labor & Installation": 1500 });
+assert.deepEqual(publicEstimate(privateEstimate).grouped_totals, { Materials: 2000, "Labor & Installation": 1500 });
+assert.deepEqual(documentSnapshot(privateEstimate).grouped_totals, { Materials: 2000, "Labor & Installation": 1500 });
 
 const ownerCopy = signedProposalEmail(privateEstimate, documentSnapshot(privateEstimate), {
   signer_name: "Test Customer",
@@ -53,9 +61,11 @@ const ownerCopy = signedProposalEmail(privateEstimate, documentSnapshot(privateE
   signed_at: "2026-08-14T12:00:00.000Z",
   document_hash: "document-hash"
 });
-assert.match(ownerCopy, /Signed Green Grin Proposal/);
+assert.match(ownerCopy, /Signed Green Grin Lawns Landscaping Customer Contract/);
 assert.match(ownerCopy, /Project total: \$3,500\.00/);
-assert.doesNotMatch(ownerCopy, /Materials<\/td>/);
+assert.match(ownerCopy, /Idaho Residential Contractor Disclosure Receipt/);
+assert.match(ownerCopy, /Materials<\/td>/);
+assert.match(ownerCopy, /Labor &amp; Installation/);
 assert.match(ownerCopy, /document-hash/);
 
 const repairedGroups = customerGroupedTotals({
