@@ -58,7 +58,7 @@ async function call(body) {
   assert.match(adminHtml, /watchPosition/);
 
   const serviceWorker = fs.readFileSync(path.join(root, "service-worker.js"), "utf8");
-  assert.match(serviceWorker, /green-grin-app-v46/);
+  assert.match(serviceWorker, /green-grin-app-v47/);
   assert.match(serviceWorker, /green-grin-session\.js/);
 
   console.log("Persistent session and Android time-clock shortcut tests passed.");
