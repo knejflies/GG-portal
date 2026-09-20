@@ -3719,6 +3719,176 @@
 
     .field-actions .button { min-height: 54px; }
 
+    .calendar-toolbar,
+    .calendar-panel-head,
+    .calendar-day-head,
+    .calendar-event-head,
+    .fertilizer-history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .calendar-toolbar {
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .calendar-toolbar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .calendar-toolbar input {
+      width: auto;
+      min-width: 155px;
+    }
+
+    .calendar-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .calendar-summary-item {
+      display: grid;
+      gap: 4px;
+      min-height: 84px;
+      padding: 13px;
+      border: 1px solid rgba(215, 234, 209, 0.15);
+      border-radius: 7px;
+      background: rgba(2, 15, 9, 0.8);
+    }
+
+    .calendar-summary-item span { color: var(--muted); font-size: 0.78rem; }
+    .calendar-summary-item strong { color: var(--role-accent); font-size: 1.55rem; }
+
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+    }
+
+    .calendar-weekdays {
+      border: 1px solid rgba(215, 234, 209, 0.15);
+      border-bottom: 0;
+      background: rgba(2, 12, 7, 0.86);
+    }
+
+    .calendar-weekdays span {
+      padding: 9px;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 900;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .calendar-grid {
+      border-top: 1px solid rgba(215, 234, 209, 0.15);
+      border-left: 1px solid rgba(215, 234, 209, 0.15);
+    }
+
+    .calendar-day,
+    .calendar-blank {
+      min-width: 0;
+      min-height: 142px;
+      padding: 8px;
+      border-right: 1px solid rgba(215, 234, 209, 0.15);
+      border-bottom: 1px solid rgba(215, 234, 209, 0.15);
+      background: rgba(3, 17, 10, 0.72);
+    }
+
+    .calendar-blank { background: rgba(0, 7, 4, 0.45); }
+    .calendar-day.is-today { box-shadow: inset 0 0 0 2px var(--role-accent); }
+    .calendar-day.is-selected { background: rgba(var(--role-accent-rgb), 0.11); }
+
+    .calendar-date-button {
+      width: 30px;
+      min-height: 30px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: #efffeb;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 900;
+    }
+
+    .calendar-event-list { display: grid; gap: 5px; margin-top: 6px; }
+
+    .calendar-event {
+      display: grid;
+      gap: 2px;
+      width: 100%;
+      min-height: 0;
+      padding: 6px 7px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-left: 3px solid #aab8ad;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.055);
+      color: #f3fbf0;
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.7rem;
+      line-height: 1.25;
+      text-align: left;
+    }
+
+    .calendar-event strong,
+    .calendar-event span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .calendar-event.service { border-left-color: #a3ff85; }
+    .calendar-event.fertilizer-scheduled { border-left-color: #56c9a5; }
+    .calendar-event.fertilizer-completed { border-left-color: #3ba46f; background: rgba(43, 145, 92, 0.16); }
+    .calendar-event.payment-due { border-left-color: #ffab70; background: rgba(218, 126, 65, 0.14); }
+    .calendar-event.payment-paid { border-left-color: #7ad4ff; background: rgba(52, 144, 190, 0.13); }
+
+    .calendar-mobile { display: none; }
+
+    .calendar-agenda-day,
+    .calendar-detail-event,
+    .fertilizer-history-item {
+      padding: 13px;
+      border: 1px solid rgba(215, 234, 209, 0.14);
+      border-radius: 7px;
+      background: rgba(2, 15, 9, 0.78);
+    }
+
+    .calendar-agenda-day + .calendar-agenda-day,
+    .calendar-detail-event + .calendar-detail-event,
+    .fertilizer-history-item + .fertilizer-history-item { margin-top: 8px; }
+
+    .calendar-agenda-events,
+    .calendar-day-details,
+    .fertilizer-history-list { display: grid; gap: 8px; }
+
+    .calendar-detail-event p,
+    .fertilizer-history-item p { margin: 4px 0 0; }
+
+    .calendar-kind {
+      color: var(--role-accent);
+      font-size: 0.72rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .calendar-support-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+      align-items: start;
+    }
+
     /* Final phone command-center layout. Keep this last so older theme layers cannot override it. */
     @media (max-width: 700px) {
       html { scroll-padding-top: 128px; }
@@ -3908,6 +4078,14 @@
       .field-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .field-actions .button { min-height: 58px; }
       #admin-global-search { min-height: 56px; }
+      .calendar-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .calendar-desktop { display: none; }
+      .calendar-mobile { display: grid; gap: 9px; }
+      .calendar-support-grid { grid-template-columns: 1fr; }
+      .calendar-toolbar,
+      .calendar-panel-head { align-items: stretch; flex-direction: column; }
+      .calendar-toolbar-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .calendar-toolbar input { width: 100%; }
     }
   </style>
 </head>
@@ -4062,6 +4240,7 @@
       <span class="tab-section-label owner-only">Customers &amp; work</span>
       <button class="tab owner-only" data-tab="customers" type="button">Customers</button>
       <button class="tab owner-only" data-tab="owner" type="button">Jobs</button>
+      <button class="tab owner-only" data-tab="calendar" type="button">Calendar</button>
       <span class="tab-section-label owner-only">Quoting tools</span>
       <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
       <span class="tab-section-label owner-only">Team</span>
@@ -5232,6 +5411,46 @@
       </div>
     </section>
 
+    <section id="calendar" class="panel owner-only">
+      <div class="card">
+        <div class="calendar-panel-head">
+          <div>
+            <h2>Service and Payment Calendar</h2>
+            <p class="muted">Scheduled work, fertilizer history, and invoice status in one view.</p>
+          </div>
+          <button id="calendar-refresh" class="button secondary" type="button">Refresh</button>
+        </div>
+        <div class="calendar-toolbar">
+          <div class="calendar-toolbar-actions">
+            <button id="calendar-previous" class="button ghost" type="button">Previous</button>
+            <button id="calendar-today" class="button ghost" type="button">Today</button>
+            <button id="calendar-next" class="button ghost" type="button">Next</button>
+          </div>
+          <div>
+            <label for="calendar-month">Month</label>
+            <input id="calendar-month" type="month" />
+          </div>
+        </div>
+        <div id="calendar-summary" class="calendar-summary"></div>
+        <div id="calendar-result" aria-live="polite"></div>
+        <div class="calendar-desktop">
+          <div class="calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+          <div id="calendar-grid" class="calendar-grid"></div>
+        </div>
+        <div id="calendar-mobile" class="calendar-mobile"></div>
+      </div>
+      <div class="calendar-support-grid">
+        <div class="card">
+          <h2 id="calendar-selected-title">Selected Day</h2>
+          <div id="calendar-day-details" class="calendar-day-details"></div>
+        </div>
+        <div class="card">
+          <h2>Fertilizer History</h2>
+          <div id="fertilizer-history" class="fertilizer-history-list"></div>
+        </div>
+      </div>
+    </section>
+
     <section id="activity" class="panel">
       <div class="grid">
         <div class="card owner-only">
@@ -5469,6 +5688,12 @@
 
         <div class="card owner-only expense-view" data-expense-view="mileage" hidden>
           <h2>Mileage log</h2>
+          <p class="muted">Use GPS for a trip, or enter the odometer start and end manually.</p>
+          <div class="row-actions">
+            <button id="mileage-gps-start" class="button secondary" type="button">Start GPS Trip</button>
+            <button id="mileage-gps-stop" class="button ghost" type="button" hidden>Stop GPS</button>
+          </div>
+          <div id="mileage-gps-status" class="status-box" aria-live="polite"></div>
           <form id="mileage-form">
             <input id="mileage_id" type="hidden" />
             <div class="two">
@@ -5540,6 +5765,8 @@
   </nav>
 
   <script src="/assets/green-grin-calculator.js"></script>
+  <script src="/assets/green-grin-session.js"></script>
+  <script src="/assets/green-grin-calendar.js"></script>
   <script src="/assets/green-grin-project-estimator.js"></script>
   <script src="/assets/green-grin-auto-bid-engine.js"></script>
   <script src="/assets/green-grin-contract.js"></script>
@@ -5566,6 +5793,9 @@
     let employeeDirectory = [];
     let adminJobRows = [];
     let adminDailyRouteRows = [];
+    let adminCalendarData = { jobs: [], invoices: [], completions: [] };
+    let adminCalendarMonth = "";
+    let adminCalendarSelectedDate = "";
     let optimizedDailyRouteOrder = [];
     let activeEmployeeProfile = null;
     let marketingRoutes = [];
@@ -5619,6 +5849,18 @@
       saveValue(sessionKeys.adminPin, "");
       saveValue(sessionKeys.employeePin, "");
       saveValue(sessionKeys.employeeLogin, "");
+      window.GreenGrinSession?.clearAll();
+    }
+
+    async function savePersistentPortalSession(mode, pin) {
+      if (!window.GreenGrinSession || !pin) return;
+      try { await window.GreenGrinSession.create(api("portal-session"), mode, pin); }
+      catch (_error) { return; }
+    }
+
+    async function restorePersistentPortalPin(mode) {
+      if (!window.GreenGrinSession) return "";
+      return window.GreenGrinSession.restore(api("portal-session"), mode);
     }
 
     function clearOldSavedSecrets() {
@@ -5980,7 +6222,10 @@
     async function setOwnerSignedIn(pin, remember = true) {
       adminSessionPin = pin;
       const jobsData = await requestJson("portal-jobs?admin=1", { headers: { "x-admin-pin": pin } });
-      if (remember) saveValue(sessionKeys.adminPin, pin);
+      if (remember) {
+        saveValue(sessionKeys.adminPin, pin);
+        await savePersistentPortalSession("admin", pin);
+      }
       setSignedIn({ id: "owner", email: "Owner" });
       adminJobRows = jobsData.jobs || [];
       adminDailyRouteRows = jobsData.daily_routes || [];
@@ -6001,6 +6246,7 @@
       if (remember) {
         saveValue(sessionKeys.employeePin, pin);
         saveValue(sessionKeys.employeeLogin, "pin");
+        await savePersistentPortalSession("employee", pin);
       }
       if (data.employee?.role === "Bookkeeper") {
         $("#employee-pin").value = pin;
@@ -6043,7 +6289,11 @@
       const mode = portalMode();
 
       if (mode === "admin") {
-        const savedPin = readSavedValue(sessionKeys.adminPin);
+        let savedPin = readSavedValue(sessionKeys.adminPin);
+        if (!savedPin) {
+          savedPin = await restorePersistentPortalPin("admin");
+          if (savedPin) saveValue(sessionKeys.adminPin, savedPin);
+        }
         if (!savedPin) return false;
         $("#owner-login-result").innerHTML = notice("Restoring owner session...");
         try {
@@ -6059,7 +6309,14 @@
       }
 
       if (mode === "employee") {
-        const savedPin = readSavedValue(sessionKeys.employeePin);
+        let savedPin = readSavedValue(sessionKeys.employeePin);
+        if (!savedPin) {
+          savedPin = await restorePersistentPortalPin("employee");
+          if (savedPin) {
+            saveValue(sessionKeys.employeePin, savedPin);
+            saveValue(sessionKeys.employeeLogin, "pin");
+          }
+        }
         if (!savedPin) return false;
         $("#staff-login-result").innerHTML = notice("Restoring employee session...");
         try {
@@ -6166,6 +6423,18 @@
       if (tabId === "admin-home" || tabId === "field-mode") renderOwnerHome();
     }
 
+    function revealAdminEditor(tabId, editorSelector, resultSelector, message) {
+      if (tabId) openTab(tabId);
+      const editor = $(editorSelector);
+      const details = editor?.closest("details");
+      if (details) details.open = true;
+      if (resultSelector && $(resultSelector)) $(resultSelector).innerHTML = notice(message);
+      window.requestAnimationFrame(() => {
+        editor?.scrollIntoView({ behavior: "smooth", block: "start" });
+        editor?.querySelector("input:not([type='hidden']), select, textarea")?.focus({ preventScroll: true });
+      });
+    }
+
     function openEstimatorView(view = "builder") {
       const validView = ["builder", "catalog", "saved"].includes(view) ? view : "builder";
       document.querySelectorAll("[data-estimator-view]").forEach((button) => {
@@ -6201,6 +6470,7 @@
         if (button.dataset.tab === "project-bids") loadProjectEstimator();
         if (button.dataset.tab === "customers") loadCustomers();
         if (button.dataset.tab === "employee-admin") loadEmployees();
+        if (button.dataset.tab === "calendar") loadCalendar();
         if (button.dataset.tab === "activity") loadActivity();
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
@@ -6537,6 +6807,7 @@
         $("#saved-rate-basis").value = rate.basis;
         $("#saved-rate-price").value = rate.rate;
         $("#saved-rate-minimum").value = rate.minimum || 0;
+        revealAdminEditor("bids", "#saved-rate-form", "#saved-rate-result", `Editing ${rate.service} for ${rate.propertyType || "Any property"}.`);
         return;
       }
       if (event.target.closest("[data-saved-rate-invoice]")) {
@@ -6616,6 +6887,9 @@
         $("#estimate-catalog-price").value = item.defaultRate;
         $("#estimate-catalog-increment").value = item.purchaseIncrement || 1;
         $("#estimate-catalog-density").value = item.tonsPerCubicYard || 1.4;
+        openTab("project-bids");
+        openEstimatorView("catalog");
+        revealAdminEditor("", "#estimate-catalog-form", "#estimate-catalog-result", `Editing ${item.name} (${item.category}).`);
         return;
       }
       if (event.target.closest("[data-catalog-delete]")) {
@@ -7867,7 +8141,9 @@
       $("#estimate-form").dataset.calculationInputs = JSON.stringify(estimate.calculation_inputs || {});
       $("#estimate-form").dataset.depositAmount = String(estimate.deposit_amount || 0);
       renderEstimateLines(Array.isArray(estimate.line_items) ? estimate.line_items : []);
+      openTab("project-bids");
       openEstimatorView("builder");
+      $("#estimate-result").innerHTML = notice(`Editing ${estimate.estimate_number || "estimate"} for ${estimate.customer_name || "customer"}: ${estimate.project_title || "Landscape project"}.`);
       window.scrollTo({ top: $("#project-bids").offsetTop, behavior: "smooth" });
     }
 
@@ -8954,6 +9230,9 @@
 
     const expenseCategories = ["Fuel", "Equipment", "Repairs", "Materials", "Office", "Vehicle", "Insurance", "Meals", "Other"];
     const DEFAULT_MILEAGE_RATE = 0.76;
+    let mileageGpsWatchId = null;
+    let mileageGpsLastPosition = null;
+    let mileageGpsMiles = 0;
 
     function todayInputDate() {
       const now = new Date();
@@ -9043,6 +9322,57 @@
       $("#mileage-total").textContent = fixedMoney(mileageAmount(miles));
     }
 
+    function gpsDistanceMiles(previous, current) {
+      const toRadians = (value) => value * Math.PI / 180;
+      const lat1 = toRadians(previous.coords.latitude);
+      const lat2 = toRadians(current.coords.latitude);
+      const deltaLat = lat2 - lat1;
+      const deltaLon = toRadians(current.coords.longitude - previous.coords.longitude);
+      const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) ** 2;
+      return 3958.7613 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(Math.max(0, 1 - a)));
+    }
+
+    function updateMileageGpsControls() {
+      const running = mileageGpsWatchId !== null;
+      $("#mileage-gps-start").hidden = running;
+      $("#mileage-gps-stop").hidden = !running;
+    }
+
+    function stopMileageGpsTracking(message = "GPS trip stopped.") {
+      if (mileageGpsWatchId !== null) navigator.geolocation.clearWatch(mileageGpsWatchId);
+      mileageGpsWatchId = null;
+      mileageGpsLastPosition = null;
+      updateMileageGpsControls();
+      $("#mileage-gps-status").innerHTML = notice(`${message} ${mileageGpsMiles.toFixed(1)} miles ready to save.`);
+    }
+
+    function startMileageGpsTracking() {
+      if (!navigator.geolocation) {
+        $("#mileage-gps-status").innerHTML = notice("This phone does not provide location services.", true);
+        return;
+      }
+      if (mileageGpsWatchId !== null) return;
+      mileageGpsMiles = 0;
+      mileageGpsLastPosition = null;
+      $("#mileage_miles").value = "0.0";
+      if (!$("#mileage_route").value) $("#mileage_route").value = "GPS trip";
+      if (!$("#mileage_purpose").value) $("#mileage_purpose").value = "GPS-tracked business trip";
+      $("#mileage-gps-status").innerHTML = notice("Requesting location permission and starting GPS...");
+      mileageGpsWatchId = navigator.geolocation.watchPosition((position) => {
+        if (mileageGpsLastPosition) {
+          const delta = gpsDistanceMiles(mileageGpsLastPosition, position);
+          if (Number.isFinite(delta) && delta > 0 && delta < 2) mileageGpsMiles += delta;
+        }
+        mileageGpsLastPosition = position;
+        $("#mileage_miles").value = mileageGpsMiles.toFixed(1);
+        updateMileageTotal();
+        $("#mileage-gps-status").innerHTML = notice(`GPS is tracking. ${mileageGpsMiles.toFixed(1)} miles recorded.`);
+      }, (error) => {
+        stopMileageGpsTracking(`GPS could not update: ${error.message || "check location permission"}.`);
+      }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
+      updateMileageGpsControls();
+    }
+
     function mileagePayloadFromForm() {
       updateMileageTotal();
       return {
@@ -9060,11 +9390,14 @@
     }
 
     function clearMileageForm() {
+      if (mileageGpsWatchId !== null) stopMileageGpsTracking("GPS trip cleared.");
       $("#mileage-form").reset();
       $("#mileage_id").value = "";
       $("#mileage_date").value = todayInputDate();
       $("#mileage_rate").value = DEFAULT_MILEAGE_RATE.toFixed(2);
       $("#mileage-save").textContent = "Save Mileage";
+      $("#mileage-gps-status").innerHTML = "";
+      updateMileageGpsControls();
       updateMileageTotal();
     }
 
@@ -10304,6 +10637,7 @@
     }
 
     function editMarketingRoute(route) {
+      openTab("marketing-admin");
       renderMarketingEmployeeOptions();
       $("#marketing-route-id").value = route.id;
       $("#marketing-subdivision").value = route.subdivision_name || "";
@@ -10311,7 +10645,7 @@
       $("#marketing-state").value = route.state || "ID";
       $("#marketing-notes").value = route.notes || "";
       $("#marketing-employee-select").value = route.assigned_employee_id || "";
-      $("#marketing-route-form-title").textContent = "Edit subdivision route";
+      $("#marketing-route-form-title").textContent = `Edit ${route.subdivision_name || "subdivision route"}`;
       $("#marketing-route-submit").textContent = "Save Route";
       $("#marketing-route-cancel").hidden = false;
       $("#marketing-route-form").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -10765,6 +11099,7 @@
     });
 
     function fillInvoiceForm(invoice) {
+      openTab("invoices");
       $("#invoice_id").value = invoice.id || "";
       const index = invoiceCustomers.findIndex((customer) =>
         (invoice.customer_user_id && (customer.customer_user_id || customer.id) === invoice.customer_user_id) ||
@@ -10794,7 +11129,7 @@
         rate: Number(invoice.amount || 0)
       }]);
       $("#invoice-submit").textContent = "Save Draft";
-      $("#invoice-result").innerHTML = notice(`Editing ${invoiceNumber(invoice)}.`);
+      revealAdminEditor("", "#invoice-form", "#invoice-result", `Editing ${invoiceNumber(invoice)} for ${invoice.customer_name || "customer"}.`);
     }
 
     async function handleInvoiceAction(event) {
@@ -10939,8 +11274,9 @@
       const expense = expenseRows.find((item) => item.id === id);
       if (!expense) return;
       if (button.dataset.mileageAction === "edit") {
+        setExpenseView("mileage");
         fillMileageForm(expense);
-        $("#mileage-result").innerHTML = notice("Editing mileage.");
+        $("#mileage-result").innerHTML = notice(`Editing mileage for ${expense.vendor || expense.route || "saved trip"} on ${expense.expense_date || "saved date"}.`);
         $("#mileage-form").scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
@@ -11018,8 +11354,9 @@
       const expense = expenseRows.find((item) => item.id === id);
       if (!expense) return;
       if (button.dataset.expenseAction === "edit") {
+        setExpenseView("receipts");
         fillExpenseForm(expense);
-        $("#expense-result").innerHTML = notice("Editing expense.");
+        $("#expense-result").innerHTML = notice(`Editing ${expense.vendor || "saved expense"} from ${expense.expense_date || "saved date"}.`);
         $("#expense-form").scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
@@ -11069,7 +11406,29 @@
     $("#load-employee").addEventListener("click", loadEmployeeJobs);
     $("#load-employees").addEventListener("click", loadEmployees);
     $("#load-activity").addEventListener("click", loadActivity);
+    $("#calendar-refresh").addEventListener("click", loadCalendar);
+    $("#calendar-previous").addEventListener("click", () => shiftCalendarMonth(-1));
+    $("#calendar-today").addEventListener("click", () => {
+      adminCalendarMonth = window.GreenGrinCalendar?.monthKey(new Date()) || todayInputDate().slice(0, 7);
+      adminCalendarSelectedDate = window.GreenGrinCalendar?.dateKey(new Date()) || todayInputDate();
+      renderCalendar();
+    });
+    $("#calendar-next").addEventListener("click", () => shiftCalendarMonth(1));
+    $("#calendar-month").addEventListener("change", (event) => {
+      if (!event.target.value) return;
+      adminCalendarMonth = event.target.value;
+      adminCalendarSelectedDate = "";
+      renderCalendar();
+    });
+    $("#calendar").addEventListener("click", (event) => {
+      const button = event.target.closest("[data-calendar-date]");
+      if (!button) return;
+      adminCalendarSelectedDate = button.dataset.calendarDate;
+      renderCalendar();
+    });
     $("#load-timeclock").addEventListener("click", loadTimeClock);
+    $("#mileage-gps-start").addEventListener("click", startMileageGpsTracking);
+    $("#mileage-gps-stop").addEventListener("click", () => stopMileageGpsTracking());
     $("#clock-in").addEventListener("click", () => punchTimeClock("clock-in"));
     $("#clock-out").addEventListener("click", () => punchTimeClock("clock-out"));
     $("#load-time-report").addEventListener("click", loadTimeClockReport);
@@ -11459,6 +11818,107 @@
       } finally {
         $("#save-daily-route").disabled = false;
       }
+    }
+
+    function calendarDateLabel(value, options = {}) {
+      const date = new Date(`${String(value || "").slice(0, 10)}T12:00:00`);
+      if (!Number.isFinite(date.getTime())) return "Date not set";
+      return date.toLocaleDateString("en-US", {
+        weekday: options.weekday === false ? undefined : "short",
+        month: "short",
+        day: "numeric",
+        year: options.year === false ? undefined : "numeric"
+      });
+    }
+
+    function calendarKindLabel(kind) {
+      return ({
+        service: "Scheduled service",
+        "fertilizer-scheduled": "Fertilizer scheduled",
+        "fertilizer-completed": "Fertilizer completed",
+        "payment-due": "Payment due",
+        "payment-paid": "Payment paid"
+      })[kind] || "Calendar item";
+    }
+
+    function calendarAmount(event) {
+      return Number.isFinite(Number(event.amount)) && Number(event.amount) > 0 ? money(event.amount) : "";
+    }
+
+    function calendarEventButton(event) {
+      const amount = calendarAmount(event);
+      return `<button class="calendar-event ${cleanText(event.kind)}" type="button" data-calendar-date="${cleanText(event.date)}" title="${cleanText(`${calendarKindLabel(event.kind)}: ${event.title} - ${event.detail}`)}"><strong>${cleanText(event.title)}</strong><span>${cleanText(amount || calendarKindLabel(event.kind))}</span></button>`;
+    }
+
+    function renderCalendarSelectedDay(month) {
+      const selected = adminCalendarSelectedDate;
+      const events = month.eventsByDate[selected] || [];
+      $("#calendar-selected-title").textContent = selected ? calendarDateLabel(selected) : "Selected Day";
+      $("#calendar-day-details").innerHTML = events.length ? events.map((event) => {
+        const amount = calendarAmount(event);
+        const meta = [event.customerCode, event.status, amount].filter(Boolean).join(" | ");
+        return `<article class="calendar-detail-event"><div class="calendar-event-head"><strong>${cleanText(event.title)}</strong><span class="calendar-kind">${cleanText(calendarKindLabel(event.kind))}</span></div><p>${cleanText(event.detail)}</p>${meta ? `<p class="muted">${cleanText(meta)}</p>` : ""}${event.address ? `<p class="muted">${cleanText(event.address)}</p>` : ""}</article>`;
+      }).join("") : notice("Nothing scheduled or due on this day.");
+    }
+
+    function renderFertilizerHistory() {
+      const history = window.GreenGrinCalendar?.fertilizerHistory(adminCalendarData) || [];
+      $("#fertilizer-history").innerHTML = history.length ? history.map((item) => {
+        const meta = [item.customerCode, item.actorName ? `Done by ${item.actorName}` : ""].filter(Boolean).join(" | ");
+        return `<article class="fertilizer-history-item"><div class="fertilizer-history-head"><strong>${cleanText(item.customerName)}</strong><span class="badge">${cleanText(calendarDateLabel(item.completedDate, { weekday: false }))}</span></div><p>${cleanText(item.service)}</p>${item.address ? `<p class="muted">${cleanText(item.address)}</p>` : ""}${meta ? `<p class="muted">${cleanText(meta)}</p>` : ""}</article>`;
+      }).join("") : notice("No completed fertilizer treatments recorded yet.");
+    }
+
+    function renderCalendar() {
+      if (!window.GreenGrinCalendar) {
+        $("#calendar-result").innerHTML = notice("Calendar tools did not load. Refresh the page.", true);
+        return;
+      }
+      if (!adminCalendarMonth) adminCalendarMonth = window.GreenGrinCalendar.monthKey(new Date());
+      const month = window.GreenGrinCalendar.buildMonth(adminCalendarData, adminCalendarMonth);
+      const today = window.GreenGrinCalendar.dateKey(new Date());
+      if (!adminCalendarSelectedDate || !adminCalendarSelectedDate.startsWith(`${month.month}-`)) {
+        adminCalendarSelectedDate = month.eventsByDate[today] ? today : (month.days.find((day) => month.eventsByDate[day].length) || month.days[0]);
+      }
+      $("#calendar-month").value = month.month;
+      const scheduled = month.allEvents.filter((event) => ["service", "fertilizer-scheduled"].includes(event.kind)).length;
+      const fertilizerDone = month.allEvents.filter((event) => event.kind === "fertilizer-completed").length;
+      const unpaid = month.allEvents.filter((event) => event.kind === "payment-due");
+      const paid = month.allEvents.filter((event) => event.kind === "payment-paid");
+      $("#calendar-summary").innerHTML = `
+        <div class="calendar-summary-item"><span>Scheduled visits</span><strong>${scheduled}</strong></div>
+        <div class="calendar-summary-item"><span>Fertilizer completed</span><strong>${fertilizerDone}</strong></div>
+        <div class="calendar-summary-item"><span>Unpaid due (${unpaid.length})</span><strong>${money(unpaid.reduce((sum, event) => sum + Number(event.amount || 0), 0)) || "$0.00"}</strong></div>
+        <div class="calendar-summary-item"><span>Paid (${paid.length})</span><strong>${money(paid.reduce((sum, event) => sum + Number(event.amount || 0), 0)) || "$0.00"}</strong></div>`;
+      $("#calendar-grid").innerHTML = month.cells.map((cell) => {
+        if (!cell) return '<div class="calendar-blank" aria-hidden="true"></div>';
+        const classes = ["calendar-day", cell.date === today ? "is-today" : "", cell.date === adminCalendarSelectedDate ? "is-selected" : ""].filter(Boolean).join(" ");
+        return `<div class="${classes}"><div class="calendar-day-head"><button class="calendar-date-button" type="button" data-calendar-date="${cleanText(cell.date)}" aria-label="View ${cleanText(calendarDateLabel(cell.date))}">${Number(cell.date.slice(-2))}</button></div><div class="calendar-event-list">${cell.events.map(calendarEventButton).join("")}</div></div>`;
+      }).join("");
+      const activeDays = month.days.filter((day) => month.eventsByDate[day].length);
+      $("#calendar-mobile").innerHTML = activeDays.length ? activeDays.map((day) => `<section class="calendar-agenda-day"><button class="calendar-date-button" type="button" data-calendar-date="${cleanText(day)}" aria-label="View ${cleanText(calendarDateLabel(day))}">${Number(day.slice(-2))}</button><strong>${cleanText(calendarDateLabel(day, { year: false }))}</strong><div class="calendar-agenda-events">${month.eventsByDate[day].map(calendarEventButton).join("")}</div></section>`).join("") : notice("No scheduled work or invoice due dates this month.");
+      $("#calendar-result").innerHTML = "";
+      renderCalendarSelectedDay(month);
+      renderFertilizerHistory();
+    }
+
+    async function loadCalendar() {
+      if (!hasAccountingAccess()) return;
+      $("#calendar-result").innerHTML = notice("Loading calendar...");
+      try {
+        adminCalendarData = await requestJson("portal-calendar", { headers: adminHeaders() });
+        renderCalendar();
+      } catch (error) {
+        $("#calendar-result").innerHTML = notice(error.message, true);
+      }
+    }
+
+    function shiftCalendarMonth(offset) {
+      const current = adminCalendarMonth || window.GreenGrinCalendar?.monthKey(new Date()) || todayInputDate().slice(0, 7);
+      const [year, month] = current.split("-").map(Number);
+      adminCalendarMonth = window.GreenGrinCalendar.monthKey(new Date(year, month - 1 + offset, 1));
+      adminCalendarSelectedDate = "";
+      renderCalendar();
     }
 
     async function optimizeDailyRoute() {
@@ -11933,13 +12393,17 @@
     });
     clearExpenseForm();
     clearMileageForm();
-    setExpenseView("receipts");
+    const requestedView = new URLSearchParams(window.location.search).get("view");
+    const requestedGpsTrip = new URLSearchParams(window.location.search).get("track") === "1";
+    setExpenseView(requestedView === "mileage" ? "mileage" : "receipts");
     $("#daily-route-date").value = todayInputDate();
     renderDailyRouteBuilder();
     window.setTimeout(() => showInstallPrompt(), 900);
     enablePortalMotion();
     window.setInterval(updateRollingClock, 1000);
-    loadSupabaseAuth();
+    loadSupabaseAuth().then(() => {
+      if (requestedGpsTrip && activeAccount) startMileageGpsTracking();
+    });
   </script>
 </body>
 </html>

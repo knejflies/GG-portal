@@ -4719,6 +4719,7 @@
   </main>
 
   <script src="/assets/green-grin-calculator.js"></script>
+  <script src="/assets/green-grin-session.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const $ = (selector) => document.querySelector(selector);
@@ -4793,6 +4794,18 @@
       saveValue(sessionKeys.adminPin, "");
       saveValue(sessionKeys.employeePin, "");
       saveValue(sessionKeys.employeeLogin, "");
+      window.GreenGrinSession?.clearAll();
+    }
+
+    async function savePersistentPortalSession(mode, pin) {
+      if (!window.GreenGrinSession || !pin) return;
+      try { await window.GreenGrinSession.create(api("portal-session"), mode, pin); }
+      catch (_error) { return; }
+    }
+
+    async function restorePersistentPortalPin(mode) {
+      if (!window.GreenGrinSession) return "";
+      return window.GreenGrinSession.restore(api("portal-session"), mode);
     }
 
     function clearOldSavedSecrets() {
@@ -5154,7 +5167,10 @@
     async function setOwnerSignedIn(pin, remember = true) {
       adminSessionPin = pin;
       const jobsData = await requestJson("portal-jobs?admin=1", { headers: { "x-admin-pin": pin } });
-      if (remember) saveValue(sessionKeys.adminPin, pin);
+      if (remember) {
+        saveValue(sessionKeys.adminPin, pin);
+        await savePersistentPortalSession("admin", pin);
+      }
       setSignedIn({ id: "owner", email: "Owner" });
       openTab("owner");
       await loadEmployees();
@@ -5179,6 +5195,7 @@
       if (remember) {
         saveValue(sessionKeys.employeePin, pin);
         saveValue(sessionKeys.employeeLogin, "pin");
+        await savePersistentPortalSession("employee", pin);
       }
       if (data.employee?.role === "Bookkeeper") {
         $("#employee-pin").value = pin;
@@ -5221,7 +5238,11 @@
       const mode = portalMode();
 
       if (mode === "admin") {
-        const savedPin = readSavedValue(sessionKeys.adminPin);
+        let savedPin = readSavedValue(sessionKeys.adminPin);
+        if (!savedPin) {
+          savedPin = await restorePersistentPortalPin("admin");
+          if (savedPin) saveValue(sessionKeys.adminPin, savedPin);
+        }
         if (!savedPin) return false;
         $("#owner-login-result").innerHTML = notice("Restoring owner session...");
         try {
@@ -5237,7 +5258,14 @@
       }
 
       if (mode === "employee") {
-        const savedPin = readSavedValue(sessionKeys.employeePin);
+        let savedPin = readSavedValue(sessionKeys.employeePin);
+        if (!savedPin) {
+          savedPin = await restorePersistentPortalPin("employee");
+          if (savedPin) {
+            saveValue(sessionKeys.employeePin, savedPin);
+            saveValue(sessionKeys.employeeLogin, "pin");
+          }
+        }
         if (!savedPin) return false;
         $("#staff-login-result").innerHTML = notice("Restoring employee session...");
         try {

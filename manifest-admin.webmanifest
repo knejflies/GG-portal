@@ -22,5 +22,33 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mileage Tracker",
+      "short_name": "Mileage",
+      "description": "Open the mileage tracker",
+      "url": "/admin/?view=mileage",
+      "icons": [
+        {
+          "src": "/assets/green-grin-pwa-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Start GPS Trip",
+      "short_name": "GPS Trip",
+      "description": "Start tracking a mileage trip",
+      "url": "/admin/?view=mileage&track=1",
+      "icons": [
+        {
+          "src": "/assets/green-grin-pwa-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }
