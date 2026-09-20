@@ -3408,6 +3408,15 @@
 
     .estimate-internal-notes summary { color: var(--muted); font-weight: 900; cursor: pointer; }
     .estimate-internal-notes label { margin-top: 12px; }
+    .estimate-contract-editor { margin-top: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: rgba(245, 250, 242, 0.72); }
+    .estimate-contract-editor summary { color: var(--ink); font-weight: 900; cursor: pointer; }
+    .contract-editor-intro { margin: 10px 0 14px; color: var(--muted); }
+    .contract-section-editor { display: grid; gap: 10px; margin-top: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 7px; background: #fff; }
+    .contract-section-editor-head { display: flex; align-items: end; justify-content: space-between; gap: 10px; }
+    .contract-section-editor-head label { flex: 1; }
+    .contract-section-editor textarea { min-height: 90px; }
+    .contract-editor-paragraphs, .contract-editor-bullets { display: grid; gap: 8px; }
+    .contract-editor-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
     .estimate-line-items,
     .estimate-catalog-list,
@@ -5310,6 +5319,28 @@
             </div>
             <div id="estimate-profit-strip" class="estimate-profit-strip" aria-live="polite"></div>
             <div><label for="estimate-customer-notes">Customer contract notes</label><textarea id="estimate-customer-notes" rows="3" placeholder="Scheduling note, warranty, exclusions, or other customer-facing details."></textarea></div>
+            <div>
+              <label for="estimate-contract-template">Contract type for this job</label>
+              <select id="estimate-contract-template">
+                <option value="landscaping">Landscaping project</option>
+                <option value="mowing">Mowing service</option>
+                <option value="cleanup">Cleanup / hauling</option>
+                <option value="aeration">Aeration service</option>
+                <option value="custom">Custom service</option>
+              </select>
+              <small class="muted">This loads the matching starting wording. You can edit every section below for this job.</small>
+            </div>
+            <details class="estimate-contract-editor" open>
+              <summary>Edit contract wording for this job</summary>
+              <p class="contract-editor-intro">Type directly into these fields to change what this customer's contract says. Changes are saved with this estimate and appear in the preview, email, and signature copy.</p>
+              <div id="contract-sections-editor"></div>
+              <div class="contract-editor-actions">
+                <button id="contract-add-section" class="button small secondary" type="button">Add section</button>
+                <button id="contract-reset-default" class="button small ghost" type="button">Use standard wording</button>
+              </div>
+              <label for="estimate-contract-consent">Customer signature consent text</label>
+              <textarea id="estimate-contract-consent" rows="4" placeholder="Text the customer agrees to when signing."></textarea>
+            </details>
             <details class="estimate-internal-notes">
               <summary>Internal notes</summary>
               <label for="estimate-notes">Private owner notes</label>
@@ -6982,6 +7013,31 @@
     ["#estimate-discount", "#estimate-tax-rate"].forEach((selector) => $(selector).addEventListener("input", calculateEstimateForm));
     $("#estimate-clear").addEventListener("click", clearEstimateForm);
     $("#estimate-search").addEventListener("input", renderSavedEstimates);
+    $("#estimate-contract-template").addEventListener("change", () => {
+      resetContractEditorToStandard();
+      $("#estimate-result").innerHTML = notice(`Loaded the standard ${$("#estimate-contract-template").selectedOptions[0].textContent} wording. Edit it below, then save this estimate.`);
+    });
+    $("#contract-reset-default").addEventListener("click", resetContractEditorToStandard);
+    $("#contract-add-section").addEventListener("click", () => {
+      const sections = readContractSectionsFromForm();
+      sections.push({ title: "New section", paragraphs: [""], bullets: [] });
+      renderContractEditor(sections);
+    });
+    $("#contract-sections-editor").addEventListener("click", (event) => {
+      const section = event.target.closest(".contract-section-editor");
+      if (!section) return;
+      if (event.target.closest("[data-contract-remove-section]")) {
+        section.remove();
+        return;
+      }
+      if (event.target.closest("[data-contract-add-paragraph]")) {
+        section.querySelector(".contract-editor-paragraphs").insertAdjacentHTML("beforeend", '<textarea class="contract-section-paragraph" maxlength="8000"></textarea>');
+        return;
+      }
+      if (event.target.closest("[data-contract-add-bullet]")) {
+        section.querySelector(".contract-editor-bullets").insertAdjacentHTML("beforeend", '<textarea class="contract-section-bullet" maxlength="2000"></textarea>');
+      }
+    });
     $("#estimate-customer").addEventListener("change", () => {
       const customer = selectedEstimateCustomer();
       if (!customer) return;
@@ -8004,6 +8060,44 @@
       return value === "manual" ? null : invoiceCustomers[Number(value)] || null;
     }
 
+    function standardContractDraft(template = $("#estimate-contract-template")?.value || "landscaping") {
+      const contract = window.GreenGrinContract?.buildContract({ total: 0, contract_template: template }, { contractTemplate: template }) || {};
+      return { sections: contract.sections || [], consent: contract.consent_text || "" };
+    }
+
+    function renderContractEditor(sections = []) {
+      const editor = $("#contract-sections-editor");
+      if (!editor) return;
+      const rows = Array.isArray(sections) && sections.length ? sections : standardContractDraft().sections;
+      editor.innerHTML = rows.map((section, sectionIndex) => `
+        <article class="contract-section-editor" data-contract-section="${sectionIndex}">
+          <div class="contract-section-editor-head">
+            <label>Section title<input class="contract-section-title" value="${cleanText(section.title || "")}" maxlength="160" /></label>
+            <button class="button small ghost" data-contract-remove-section type="button">Remove</button>
+          </div>
+          <label>Paragraphs</label>
+          <div class="contract-editor-paragraphs">${(section.paragraphs || []).map((paragraph) => `<textarea class="contract-section-paragraph" maxlength="8000">${cleanText(paragraph)}</textarea>`).join("")}</div>
+          <button class="button small ghost" data-contract-add-paragraph type="button">Add paragraph</button>
+          <label>Bullet points</label>
+          <div class="contract-editor-bullets">${(section.bullets || []).map((bullet) => `<textarea class="contract-section-bullet" maxlength="2000">${cleanText(bullet)}</textarea>`).join("")}</div>
+          <button class="button small ghost" data-contract-add-bullet type="button">Add bullet</button>
+        </article>`).join("");
+    }
+
+    function readContractSectionsFromForm() {
+      return [...document.querySelectorAll(".contract-section-editor")].map((section) => ({
+        title: section.querySelector(".contract-section-title")?.value || "",
+        paragraphs: [...section.querySelectorAll(".contract-section-paragraph")].map((input) => input.value),
+        bullets: [...section.querySelectorAll(".contract-section-bullet")].map((input) => input.value)
+      })).filter((section) => section.title.trim() && [...section.paragraphs, ...section.bullets].some((value) => value.trim()));
+    }
+
+    function resetContractEditorToStandard() {
+      const draft = standardContractDraft();
+      renderContractEditor(draft.sections);
+      $("#estimate-contract-consent").value = draft.consent;
+    }
+
     function estimatePayloadFromForm() {
       const customer = selectedEstimateCustomer();
       const calculation = calculateEstimateForm();
@@ -8037,6 +8131,9 @@
         invoice_id: $("#estimate-form").dataset.invoiceId || null,
         invoice_number: $("#estimate-form").dataset.invoiceNumber || "",
         invoiced_at: $("#estimate-form").dataset.invoicedAt || null,
+        contract_template: $("#estimate-contract-template").value || "landscaping",
+        contract_sections: readContractSectionsFromForm(),
+        contract_consent_text: $("#estimate-contract-consent").value.trim(),
         notes: $("#estimate-notes").value.trim()
       };
     }
@@ -8064,6 +8161,8 @@
       $("#estimate-discount").value = "0";
       $("#estimate-tax-rate").value = "0";
       $("#estimate-price-display").value = "total_only";
+      $("#estimate-contract-template").value = "landscaping";
+      resetContractEditorToStandard();
       renderEstimateLines();
       clearQuickProject();
       $("#estimate-result").innerHTML = "";
@@ -8133,6 +8232,10 @@
       $("#estimate-valid-until").value = estimate.valid_until || "";
       $("#estimate-invoice-due").value = estimate.invoice_due_date || "";
       $("#estimate-customer-notes").value = estimate.customer_notes || "";
+      $("#estimate-contract-template").value = estimate.contract_template || "landscaping";
+      renderContractEditor(Array.isArray(estimate.contract_sections) && estimate.contract_sections.length ? estimate.contract_sections : standardContractDraft($("#estimate-contract-template").value).sections);
+      const savedContract = window.GreenGrinContract?.buildContract(estimate, { contractTemplate: $("#estimate-contract-template").value }) || {};
+      $("#estimate-contract-consent").value = estimate.contract_consent_text || savedContract.consent_text || "";
       $("#estimate-status").value = estimate.status || "Draft";
       $("#estimate-discount").value = Number(estimate.discount || 0);
       $("#estimate-tax-rate").value = Number(estimate.tax_rate || 0);
@@ -8173,7 +8276,7 @@
       const drawnSignature = signature?.signature_type === "drawn" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature.signature_data || "") ? `<img class="signature-image" src="${signature.signature_data}" alt="Customer signature">` : "";
       const companyAcceptance = signature ? `<section class="signed"><h2>Green Grin Lawns acceptance</h2><p><strong>Accepted by Green Grin Lawns</strong></p><p class="meta-left">Accepted ${cleanText(new Date(signature.signed_at).toLocaleString())} through the Green Grin Lawns contract system.</p></section>` : "";
       const signedBlock = signature ? `<section class="signed"><h2>Customer signature</h2>${drawnSignature || `<p class="typed-signature">${cleanText(signature.signer_name)}</p>`}<p>${cleanText(signature.consent_text || contract.consent_text || "I agree to this Landscaping Customer Contract and authorize Green Grin Lawns to perform the described work.")}</p><p class="meta-left">Signed by ${cleanText(signature.signer_name)} (${cleanText(signature.signer_email || "No email")})<br>${cleanText(new Date(signature.signed_at).toLocaleString())}<br>Document reference: ${cleanText(signature.document_hash)}<br>Contract version: ${cleanText(contract.version || "")}</p></section>${companyAcceptance}` : "";
-      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${cleanText(document.estimate_number)} Landscaping Customer Contract</title><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#102419;margin:0;line-height:1.5;background:#edf3eb}.document{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff;box-shadow:0 16px 50px rgba(12,38,22,.15)}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d;font-size:20px;margin-top:24px}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:24px;font-weight:bold;margin:26px 0}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms,.signed{margin-top:24px;padding:18px;border:1px solid #ccd8c9}.contract-section{padding:10px 0;border-bottom:1px solid #d7e0d6;break-inside:avoid}.contract-section:last-child{border-bottom:0}.contract-section li{margin:7px 0}.meta{text-align:right;color:#526458}.meta-left{font-size:12px;color:#526458}.toolbar{position:sticky;top:0;display:flex;justify-content:center;padding:12px;background:#07351d}.toolbar button{padding:12px 18px;border:0;border-radius:5px;background:#8ed23e;color:#06170d;font-weight:800;cursor:pointer}.typed-signature{font-size:25px;font-style:italic;border-bottom:1px solid #7a8a7d;padding-bottom:8px}.signature-image{display:block;max-width:430px;max-height:140px;border-bottom:1px solid #7a8a7d}@media(max-width:620px){.document{padding:24px}header{display:block}.meta{text-align:left;margin-top:12px}}@media print{body{background:#fff}.toolbar{display:none}.document{width:auto;margin:0;padding:0;box-shadow:none}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="document"><header><div><h1>Green Grin Lawns</h1><strong>${signature ? "Signed Landscaping Customer Contract" : "Landscaping Customer Contract"}</strong><br>Caldwell, Idaho | 208-740-8837 | ken@greengrinlawns.com${registration}</div><div class="meta"><strong>${cleanText(document.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}<br>Payment due ${cleanText(paymentDue)}</div></header><h2>${cleanText(document.project_title)}</h2><p><strong>Customer:</strong> ${cleanText(document.customer_name)}</p><p><strong>Project address:</strong> ${cleanText(document.service_address || "")}</p>${document.project_scope ? `<h2>Scope of Work</h2><div class="scope">${cleanText(document.project_scope)}</div>` : ""}<h2>Project Price</h2>${groupTable}<p class="total">Project total: ${cleanText(money(pricing.project_total))}</p><div class="terms"><strong>50/50 Payment Schedule</strong><p>50% initial payment: ${cleanText(money(pricing.initial_payment))}</p><p>50% final payment: ${cleanText(money(pricing.final_payment))}</p></div>${document.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(document.customer_notes)}</div>` : ""}${contractTerms}${signedBlock}</main></body></html>`);
+      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${cleanText(document.estimate_number)} ${cleanText(contract.title || "Service Agreement")}</title><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#102419;margin:0;line-height:1.5;background:#edf3eb}.document{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff;box-shadow:0 16px 50px rgba(12,38,22,.15)}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d;font-size:20px;margin-top:24px}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:24px;font-weight:bold;margin:26px 0}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms,.signed{margin-top:24px;padding:18px;border:1px solid #ccd8c9}.contract-section{padding:10px 0;border-bottom:1px solid #d7e0d6;break-inside:avoid}.contract-section:last-child{border-bottom:0}.contract-section li{margin:7px 0}.meta{text-align:right;color:#526458}.meta-left{font-size:12px;color:#526458}.toolbar{position:sticky;top:0;display:flex;justify-content:center;padding:12px;background:#07351d}.toolbar button{padding:12px 18px;border:0;border-radius:5px;background:#8ed23e;color:#06170d;font-weight:800;cursor:pointer}.typed-signature{font-size:25px;font-style:italic;border-bottom:1px solid #7a8a7d;padding-bottom:8px}.signature-image{display:block;max-width:430px;max-height:140px;border-bottom:1px solid #7a8a7d}@media(max-width:620px){.document{padding:24px}header{display:block}.meta{text-align:left;margin-top:12px}}@media print{body{background:#fff}.toolbar{display:none}.document{width:auto;margin:0;padding:0;box-shadow:none}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="document"><header><div><h1>Green Grin Lawns</h1><strong>${signature ? `Signed ${cleanText(contract.title || "Service Agreement")}` : cleanText(contract.title || "Service Agreement")}</strong><br>Caldwell, Idaho | 208-740-8837 | ken@greengrinlawns.com${registration}</div><div class="meta"><strong>${cleanText(document.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}<br>Payment due ${cleanText(paymentDue)}</div></header><h2>${cleanText(document.project_title)}</h2><p><strong>Customer:</strong> ${cleanText(document.customer_name)}</p><p><strong>Project address:</strong> ${cleanText(document.service_address || "")}</p>${document.project_scope ? `<h2>Scope of Work</h2><div class="scope">${cleanText(document.project_scope)}</div>` : ""}<h2>Project Price</h2>${groupTable}<p class="total">Project total: ${cleanText(money(pricing.project_total))}</p><div class="terms"><strong>50/50 Payment Schedule</strong><p>50% initial payment: ${cleanText(money(pricing.initial_payment))}</p><p>50% final payment: ${cleanText(money(pricing.final_payment))}</p></div>${document.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(document.customer_notes)}</div>` : ""}${contractTerms}${signedBlock}</main></body></html>`);
       popup.document.close();
       popup.focus();
     }

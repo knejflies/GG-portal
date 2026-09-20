@@ -123,6 +123,7 @@ LANDSCAPE PROPOSALS
 6. Signing creates the project and a 50% initial-payment invoice automatically.
 7. A signed customer copy is emailed to GREEN_GRIN_OWNER_EMAIL and remains available from the Signed Contract button in Saved Estimates.
 8. Preview Contract shows the exact customer-facing scope and prices before sending. Contracts show only broad Materials and Labor & Installation amounts plus the final total; unit rates, markups, hours, costs, and profit stay private.
+9. Each estimate has a contract type menu for Landscaping, Mowing, Cleanup / Hauling, Aeration, or Custom service. Edit the contract sections and signature consent text directly under that menu; the wording is saved with that job and used in the preview, email, customer signature page, and signed copy.
 
 BOOKKEEPING CONSOLE
 1. Run the latest portal-setup.sql once to add invoice line items, discounts, tax, and the employee role field.

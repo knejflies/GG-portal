@@ -25,6 +25,7 @@
     "test:project-final-bid": "node tests/project-final-bid.test.cjs",
     "test:project-proposals": "node tests/project-proposals.test.cjs",
     "test:landscaping-contract": "node tests/landscaping-contract.test.cjs",
+    "test:contract-editor": "node tests/contract-editor.test.cjs",
     "test:project-time": "node tests/project-time-tracking.test.cjs",
     "test:project-estimator-integration": "node tests/project-estimator-integration.test.cjs",
     "test:persistent-sessions": "node tests/persistent-sessions.test.cjs",

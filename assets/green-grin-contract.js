@@ -7,6 +7,13 @@
 
   const BUSINESS_NAME = "Green Grin Lawns";
   const CONTRACT_VERSION = "2026-08-19";
+  const CONTRACT_TEMPLATES = {
+    landscaping: { label: "Landscaping project", title: "LANDSCAPING CUSTOMER CONTRACT" },
+    mowing: { label: "Mowing service", title: "Recurring Lawn Mowing Agreement" },
+    cleanup: { label: "Cleanup / hauling", title: "Property Cleanup and Hauling Agreement" },
+    aeration: { label: "Aeration service", title: "Lawn Aeration Service Agreement" },
+    custom: { label: "Custom service", title: "Green Grin Service Agreement" }
+  };
 
   function number(value) {
     const parsed = Number(value);
@@ -29,19 +36,52 @@
     };
   }
 
-  function contractSections(disclosureRequired) {
+  function normalizeContractSections(value) {
+    if (!Array.isArray(value)) return [];
+    return value.slice(0, 40).map((section) => {
+      const title = String(section?.title || "").trim().slice(0, 160);
+      const paragraphs = Array.isArray(section?.paragraphs)
+        ? section.paragraphs.map((paragraph) => String(paragraph || "").trim().slice(0, 8000)).filter(Boolean).slice(0, 12)
+        : [];
+      const bullets = Array.isArray(section?.bullets)
+        ? section.bullets.map((bullet) => String(bullet || "").trim().slice(0, 2000)).filter(Boolean).slice(0, 20)
+        : [];
+      return { title, paragraphs, bullets };
+    }).filter((section) => section.title && (section.paragraphs.length || section.bullets.length));
+  }
+
+  function contractSections(disclosureRequired, template = "landscaping") {
+    const type = CONTRACT_TEMPLATES[template] ? template : "landscaping";
+    const serviceTerms = {
+      mowing: {
+        title: "Mowing Service Terms",
+        paragraphs: ["Mowing service covers the scheduled visits and service items listed in the approved proposal. Grass growth, weather, access, gates, pets, and site conditions can affect the exact service date.", "The Customer is responsible for keeping the lawn accessible and removing toys, hoses, pet waste, and other items before the scheduled visit."]
+      },
+      cleanup: {
+        title: "Cleanup and Hauling Terms",
+        paragraphs: ["Cleanup and hauling covers only the materials, areas, loads, and disposal described in the approved proposal. Hidden, hazardous, regulated, or unusually heavy material is excluded unless added by written Change Order.", "The Customer authorizes Green Grin Lawns to load and dispose of approved material at a lawful disposal location."]
+      },
+      aeration: {
+        title: "Aeration Service Terms",
+        paragraphs: ["Aeration service covers the lawn areas and number of visits listed in the approved proposal. Aeration loosens compacted soil but does not guarantee germination, weed control, or recovery from drought, disease, pests, or improper watering.", "The Customer will mark or disclose irrigation, utility, drainage, pet fence, and other concealed lines before service."]
+      },
+      custom: {
+        title: "Service-Specific Terms",
+        paragraphs: ["The service details, limits, materials, schedule, and completion standard are the items written in the approved proposal and any approved Change Orders."]
+      }
+    };
     const sections = [
       {
         title: "Agreement",
         paragraphs: [
-          `This Landscaping Customer Contract, together with the approved proposal, is the agreement between ${BUSINESS_NAME} and the Customer. It becomes binding when the Customer signs electronically and ${BUSINESS_NAME} accepts the signed contract.`,
+          `This ${CONTRACT_TEMPLATES[type].title}, together with the approved proposal, is the agreement between ${BUSINESS_NAME} and the Customer. It becomes binding when the Customer signs electronically and ${BUSINESS_NAME} accepts the signed contract.`,
           `The approved scope, measurements, plans, written specifications, customer-facing price summary, and approved written change orders are incorporated into this contract.`
         ]
       },
       {
         title: "Scope of Work",
         paragraphs: [
-          `${BUSINESS_NAME} will perform the landscaping work described in the approved scope. Work not specifically included is excluded.`,
+          `${BUSINESS_NAME} will perform the ${CONTRACT_TEMPLATES[type].label.toLowerCase()} work described in the approved scope. Work not specifically included is excluded.`,
           "Excluded work includes major excavation, unforeseen underground conditions, utility relocation, major drainage correction, electrical or plumbing work, hazardous materials, and work requested after signing unless added by an approved Change Order."
         ]
       },
@@ -108,6 +148,8 @@
       }
     ];
 
+    if (serviceTerms[type]) sections.splice(2, 0, serviceTerms[type]);
+
     if (disclosureRequired) {
       sections.push({
         title: "Idaho Residential Contractor Disclosure Receipt",
@@ -137,9 +179,19 @@
     const disclosureRequired = total > 2000;
     const registrationNumber = String(options.registrationNumber || estimate.contractor_registration_number || "").trim();
     const sentDate = estimate.proposal_sent_at || estimate.contract_date || new Date().toISOString();
+    const template = String(options.contractTemplate || estimate.contract_template || "landscaping").toLowerCase();
+    const defaultSections = contractSections(disclosureRequired, template);
+    const customSections = normalizeContractSections(options.contractSections || estimate.contract_sections);
+    const sections = customSections.length ? customSections : defaultSections;
+    if (customSections.length && disclosureRequired && !customSections.some((section) => /residential contractor disclosure/i.test(section.title))) {
+      const disclosure = defaultSections.find((section) => /residential contractor disclosure/i.test(section.title));
+      if (disclosure) sections.push(disclosure);
+    }
+    const defaultConsent = `I have reviewed and agree to this Landscaping Customer Contract, including the approved scope, project price, 50% initial payment, 50% final payment, warranty, exclusions, and Change Order terms. I authorize ${BUSINESS_NAME} to perform the described work.${disclosureRequired ? " I also acknowledge receipt, before signing, of the Idaho Residential Contractor Disclosure included in this contract." : ""}`;
+    const consentText = String(options.consentText || estimate.contract_consent_text || defaultConsent).trim().slice(0, 8000);
     return {
       version: CONTRACT_VERSION,
-      title: "Landscaping Customer Contract",
+      title: CONTRACT_TEMPLATES[template]?.title || CONTRACT_TEMPLATES.landscaping.title,
       business: {
         name: BUSINESS_NAME,
         city: "Caldwell, Idaho",
@@ -163,16 +215,18 @@
       },
       pricing: paymentSchedule(total),
       disclosure_required: disclosureRequired,
-      sections: contractSections(disclosureRequired),
-      consent_text: `I have reviewed and agree to this Landscaping Customer Contract, including the approved scope, project price, 50% initial payment, 50% final payment, warranty, exclusions, and Change Order terms. I authorize ${BUSINESS_NAME} to perform the described work.${disclosureRequired ? " I also acknowledge receipt, before signing, of the Idaho Residential Contractor Disclosure included in this contract." : ""}`
+      sections,
+      consent_text: consentText
     };
   }
 
   return {
     BUSINESS_NAME,
     CONTRACT_VERSION,
+    CONTRACT_TEMPLATES,
     paymentSchedule,
     contractSections,
+    normalizeContractSections,
     buildContract
   };
 });

@@ -551,6 +551,9 @@ create table if not exists public.green_grin_estimates (
   valid_until date,
   invoice_due_date date,
   customer_notes text,
+  contract_template text not null default 'landscaping',
+  contract_sections jsonb not null default '[]'::jsonb,
+  contract_consent_text text,
   status text not null default 'Draft',
   line_items jsonb not null default '[]'::jsonb,
   subtotal numeric(12, 2) not null default 0,
@@ -584,6 +587,9 @@ create table if not exists public.green_grin_estimates (
 alter table public.green_grin_estimates add column if not exists valid_until date;
 alter table public.green_grin_estimates add column if not exists invoice_due_date date;
 alter table public.green_grin_estimates add column if not exists customer_notes text;
+alter table public.green_grin_estimates add column if not exists contract_template text not null default 'landscaping';
+alter table public.green_grin_estimates add column if not exists contract_sections jsonb not null default '[]'::jsonb;
+alter table public.green_grin_estimates add column if not exists contract_consent_text text;
 alter table public.green_grin_estimates add column if not exists invoice_id uuid;
 alter table public.green_grin_estimates add column if not exists invoice_number text;
 alter table public.green_grin_estimates add column if not exists invoiced_at timestamptz;

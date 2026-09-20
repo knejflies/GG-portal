@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const { groupedTotals } = require("../../assets/green-grin-project-estimator.js");
+const { normalizeContractSections } = require("../../assets/green-grin-contract.js");
 
 const headers = {
   "Content-Type": "application/json",
@@ -41,6 +42,8 @@ function signedMoneyNumber(value) {
 function clean(value, maximum = 180) {
   return String(value || "").trim().slice(0, maximum);
 }
+
+const CONTRACT_TEMPLATE_TYPES = new Set(["landscaping", "mowing", "cleanup", "aeration", "custom"]);
 
 function normalizeEstimateLines(value) {
   const rows = Array.isArray(value) ? value : [];
@@ -95,6 +98,13 @@ function estimatePayload(body, current = {}) {
     valid_until: clean(body.valid_until, 10) || null,
     invoice_due_date: clean(body.invoice_due_date, 10) || null,
     customer_notes: clean(body.customer_notes, 4000),
+    contract_template: CONTRACT_TEMPLATE_TYPES.has(body.contract_template)
+      ? body.contract_template
+      : (CONTRACT_TEMPLATE_TYPES.has(current.contract_template) ? current.contract_template : "landscaping"),
+    contract_sections: body.contract_sections !== undefined
+      ? normalizeContractSections(body.contract_sections)
+      : normalizeContractSections(current.contract_sections),
+    contract_consent_text: clean(body.contract_consent_text !== undefined ? body.contract_consent_text : current.contract_consent_text, 8000),
     status: statuses.includes(body.status) ? body.status : "Draft",
     line_items: lineItems,
     subtotal,

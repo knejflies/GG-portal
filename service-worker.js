@@ -17,6 +17,7 @@ const APP_SHELL = [
   "/assets/green-grin-calendar.js",
   "/assets/green-grin-session.js",
   "/assets/green-grin-contract.js",
+  "/assets/green-grin-proposal-label.js",
   "/assets/green-grin-pricing-config.json"
 ];
 
