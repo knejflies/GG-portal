@@ -17,7 +17,7 @@ public class MileageWidgetProvider extends AppWidgetProvider {
         super.onReceive(context, intent);
         if (START.equals(intent.getAction())) {
             Intent service = new Intent(context, MileageTrackingService.class).setAction(START);
-            androidx.core.content.ContextCompat.startForegroundService(context, service);
+            context.startForegroundService(service);
         } else if (STOP.equals(intent.getAction())) {
             context.startService(new Intent(context, MileageTrackingService.class).setAction(STOP));
         } else if (RESET.equals(intent.getAction())) {

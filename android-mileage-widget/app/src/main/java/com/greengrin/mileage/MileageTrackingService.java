@@ -14,7 +14,6 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.Handler;
 import android.os.Looper;
-import androidx.core.app.NotificationCompat;
 
 public class MileageTrackingService extends Service implements LocationListener {
     private static final String CHANNEL = "mileage_tracking";
@@ -59,7 +58,7 @@ public class MileageTrackingService extends Service implements LocationListener 
     }
     private void update() { MileageWidgetProvider.updateAll(this); }
     private void createChannel() { if (Build.VERSION.SDK_INT >= 26) ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(new NotificationChannel(CHANNEL, "Mileage tracking", NotificationManager.IMPORTANCE_LOW)); }
-    private Notification notification() { return new NotificationCompat.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("Green Grin mileage tracking").setContentText(String.format(java.util.Locale.US, "%.1f miles", MileageStore.miles(this))).setOngoing(true).build(); }
+    private Notification notification() { return new Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("Green Grin mileage tracking").setContentText(String.format(java.util.Locale.US, "%.1f miles", MileageStore.miles(this))).setOngoing(true).build(); }
     @Override public void onDestroy() {
         if (locationManager != null) locationManager.removeUpdates(this);
         locationManager = null;
