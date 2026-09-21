@@ -1,0 +1,26 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application android:theme="@style/Theme.GreenGrin" android:label="Green Grin Mileage" android:icon="@drawable/ic_launcher">
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service android:name=".MileageTrackingService" android:exported="false" android:foregroundServiceType="location" />
+        <receiver android:name=".MileageWidgetProvider" android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.greengrin.mileage.START" />
+                <action android:name="com.greengrin.mileage.STOP" />
+                <action android:name="com.greengrin.mileage.RESET" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/mileage_widget_info" />
+        </receiver>
+    </application>
+</manifest>

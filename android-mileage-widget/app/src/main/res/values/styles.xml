@@ -1,0 +1,1 @@
+<resources><style name="Theme.GreenGrin" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:colorAccent">#2E8B57</item></style></resources>
