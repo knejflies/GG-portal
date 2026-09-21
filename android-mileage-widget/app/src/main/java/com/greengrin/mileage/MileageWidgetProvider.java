@@ -46,13 +46,17 @@ public class MileageWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_start, running ? "Tracking" : "Start");
         views.setTextViewText(R.id.widget_stop, running ? "Stop" : "Reset");
         views.setOnClickPendingIntent(R.id.widget_start, action(context, running ? RESET : START));
-        views.setOnClickPendingIntent(R.id.widget_stop, action(context, running ? STOP : RESET));
+        views.setOnClickPendingIntent(R.id.widget_stop, running ? stopForm(context) : action(context, RESET));
         manager.updateAppWidget(id, views);
     }
 
     private static PendingIntent action(Context c, String action) {
         Intent intent = new Intent(c, MileageWidgetProvider.class).setAction(action);
         return PendingIntent.getBroadcast(c, action.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+    private static PendingIntent stopForm(Context c) {
+        Intent intent = new Intent(c, MainActivity.class).setAction(STOP).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return PendingIntent.getActivity(c, STOP.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
     static String formatElapsed(long millis) {
         long seconds = millis / 1000L;

@@ -20,6 +20,12 @@ public class MainActivity extends Activity {
         showSetupForm();
     }
 
+    @Override public void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (MileageWidgetProvider.STOP.equals(intent.getAction())) showStopForm();
+    }
+
     private void showSetupForm() {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
