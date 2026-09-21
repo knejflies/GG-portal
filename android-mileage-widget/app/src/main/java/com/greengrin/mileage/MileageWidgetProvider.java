@@ -37,8 +37,8 @@ public class MileageWidgetProvider extends AppWidgetProvider {
     static void update(Context context, AppWidgetManager manager, int id) {
         boolean running = MileageStore.running(context);
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_mileage);
-        float miles = MileageStore.miles(context);
-        long elapsed = running ? Math.max(0L, System.currentTimeMillis() - MileageStore.start(context)) : 0L;
+        float miles = MileageStore.milesValue(context);
+        long elapsed = running ? Math.max(0L, System.currentTimeMillis() - MileageStore.startTime(context)) : 0L;
         views.setTextViewText(R.id.widget_state, running ? "GPS TRACKING" : "READY");
         views.setTextViewText(R.id.widget_miles, String.format(java.util.Locale.US, "%.1f mi", miles));
         views.setTextViewText(R.id.widget_elapsed, running ? formatElapsed(elapsed) : "00:00:00");

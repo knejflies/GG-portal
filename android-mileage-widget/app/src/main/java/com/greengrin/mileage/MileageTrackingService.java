@@ -52,13 +52,13 @@ public class MileageTrackingService extends Service implements LocationListener 
         update();
     }
     @Override public void onLocationChanged(Location location) {
-        if (last != null) { float delta = last.distanceTo(location) / 1609.344f; if (delta > 0f && delta < 2f) MileageStore.miles(this, MileageStore.miles(this) + delta); }
+        if (last != null) { float delta = last.distanceTo(location) / 1609.344f; if (delta > 0f && delta < 2f) MileageStore.miles(this, MileageStore.milesValue(this) + delta); }
         last = location;
         update();
     }
     private void update() { MileageWidgetProvider.updateAll(this); }
     private void createChannel() { if (Build.VERSION.SDK_INT >= 26) ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).createNotificationChannel(new NotificationChannel(CHANNEL, "Mileage tracking", NotificationManager.IMPORTANCE_LOW)); }
-    private Notification notification() { return new Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("Green Grin mileage tracking").setContentText(String.format(java.util.Locale.US, "%.1f miles", MileageStore.miles(this))).setOngoing(true).build(); }
+    private Notification notification() { return new Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("Green Grin mileage tracking").setContentText(String.format(java.util.Locale.US, "%.1f miles", MileageStore.milesValue(this))).setOngoing(true).build(); }
     @Override public void onDestroy() {
         if (locationManager != null) locationManager.removeUpdates(this);
         locationManager = null;
