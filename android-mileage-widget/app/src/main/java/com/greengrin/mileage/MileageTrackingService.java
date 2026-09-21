@@ -29,8 +29,8 @@ public class MileageTrackingService extends Service implements LocationListener 
 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent == null ? MileageWidgetProvider.START : intent.getAction();
-        if (MileageWidgetProvider.RESET.equals(action)) { stopTracking(false); MileageStore.reset(this); update(); return START_NOT_STICKY; }
-        if (MileageWidgetProvider.STOP.equals(action)) { stopTracking(true); return START_NOT_STICKY; }
+        if (MileageWidgetProvider.RESET.equals(action)) { stopTracking(false, "Android GPS trip", "GPS-tracked business trip"); MileageStore.reset(this); update(); return START_NOT_STICKY; }
+        if (MileageWidgetProvider.STOP.equals(action)) { stopTracking(true, intent.getStringExtra("route"), intent.getStringExtra("purpose")); return START_NOT_STICKY; }
         if (!MileageStore.running(this)) MileageStore.start(this);
         createChannel();
         startForeground(42, notification());
@@ -47,7 +47,7 @@ public class MileageTrackingService extends Service implements LocationListener 
         try { locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000L, 2f, this); }
         catch (SecurityException ignored) { }
     }
-    private void stopTracking(boolean upload) {
+    private void stopTracking(boolean upload, String route, String purpose) {
         float completedMiles = MileageStore.milesValue(this);
         if (locationManager != null) locationManager.removeUpdates(this);
         locationManager = null;
@@ -55,11 +55,11 @@ public class MileageTrackingService extends Service implements LocationListener 
         MileageStore.stop(this);
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
-        if (upload && completedMiles > 0f) uploadTrip(completedMiles);
+        if (upload && completedMiles > 0f) uploadTrip(completedMiles, route, purpose);
         update();
     }
 
-    private void uploadTrip(float miles) {
+    private void uploadTrip(float miles, String route, String purpose) {
         String pin = MileageStore.prefs(this).getString("admin_pin", "");
         if (pin.isEmpty()) { notifyResult("Trip saved on phone. Add the owner PIN in the widget app to sync it."); return; }
         new Thread(() -> {
@@ -69,8 +69,8 @@ public class MileageTrackingService extends Service implements LocationListener 
                 body.put("expense_date", new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(new java.util.Date()));
                 body.put("mileage_miles", Math.round(miles * 10f) / 10f);
                 body.put("mileage_rate", 0.76);
-                body.put("route", "Android GPS trip");
-                body.put("purpose", "GPS-tracked business trip");
+                body.put("route", route == null || route.trim().isEmpty() ? "Android GPS trip" : route.trim());
+                body.put("purpose", purpose == null || purpose.trim().isEmpty() ? "GPS-tracked business trip" : purpose.trim());
                 HttpURLConnection connection = (HttpURLConnection) new URL("https://portal.greengrinlawns.com/.netlify/functions/portal-expenses").openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");

@@ -19,7 +19,8 @@ public class MileageWidgetProvider extends AppWidgetProvider {
             Intent service = new Intent(context, MileageTrackingService.class).setAction(START);
             context.startForegroundService(service);
         } else if (STOP.equals(intent.getAction())) {
-            context.startService(new Intent(context, MileageTrackingService.class).setAction(STOP));
+            Intent stopForm = new Intent(context, MainActivity.class).setAction(STOP).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            context.startActivity(stopForm);
         } else if (RESET.equals(intent.getAction())) {
             context.startService(new Intent(context, MileageTrackingService.class).setAction(RESET));
         }
