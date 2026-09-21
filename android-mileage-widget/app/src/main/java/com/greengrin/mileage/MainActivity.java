@@ -45,22 +45,20 @@ public class MainActivity extends Activity {
         layout.setPadding(32, 48, 32, 32);
         TextView heading = new TextView(this);
         heading.setText("Finish GPS trip\n\nRecorded miles: " + String.format(java.util.Locale.US, "%.1f", MileageStore.miles(this)));
-        EditText route = new EditText(this);
-        route.setHint("Where did you go? (customer, shop, supply run)");
         EditText purpose = new EditText(this);
-        purpose.setHint("Trip name or purpose");
+        purpose.setHint("Trip name or purpose (optional)");
         Button save = new Button(this);
         save.setText("Stop & Save to Green Grin");
         save.setOnClickListener(v -> {
             Intent stop = new Intent(this, MileageTrackingService.class).setAction(MileageWidgetProvider.STOP)
-                .putExtra("route", route.getText().toString()).putExtra("purpose", purpose.getText().toString());
+                .putExtra("purpose", purpose.getText().toString());
             startService(stop);
             finish();
         });
         Button cancel = new Button(this);
         cancel.setText("Keep Tracking");
         cancel.setOnClickListener(v -> finish());
-        layout.addView(heading); layout.addView(route); layout.addView(purpose); layout.addView(save); layout.addView(cancel);
+        layout.addView(heading); layout.addView(purpose); layout.addView(save); layout.addView(cancel);
         layout.setGravity(Gravity.TOP);
         setContentView(layout);
     }

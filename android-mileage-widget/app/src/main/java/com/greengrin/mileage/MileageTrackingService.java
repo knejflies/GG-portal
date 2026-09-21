@@ -30,7 +30,7 @@ public class MileageTrackingService extends Service implements LocationListener 
     @Override public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent == null ? MileageWidgetProvider.START : intent.getAction();
         if (MileageWidgetProvider.RESET.equals(action)) { stopTracking(false, "Android GPS trip", "GPS-tracked business trip"); MileageStore.reset(this); update(); return START_NOT_STICKY; }
-        if (MileageWidgetProvider.STOP.equals(action)) { stopTracking(true, intent.getStringExtra("route"), intent.getStringExtra("purpose")); return START_NOT_STICKY; }
+        if (MileageWidgetProvider.STOP.equals(action)) { stopTracking(true, "Android GPS trip", intent.getStringExtra("purpose")); return START_NOT_STICKY; }
         if (!MileageStore.running(this)) MileageStore.start(this);
         createChannel();
         startForeground(42, notification());
