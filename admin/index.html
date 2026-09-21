@@ -12510,7 +12510,11 @@
     enablePortalMotion();
     window.setInterval(updateRollingClock, 1000);
     loadSupabaseAuth().then(() => {
-      if (requestedGpsTrip && activeAccount) startMileageGpsTracking();
+      if (activeAccount?.id === "owner" && requestedView === "mileage") {
+        openTab("expenses");
+        setExpenseView("mileage");
+      }
+      if (requestedGpsTrip && activeAccount?.id === "owner") startMileageGpsTracking();
     });
   </script>
 </body>
