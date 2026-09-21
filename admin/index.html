@@ -3481,7 +3481,7 @@
       border-radius: 8px;
       background: linear-gradient(145deg, rgba(var(--role-accent-rgb), .11), rgba(1, 10, 6, .7));
     }
-    .auto-bid-shell { margin-bottom: 18px; padding: 16px; border: 1px solid rgba(120, 198, 83, .35); border-radius: 8px; background: linear-gradient(145deg, rgba(5, 35, 20, .94), rgba(2, 15, 9, .96)); }
+    .auto-bid-shell { display: none !important; }
     .auto-bid-shell textarea { min-height: 112px; font-size: 1rem; line-height: 1.5; }
     .auto-bid-headline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
     .auto-bid-headline > div { padding: 11px; border: 1px solid rgba(210, 232, 204, .14); border-radius: 7px; background: rgba(1, 10, 6, .55); }
@@ -4540,6 +4540,13 @@
             <button class="quick-command" data-home-go="employee-admin" type="button"><strong>Crew</strong><span>Employees and time</span></button>
             <button class="quick-command" data-home-go="bids" type="button"><strong>New Bid</strong><span>Price a property</span></button>
           </div>
+        </div>
+
+        <div class="card">
+          <span class="admin-eyebrow">Android tool</span>
+          <h2>Mileage widget</h2>
+          <p class="muted">Install the home-screen tracker with Start, Stop, live miles, and elapsed time.</p>
+          <a class="button secondary" href="/downloads/green-grin-mileage.apk" download>Download Android Widget</a>
         </div>
       </div>
     </section>

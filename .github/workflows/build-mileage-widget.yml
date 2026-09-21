@@ -1,0 +1,43 @@
+name: Build Android mileage widget
+
+on:
+  push:
+    paths:
+      - "android-mileage-widget/**"
+      - ".github/workflows/build-mileage-widget.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out portal
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Build debug APK
+        run: |
+          curl -fsSL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          /tmp/gradle-8.9/bin/gradle -p android-mileage-widget assembleDebug --no-daemon
+      - name: Publish APK for in-app download
+        run: |
+          mkdir -p downloads
+          cp android-mileage-widget/app/build/outputs/apk/debug/app-debug.apk downloads/green-grin-mileage.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add downloads/green-grin-mileage.apk
+          git diff --cached --quiet || git commit -m "Publish Android mileage widget APK"
+          git push
