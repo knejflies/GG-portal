@@ -7080,6 +7080,7 @@
       event.preventDefault();
       const intent = event.submitter?.dataset.estimateIntent || "save";
       const submitter = event.submitter;
+      const previewWindow = intent === "print" ? window.open("", "_blank", "width=900,height=950") : null;
       const payload = estimatePayloadFromForm();
       const calculation = calculateEstimateForm();
       if (!payload.customer_name || !payload.phone || !payload.project_title || !payload.service_address || !payload.project_scope || !payload.line_items.length) {
@@ -7101,8 +7102,12 @@
         if (intent === "send-proposal") {
           await sendEstimateProposal(estimate);
         } else if (intent === "print") {
-          printEstimate(estimate);
-          $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved and opened for printing.`);
+          if (previewWindow) {
+            printEstimate(estimate, null, previewWindow);
+            $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved and opened for printing.`);
+          } else {
+            $("#estimate-result").innerHTML = notice("The preview window was blocked. Allow pop-ups for this site and try Preview Contract again.", true);
+          }
         } else {
           $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved.`);
         }
@@ -8278,8 +8283,8 @@
       window.scrollTo({ top: $("#project-bids").offsetTop, behavior: "smooth" });
     }
 
-    function printEstimate(estimate, signature = null) {
-      const popup = window.open("", "_blank", "width=900,height=950");
+    function printEstimate(estimate, signature = null, reservedPopup = null) {
+      const popup = reservedPopup || window.open("", "_blank", "width=900,height=950");
       if (!popup) {
         showEstimateNotice("Allow pop-ups for this site to open the customer PDF preview.", true);
         return;
