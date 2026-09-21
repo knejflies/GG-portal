@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(32, 48, 32, 32);
         TextView heading = new TextView(this);
-        heading.setText("Finish GPS trip\n\nRecorded miles: " + String.format(java.util.Locale.US, "%.1f", MileageStore.miles(this)));
+        heading.setText("Finish GPS trip\n\nRecorded miles: " + String.format(java.util.Locale.US, "%.1f", MileageStore.milesValue(this)));
         EditText purpose = new EditText(this);
         purpose.setHint("Trip name or purpose (optional)");
         Button save = new Button(this);
