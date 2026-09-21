@@ -52,10 +52,14 @@ const mixedEstimate = estimatePayload({
 });
 assert.deepEqual(mixedEstimate.grouped_totals, {
   Materials: 100,
-  "Labor & Installation": 315
+  Labor: 200,
+  Equipment: 30,
+  Disposal: 10,
+  Service: 50,
+  Other: 25
 });
-assert.equal(Object.keys(mixedEstimate.grouped_totals).length, 2);
-assert.equal(Object.keys(mixedEstimate.grouped_totals).some((label) => /contingency/i.test(label)), false);
+assert.equal(Object.keys(mixedEstimate.grouped_totals).length, 6);
+assert.equal(mixedEstimate.grouped_totals.Other, 25);
 assert.equal(Object.values(mixedEstimate.grouped_totals).reduce((sum, amount) => sum + amount, 0), mixedEstimate.subtotal);
 
 const linked = estimatePayload({

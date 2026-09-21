@@ -195,15 +195,25 @@
     }, count, { depositEligible: true });
   }
 
+  const CATEGORY_GROUP_LABELS = Object.freeze({
+    Material: "Materials",
+    Labor: "Labor",
+    Equipment: "Equipment",
+    Disposal: "Disposal",
+    Service: "Service",
+    Other: "Other"
+  });
+
+  function normalizeCategory(value) {
+    const category = String(value || "").trim().toLowerCase();
+    return Object.keys(CATEGORY_GROUP_LABELS).find((name) => name.toLowerCase() === category) || "Other";
+  }
+
   function groupedTotals(lines = []) {
-    const groups = {
-      Materials: 0,
-      "Labor & Installation": 0
-    };
+    const groups = Object.fromEntries(Object.values(CATEGORY_GROUP_LABELS).map((label) => [label, 0]));
     for (const line of lines) {
-      const category = String(line.category || "").trim().toLowerCase();
-      if (category === "material") groups.Materials += number(line.amount);
-      else groups["Labor & Installation"] += number(line.amount);
+      const category = normalizeCategory(line.category);
+      groups[CATEGORY_GROUP_LABELS[category]] += number(line.amount);
     }
     return Object.fromEntries(Object.entries(groups).map(([key, value]) => [key, money(value)]).filter(([, value]) => value > 0));
   }
@@ -211,7 +221,7 @@
   function invoiceLines(lines = []) {
     return Object.entries(groupedTotals(lines)).map(([description, rate]) => ({
       description,
-      category: description === "Materials" ? "Material" : "Labor",
+      category: Object.entries(CATEGORY_GROUP_LABELS).find(([, label]) => label === description)?.[0] || "Other",
       quantity: 1,
       unit: "project",
       rate
@@ -386,6 +396,7 @@
     primaryMaterialId,
     roundPurchase,
     groupedTotals,
+    normalizeCategory,
     invoiceLines,
     phaseHours,
     calculateProject

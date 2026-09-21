@@ -1,7 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
-const { groupedTotals } = require("../../assets/green-grin-project-estimator.js");
+const { groupedTotals, normalizeCategory } = require("../../assets/green-grin-project-estimator.js");
 const { normalizeContractSections } = require("../../assets/green-grin-contract.js");
 
 const headers = {
@@ -53,10 +53,11 @@ function normalizeEstimateLines(value) {
     const markupPercent = Math.min(1000, moneyNumber(item?.markup_percent));
     const calculatedRate = unitCost * (1 + markupPercent / 100);
     const rate = moneyNumber(item?.rate ?? calculatedRate);
+    const category = normalizeCategory(item?.category || "Material");
     return {
       catalog_id: clean(item?.catalog_id, 80),
       description: clean(item?.description || "Project item"),
-      category: clean(item?.category || "Material", 40),
+      category,
       quantity,
       unit: clean(item?.unit || "each", 24),
       unit_cost: unitCost,
@@ -64,7 +65,7 @@ function normalizeEstimateLines(value) {
       rate,
       cost_total: moneyNumber(quantity * unitCost),
       amount: moneyNumber(quantity * rate),
-      deposit_eligible: item?.deposit_eligible === true || ["Material", "Equipment"].includes(clean(item?.category, 40))
+      deposit_eligible: item?.deposit_eligible === true || ["Material", "Equipment"].includes(category)
     };
   }).filter((item) => item.description && item.quantity > 0);
 }

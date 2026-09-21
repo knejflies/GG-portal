@@ -53,11 +53,13 @@ const amountFor = (category) => saved.line_items
   .reduce((sum, line) => sum + line.amount, 0);
 
 assert.equal(customerGroups.Materials, amountFor("Material"));
-assert.equal(customerGroups["Labor & Installation"], saved.subtotal - amountFor("Material"));
-assert.deepEqual(Object.keys(customerGroups), ["Materials", "Labor & Installation"]);
+assert.equal(customerGroups.Labor, amountFor("Labor"));
+assert.equal(customerGroups.Equipment, amountFor("Equipment"));
+assert.equal(customerGroups.Disposal, amountFor("Disposal"));
+assert.equal(customerGroups.Service, amountFor("Service"));
+assert.deepEqual(Object.keys(customerGroups), ["Materials", "Labor", "Equipment", "Disposal", "Service", "Other"]);
 assert.equal(Object.values(customerGroups).reduce((sum, amount) => sum + amount, 0), saved.subtotal);
-assert.equal(Object.keys(customerGroups).some((label) => /contingency|equipment|disposal/i.test(label)), false);
-assert.deepEqual(estimator.invoiceLines(saved.line_items).map((line) => line.description), ["Materials", "Labor & Installation"]);
+assert.deepEqual(estimator.invoiceLines(saved.line_items).map((line) => line.description), ["Materials", "Labor", "Equipment", "Disposal", "Service", "Other"]);
 assert.ok(saved.deposit_amount < saved.subtotal, "Labor and project coordination must not enter the material deposit.");
 
 console.log("Final customer bid category reconciliation passed.");

@@ -79,7 +79,8 @@ const repairedGroups = customerGroupedTotals({
 });
 assert.deepEqual(repairedGroups, {
   Materials: 100,
-  "Labor & Installation": 350
+  Labor: 200,
+  Service: 150
 });
 
 console.log("Project proposal tests passed.");
