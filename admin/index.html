@@ -5725,6 +5725,7 @@
             <button id="mileage-gps-stop" class="button ghost" type="button" hidden>Stop GPS</button>
           </div>
           <div id="mileage-gps-status" class="status-box" aria-live="polite"></div>
+          <p class="muted">A GPS trip is held in this form until you stop tracking and tap Save Mileage.</p>
           <form id="mileage-form">
             <input id="mileage_id" type="hidden" />
             <div class="two">
@@ -5821,6 +5822,7 @@
     let latestFertBid = null;
     let savedEstimates = [];
     let expenseRows = [];
+    let expenseRowsLoaded = false;
     let employeeDirectory = [];
     let adminJobRows = [];
     let adminDailyRouteRows = [];
@@ -9613,6 +9615,7 @@
       if (view === "mileage") {
         renderMileage();
         updateMileageTotal();
+        if (hasAccountingAccess() && !expenseRowsLoaded) loadExpenses();
       }
     }
 
@@ -9622,7 +9625,9 @@
       try {
         const data = await requestJson("portal-expenses?admin=1", { headers: adminHeaders() });
         renderExpenses(data);
+        expenseRowsLoaded = true;
       } catch (error) {
+        expenseRowsLoaded = false;
         $("#expense-list").innerHTML = notice(error.message, true);
       }
     }
