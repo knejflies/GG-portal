@@ -5375,7 +5375,7 @@
             <div class="estimate-primary-actions">
               <button class="button secondary" data-estimate-intent="save" type="submit">Save Estimate</button>
               <button class="button" data-estimate-intent="send-proposal" type="submit">Send Contract</button>
-              <button class="button ghost" data-estimate-intent="print" type="submit">Preview Contract</button>
+              <button id="estimate-preview" class="button ghost" type="button">Preview Contract</button>
               <button id="estimate-clear" class="button ghost" type="button">New Estimate</button>
             </div>
           </form>
@@ -7076,11 +7076,26 @@
       $("#estimate-service-address").value = customer.property?.address || job?.address || "";
     });
 
+    $("#estimate-preview").addEventListener("click", () => {
+      const popup = window.open("", "_blank", "width=900,height=950");
+      if (!popup) {
+        showEstimateNotice("The preview window was blocked. Allow pop-ups for this site and try Preview Contract again.", true);
+        return;
+      }
+      try {
+        const payload = estimatePayloadFromForm();
+        const calculation = calculateEstimateForm();
+        printEstimate({ ...payload, ...calculation, total: calculation.total, subtotal: calculation.subtotal }, null, popup);
+      } catch (error) {
+        popup.close();
+        showEstimateNotice(error.message, true);
+      }
+    });
+
     $("#estimate-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const intent = event.submitter?.dataset.estimateIntent || "save";
       const submitter = event.submitter;
-      const previewWindow = intent === "print" ? window.open("", "_blank", "width=900,height=950") : null;
       const payload = estimatePayloadFromForm();
       const calculation = calculateEstimateForm();
       if (!payload.customer_name || !payload.phone || !payload.project_title || !payload.service_address || !payload.project_scope || !payload.line_items.length) {
@@ -7101,13 +7116,6 @@
         const estimate = await saveEstimateRecord(payload);
         if (intent === "send-proposal") {
           await sendEstimateProposal(estimate);
-        } else if (intent === "print") {
-          if (previewWindow) {
-            printEstimate(estimate, null, previewWindow);
-            $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved and opened for printing.`);
-          } else {
-            $("#estimate-result").innerHTML = notice("The preview window was blocked. Allow pop-ups for this site and try Preview Contract again.", true);
-          }
         } else {
           $("#estimate-result").innerHTML = notice(`Estimate ${estimate.estimate_number} saved.`);
         }
