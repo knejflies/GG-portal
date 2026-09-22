@@ -92,6 +92,8 @@ function mileagePayload(body) {
   const rate = moneyNumber(body.mileage_rate ?? body.rate) || DEFAULT_MILEAGE_RATE;
   const route = String(body.route || body.vendor || "").trim();
   const purpose = String(body.purpose || body.notes || "").trim();
+  const routePoints = Array.isArray(body.route_points) ? body.route_points.slice(0, 500).map((point) => ({ lat: Number(point?.lat), lon: Number(point?.lon) })).filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon)) : [];
+  const routeNote = routePoints.length ? `GPS_ROUTE_POINTS:${JSON.stringify(routePoints)}` : "";
   const amount = Math.round(miles * rate * 100) / 100;
   return {
     expense_type: "mileage",
@@ -102,12 +104,39 @@ function mileagePayload(body) {
     subtotal: null,
     tax: null,
     payment_method: "Mileage",
-    notes: purpose.slice(0, 800),
+    notes: [purpose, routeNote].filter(Boolean).join(" | ").slice(0, 800),
     receipt_filename: "",
     mileage_start: start,
     mileage_end: end,
     mileage_miles: miles,
     mileage_rate: rate,
+    ai_confidence: null,
+    ai_raw: null,
+    active: true
+  };
+}
+
+function fertilizerPayload(body) {
+  const amount = String(body.amount_applied || body.amount || "").trim().slice(0, 80);
+  if (!amount) throw new Error("Enter the amount of fertilizer applied.");
+  const product = String(body.product || "").trim().slice(0, 120);
+  const customer = String(body.customer || body.vendor || "").trim().slice(0, 120);
+  const notes = [`Applied amount: ${amount}`, product ? `Product: ${product}` : "", customer ? `Customer: ${customer}` : ""].filter(Boolean).join(" | ");
+  return {
+    expense_type: "fertilizer_application",
+    expense_date: cleanDate(body.expense_date || body.date),
+    vendor: customer ? `Fertilizer - ${customer}`.slice(0, 120) : "Fertilizer application",
+    category: "Materials",
+    amount: 0,
+    subtotal: null,
+    tax: null,
+    payment_method: "Application record",
+    notes: notes.slice(0, 800),
+    receipt_filename: "",
+    mileage_start: null,
+    mileage_end: null,
+    mileage_miles: null,
+    mileage_rate: null,
     ai_confidence: null,
     ai_raw: null,
     active: true
@@ -240,6 +269,11 @@ exports.handler = async (event) => {
       const expenses = await activeExpenses();
       return json(200, { expense: rows?.[0] || null, expenses, totals: totalsFor(expenses) });
     }
+    if (event.httpMethod === "POST" && body.action === "fertilizer") {
+      const rows = await supabase("green_grin_expenses", { method: "POST", body: JSON.stringify(fertilizerPayload(body)) });
+      const expenses = await activeExpenses();
+      return json(200, { expense: rows?.[0] || null, expenses, totals: totalsFor(expenses) });
+    }
 
     if (event.httpMethod === "POST") {
       const rows = await supabase("green_grin_expenses", {
@@ -254,7 +288,7 @@ exports.handler = async (event) => {
       if (!body.id) return json(400, { error: "Expense id is required." });
       const rows = await supabase(`green_grin_expenses?id=eq.${encodeURIComponent(body.id)}`, {
         method: "PATCH",
-        body: JSON.stringify(body.expense_type === "mileage" || body.action === "mileage" ? mileagePayload(body) : expensePayload(body))
+        body: JSON.stringify(body.expense_type === "mileage" || body.action === "mileage" ? mileagePayload(body) : body.expense_type === "fertilizer_application" || body.action === "fertilizer" ? fertilizerPayload(body) : expensePayload(body))
       });
       const expenses = await activeExpenses();
       return json(200, { expense: rows?.[0] || null, expenses, totals: totalsFor(expenses) });

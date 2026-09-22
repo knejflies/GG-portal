@@ -19,11 +19,13 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 public class MileageTrackingService extends Service implements LocationListener {
     private static final String CHANNEL = "mileage_tracking";
     private LocationManager locationManager;
     private Location last;
+    private final JSONArray routePoints = new JSONArray();
     private final Handler ticker = new Handler(Looper.getMainLooper());
     private final Runnable tickerTask = new Runnable() { @Override public void run() { update(); if (MileageStore.running(MileageTrackingService.this)) ticker.postDelayed(this, 1000L); } };
 
@@ -32,6 +34,7 @@ public class MileageTrackingService extends Service implements LocationListener 
         if (MileageWidgetProvider.RESET.equals(action)) { stopTracking(false, "Android GPS trip", "GPS-tracked business trip"); MileageStore.reset(this); update(); return START_NOT_STICKY; }
         if (MileageWidgetProvider.STOP.equals(action)) { stopTracking(true, "Android GPS trip", intent.getStringExtra("purpose")); return START_NOT_STICKY; }
         if (!MileageStore.running(this)) MileageStore.start(this);
+        while (routePoints.length() > 0) routePoints.remove(routePoints.length() - 1);
         createChannel();
         startForeground(42, notification());
         beginLocationUpdates();
@@ -71,6 +74,7 @@ public class MileageTrackingService extends Service implements LocationListener 
                 body.put("mileage_rate", 0.76);
                 body.put("route", route == null || route.trim().isEmpty() ? "Android GPS trip" : route.trim());
                 body.put("purpose", purpose == null || purpose.trim().isEmpty() ? "GPS-tracked business trip" : purpose.trim());
+                body.put("route_points", routePoints);
                 HttpURLConnection connection = (HttpURLConnection) new URL("https://portal.greengrinlawns.com/.netlify/functions/portal-expenses").openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
@@ -87,6 +91,7 @@ public class MileageTrackingService extends Service implements LocationListener 
     @Override public void onLocationChanged(Location location) {
         if (last != null) { float delta = last.distanceTo(location) / 1609.344f; if (delta > 0f && delta < 2f) MileageStore.miles(this, MileageStore.milesValue(this) + delta); }
         last = location;
+        if (routePoints.length() < 500) { try { JSONObject point = new JSONObject(); point.put("lat", location.getLatitude()); point.put("lon", location.getLongitude()); routePoints.put(point); } catch (Exception ignored) { } }
         update();
     }
     private void update() { MileageWidgetProvider.updateAll(this); }

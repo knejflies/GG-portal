@@ -101,6 +101,26 @@ function messageFor(template, job) {
   return `Hi${name}, Green Grin has an update about your ${service}.`;
 }
 
+function fertilizerJob(job) {
+  return /fertiliz|fertiliser|\bfert\b/i.test(String(job?.service_type || ""));
+}
+
+function fertilizerRecord(body, job) {
+  const amount = String(body.application_amount || "").trim().slice(0, 80);
+  if (!amount || !fertilizerJob(job)) return null;
+  const product = String(body.application_product || "").trim().slice(0, 120);
+  return {
+    expense_type: "fertilizer_application",
+    expense_date: new Date().toISOString().slice(0, 10),
+    vendor: `Fertilizer - ${job.customer_name || "Customer"}`.slice(0, 120),
+    category: "Materials",
+    amount: 0,
+    payment_method: "Application record",
+    notes: [`Applied amount: ${amount}`, product ? `Product: ${product}` : "", job.customer_code ? `Customer code: ${job.customer_code}` : ""].filter(Boolean).join(" | ").slice(0, 800),
+    active: true
+  };
+}
+
 function pushTitle(template) {
   if (template === "objects") return "Yard cleanup reminder";
   if (template === "completed") return "Service completed";
@@ -220,6 +240,8 @@ exports.handler = async (event) => {
         twilio_sid: null
       })
     });
+    const applicationRecord = body.template === "completed" ? fertilizerRecord(body, job) : null;
+    if (applicationRecord) await supabase("green_grin_expenses", { method: "POST", body: JSON.stringify(applicationRecord) });
 
     return json(200, {
       ok: true,

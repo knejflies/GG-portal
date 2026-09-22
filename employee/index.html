@@ -9610,10 +9610,14 @@
           const timer = await setWorkTimer("stop-work", id, "", true);
           if (!timer.ok) timerFeedback = ` Job timer did not stop: ${timer.error.message}`;
         }
+        const fertilizer = action === "completed" && /fertiliz|fertiliser|\bfert\b/i.test(String(job?.service_type || ""));
+        const applicationAmount = fertilizer ? prompt("How much fertilizer did you apply? (Example: 22 lb, 3 bags, or 1.5 gal)") : "";
+        if (fertilizer && applicationAmount === null) return;
+        const applicationProduct = fertilizer ? prompt("Which fertilizer product? (Optional)") : "";
         const data = await requestJson("portal-message", {
           method: "POST",
           headers,
-          body: JSON.stringify({ id, template: action, route_date: routeDate || undefined })
+          body: JSON.stringify({ id, template: action, route_date: routeDate || undefined, application_amount: applicationAmount || "", application_product: applicationProduct || "" })
         });
         const employeeFeedback = pushDeliveryText(data.push, action === "arrived" ? "Arrival notification saved." : "Done message saved.") + timerFeedback;
         await loadEmployeeJobs();

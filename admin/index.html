@@ -5656,6 +5656,8 @@
       <div class="expense-switch owner-only" role="tablist" aria-label="Expense tools">
         <button class="button active" data-expense-view-button="receipts" type="button">Receipts</button>
         <button class="button ghost" data-expense-view-button="mileage" type="button">Mileage</button>
+        <button class="button ghost" data-expense-view-button="fertilizer" type="button">Fertilizer Records</button>
+        <button class="button ghost" data-expense-view-button="mileage-maps" type="button">Mileage Maps</button>
       </div>
       <div class="grid">
         <div class="card owner-only expense-view" data-expense-view="receipts">
@@ -5807,6 +5809,30 @@
             <button id="load-expenses" class="button secondary" type="button">Load Expenses</button>
           </div>
           <div id="expense-list" class="status-box"></div>
+        </div>
+
+        <div class="card owner-only expense-view" data-expense-view="fertilizer" hidden>
+          <h2>Fertilizer application records</h2>
+          <p class="muted">Track the date, product, and amount applied for every treatment.</p>
+          <form id="fertilizer-record-form">
+            <div class="three">
+              <div><label for="fert-record-date">Date applied</label><input id="fert-record-date" type="date" /></div>
+              <div><label for="fert-record-customer">Customer / location</label><input id="fert-record-customer" placeholder="Customer or property" /></div>
+              <div><label for="fert-record-product">Product</label><input id="fert-record-product" placeholder="Product name" /></div>
+            </div>
+            <div class="two">
+              <div><label for="fert-record-amount">Amount applied</label><input id="fert-record-amount" placeholder="22 lb, 3 bags, 1.5 gal" /></div>
+              <div class="row-actions" style="align-items:end"><button class="button" type="submit">Save Application</button></div>
+            </div>
+          </form>
+          <div id="fertilizer-record-result" aria-live="polite"></div>
+          <div id="fertilizer-record-list" class="status-box"></div>
+        </div>
+
+        <div class="card owner-only expense-view" data-expense-view="mileage-maps" hidden>
+          <h2>Mileage Maps</h2>
+          <p class="muted">GPS trips with a saved route are shown here with their date and miles. Older trips without route points remain available in Mileage.</p>
+          <div id="mileage-map-list" class="status-box"></div>
         </div>
       </div>
     </section>
@@ -9443,6 +9469,33 @@
       return expenseRows.filter((expense) => expense.expense_type === "mileage" || Number(expense.mileage_miles || 0) > 0);
     }
 
+    function fertilizerRows() {
+      return expenseRows.filter((expense) => expense.expense_type === "fertilizer_application");
+    }
+
+    function fertilizerRecordCard(expense) {
+      const date = expense.expense_date ? displayScheduleDate(expense.expense_date) : "No date";
+      return `<div class="message"><div class="message-head"><strong>${cleanText(expense.vendor || "Fertilizer application")}</strong><span class="badge">${cleanText(date)}</span></div><p>${cleanText(expense.notes || "Amount not recorded")}</p></div>`;
+    }
+
+    function routePointsFromExpense(expense) {
+      const match = String(expense.notes || "").match(/GPS_ROUTE_POINTS:(\[[^|]+\])/);
+      if (!match) return [];
+      try { return JSON.parse(match[1]).filter((point) => Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lon))); } catch { return []; }
+    }
+
+    function mileageMapCard(expense) {
+      const points = routePointsFromExpense(expense);
+      const date = expense.expense_date ? displayScheduleDate(expense.expense_date) : "No date";
+      const miles = Number(expense.mileage_miles || 0).toFixed(1);
+      if (points.length < 2) return `<div class="message"><div class="message-head"><strong>${cleanText(expense.vendor || "Mileage")}</strong><span class="badge">${cleanText(date)} · ${cleanText(miles)} mi</span></div><p class="muted">No GPS route points were saved for this trip.</p></div>`;
+      const minLat = Math.min(...points.map((point) => Number(point.lat))); const maxLat = Math.max(...points.map((point) => Number(point.lat)));
+      const minLon = Math.min(...points.map((point) => Number(point.lon))); const maxLon = Math.max(...points.map((point) => Number(point.lon)));
+      const dx = Math.max(maxLon - minLon, 0.00001); const dy = Math.max(maxLat - minLat, 0.00001);
+      const polyline = points.map((point) => `${(((Number(point.lon) - minLon) / dx) * 360 + 20).toFixed(1)},${(180 - ((Number(point.lat) - minLat) / dy) * 160 - 10).toFixed(1)}`).join(" ");
+      return `<div class="message"><div class="message-head"><strong>${cleanText(expense.vendor || "Mileage")}</strong><span class="badge">${cleanText(date)} · ${cleanText(miles)} mi</span></div><svg viewBox="0 0 400 200" role="img" aria-label="GPS mileage route" style="width:100%;height:220px;background:#e7f0e3;border-radius:8px;margin-top:10px"><polyline points="${polyline}" fill="none" stroke="#167447" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${polyline.split(" ")[0].split(",")[0]}" cy="${polyline.split(" ")[0].split(",")[1]}" r="6" fill="#0a4"/><circle cx="${polyline.split(" ").slice(-1)[0].split(",")[0]}" cy="${polyline.split(" ").slice(-1)[0].split(",")[1]}" r="6" fill="#d55"/></svg>${expense.notes ? `<p class="muted">${cleanText(String(expense.notes).replace(/\s*\|?\s*GPS_ROUTE_POINTS:\[[^|]+\]/, "").trim())}</p>` : ""}</div>`;
+    }
+
     function mileageDistance() {
       const start = Number($("#mileage_start").value);
       const end = Number($("#mileage_end").value);
@@ -9589,6 +9642,16 @@
         : notice("No mileage logged yet.");
     }
 
+    function renderFertilizerRecords() {
+      const rows = fertilizerRows();
+      $("#fertilizer-record-list").innerHTML = rows.length ? rows.map(fertilizerRecordCard).join("") : notice("No fertilizer application records yet.");
+    }
+
+    function renderMileageMaps() {
+      const rows = mileageRows();
+      $("#mileage-map-list").innerHTML = rows.length ? rows.map(mileageMapCard).join("") : notice("No mileage trips logged yet.");
+    }
+
     function expenseCategoryTotalsHtml(totals = {}) {
       const rows = Object.entries(totals)
         .filter(([, value]) => Number(value) > 0)
@@ -9639,6 +9702,8 @@
         ? receiptRows.map((expense) => expenseCard(expense)).join("")
         : notice("No expenses saved yet.");
       renderMileage();
+      renderFertilizerRecords();
+      renderMileageMaps();
     }
 
     function setExpenseView(view = "receipts") {
@@ -9654,6 +9719,11 @@
       if (view === "mileage") {
         renderMileage();
         updateMileageTotal();
+        if (hasAccountingAccess() && !expenseRowsLoaded) loadExpenses();
+      }
+      if (view === "fertilizer" || view === "mileage-maps") {
+        renderFertilizerRecords();
+        renderMileageMaps();
         if (hasAccountingAccess() && !expenseRowsLoaded) loadExpenses();
       }
     }
@@ -11444,6 +11514,31 @@
       }
     });
 
+    $("#fert-record-date").value = todayInputDate();
+    $("#fertilizer-record-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const amount = $("#fert-record-amount").value.trim();
+      if (!amount) {
+        $("#fertilizer-record-result").innerHTML = notice("Enter the amount applied.", true);
+        return;
+      }
+      $("#fertilizer-record-result").innerHTML = notice("Saving fertilizer application...");
+      try {
+        const data = await requestJson("portal-expenses", {
+          method: "POST",
+          headers: adminHeaders(),
+          body: JSON.stringify({ action: "fertilizer", expense_date: $("#fert-record-date").value || todayInputDate(), customer: $("#fert-record-customer").value, product: $("#fert-record-product").value, amount_applied: amount })
+        });
+        renderExpenses(data);
+        $("#fert-record-customer").value = "";
+        $("#fert-record-product").value = "";
+        $("#fert-record-amount").value = "";
+        $("#fertilizer-record-result").innerHTML = notice("Fertilizer application saved.");
+      } catch (error) {
+        $("#fertilizer-record-result").innerHTML = notice(error.message, true);
+      }
+    });
+
     $("#expense-scan").addEventListener("click", async () => {
       const file = $("#expense_receipt").files?.[0];
       if (!file) {
@@ -12213,10 +12308,15 @@
             body: JSON.stringify({ id, scheduled_date, schedule_start_date: scheduled_date, schedule_end_date, cleanup_reminder_time, annual_price, monthly_price, status, assigned_employee_id, assigned_employee_name })
           });
         } else {
+          const selectedJob = adminJobRows.find((entry) => entry.id === id);
+          const fertilizer = action === "completed" && /fertiliz|fertiliser|\bfert\b/i.test(String(selectedJob?.service_type || ""));
+          const applicationAmount = fertilizer ? prompt("How much fertilizer did you apply? (Example: 22 lb, 3 bags, or 1.5 gal)") : "";
+          if (fertilizer && applicationAmount === null) return;
+          const applicationProduct = fertilizer ? prompt("Which fertilizer product? (Optional)") : "";
           const data = await requestJson("portal-message", {
             method: "POST",
             headers: adminHeaders(),
-            body: JSON.stringify({ id, template: action })
+            body: JSON.stringify({ id, template: action, application_amount: applicationAmount || "", application_product: applicationProduct || "" })
           });
           const label = action === "completed"
             ? "Done message saved."
