@@ -24,15 +24,16 @@
     return Math.round(number(value) * 100) / 100;
   }
 
-  function paymentSchedule(total) {
+  function paymentSchedule(total, initialPercent = 50) {
     const projectTotal = money(total);
-    const initialPayment = money(projectTotal / 2);
+    const normalizedInitialPercent = Math.min(100, Math.max(0, Number.isFinite(Number(initialPercent)) ? Number(initialPercent) : 50));
+    const initialPayment = money(projectTotal * normalizedInitialPercent / 100);
     return {
       project_total: projectTotal,
       initial_payment: initialPayment,
       final_payment: money(projectTotal - initialPayment),
-      initial_percent: 50,
-      final_percent: 50
+      initial_percent: normalizedInitialPercent,
+      final_percent: money(100 - normalizedInitialPercent)
     };
   }
 
@@ -88,7 +89,7 @@
       {
         title: "Project Price and Payment",
         paragraphs: [
-          `The 50% initial payment is due upon signing and must be received before ${BUSINESS_NAME} schedules work, orders project materials, or begins the Project. The remaining 50% is due upon substantial completion.`,
+          `The initial payment shown in the approved proposal is due upon signing and must be received before ${BUSINESS_NAME} schedules work, orders project materials, or begins the Project. The remaining balance is due upon substantial completion.`,
           `${BUSINESS_NAME}' internal costs, margins, supplier pricing, and material acquisition costs are confidential business information and are not part of the Customer's pricing information.`
         ]
       },
@@ -168,7 +169,7 @@
     sections.push({
       title: "Customer Acknowledgment",
       paragraphs: [
-        "By signing, the Customer confirms that the Customer has reviewed and agrees to the approved scope, price, 50/50 payment schedule, warranty, exclusions, and all terms of this Landscaping Customer Contract."
+        "By signing, the Customer confirms that the Customer has reviewed and agrees to the approved scope, price, payment schedule, warranty, exclusions, and all terms of this Landscaping Customer Contract."
       ]
     });
     return sections;
@@ -187,7 +188,7 @@
       const disclosure = defaultSections.find((section) => /residential contractor disclosure/i.test(section.title));
       if (disclosure) sections.push(disclosure);
     }
-    const defaultConsent = `I have reviewed and agree to this Landscaping Customer Contract, including the approved scope, project price, 50% initial payment, 50% final payment, warranty, exclusions, and Change Order terms. I authorize ${BUSINESS_NAME} to perform the described work.${disclosureRequired ? " I also acknowledge receipt, before signing, of the Idaho Residential Contractor Disclosure included in this contract." : ""}`;
+    const defaultConsent = `I have reviewed and agree to this Landscaping Customer Contract, including the approved scope, project price, payment schedule, warranty, exclusions, and Change Order terms. I authorize ${BUSINESS_NAME} to perform the described work.${disclosureRequired ? " I also acknowledge receipt, before signing, of the Idaho Residential Contractor Disclosure included in this contract." : ""}`;
     const consentText = String(options.consentText || estimate.contract_consent_text || defaultConsent).trim().slice(0, 8000);
     return {
       version: CONTRACT_VERSION,
@@ -213,7 +214,7 @@
         estimated_start: String(estimate.estimated_start || estimate.project_start_date || "To be scheduled"),
         estimated_completion: String(estimate.estimated_completion || estimate.project_completion_date || "To be scheduled")
       },
-      pricing: paymentSchedule(total),
+      pricing: paymentSchedule(total, options.initialPaymentPercent ?? estimate.initial_payment_percent),
       disclosure_required: disclosureRequired,
       sections,
       consent_text: consentText

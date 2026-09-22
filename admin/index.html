@@ -5336,6 +5336,11 @@
               <div><label for="estimate-tax-rate">Tax rate %</label><input id="estimate-tax-rate" type="number" min="0" max="100" step="0.01" value="0" /></div>
               <div><label for="estimate-invoice-due">Payment due date</label><input id="estimate-invoice-due" type="date" /></div>
             </div>
+            <div class="payment-schedule-editor">
+              <label for="estimate-initial-payment-percent">Initial payment percentage</label>
+              <input id="estimate-initial-payment-percent" type="number" min="0" max="100" step="1" value="50" inputmode="decimal" />
+              <small class="muted">Set the amount due when the customer signs. The remaining percentage is due at completion. This is saved per estimate.</small>
+            </div>
             <div>
               <label for="estimate-price-display">Prices shown to customer</label>
               <select id="estimate-price-display">
@@ -8088,7 +8093,8 @@
       const total = taxable + tax;
       const profit = taxable - cost;
       const margin = taxable > 0 ? profit / taxable : 0;
-      const depositAmount = Math.round(total * 50) / 100;
+      const initialPaymentPercent = Math.min(100, Math.max(0, Number($("#estimate-initial-payment-percent")?.value) || 0));
+      const depositAmount = Math.round(total * initialPaymentPercent) / 100;
       const groupedTotals = window.GreenGrinProjectEstimator?.groupedTotals(lines.map((item) => ({ ...item, amount: item.quantity * item.rate }))) || {};
       document.querySelectorAll("#estimate-line-items .estimate-line-row").forEach((row) => {
         const quantity = Number(row.querySelector(".estimate-item-quantity")?.value) || 0;
@@ -8101,9 +8107,9 @@
         <div><span>Customer subtotal</span><strong>${cleanText(money(subtotal))}</strong></div>
         <div><span>Expected profit</span><strong>${cleanText(money(profit))}</strong></div>
         <div><span>Gross margin</span><strong>${cleanText(`${(margin * 100).toFixed(1)}%`)}</strong></div>
-        <div><span>50% initial payment</span><strong>${cleanText(money(depositAmount))}</strong></div>
+        <div><span>${cleanText(`${initialPaymentPercent}% initial payment`)}</span><strong>${cleanText(money(depositAmount))}</strong></div>
         <div><span>Customer total</span><strong>${cleanText(money(total))}</strong></div>`;
-      return { lines, cost, subtotal, discount, taxRate, tax, total, profit, margin, depositAmount, groupedTotals };
+      return { lines, cost, subtotal, discount, taxRate, tax, total, profit, margin, depositAmount, initialPaymentPercent, groupedTotals };
     }
 
     function renderEstimateLines(lines = []) {
@@ -8188,6 +8194,7 @@
         tax_rate: calculation.taxRate,
         grouped_totals: calculation.groupedTotals,
         deposit_amount: calculation.depositAmount,
+        initial_payment_percent: calculation.initialPaymentPercent,
         gross_margin: calculation.margin,
         contingency_percent: Number($("#project-contingency")?.value) || 0,
         calculation_inputs: (() => {
@@ -8227,6 +8234,7 @@
       $("#estimate-invoice-due").value = estimateDateOffset(7);
       $("#estimate-discount").value = "0";
       $("#estimate-tax-rate").value = "0";
+      $("#estimate-initial-payment-percent").value = "50";
       $("#estimate-price-display").value = "total_only";
       $("#estimate-contract-template").value = "landscaping";
       resetContractEditorToStandard();
@@ -8306,6 +8314,7 @@
       $("#estimate-status").value = estimate.status || "Draft";
       $("#estimate-discount").value = Number(estimate.discount || 0);
       $("#estimate-tax-rate").value = Number(estimate.tax_rate || 0);
+      $("#estimate-initial-payment-percent").value = Number(estimate.initial_payment_percent ?? 50);
       $("#estimate-price-display").value = "grouped";
       $("#estimate-notes").value = estimate.notes || "";
       $("#estimate-form").dataset.calculationInputs = JSON.stringify(estimate.calculation_inputs || {});
@@ -8325,7 +8334,7 @@
       }
       const snapshot = signature?.document_snapshot || null;
       const document = snapshot ? { ...estimate, ...snapshot } : estimate;
-      const contract = snapshot?.contract || window.GreenGrinContract?.buildContract(document, { registrationNumber: portalConfig.contractorRegistrationNumber || "" }) || {};
+      const contract = snapshot?.contract || window.GreenGrinContract?.buildContract(document, { registrationNumber: portalConfig.contractorRegistrationNumber || "", initialPaymentPercent: document.initial_payment_percent }) || {};
       const pricing = contract.pricing || { project_total: Number(document.total || 0), initial_payment: Number(document.total || 0) / 2, final_payment: Number(document.total || 0) / 2 };
       const priceDisplay = "grouped";
       const allGroups = snapshot
@@ -8343,7 +8352,7 @@
       const drawnSignature = signature?.signature_type === "drawn" && /^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signature.signature_data || "") ? `<img class="signature-image" src="${signature.signature_data}" alt="Customer signature">` : "";
       const companyAcceptance = signature ? `<section class="signed"><h2>Green Grin Lawns acceptance</h2><p><strong>Accepted by Green Grin Lawns</strong></p><p class="meta-left">Accepted ${cleanText(new Date(signature.signed_at).toLocaleString())} through the Green Grin Lawns contract system.</p></section>` : "";
       const signedBlock = signature ? `<section class="signed"><h2>Customer signature</h2>${drawnSignature || `<p class="typed-signature">${cleanText(signature.signer_name)}</p>`}<p>${cleanText(signature.consent_text || contract.consent_text || "I agree to this Landscaping Customer Contract and authorize Green Grin Lawns to perform the described work.")}</p><p class="meta-left">Signed by ${cleanText(signature.signer_name)} (${cleanText(signature.signer_email || "No email")})<br>${cleanText(new Date(signature.signed_at).toLocaleString())}<br>Document reference: ${cleanText(signature.document_hash)}<br>Contract version: ${cleanText(contract.version || "")}</p></section>${companyAcceptance}` : "";
-      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${cleanText(document.estimate_number)} ${cleanText(contract.title || "Service Agreement")}</title><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#102419;margin:0;line-height:1.5;background:#edf3eb}.document{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff;box-shadow:0 16px 50px rgba(12,38,22,.15)}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d;font-size:20px;margin-top:24px}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:24px;font-weight:bold;margin:26px 0}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms,.signed{margin-top:24px;padding:18px;border:1px solid #ccd8c9}.contract-section{padding:10px 0;border-bottom:1px solid #d7e0d6;break-inside:avoid}.contract-section:last-child{border-bottom:0}.contract-section li{margin:7px 0}.meta{text-align:right;color:#526458}.meta-left{font-size:12px;color:#526458}.toolbar{position:sticky;top:0;display:flex;justify-content:center;padding:12px;background:#07351d}.toolbar button{padding:12px 18px;border:0;border-radius:5px;background:#8ed23e;color:#06170d;font-weight:800;cursor:pointer}.typed-signature{font-size:25px;font-style:italic;border-bottom:1px solid #7a8a7d;padding-bottom:8px}.signature-image{display:block;max-width:430px;max-height:140px;border-bottom:1px solid #7a8a7d}@media(max-width:620px){.document{padding:24px}header{display:block}.meta{text-align:left;margin-top:12px}}@media print{body{background:#fff}.toolbar{display:none}.document{width:auto;margin:0;padding:0;box-shadow:none}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="document"><header><div><h1>Green Grin Lawns</h1><strong>${signature ? `Signed ${cleanText(contract.title || "Service Agreement")}` : cleanText(contract.title || "Service Agreement")}</strong><br>Caldwell, Idaho | 208-740-8837 | ken@greengrinlawns.com${registration}</div><div class="meta"><strong>${cleanText(document.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}<br>Payment due ${cleanText(paymentDue)}</div></header><h2>${cleanText(document.project_title)}</h2><p><strong>Customer:</strong> ${cleanText(document.customer_name)}</p><p><strong>Project address:</strong> ${cleanText(document.service_address || "")}</p>${document.project_scope ? `<h2>Scope of Work</h2><div class="scope">${cleanText(document.project_scope)}</div>` : ""}<h2>Project Price</h2>${groupTable}<p class="total">Project total: ${cleanText(money(pricing.project_total))}</p><div class="terms"><strong>50/50 Payment Schedule</strong><p>50% initial payment: ${cleanText(money(pricing.initial_payment))}</p><p>50% final payment: ${cleanText(money(pricing.final_payment))}</p></div>${document.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(document.customer_notes)}</div>` : ""}${contractTerms}${signedBlock}</main></body></html>`);
+      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${cleanText(document.estimate_number)} ${cleanText(contract.title || "Service Agreement")}</title><style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#102419;margin:0;line-height:1.5;background:#edf3eb}.document{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff;box-shadow:0 16px 50px rgba(12,38,22,.15)}header{display:flex;justify-content:space-between;gap:24px;border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{margin:0;color:#07351d}h2{color:#07351d;font-size:20px;margin-top:24px}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:12px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:24px;font-weight:bold;margin:26px 0}.scope{white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.notes{white-space:pre-wrap;margin-top:22px;padding-top:16px;border-top:1px solid #ccd8c9}.terms,.signed{margin-top:24px;padding:18px;border:1px solid #ccd8c9}.contract-section{padding:10px 0;border-bottom:1px solid #d7e0d6;break-inside:avoid}.contract-section:last-child{border-bottom:0}.contract-section li{margin:7px 0}.meta{text-align:right;color:#526458}.meta-left{font-size:12px;color:#526458}.toolbar{position:sticky;top:0;display:flex;justify-content:center;padding:12px;background:#07351d}.toolbar button{padding:12px 18px;border:0;border-radius:5px;background:#8ed23e;color:#06170d;font-weight:800;cursor:pointer}.typed-signature{font-size:25px;font-style:italic;border-bottom:1px solid #7a8a7d;padding-bottom:8px}.signature-image{display:block;max-width:430px;max-height:140px;border-bottom:1px solid #7a8a7d}@media(max-width:620px){.document{padding:24px}header{display:block}.meta{text-align:left;margin-top:12px}}@media print{body{background:#fff}.toolbar{display:none}.document{width:auto;margin:0;padding:0;box-shadow:none}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="document"><header><div><h1>Green Grin Lawns</h1><strong>${signature ? `Signed ${cleanText(contract.title || "Service Agreement")}` : cleanText(contract.title || "Service Agreement")}</strong><br>Caldwell, Idaho | 208-740-8837 | ken@greengrinlawns.com${registration}</div><div class="meta"><strong>${cleanText(document.estimate_number)}</strong><br>Valid until ${cleanText(validUntil)}<br>Payment due ${cleanText(paymentDue)}</div></header><h2>${cleanText(document.project_title)}</h2><p><strong>Customer:</strong> ${cleanText(document.customer_name)}</p><p><strong>Project address:</strong> ${cleanText(document.service_address || "")}</p>${document.project_scope ? `<h2>Scope of Work</h2><div class="scope">${cleanText(document.project_scope)}</div>` : ""}<h2>Project Price</h2>${groupTable}<p class="total">Project total: ${cleanText(money(pricing.project_total))}</p><div class="terms"><strong>${cleanText(`${pricing.initial_percent}% / ${pricing.final_percent}% Payment Schedule`)}</strong><p>${cleanText(`${pricing.initial_percent}% initial payment`)}: ${cleanText(money(pricing.initial_payment))}</p><p>${cleanText(`${pricing.final_percent}% final payment`)}: ${cleanText(money(pricing.final_payment))}</p></div>${document.customer_notes ? `<div class="notes"><strong>Project notes</strong><br>${cleanText(document.customer_notes)}</div>` : ""}${contractTerms}${signedBlock}</main></body></html>`);
       popup.document.close();
       popup.focus();
     }

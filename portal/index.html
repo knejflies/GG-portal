@@ -3418,6 +3418,10 @@
       .notification-actions { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+    /* Customer billing keeps invoices and history, while plan selection stays owner-managed. */
+    [data-tab="plans"], #plans, #customer-billing-plans { display: none !important; }
+  </style>
 </head>
 <body>
   <header>

@@ -3424,6 +3424,10 @@
       .notification-actions { grid-template-columns: 1fr; }
     }
   </style>
+  <style>
+    /* Plans are managed by Green Grin now; customers keep billing history and invoices without plan-shopping controls. */
+    [data-tab="plans"], #plans, #customer-billing-plans { display: none !important; }
+  </style>
 </head>
 <body>
   <header>
