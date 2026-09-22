@@ -179,18 +179,20 @@ exports.handler = async () => {
       });
     }
 
-    await supabase("green_grin_message_log", {
-      method: "POST",
-      body: JSON.stringify({
-        job_id: job.id,
-        phone: job.phone,
-        template: "objects",
-        message,
-        actor_type: "System",
-        actor_name: delivered ? `Morning app reminder ${reminderTime}` : `Morning app reminder attempted ${reminderTime}`,
-        twilio_sid: null
-      })
-    });
+    if (delivered) {
+      await supabase("green_grin_message_log", {
+        method: "POST",
+        body: JSON.stringify({
+          job_id: job.id,
+          phone: job.phone,
+          template: "objects",
+          message,
+          actor_type: "System",
+          actor_name: `Morning app reminder ${reminderTime}`,
+          twilio_sid: null
+        })
+      });
+    }
 
     if (delivered) sent += 1;
     else failed += 1;
