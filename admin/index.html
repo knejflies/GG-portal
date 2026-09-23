@@ -5864,6 +5864,7 @@
     <button data-mobile-tab="field-mode" type="button"><strong>Today</strong></button>
     <button data-mobile-tab="customers" type="button"><strong>Customers</strong></button>
     <button data-mobile-tab="invoices" type="button"><strong>Money</strong></button>
+    <button data-mobile-tab="mowing-contract" type="button"><strong>Mowing</strong></button>
     <button data-mobile-menu type="button" aria-expanded="false"><strong>More</strong></button>
   </nav>
 
@@ -6604,7 +6605,13 @@
     });
 
     document.querySelectorAll("[data-mobile-tab]").forEach((button) => {
-      button.addEventListener("click", () => openTab(button.dataset.mobileTab));
+      button.addEventListener("click", () => {
+        if (button.dataset.mobileTab === "mowing-contract") {
+          document.querySelector('[data-tab="mowing-contract"]')?.click();
+          return;
+        }
+        openTab(button.dataset.mobileTab);
+      });
     });
 
     document.querySelector("[data-mobile-menu]")?.addEventListener("click", (event) => {
