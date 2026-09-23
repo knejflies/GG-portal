@@ -5204,6 +5204,32 @@
       </div>
     </section>
 
+    <section id="mowing-contract" class="panel owner-only">
+      <div class="bid-page-head">
+        <div>
+          <p class="eyebrow">Recurring service</p>
+          <h2>Mowing Contract</h2>
+          <p class="muted">Send the separate mowing agreement. You enter the price and email; the customer fills in the property details and signs the contract.</p>
+        </div>
+        <span class="badge">Owner only</span>
+      </div>
+      <div class="card">
+        <form id="mowing-contract-form" novalidate>
+          <div class="two">
+            <div><label for="mowing-contract-email">Customer email</label><input id="mowing-contract-email" type="email" autocomplete="email" required placeholder="customer@example.com" /></div>
+            <div><label for="mowing-contract-rate">Rate per visit</label><input id="mowing-contract-rate" type="number" min="0.01" step="0.01" inputmode="decimal" required placeholder="65.00" /></div>
+          </div>
+          <div class="two">
+            <div><label for="mowing-contract-title">Contract title</label><input id="mowing-contract-title" value="Recurring Lawn Mowing Service" required /></div>
+            <div><label for="mowing-contract-valid-until">Valid until</label><input id="mowing-contract-valid-until" type="date" /></div>
+          </div>
+          <p class="muted">The secure link lets the customer enter their name, phone, service and billing addresses, service frequency, billing choice, and signature. This form is separate from Landscape Estimates.</p>
+          <div id="mowing-contract-result" aria-live="polite"></div>
+          <div class="row-actions"><button class="button" type="submit">Send Mowing Contract</button><button id="mowing-contract-clear" class="button ghost" type="button">Clear</button></div>
+        </form>
+      </div>
+    </section>
+
     <section id="project-bids" class="panel owner-only">
       <div class="bid-page-head">
         <div>
@@ -6560,14 +6586,8 @@
       button.addEventListener("click", () => {
         const requestedTab = button.dataset.tab;
         if (requestedTab === "mowing-contract") {
-          document.body.classList.add("mowing-contract-mode");
-          $("#project-bids .bid-page-head h2").textContent = "Mowing Contract";
-          $("#project-bids .bid-page-head .muted").textContent = "Complete and send the recurring mowing service agreement. Customers finish the remaining fields and sign digitally.";
-          openTab("project-bids");
-          document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab === button));
-          openEstimatorView("builder");
-          loadProjectEstimator();
-          window.requestAnimationFrame(() => $("#estimate-start-mowing")?.click());
+          document.body.classList.remove("mowing-contract-mode");
+          openTab("mowing-contract");
           return;
         }
         document.body.classList.remove("mowing-contract-mode");
@@ -7121,10 +7141,53 @@
       $("#estimate-result").innerHTML = notice("Mowing contract wording loaded. Finish the customer, price, and schedule, then use Send Contract.");
     });
     $("#mowing-contract-launch").addEventListener("click", () => {
-      openTab("project-bids");
-      openEstimatorView("builder");
-      $("#estimate-start-mowing").click();
-      window.scrollTo({ top: $("#project-bids").offsetTop, behavior: "smooth" });
+      document.querySelector('[data-tab="mowing-contract"]')?.click();
+    });
+    $("#mowing-contract-clear").addEventListener("click", () => {
+      $("#mowing-contract-form").reset();
+      $("#mowing-contract-title").value = "Recurring Lawn Mowing Service";
+      $("#mowing-contract-result").innerHTML = "";
+    });
+    $("#mowing-contract-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const email = $("#mowing-contract-email").value.trim().toLowerCase();
+      const rate = Math.max(0, Number($("#mowing-contract-rate").value) || 0);
+      if (!email || !rate) {
+        $("#mowing-contract-result").innerHTML = notice("Enter the customer's email and the rate per visit.", true);
+        return;
+      }
+      const submitter = event.submitter;
+      if (submitter) submitter.disabled = true;
+      $("#mowing-contract-result").innerHTML = notice("Saving and emailing the separate mowing contract...");
+      try {
+        const payload = {
+          customer_name: "Customer",
+          email,
+          phone: "",
+          project_title: $("#mowing-contract-title").value.trim() || "Recurring Lawn Mowing Service",
+          project_scope: "Scheduled lawn mowing and routine service visits for the property described in this agreement.",
+          valid_until: $("#mowing-contract-valid-until").value || "",
+          service_address: "",
+          contract_template: "mowing",
+          contract_sections: standardContractDraft("mowing").sections,
+          contract_consent_text: standardContractDraft("mowing").consent_text,
+          status: "Draft",
+          discount: 0,
+          tax_rate: 0,
+          initial_payment_percent: 0,
+          line_items: [{ description: "Recurring lawn mowing service", category: "Service", quantity: 1, unit: "visit", rate, unit_cost: 0, markup_percent: 0, amount: rate, deposit_eligible: false }]
+        };
+        const estimate = await saveEstimateRecord(payload);
+        await sendEstimateProposal(estimate);
+        $("#mowing-contract-result").innerHTML = notice(`Mowing contract emailed to ${email}. The customer can fill it out and sign it from the secure link.`);
+        $("#mowing-contract-form").reset();
+        $("#mowing-contract-title").value = "Recurring Lawn Mowing Service";
+        await loadEstimates();
+      } catch (error) {
+        $("#mowing-contract-result").innerHTML = notice(error.message, true);
+      } finally {
+        if (submitter) submitter.disabled = false;
+      }
     });
     $("#contract-reset-default").addEventListener("click", resetContractEditorToStandard);
     $("#contract-add-section").addEventListener("click", () => {
