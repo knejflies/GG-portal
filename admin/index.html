@@ -5360,6 +5360,7 @@
                 <option value="custom">Custom service</option>
               </select>
               <small class="muted">This loads the matching starting wording. You can edit every section below for this job.</small>
+              <div class="contract-quick-actions"><button id="estimate-start-mowing" class="button small secondary" type="button">Start Mowing Contract</button></div>
             </div>
             <details class="estimate-contract-editor" open>
               <summary>Edit contract wording for this job</summary>
@@ -7076,6 +7077,13 @@
       resetContractEditorToStandard();
       $("#estimate-result").innerHTML = notice(`Loaded the standard ${$("#estimate-contract-template").selectedOptions[0].textContent} wording. Edit it below, then save this estimate.`);
     });
+    $("#estimate-start-mowing").addEventListener("click", () => {
+      $("#estimate-contract-template").value = "mowing";
+      resetContractEditorToStandard();
+      if (!$("#estimate-project-title").value.trim()) $("#estimate-project-title").value = "Recurring Lawn Mowing Service";
+      if (!$("#estimate-project-scope").value.trim()) $("#estimate-project-scope").value = "Scheduled lawn mowing and routine service visits for the property described in this contract.";
+      $("#estimate-result").innerHTML = notice("Mowing contract wording loaded. Finish the customer, price, and schedule, then use Send Contract.");
+    });
     $("#contract-reset-default").addEventListener("click", resetContractEditorToStandard);
     $("#contract-add-section").addEventListener("click", () => {
       const sections = readContractSectionsFromForm();
@@ -7142,7 +7150,8 @@
         return;
       }
       if (submitter) submitter.disabled = true;
-      $("#estimate-result").innerHTML = notice(intent === "send-proposal" ? "Saving and emailing the secure Landscaping Customer Contract..." : "Saving estimate...");
+      const contractLabel = window.GreenGrinContract?.CONTRACT_TEMPLATES?.[payload.contract_template]?.title || "Service Contract";
+      $("#estimate-result").innerHTML = notice(intent === "send-proposal" ? `Saving and emailing the secure ${contractLabel}...` : "Saving estimate...");
       try {
         const estimate = await saveEstimateRecord(payload);
         if (intent === "send-proposal") {
@@ -8383,10 +8392,11 @@
     async function sendEstimateProposal(estimate) {
       if (!estimate?.id) throw new Error("Save the estimate before sending the contract.");
       if (!estimate.email) throw new Error("Add the customer's email before sending the contract.");
-      showEstimateNotice("Emailing the secure Landscaping Customer Contract...");
+      const contractLabel = window.GreenGrinContract?.CONTRACT_TEMPLATES?.[estimate.contract_template]?.title || "Service Contract";
+      showEstimateNotice(`Emailing the secure ${contractLabel}...`);
       const data = await requestJson("portal-proposals", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send", estimate_id: estimate.id }) });
       await loadEstimates();
-      showEstimateNotice(data.message || `Landscaping Customer Contract ${estimate.estimate_number} emailed to ${estimate.email}.`);
+      showEstimateNotice(data.message || `${contractLabel} ${estimate.estimate_number} emailed to ${estimate.email}.`);
       return data;
     }
 
