@@ -66,6 +66,10 @@ function contractFor(estimate = {}) {
   return buildContract(estimate, { registrationNumber: CONTRACTOR_REGISTRATION_NUMBER, initialPaymentPercent: estimate.initial_payment_percent });
 }
 
+function isMowingContract(estimate = {}, contract = contractFor(estimate)) {
+  return String(estimate.contract_template || "").toLowerCase() === "mowing" || contract.title === "Recurring Lawn Mowing Agreement";
+}
+
 function contractSectionsHtml(contract) {
   return (contract.sections || []).map((section) => {
     const paragraphs = (section.paragraphs || []).map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join("");
@@ -106,6 +110,7 @@ async function sendEmail(to, subject, html) {
 
 function publicEstimate(estimate) {
   const contract = contractFor(estimate);
+  const mowing = isMowingContract(estimate, contract);
   return {
     id: estimate.id,
     estimate_number: estimate.estimate_number,
@@ -123,7 +128,7 @@ function publicEstimate(estimate) {
     discount: Number(estimate.discount || 0),
     tax_amount: Number(estimate.tax_amount || 0),
     total: Number(estimate.total || 0),
-    deposit_amount: contract.pricing.initial_payment,
+    deposit_amount: mowing ? 0 : contract.pricing.initial_payment,
     contract,
     status: estimate.status,
     approved_at: estimate.approved_at,
@@ -143,11 +148,15 @@ function proposalEmail(estimate, link) {
   const groups = rows ? `<table style="width:100%;border-collapse:collapse">${rows}</table>` : "";
   const due = estimate.invoice_due_date ? new Date(`${estimate.invoice_due_date}T12:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Per the payment schedule below";
   const registration = contract.business.contractor_registration_number ? `<p><strong>Idaho contractor registration:</strong> ${escapeHtml(contract.business.contractor_registration_number)}</p>` : "";
-  return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">${escapeHtml(BUSINESS_NAME)}</h1><p style="color:#4f6556;font-weight:700">${escapeHtml(contract.title)} | ${escapeHtml(estimate.estimate_number)}</p>${registration}<h2 style="color:#07351d">${escapeHtml(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${escapeHtml(estimate.customer_name)}</p><p>${escapeHtml(estimate.service_address || "")}</p><h3 style="color:#07351d">Scope of work</h3><div style="white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(estimate.project_scope || "")}</div><h3 style="color:#07351d">Project price</h3>${groups}<p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(contract.pricing.project_total)}</p><p><strong>${escapeHtml(`${contract.pricing.initial_percent}% initial payment`)}:</strong> ${money(contract.pricing.initial_payment)}</p><p><strong>${escapeHtml(`${contract.pricing.final_percent}% final payment`)}:</strong> ${money(contract.pricing.final_payment)}</p><p><strong>Payment due:</strong> ${escapeHtml(due)}</p>${estimate.customer_notes ? `<h3 style="color:#07351d">Project notes</h3><p style="white-space:pre-wrap">${escapeHtml(estimate.customer_notes)}</p>` : ""}<p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Sign Contract</a></p><p style="color:#5c6e62">Review the complete contract and required disclosures at the secure link before signing.</p></div>`;
+  const paymentCopy = isMowingContract(estimate, contract)
+    ? `<p><strong>Billing:</strong> Recurring mowing is billed according to the customer account billing schedule. No project deposit is required.</p>`
+    : `<p><strong>${escapeHtml(`${contract.pricing.initial_percent}% initial payment`)}:</strong> ${money(contract.pricing.initial_payment)}</p><p><strong>${escapeHtml(`${contract.pricing.final_percent}% final payment`)}:</strong> ${money(contract.pricing.final_payment)}</p>`;
+  return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">${escapeHtml(BUSINESS_NAME)}</h1><p style="color:#4f6556;font-weight:700">${escapeHtml(contract.title)} | ${escapeHtml(estimate.estimate_number)}</p>${registration}<h2 style="color:#07351d">${escapeHtml(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${escapeHtml(estimate.customer_name)}</p><p>${escapeHtml(estimate.service_address || "")}</p><h3 style="color:#07351d">Scope of work</h3><div style="white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(estimate.project_scope || "")}</div><h3 style="color:#07351d">Project price</h3>${groups}<p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(contract.pricing.project_total)}</p>${paymentCopy}<p><strong>Payment due:</strong> ${escapeHtml(due)}</p>${estimate.customer_notes ? `<h3 style="color:#07351d">Project notes</h3><p style="white-space:pre-wrap">${escapeHtml(estimate.customer_notes)}</p>` : ""}<p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Sign Contract</a></p><p style="color:#5c6e62">Review the complete contract and required disclosures at the secure link before signing.</p></div>`;
 }
 
 function documentSnapshot(estimate) {
   const contract = contractFor(estimate);
+  const mowing = isMowingContract(estimate, contract);
   return {
     estimate_number: estimate.estimate_number,
     customer_name: estimate.customer_name,
@@ -160,11 +169,13 @@ function documentSnapshot(estimate) {
     discount: Number(estimate.discount || 0),
     tax_amount: Number(estimate.tax_amount || 0),
     total: Number(estimate.total || 0),
-    deposit_amount: contract.pricing.initial_payment,
+    deposit_amount: mowing ? 0 : contract.pricing.initial_payment,
     valid_until: estimate.valid_until,
     invoice_due_date: estimate.invoice_due_date,
     customer_notes: estimate.customer_notes,
-    payment_terms: `${contract.pricing.initial_percent}% initial payment of ${money(contract.pricing.initial_payment)} is due upon signing. The remaining ${contract.pricing.final_percent}% of ${money(contract.pricing.final_payment)} is due upon substantial completion.`,
+    payment_terms: mowing
+      ? "Recurring mowing is billed according to the customer account billing schedule. No project deposit is required."
+      : `${contract.pricing.initial_percent}% initial payment of ${money(contract.pricing.initial_payment)} is due upon signing. The remaining ${contract.pricing.final_percent}% of ${money(contract.pricing.final_payment)} is due upon substantial completion.`,
     change_order_terms: "Additional work requires an approved written Change Order.",
     contract
   };
@@ -177,11 +188,15 @@ function signedProposalEmail(estimate, snapshot, signature) {
     ? `<img src="${signature.signature_data}" alt="Customer signature" style="display:block;max-width:420px;max-height:130px;margin:12px 0;border-bottom:1px solid #7a8a7d" />`
     : `<p style="font-size:24px;font-style:italic;margin:12px 0">${escapeHtml(signature.signer_name)}</p>`;
   const contract = snapshot.contract || contractFor(estimate);
+  const mowing = isMowingContract(estimate, contract);
   const registration = contract.business.contractor_registration_number ? `<p><strong>Idaho contractor registration:</strong> ${escapeHtml(contract.business.contractor_registration_number)}</p>` : "";
   const companyAcceptance = snapshot.company_acceptance
     ? `<div style="margin-top:22px;padding:15px;border:1px solid #cad8c9"><h3 style="margin-top:0">${escapeHtml(BUSINESS_NAME)} acceptance</h3><p><strong>Accepted by ${escapeHtml(BUSINESS_NAME)}</strong><br>${escapeHtml(new Date(snapshot.company_acceptance.accepted_at).toLocaleString("en-US"))}</p></div>`
     : "";
-  return `<div style="font-family:Arial,sans-serif;max-width:700px;margin:auto;color:#102419"><h1 style="color:#07351d">Signed ${escapeHtml(BUSINESS_NAME)} Landscaping Customer Contract</h1><p><strong>${escapeHtml(snapshot.estimate_number)}</strong> was signed by ${escapeHtml(signature.signer_name)} on ${escapeHtml(new Date(signature.signed_at).toLocaleString("en-US"))}.</p>${registration}<hr style="border:0;border-top:3px solid #78c653"><h2>${escapeHtml(snapshot.project_title)}</h2><p><strong>Customer:</strong> ${escapeHtml(snapshot.customer_name)}</p><p><strong>Project address:</strong> ${escapeHtml(snapshot.service_address || "")}</p><h3>Scope of work</h3><div style="white-space:pre-wrap;padding:15px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(snapshot.project_scope || "")}</div>${groups}<p style="font-size:24px;font-weight:800;text-align:right">Project total: ${money(contract.pricing.project_total)}</p><div style="padding:15px;border:1px solid #cad8c9"><strong>Payment schedule</strong><p>${escapeHtml(`${contract.pricing.initial_percent}% initial payment`)}: ${money(contract.pricing.initial_payment)}</p><p>${escapeHtml(`${contract.pricing.final_percent}% final payment`)}: ${money(contract.pricing.final_payment)}</p></div>${snapshot.customer_notes ? `<p style="white-space:pre-wrap"><strong>Project notes</strong><br>${escapeHtml(snapshot.customer_notes)}</p>` : ""}${contractSectionsHtml(contract)}<h3>Customer signature</h3>${signatureImage}<p>${escapeHtml(signature.consent_text)}</p><p style="font-size:12px;color:#5c6e62">Signed by ${escapeHtml(signature.signer_name)} (${escapeHtml(signature.signer_email || "No email")})<br>Document reference: ${escapeHtml(signature.document_hash)}<br>Contract version: ${escapeHtml(contract.version)}</p>${companyAcceptance}</div>`;
+  const signedPayment = mowing
+    ? `<div style="padding:15px;border:1px solid #cad8c9"><strong>Billing</strong><p>Recurring mowing is billed according to the customer account billing schedule. No project deposit is required.</p></div>`
+    : `<div style="padding:15px;border:1px solid #cad8c9"><strong>Payment schedule</strong><p>${escapeHtml(`${contract.pricing.initial_percent}% initial payment`)}: ${money(contract.pricing.initial_payment)}</p><p>${escapeHtml(`${contract.pricing.final_percent}% final payment`)}: ${money(contract.pricing.final_payment)}</p></div>`;
+  return `<div style="font-family:Arial,sans-serif;max-width:700px;margin:auto;color:#102419"><h1 style="color:#07351d">Signed ${escapeHtml(mowing ? contract.title : BUSINESS_NAME + " Landscaping Customer Contract")}</h1><p><strong>${escapeHtml(snapshot.estimate_number)}</strong> was signed by ${escapeHtml(signature.signer_name)} on ${escapeHtml(new Date(signature.signed_at).toLocaleString("en-US"))}.</p>${registration}<hr style="border:0;border-top:3px solid #78c653"><h2>${escapeHtml(snapshot.project_title)}</h2><p><strong>Customer:</strong> ${escapeHtml(snapshot.customer_name)}</p><p><strong>Project address:</strong> ${escapeHtml(snapshot.service_address || "")}</p><h3>Scope of work</h3><div style="white-space:pre-wrap;padding:15px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(snapshot.project_scope || "")}</div>${groups}<p style="font-size:24px;font-weight:800;text-align:right">Project total: ${money(contract.pricing.project_total)}</p>${signedPayment}${snapshot.customer_notes ? `<p style="white-space:pre-wrap"><strong>Project notes</strong><br>${escapeHtml(snapshot.customer_notes)}</p>` : ""}${contractSectionsHtml(contract)}<h3>Customer signature</h3>${signatureImage}<p>${escapeHtml(signature.consent_text)}</p><p style="font-size:12px;color:#5c6e62">Signed by ${escapeHtml(signature.signer_name)} (${escapeHtml(signature.signer_email || "No email")})<br>Document reference: ${escapeHtml(signature.document_hash)}<br>Contract version: ${escapeHtml(contract.version)}</p>${companyAcceptance}</div>`;
 }
 
 function dateOffset(days) {
@@ -211,7 +226,7 @@ async function createProjectAndDeposit(estimate) {
     });
     jobId = jobs?.[0]?.id || null;
   }
-  if (!invoiceId && contract.pricing.initial_payment > 0) {
+  if (!invoiceId && !isMowingContract(estimate, contract) && contract.pricing.initial_payment > 0) {
     const amount = contract.pricing.initial_payment;
     const invoices = await supabase("green_grin_invoices", {
       method: "POST",
@@ -282,7 +297,7 @@ exports.handler = async (event) => {
       const expiry = estimate.valid_until ? new Date(`${estimate.valid_until}T23:59:59`).toISOString() : new Date(Date.now() + 30 * 86400000).toISOString();
       const link = `${PROPOSAL_URL}${PROPOSAL_URL.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
       const sentAt = new Date().toISOString();
-      await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, { method: "PATCH", body: JSON.stringify({ proposal_token_hash: hash(token), proposal_sent_at: sentAt, proposal_expires_at: expiry, deposit_amount: contract.pricing.initial_payment, status: "Quoted", updated_at: sentAt }) });
+      await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, { method: "PATCH", body: JSON.stringify({ proposal_token_hash: hash(token), proposal_sent_at: sentAt, proposal_expires_at: expiry, deposit_amount: isMowingContract(estimate, contract) ? 0 : contract.pricing.initial_payment, status: "Quoted", updated_at: sentAt }) });
       await sendEmail(estimate.email, `${BUSINESS_NAME} ${contract.title} ${estimate.estimate_number}`, proposalEmail({ ...estimate, proposal_sent_at: sentAt }, link));
       return json(200, { ok: true, link, message: `${contract.title} emailed to ${estimate.email}.` });
     }
