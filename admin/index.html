@@ -3343,6 +3343,9 @@
       background: rgba(1, 10, 6, .42);
     }
 
+    body.mowing-contract-mode #project-bids .estimator-workspace-nav,
+    body.mowing-contract-mode #project-bids .mowing-contract-launcher { display: none; }
+
     .estimator-workspace-button {
       min-height: 44px;
       border: 1px solid transparent;
@@ -4271,6 +4274,7 @@
       <button class="tab owner-only" data-tab="calendar" type="button">Calendar</button>
       <span class="tab-section-label owner-only">Quoting tools</span>
       <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
+      <button class="tab owner-only" data-tab="mowing-contract" type="button">Mowing Contract</button>
       <span class="tab-section-label owner-only">Team</span>
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
@@ -6554,6 +6558,20 @@
     document.querySelectorAll(".tab").forEach((button) => {
       button.addEventListener("click", () => {
         const requestedTab = button.dataset.tab;
+        if (requestedTab === "mowing-contract") {
+          document.body.classList.add("mowing-contract-mode");
+          $("#project-bids .bid-page-head h2").textContent = "Mowing Contract";
+          $("#project-bids .bid-page-head .muted").textContent = "Complete and send the recurring mowing service agreement. Customers finish the remaining fields and sign digitally.";
+          openTab("project-bids");
+          document.querySelectorAll(".tab").forEach((tab) => tab.classList.toggle("active", tab === button));
+          openEstimatorView("builder");
+          loadProjectEstimator();
+          window.requestAnimationFrame(() => $("#estimate-start-mowing")?.click());
+          return;
+        }
+        document.body.classList.remove("mowing-contract-mode");
+        $("#project-bids .bid-page-head h2").textContent = "Landscape Estimates";
+        $("#project-bids .bid-page-head .muted").textContent = "Price the work, protect your margin, and turn the approved scope into a real customer invoice.";
         const destinationTab = requestedTab === "bids" ? "project-bids" : requestedTab;
         openTab(destinationTab);
         if (button.dataset.tab === "invoices") {
