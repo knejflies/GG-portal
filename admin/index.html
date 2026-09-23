@@ -5216,6 +5216,15 @@
         <button class="estimator-workspace-button" data-estimator-view="saved" type="button" role="tab" aria-selected="false">Saved Estimates</button>
       </div>
 
+      <div class="card mowing-contract-launcher">
+        <div>
+          <span class="admin-eyebrow">Recurring service</span>
+          <h3>Mowing Contract</h3>
+          <p class="muted">Send the separate Green Grin mowing agreement. Customers fill in their service details and sign it digitally.</p>
+        </div>
+        <button id="mowing-contract-launch" class="button" type="button">Open Mowing Contract</button>
+      </div>
+
       <div class="estimator-workspace-panel active" data-estimator-panel="builder">
         <div class="card estimator-builder-card">
           <form id="estimate-form" novalidate>
@@ -7085,6 +7094,12 @@
       if (!$("#estimate-project-title").value.trim()) $("#estimate-project-title").value = "Recurring Lawn Mowing Service";
       if (!$("#estimate-project-scope").value.trim()) $("#estimate-project-scope").value = "Scheduled lawn mowing and routine service visits for the property described in this contract.";
       $("#estimate-result").innerHTML = notice("Mowing contract wording loaded. Finish the customer, price, and schedule, then use Send Contract.");
+    });
+    $("#mowing-contract-launch").addEventListener("click", () => {
+      openTab("project-bids");
+      openEstimatorView("builder");
+      $("#estimate-start-mowing").click();
+      window.scrollTo({ top: $("#project-bids").offsetTop, behavior: "smooth" });
     });
     $("#contract-reset-default").addEventListener("click", resetContractEditorToStandard);
     $("#contract-add-section").addEventListener("click", () => {
