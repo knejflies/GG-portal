@@ -56,7 +56,7 @@
     const serviceTerms = {
       mowing: {
         title: "Mowing Service Terms",
-        paragraphs: ["Mowing service covers the scheduled visits and service items listed in the approved proposal. Grass growth, weather, access, gates, pets, and site conditions can affect the exact service date.", "The Customer is responsible for keeping the lawn accessible and removing toys, hoses, pet waste, and other items before the scheduled visit."]
+        paragraphs: ["Mowing service covers the recurring visits and service items listed in this agreement. Grass growth, weather, access, gates, pets, and site conditions can affect the exact service date.", "The Customer is responsible for keeping the lawn accessible and removing toys, hoses, pet waste, and other items before each scheduled visit.", "Green Grin Lawns will mow the agreed lawn areas, trim accessible edges, and blow hard surfaces clear of normal clippings. Additional work such as overgrowth recovery, shrub trimming, leaf cleanup, irrigation repair, or hauling requires separate approval."]
       },
       cleanup: {
         title: "Cleanup and Hauling Terms",
@@ -71,6 +71,15 @@
         paragraphs: ["The service details, limits, materials, schedule, and completion standard are the items written in the approved proposal and any approved Change Orders."]
       }
     };
+    const paymentParagraphs = type === "mowing"
+      ? [
+        "Recurring mowing is billed at the service price shown in the approved proposal or invoice. Payment is due according to the billing schedule stated on the customer account. A missed or failed payment may pause future service until the account is current.",
+        "The recurring price assumes normal mowing conditions and the service frequency shown in the account. Significant overgrowth, blocked access, unusually heavy debris, or requested extra work may require a separately approved charge."
+      ]
+      : [
+        `The initial payment shown in the approved proposal is due upon signing and must be received before ${BUSINESS_NAME} schedules work, orders project materials, or begins the Project. The remaining balance is due upon substantial completion.`,
+        `${BUSINESS_NAME}' internal costs, margins, supplier pricing, and material acquisition costs are confidential business information and are not part of the Customer's pricing information.`
+      ];
     const sections = [
       {
         title: "Agreement",
@@ -88,10 +97,7 @@
       },
       {
         title: "Project Price and Payment",
-        paragraphs: [
-          `The initial payment shown in the approved proposal is due upon signing and must be received before ${BUSINESS_NAME} schedules work, orders project materials, or begins the Project. The remaining balance is due upon substantial completion.`,
-          `${BUSINESS_NAME}' internal costs, margins, supplier pricing, and material acquisition costs are confidential business information and are not part of the Customer's pricing information.`
-        ]
+        paragraphs: paymentParagraphs
       },
       {
         title: "Change Orders",
@@ -188,7 +194,8 @@
       const disclosure = defaultSections.find((section) => /residential contractor disclosure/i.test(section.title));
       if (disclosure) sections.push(disclosure);
     }
-    const defaultConsent = `I have reviewed and agree to this Landscaping Customer Contract, including the approved scope, project price, payment schedule, warranty, exclusions, and Change Order terms. I authorize ${BUSINESS_NAME} to perform the described work.${disclosureRequired ? " I also acknowledge receipt, before signing, of the Idaho Residential Contractor Disclosure included in this contract." : ""}`;
+    const agreementName = CONTRACT_TEMPLATES[template]?.title || CONTRACT_TEMPLATES.landscaping.title;
+    const defaultConsent = `I have reviewed and agree to this ${agreementName}, including the approved service scope, price, payment terms, warranty, exclusions, and Change Order terms. I authorize ${BUSINESS_NAME} to perform the described work.${disclosureRequired ? " I also acknowledge receipt, before signing, of the Idaho Residential Contractor Disclosure included in this contract." : ""}`;
     const consentText = String(options.consentText || estimate.contract_consent_text || defaultConsent).trim().slice(0, 8000);
     return {
       version: CONTRACT_VERSION,
