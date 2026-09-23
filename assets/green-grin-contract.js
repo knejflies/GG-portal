@@ -71,6 +71,87 @@
         paragraphs: ["The service details, limits, materials, schedule, and completion standard are the items written in the approved proposal and any approved Change Orders."]
       }
     };
+    if (type === "mowing") {
+      return [
+        {
+          title: "Client and Property Information",
+          paragraphs: [
+            "This Service Agreement applies to the client, service address, billing address, and contact information shown in the approved proposal."
+          ]
+        },
+        {
+          title: "1. Work to Be Performed",
+          paragraphs: [
+            "Lawn Maintenance Bundle: includes lawn mowing, string trimming, and blowing of hard surfaces.",
+            "Spring / Fall Clean-Up: includes leaf removal, bed cleanup, and lawn debris removal.",
+            "Other Custom Work: only the work written in the approved proposal or an approved change order.",
+            "Service frequency is the frequency selected in the approved proposal: weekly, bi-weekly, or as requested."
+          ]
+        },
+        {
+          title: "2. Price and Payment",
+          paragraphs: [
+            "The rate per visit and selected billing option are shown in the approved proposal or customer account.",
+            "Billing may be per service, invoiced upon completion, or monthly, invoiced at the beginning of the month for that month's scheduled services."
+          ]
+        },
+        {
+          title: "3. Payment Terms",
+          paragraphs: [
+            "Invoices are sent via email. Monthly accounts are invoiced at the beginning of the month for that month's scheduled services.",
+            "Unpaid balances 15 days past the invoice date are subject to a late fee of $15.00 or 1.5% of the outstanding balance per month, whichever is greater. Green Grin Lawns reserves the right to stop service on accounts with past-due balances."
+          ]
+        },
+        {
+          title: "4. Scheduling and Weather",
+          paragraphs: [
+            "Services are organized by route efficiency. While Green Grin Lawns aims for a consistent scheduled day, service dates are flexible to accommodate weather shifts, seasonal growth rates, holidays, or necessary equipment maintenance."
+          ]
+        },
+        {
+          title: "5. Property Access and Gates",
+          paragraphs: [
+            "The Client must ensure that gates are unlocked, paths are clear, and pets are indoors on service days. If the crew cannot access the yard or conditions are unsafe, a $25.00 trip fee applies, or the service may be billed at the standard rate."
+          ]
+        },
+        {
+          title: "6. Yard Debris",
+          paragraphs: [
+            "To avoid equipment damage and ensure an even cut, the Client must clear the lawn of toys, rocks, hoses, and large sticks before crew arrival."
+          ]
+        },
+        {
+          title: "7. Pet Waste",
+          paragraphs: [
+            "All animal waste must be removed from the service area before arrival. If pet waste is left on the lawn, Green Grin Lawns may perform a cleanup prior to mowing for an additional $15.00 charge, mow around the affected zones at the regular rate, or skip the service visit while billing the regular rate."
+          ]
+        },
+        {
+          title: "8. Underground Systems and Property Damage",
+          paragraphs: [
+            "Green Grin Lawns is fully insured. We are not responsible for damage to items left on the grass or to unmapped or shallowly buried systems, including invisible pet fences, shallow wiring, or shallow sprinkler heads. The Client must notify Green Grin Lawns of hidden property features before work begins."
+          ]
+        },
+        {
+          title: "9. Cancellation",
+          paragraphs: [
+            "This is an ongoing seasonal partnership. Either party may cancel or change this agreement at any time by giving 7-day written or verbal notice."
+          ]
+        },
+        {
+          title: "10. Assignment and Subcontracting",
+          paragraphs: [
+            "Green Grin Lawns reserves the right to assign, delegate, or subcontract any portion of the yard services to qualified independent contractors, associates, or service partners at its discretion."
+          ]
+        },
+        {
+          title: "Signatures and Authorization",
+          paragraphs: [
+            "The electronic signature on this agreement confirms that the Client reviewed and authorized the selected services, frequency, price, billing option, and terms above."
+          ]
+        }
+      ];
+    }
     const paymentParagraphs = type === "mowing"
       ? [
         "Recurring mowing is billed at the service price shown in the approved proposal or invoice. Payment is due according to the billing schedule stated on the customer account. A missed or failed payment may pause future service until the account is current.",
