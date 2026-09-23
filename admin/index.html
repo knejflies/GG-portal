@@ -12716,6 +12716,9 @@
         openTab("expenses");
         setExpenseView("mileage");
       }
+      if (activeAccount?.id === "owner" && requestedView === "mowing-contract") {
+        document.querySelector('[data-tab="mowing-contract"]')?.click();
+      }
       if (requestedGpsTrip && activeAccount?.id === "owner") startMileageGpsTracking();
     });
   </script>
