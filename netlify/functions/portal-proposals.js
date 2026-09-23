@@ -119,6 +119,7 @@ function publicEstimate(estimate) {
     project_title: estimate.project_title,
     service_address: estimate.service_address,
     project_scope: estimate.project_scope,
+    contract_template: estimate.contract_template || "landscaping",
     customer_notes: estimate.customer_notes,
     valid_until: estimate.valid_until,
     invoice_due_date: estimate.invoice_due_date,
@@ -154,15 +155,28 @@ function proposalEmail(estimate, link) {
   return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">${escapeHtml(BUSINESS_NAME)}</h1><p style="color:#4f6556;font-weight:700">${escapeHtml(contract.title)} | ${escapeHtml(estimate.estimate_number)}</p>${registration}<h2 style="color:#07351d">${escapeHtml(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${escapeHtml(estimate.customer_name)}</p><p>${escapeHtml(estimate.service_address || "")}</p><h3 style="color:#07351d">Scope of work</h3><div style="white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(estimate.project_scope || "")}</div><h3 style="color:#07351d">Project price</h3>${groups}<p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(contract.pricing.project_total)}</p>${paymentCopy}<p><strong>Payment due:</strong> ${escapeHtml(due)}</p>${estimate.customer_notes ? `<h3 style="color:#07351d">Project notes</h3><p style="white-space:pre-wrap">${escapeHtml(estimate.customer_notes)}</p>` : ""}<p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Sign Contract</a></p><p style="color:#5c6e62">Review the complete contract and required disclosures at the secure link before signing.</p></div>`;
 }
 
-function documentSnapshot(estimate) {
-  const contract = contractFor(estimate);
+function documentSnapshot(estimate, customerDetails = {}) {
+  const completed = {
+    ...estimate,
+    customer_name: customerDetails.customer_name || estimate.customer_name,
+    service_address: customerDetails.service_address || estimate.service_address,
+    billing_address: customerDetails.billing_address || estimate.billing_address || customerDetails.service_address || estimate.service_address,
+    phone: customerDetails.phone || estimate.phone,
+    service_frequency: customerDetails.service_frequency || estimate.service_frequency,
+    billing_option: customerDetails.billing_option || estimate.billing_option,
+    mowing_rate_per_visit: customerDetails.mowing_rate_per_visit || estimate.mowing_rate_per_visit
+  };
+  const contract = contractFor(completed);
   const mowing = isMowingContract(estimate, contract);
   return {
     estimate_number: estimate.estimate_number,
-    customer_name: estimate.customer_name,
+    customer_name: completed.customer_name,
     project_title: estimate.project_title,
-    service_address: estimate.service_address,
-    project_scope: estimate.project_scope,
+    service_address: completed.service_address,
+    project_scope: completed.project_scope,
+    billing_address: completed.billing_address,
+    phone: completed.phone,
+    customer_details: customerDetails,
     price_display: proposalPriceDisplay(estimate),
     grouped_totals: customerVisibleGroups(estimate),
     subtotal: Number(estimate.subtotal || 0),
@@ -333,7 +347,17 @@ exports.handler = async (event) => {
       const signatureType = body.signature_type === "drawn" ? "drawn" : "typed";
       const signatureData = String(body.signature_data || signerName).slice(0, 300000);
       const signedAt = new Date().toISOString();
-      const snapshot = documentSnapshot(estimate);
+      const rawCustomerDetails = body.customer_details && typeof body.customer_details === "object" ? body.customer_details : {};
+      const customerDetails = {
+        customer_name: String(rawCustomerDetails.customer_name || "").trim().slice(0, 140),
+        service_address: String(rawCustomerDetails.service_address || "").trim().slice(0, 300),
+        billing_address: String(rawCustomerDetails.billing_address || "").trim().slice(0, 300),
+        phone: String(rawCustomerDetails.phone || "").trim().slice(0, 40),
+        service_frequency: String(rawCustomerDetails.service_frequency || "").trim().slice(0, 40),
+        billing_option: String(rawCustomerDetails.billing_option || "").trim().slice(0, 60),
+        mowing_rate_per_visit: Number(rawCustomerDetails.mowing_rate_per_visit) > 0 ? Number(rawCustomerDetails.mowing_rate_per_visit) : null
+      };
+      const snapshot = documentSnapshot(estimate, customerDetails);
       snapshot.company_acceptance = { business_name: BUSINESS_NAME, accepted_at: signedAt, method: `${BUSINESS_NAME} secure contract system` };
       const documentHash = hash(JSON.stringify(snapshot));
       const signature = { estimate_id: estimate.id, signer_name: signerName, signer_email: estimate.email || "", signature_type: signatureType, signature_data: signatureData, consent_text: snapshot.contract.consent_text, signed_at: signedAt, document_hash: documentHash, document_snapshot: snapshot, ip_address: String(event.headers["x-forwarded-for"] || "").split(",")[0].trim(), user_agent: String(event.headers["user-agent"] || "").slice(0, 500) };
