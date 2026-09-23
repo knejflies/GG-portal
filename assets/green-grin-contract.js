@@ -72,27 +72,35 @@
       }
     };
     if (type === "mowing") {
+      const mowingLines = Array.isArray(estimate.line_items) ? estimate.line_items : [];
+      const ratePerVisit = number(estimate.rate_per_visit ?? estimate.mowing_rate_per_visit ?? mowingLines.find((line) => Number(line?.rate) > 0)?.rate ?? 0);
+      const frequency = String(estimate.service_frequency || estimate.mowing_frequency || "As Requested").trim();
+      const billingOption = String(estimate.billing_option || estimate.mowing_billing_option || "Monthly").trim();
       return [
         {
           title: "Client and Property Information",
           paragraphs: [
-            "This Service Agreement applies to the client, service address, billing address, and contact information shown in the approved proposal."
+            `Client Name: ${String(estimate.customer_name || "")}`,
+            `Service Address: ${String(estimate.service_address || "")}`,
+            `Billing Address: ${String(estimate.billing_address || estimate.service_address || "")}`,
+            `Phone / Email: ${String(estimate.phone || "")} / ${String(estimate.email || "")}`
           ]
         },
         {
           title: "1. Work to Be Performed",
           paragraphs: [
-            "Lawn Maintenance Bundle: includes lawn mowing, string trimming, and blowing of hard surfaces.",
-            "Spring / Fall Clean-Up: includes leaf removal, bed cleanup, and lawn debris removal.",
-            "Other Custom Work: only the work written in the approved proposal or an approved change order.",
-            "Service frequency is the frequency selected in the approved proposal: weekly, bi-weekly, or as requested."
+            "[ ] Lawn Maintenance Bundle — includes lawn mowing, string trimming, and blowing of hard surfaces.",
+            "[ ] Spring / Fall Clean-Up — includes leaf removal, bed cleanup, and lawn debris removal.",
+            "[ ] Other Custom Work: only the work written in the approved proposal or an approved change order.",
+            `Service Frequency: [ ] Weekly   [ ] Bi-Weekly   [ ] As Requested   |   Selected: ${frequency}`
           ]
         },
         {
           title: "2. Price and Payment",
           paragraphs: [
-            "The rate per visit and selected billing option are shown in the approved proposal or customer account.",
-            "Billing may be per service, invoiced upon completion, or monthly, invoiced at the beginning of the month for that month's scheduled services."
+            `Rate per Visit: ${ratePerVisit > 0 ? `$${ratePerVisit.toFixed(2)} USD` : "See approved proposal"}`,
+            "Billing Options: [ ] Per-Service (invoiced upon completion)   [ ] Monthly (invoiced at beginning of month)",
+            `Selected Billing Option: ${billingOption}`
           ]
         },
         {
