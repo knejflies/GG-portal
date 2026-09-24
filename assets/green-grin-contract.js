@@ -51,7 +51,7 @@
     }).filter((section) => section.title && (section.paragraphs.length || section.bullets.length));
   }
 
-  function contractSections(disclosureRequired, template = "landscaping") {
+  function contractSections(disclosureRequired, template = "landscaping", estimate = {}) {
     const type = CONTRACT_TEMPLATES[template] ? template : "landscaping";
     const serviceTerms = {
       mowing: {
@@ -276,7 +276,7 @@
     const registrationNumber = String(options.registrationNumber || estimate.contractor_registration_number || "").trim();
     const sentDate = estimate.proposal_sent_at || estimate.contract_date || new Date().toISOString();
     const template = String(options.contractTemplate || estimate.contract_template || "landscaping").toLowerCase();
-    const defaultSections = contractSections(disclosureRequired, template);
+    const defaultSections = contractSections(disclosureRequired, template, estimate);
     const customSections = normalizeContractSections(options.contractSections || estimate.contract_sections);
     const sections = customSections.length ? customSections : defaultSections;
     if (customSections.length && disclosureRequired && !customSections.some((section) => /residential contractor disclosure/i.test(section.title))) {
