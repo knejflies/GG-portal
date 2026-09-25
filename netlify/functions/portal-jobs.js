@@ -208,6 +208,9 @@ exports.handler = async (event) => {
         email: body.email || user?.email || "",
         address: body.address || "",
         service_type: body.service_type || "Service request",
+        service_category: body.service_category || "Mowing",
+        schedule_frequency: body.schedule_frequency || (scheduleStartDate && scheduleEndDate ? "Weekly" : "One-time"),
+        route_order: Number.isFinite(Number(body.route_order)) ? Number(body.route_order) : null,
         preferred_date: body.preferred_date || null,
         scheduled_date: scheduledDate,
         recurring_weekly: Boolean(adminCreate && scheduleStartDate && scheduleEndDate),
@@ -218,6 +221,9 @@ exports.handler = async (event) => {
         assigned_employee_name: body.assigned_employee_name || null,
         annual_price: body.annual_price || null,
         monthly_price: body.monthly_price || null,
+        service_category: body.service_category || "Mowing",
+        schedule_frequency: body.schedule_frequency || (body.schedule_start_date && body.schedule_end_date ? "Weekly" : "One-time"),
+        route_order: Number.isFinite(Number(body.route_order)) ? Number(body.route_order) : null,
         notes: body.notes || "",
         status: adminCreate ? body.status || (scheduledDate ? "Scheduled" : "New") : "New"
       };

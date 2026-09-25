@@ -4594,6 +4594,8 @@
       <div class="grid">
         <div class="card owner-only">
           <h2>Customers</h2>
+          <label for="customer-list-search">Search customers</label>
+          <input id="customer-list-search" type="search" autocomplete="off" placeholder="Name, GG number, phone, or address" />
           <div class="admin-bar">
             <button id="load-customers" class="button secondary" type="button">Load Customers</button>
           </div>
@@ -4652,6 +4654,25 @@
                 </select>
               </div>
               <div>
+                <label for="owner_job_category">Job category</label>
+                <select id="owner_job_category">
+                  <option value="Mowing">Mowing</option>
+                  <option value="Cleanup">Cleanup / Aeration</option>
+                  <option value="Landscaping">Landscaping</option>
+                  <option value="Fertilization">Fertilization</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label for="owner_job_frequency">Schedule frequency</label>
+                <select id="owner_job_frequency">
+                  <option value="Weekly">Weekly</option>
+                  <option value="Bi-Weekly">Bi-Weekly</option>
+                  <option value="One-time">One-time</option>
+                  <option value="As Requested">As Requested</option>
+                </select>
+              </div>
+              <div>
                 <label for="owner_job_weekly_price">Price per service week</label>
                 <input id="owner_job_weekly_price" type="number" min="0" step="0.01" placeholder="Weekly price" />
               </div>
@@ -4693,9 +4714,15 @@
           </form>
           <div id="owner-create-result" aria-live="polite"></div>
         </div>
-        <div class="card owner-only">
-          <h2>Jobs</h2>
-          <div id="admin-result" class="status-box" aria-live="polite"></div>
+          <div class="card owner-only">
+            <h2>Jobs</h2>
+            <div class="two job-filters">
+              <label for="job-category-filter">Show category</label>
+              <select id="job-category-filter"><option value="All">All jobs</option><option value="Mowing">Mowing</option><option value="Cleanup">Cleanup / Aeration</option><option value="Landscaping">Landscaping</option><option value="Fertilization">Fertilization</option><option value="Other">Other</option></select>
+              <label for="job-frequency-filter">Show frequency</label>
+              <select id="job-frequency-filter"><option value="All">All frequencies</option><option value="Weekly">Weekly</option><option value="Bi-Weekly">Bi-Weekly</option><option value="One-time">One-time</option><option value="As Requested">As Requested</option></select>
+            </div>
+            <div id="admin-result" class="status-box" aria-live="polite"></div>
         </div>
         <div class="card owner-only daily-route-builder">
           <h2>Daily Route Builder</h2>
@@ -6364,9 +6391,7 @@
       openTab("admin-home");
       renderOwnerHome();
       await loadEmployees();
-      $("#admin-result").innerHTML = adminJobRows.length
-        ? adminJobRows.map((job) => jobCard(job, true)).join("")
-        : notice("No jobs yet.");
+      renderAdminJobList();
       renderDailyRouteBuilder();
       await Promise.allSettled([loadCustomers(), loadInvoiceCustomers(), loadInvoices()]);
       renderOwnerHome();
@@ -8972,7 +8997,7 @@
     }
 
     function customerMessageCard(log) {
-      const sent = log.created_at ? new Date(log.created_at).toLocaleString() : "";
+      const sent = log.created_at ? formatDateTime(log.created_at) : "";
       const title = log.template === "completed"
         ? "Service completed"
         : log.template === "arrived"
@@ -10016,15 +10041,21 @@
       `;
     }
 
+    function renderAdminCustomerList() {
+      const query = String($("#customer-list-search")?.value || "").trim().toLowerCase();
+      const visible = invoiceCustomers.filter((customer) => !query || adminSearchText(customer).includes(query));
+      $("#customers-result").innerHTML = visible.length
+        ? visible.map((customer) => adminCustomerCard(customer, invoiceCustomers.indexOf(customer))).join("")
+        : notice(query ? "No customers match that search." : "No customer accounts yet.");
+    }
+
     async function loadCustomers() {
       if (!adminPin()) return;
       $("#customers-result").innerHTML = notice("Loading customers...");
       try {
         const data = await requestJson("portal-customers?admin=1", { headers: adminHeaders() });
         invoiceCustomers = data.customers || [];
-        $("#customers-result").innerHTML = invoiceCustomers.length
-          ? invoiceCustomers.map((customer, index) => adminCustomerCard(customer, index)).join("")
-          : notice("No customer accounts yet.");
+        renderAdminCustomerList();
         renderInvoiceCustomerOptions();
         renderOwnerHome();
       } catch (error) {
@@ -10350,6 +10381,31 @@
       });
     }
 
+    function jobCategory(job = {}) {
+      if (job.service_category) return String(job.service_category);
+      const text = String(job.service_type || "").toLowerCase();
+      if (/fertil/.test(text)) return "Fertilization";
+      if (/cleanup|clean up|aeration|aerat/.test(text)) return "Cleanup";
+      if (/landscap|install|design|rock|mulch/.test(text)) return "Landscaping";
+      if (/mow|lawn|grass/.test(text)) return "Mowing";
+      return "Other";
+    }
+
+    function jobFrequency(job = {}) {
+      if (job.schedule_frequency) return String(job.schedule_frequency);
+      if (job.recurring_weekly) return "Weekly";
+      return "One-time";
+    }
+
+    function renderAdminJobList() {
+      const category = $("#job-category-filter")?.value || "All";
+      const frequency = $("#job-frequency-filter")?.value || "All";
+      const visible = adminJobRows.filter((job) => (category === "All" || jobCategory(job) === category) && (frequency === "All" || jobFrequency(job) === frequency));
+      $("#admin-result").innerHTML = visible.length
+        ? visible.map((job) => jobCard(job, true)).join("")
+        : notice("No jobs match those filters.");
+    }
+
     function renderMarketingEmployeeOptions() {
       const select = $("#marketing-employee-select");
       if (!select) return;
@@ -10380,6 +10436,7 @@
           <div class="${admin ? "job-collapse" : ""}" ${admin ? "hidden" : ""}>
             <p class="muted">Status: ${job.status || "New"}</p>
             <p class="muted">${job.service_type || "Service"} - ${scheduled}</p>
+            <p class="muted">${cleanText(jobCategory(job))} | ${cleanText(jobFrequency(job))}</p>
             <p class="muted">Morning notification: ${reminderTime}</p>
             ${admin && weeklyPrice ? `<p class="muted">Customer price: $${weeklyPrice}/service week. This month: ${monthlyBilling.weeks} week${monthlyBilling.weeks === 1 ? "" : "s"} = $${Number(monthlyBilling.amount).toFixed(2)}${annualPrice ? `. Season total: $${annualPrice}` : ""}</p>` : ""}
             <p>${job.address || ""}</p>
@@ -10480,7 +10537,7 @@
     }
 
     function formatDateTime(value) {
-      return value ? new Date(value).toLocaleString() : "";
+      return value ? new Intl.DateTimeFormat("en-US", { timeZone: "America/Denver", dateStyle: "short", timeStyle: "medium" }).format(new Date(value)) : "";
     }
 
     function formatMinutes(minutes = 0) {
@@ -11166,6 +11223,8 @@
             email: $("#owner_job_email").value,
             address: $("#owner_job_address").value,
             service_type: $("#owner_job_service_type").value,
+            service_category: $("#owner_job_category").value,
+            schedule_frequency: $("#owner_job_frequency").value,
             scheduled_date: scheduledDate || null,
             schedule_start_date: scheduledDate || null,
             schedule_end_date: scheduleEndDate || null,
@@ -11790,7 +11849,10 @@
     });
 
     $("#load-admin").addEventListener("click", loadAdminJobs);
+    $("#job-category-filter")?.addEventListener("change", renderAdminJobList);
+    $("#job-frequency-filter")?.addEventListener("change", renderAdminJobList);
     $("#load-customers").addEventListener("click", loadCustomers);
+    $("#customer-list-search")?.addEventListener("input", renderAdminCustomerList);
     $("#load-employee").addEventListener("click", loadEmployeeJobs);
     $("#load-employees").addEventListener("click", loadEmployees);
     $("#load-activity").addEventListener("click", loadActivity);
@@ -11846,6 +11908,11 @@
 
     $("#customers-result").addEventListener("click", async (event) => {
       const button = event.target.closest("button[data-customer-list-action]");
+      const customerCard = event.target.closest(".customer-card");
+      if (!button && customerCard && !event.target.closest("input,select,a")) {
+        customerCard.querySelector("button[data-customer-list-action='toggle']")?.click();
+        return;
+      }
       if (!button) return;
       const card = button.closest(".job");
       const customer = invoiceCustomers[Number(card?.dataset.customerIndex)] || null;
@@ -12033,9 +12100,7 @@
         const data = await requestJson("portal-jobs?admin=1", { headers: adminHeaders() });
         adminJobRows = data.jobs || [];
         adminDailyRouteRows = data.daily_routes || [];
-        $("#admin-result").innerHTML = adminJobRows.length
-          ? adminJobRows.map((job) => jobCard(job, true)).join("")
-          : notice("No jobs yet.");
+        renderAdminJobList();
         renderDailyRouteBuilder();
         renderOwnerHome();
       } catch (error) {

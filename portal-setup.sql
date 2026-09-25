@@ -57,6 +57,15 @@ alter table public.green_grin_jobs
   add column if not exists customer_user_id uuid references auth.users(id) on delete set null;
 
 alter table public.green_grin_jobs
+  add column if not exists service_category text not null default 'Mowing';
+
+alter table public.green_grin_jobs
+  add column if not exists schedule_frequency text not null default 'One-time';
+
+alter table public.green_grin_jobs
+  add column if not exists route_order integer;
+
+alter table public.green_grin_jobs
   add column if not exists customer_code text;
 
 alter table public.green_grin_jobs

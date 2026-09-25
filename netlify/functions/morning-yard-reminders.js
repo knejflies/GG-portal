@@ -48,6 +48,11 @@ function localTime(date = new Date()) {
   return `${value.hour}:${value.minute}`;
 }
 
+function minutesOfDay(value) {
+  const [hour, minute] = String(value || "").split(":").map(Number);
+  return Number.isFinite(hour) && Number.isFinite(minute) ? hour * 60 + minute : 0;
+}
+
 function requireSetup() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return "Supabase is not configured yet.";
   if (!pushReady()) return "App notification keys are not configured yet.";
@@ -149,6 +154,12 @@ exports.handler = async () => {
 
     const reminderTime = String(job.cleanup_reminder_time || "08:00").slice(0, 5);
     if (reminderTime > nowTime) {
+      skipped += 1;
+      continue;
+    }
+    // Do not send a stale reminder hours late when a scheduled invocation catches up.
+    // The next scheduled run should handle the next service day instead.
+    if (minutesOfDay(nowTime) - minutesOfDay(reminderTime) > 30) {
       skipped += 1;
       continue;
     }
