@@ -99,14 +99,14 @@
           title: "2. Price and Payment",
           paragraphs: [
             `Rate per Visit: ${ratePerVisit > 0 ? `$${ratePerVisit.toFixed(2)} USD` : "See approved proposal"}`,
-            "Billing Options: [ ] Per-Service (invoiced upon completion)   [ ] Monthly (invoiced at beginning of month)",
+            "Billing Options: [ ] Per-Service (invoiced upon completion)   [ ] Monthly (invoiced at end of month)",
             `Selected Billing Option: ${billingOption}`
           ]
         },
         {
           title: "3. Payment Terms",
           paragraphs: [
-            "Invoices are sent via email. Monthly accounts are invoiced at the beginning of the month for that month's scheduled services.",
+            "Invoices are sent via email at the end of each month for lawn services and any chemicals or fertilizer applied during that month.",
             "Unpaid balances 15 days past the invoice date are subject to a late fee of $15.00 or 1.5% of the outstanding balance per month, whichever is greater. Green Grin Lawns reserves the right to stop service on accounts with past-due balances."
           ]
         },
