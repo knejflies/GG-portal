@@ -219,7 +219,7 @@ async function saveInvoice(path, method, body) {
 }
 
 async function recordFertilizerApplications(invoice) {
-  if (!invoice || String(invoice.status || "").toLowerCase() !== "paid") return [];
+  if (!invoice || String(invoice.status || "").toLowerCase() === "draft") return [];
   const lines = normalizeLineItems(invoice.line_items).filter((item) => /fertilizer|fertilization|fertiliser/i.test(`${item.category} ${item.description}`));
   if (!lines.length || !invoice.id) return [];
   const existing = await supabase("green_grin_expenses?select=id,notes&expense_type=eq.fertilizer_application&limit=1000").catch(() => []);
