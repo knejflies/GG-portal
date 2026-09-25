@@ -3342,6 +3342,13 @@
       border-radius: 8px;
       background: rgba(1, 10, 6, .42);
     }
+    .customer-file-modal { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 18px; background: rgba(1, 12, 7, .78); }
+    .customer-file-modal[hidden] { display: none; }
+    .customer-file-panel { width: min(760px, 100%); max-height: min(90vh, 900px); overflow: auto; background: #0d281a; border: 1px solid rgba(142,210,62,.45); border-radius: 16px; padding: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.45); }
+    .customer-file-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; border-bottom:1px solid rgba(215,238,207,.18); padding-bottom:14px; margin-bottom:16px; }
+    .customer-file-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .customer-file-block { padding:14px; border:1px solid rgba(215,238,207,.14); border-radius:10px; background:rgba(0,0,0,.14); }
+    @media (max-width: 680px) { .customer-file-grid { grid-template-columns:1fr; } }
 
     body.mowing-contract-mode #project-bids .estimator-workspace-nav,
     body.mowing-contract-mode #project-bids .mowing-contract-launcher { display: none; }
@@ -4619,6 +4626,13 @@
         </div>
       </div>
     </section>
+
+    <div id="customer-file-modal" class="customer-file-modal" hidden>
+      <div class="customer-file-panel" role="dialog" aria-modal="true" aria-labelledby="customer-file-title">
+        <div class="customer-file-head"><div><span class="admin-eyebrow">Customer file</span><h2 id="customer-file-title">Customer</h2></div><button id="customer-file-close" class="button small ghost" type="button">Close</button></div>
+        <div id="customer-file-content"></div>
+      </div>
+    </div>
 
     <section id="owner" class="panel">
       <div class="grid">
@@ -10041,6 +10055,30 @@
       `;
     }
 
+    function openCustomerFile(customer) {
+      const property = customer.property || {};
+      const jobs = customer.jobs || [];
+      const modal = $("#customer-file-modal");
+      if (!modal) return;
+      $("#customer-file-title").textContent = customer.name || "Customer";
+      $("#customer-file-content").innerHTML = `
+        <div class="customer-file-grid">
+          <div class="customer-file-block"><strong>Contact</strong><p>${cleanText(customer.email || "No email")}</p><p>${cleanText(customer.phone || "No phone")}</p><p class="muted">${cleanText(customer.customer_code || "No customer ID")}</p></div>
+          <div class="customer-file-block"><strong>Property</strong><p>${cleanText(property.address || "No address saved")}</p><p class="muted">Gate: ${cleanText(property.gate_code || "None")}</p><p class="muted">Pets: ${cleanText(property.pets || "None listed")}</p></div>
+        </div>
+        <div class="customer-file-block" style="margin-top:12px"><strong>Service and billing</strong><p>${cleanText(customer.plan || "No plan set")}</p><p class="muted">${cleanText(preferenceLine(customer))}</p><p class="muted">${cleanText(notificationLine(customer))}</p></div>
+        <div class="customer-file-block" style="margin-top:12px"><strong>Jobs</strong>${jobs.length ? jobs.map((job) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(job.service_type || "Service")}</strong><p class="muted">${cleanText(jobCategory(job))} | ${cleanText(jobFrequency(job))} | ${cleanText(scheduleLine(job))}</p><p class="muted">${cleanText(job.address || property.address || "No address")}</p></div><span class="badge">${cleanText(job.status || "New")}</span></div>`).join("") : `<p class="muted">No jobs created for this customer yet.</p>`}</div>
+        <div class="admin-actions" style="margin-top:14px"><button class="button small secondary" data-file-action="fill-job" type="button">Create Booking</button><button class="button small secondary" data-file-action="details" type="button">Open Details</button><button class="button small ghost" data-file-action="chat" type="button">Open Chat</button></div>
+      `;
+      modal.hidden = false;
+      modal.dataset.customerIndex = String(invoiceCustomers.indexOf(customer));
+    }
+
+    function closeCustomerFile() {
+      const modal = $("#customer-file-modal");
+      if (modal) modal.hidden = true;
+    }
+
     function renderAdminCustomerList() {
       const query = String($("#customer-list-search")?.value || "").trim().toLowerCase();
       const visible = invoiceCustomers.filter((customer) => !query || adminSearchText(customer).includes(query));
@@ -11854,6 +11892,17 @@
     $("#job-frequency-filter")?.addEventListener("change", renderAdminJobList);
     $("#load-customers").addEventListener("click", loadCustomers);
     $("#customer-list-search")?.addEventListener("input", renderAdminCustomerList);
+    $("#customer-file-close")?.addEventListener("click", closeCustomerFile);
+    $("#customer-file-modal")?.addEventListener("click", (event) => {
+      if (event.target.id === "customer-file-modal") return closeCustomerFile();
+      const actionButton = event.target.closest("[data-file-action]");
+      if (!actionButton) return;
+      const index = Number(event.currentTarget.dataset.customerIndex);
+      const card = document.querySelector(`.customer-card[data-customer-index="${index}"]`);
+      const action = actionButton.dataset.fileAction;
+      closeCustomerFile();
+      card?.querySelector(`button[data-customer-list-action="${action}"]`)?.click();
+    });
     $("#load-employee").addEventListener("click", loadEmployeeJobs);
     $("#load-employees").addEventListener("click", loadEmployees);
     $("#load-activity").addEventListener("click", loadActivity);
@@ -11911,7 +11960,8 @@
       const button = event.target.closest("button[data-customer-list-action]");
       const customerCard = event.target.closest(".customer-card");
       if (!button && customerCard && !event.target.closest("input,select,a")) {
-        customerCard.querySelector("button[data-customer-list-action='toggle']")?.click();
+        const customer = invoiceCustomers[Number(customerCard.dataset.customerIndex)] || null;
+        if (customer) openCustomerFile(customer);
         return;
       }
       if (!button) return;
