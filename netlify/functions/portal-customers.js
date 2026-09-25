@@ -173,6 +173,15 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "PATCH") {
       if (!customerUserId) return json(400, { error: "Only account customers can be updated." });
+      const editableFields = {};
+      if (Object.prototype.hasOwnProperty.call(body, "billing_plan")) editableFields.billing_plan = String(body.billing_plan || "").trim().slice(0, 160) || null;
+      if (Object.prototype.hasOwnProperty.call(body, "monthly_price")) editableFields.monthly_price = body.monthly_price === "" || body.monthly_price === null ? null : Math.max(0, Number(body.monthly_price) || 0);
+      if (Object.prototype.hasOwnProperty.call(body, "annual_price")) editableFields.annual_price = body.annual_price === "" || body.annual_price === null ? null : Math.max(0, Number(body.annual_price) || 0);
+      if (Object.prototype.hasOwnProperty.call(body, "billing_status")) editableFields.billing_status = String(body.billing_status || "").trim().slice(0, 80) || "Active";
+      if (Object.keys(editableFields).length) {
+        const rows = await supabase(`green_grin_customers?id=eq.${encodeURIComponent(customerUserId)}`, { method: "PATCH", body: JSON.stringify(editableFields) });
+        return json(200, { customer: rows?.[0] || null });
+      }
       if (Object.prototype.hasOwnProperty.call(body, "service_weekday")) {
         const weekday = body.service_weekday === null || body.service_weekday === "" ? null : Number(body.service_weekday);
         if (weekday !== null && (!Number.isInteger(weekday) || weekday < 0 || weekday > 6)) {

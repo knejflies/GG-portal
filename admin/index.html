@@ -10079,6 +10079,28 @@
       if (modal) modal.hidden = true;
     }
 
+    function openCustomerEditFile(customer) {
+      const modal = $("#customer-file-modal");
+      if (!modal) return;
+      $("#customer-file-title").textContent = `${customer.name || "Customer"} Details`;
+      $("#customer-file-content").innerHTML = `<form id="customer-file-edit-form"><div class="customer-file-grid"><div class="customer-file-block"><label>Plan / service<input id="customer-file-plan" value="${cleanText(customer.plan || "")}" /></label><label>Monthly payment<input id="customer-file-monthly" type="number" min="0" step="0.01" value="${customer.monthly_price ?? ""}" /></label><label>Annual amount<input id="customer-file-annual" type="number" min="0" step="0.01" value="${customer.annual_price ?? ""}" /></label><label>Billing status<select id="customer-file-status"><option${customer.billing_status === "Active" ? " selected" : ""}>Active</option><option${customer.billing_status === "Paused" ? " selected" : ""}>Paused</option><option${customer.billing_status === "Past Due" ? " selected" : ""}>Past Due</option><option${customer.billing_status === "Not connected" ? " selected" : ""}>Not connected</option></select></label></div><div class="customer-file-block"><h3>AutoPay</h3><p class="muted">AutoPay setup will appear here when the payment connection is enabled.</p><button class="button small ghost" type="button" disabled>Connect AutoPay</button><p class="muted">No payment method is connected.</p></div></div><div id="customer-file-edit-result" aria-live="polite"></div><div class="admin-actions" style="margin-top:14px"><button class="button" type="submit">Save Customer Details</button><button class="button small ghost" id="customer-file-cancel" type="button">Cancel</button></div></form>`;
+      modal.hidden = false;
+      modal.dataset.customerIndex = String(invoiceCustomers.indexOf(customer));
+      $("#customer-file-cancel").addEventListener("click", closeCustomerFile, { once: true });
+      $("#customer-file-edit-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const result = $("#customer-file-edit-result");
+        try {
+          result.innerHTML = notice("Saving customer details...");
+          const data = await requestJson("portal-customers", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ customer_user_id: customer.customer_user_id || customer.id, billing_plan: $("#customer-file-plan").value, monthly_price: $("#customer-file-monthly").value, annual_price: $("#customer-file-annual").value, billing_status: $("#customer-file-status").value }) });
+          Object.assign(customer, { plan: data.customer?.billing_plan || $("#customer-file-plan").value, monthly_price: data.customer?.monthly_price ?? $("#customer-file-monthly").value, annual_price: data.customer?.annual_price ?? $("#customer-file-annual").value, billing_status: data.customer?.billing_status || $("#customer-file-status").value });
+          closeCustomerFile();
+          renderAdminCustomerList();
+          $("#customer-detail-result").innerHTML = notice("Customer details saved.");
+        } catch (error) { result.innerHTML = notice(error.message, true); }
+      });
+    }
+
     function renderAdminCustomerList() {
       const query = String($("#customer-list-search")?.value || "").trim().toLowerCase();
       const visible = invoiceCustomers.filter((customer) => !query || adminSearchText(customer).includes(query));
@@ -11900,6 +11922,11 @@
       const index = Number(event.currentTarget.dataset.customerIndex);
       const card = document.querySelector(`.customer-card[data-customer-index="${index}"]`);
       const action = actionButton.dataset.fileAction;
+      const customer = invoiceCustomers[index] || null;
+      if (action === "details" && customer) {
+        openCustomerEditFile(customer);
+        return;
+      }
       closeCustomerFile();
       card?.querySelector(`button[data-customer-list-action="${action}"]`)?.click();
     });
