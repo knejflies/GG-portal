@@ -90,8 +90,6 @@
           title: "1. Work to Be Performed",
           paragraphs: [
             "[ ] Lawn Maintenance Bundle — includes lawn mowing, string trimming, and blowing of hard surfaces.",
-            "[ ] Spring / Fall Clean-Up — includes leaf removal, bed cleanup, and lawn debris removal.",
-            "[ ] Other Custom Work: only the work written in the approved proposal or an approved change order.",
             `Service Frequency: [ ] Weekly   [ ] Bi-Weekly   [ ] As Requested   |   Selected: ${frequency}`
           ]
         },
