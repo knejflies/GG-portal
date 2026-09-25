@@ -1,9 +1,13 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="12dp" android:background="#10251B">
-    <TextView android:id="@+id/widget_state" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="READY" android:textColor="#A7E6B7" android:textSize="12sp" android:textStyle="bold" />
-    <TextView android:id="@+id/widget_miles" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0.0 mi" android:textColor="#FFFFFF" android:textSize="26sp" android:textStyle="bold" />
-    <TextView android:id="@+id/widget_elapsed" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="00:00:00" android:textColor="#D6E5DB" android:textSize="14sp" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="end">
-        <Button android:id="@+id/widget_start" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Start" />
-        <Button android:id="@+id/widget_stop" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Reset" />
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:gravity="center_vertical" android:padding="4dp" android:background="#10251B">
+    <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical">
+        <TextView android:id="@+id/widget_state" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="READY" android:textColor="#A7E6B7" android:textSize="9sp" android:textStyle="bold" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/widget_miles" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0 mi" android:textColor="#FFFFFF" android:textSize="20sp" android:textStyle="bold" />
+            <TextView android:id="@+id/widget_elapsed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginLeft="6dp" android:text="00:00:00" android:textColor="#D6E5DB" android:textSize="10sp" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center">
+        <Button android:id="@+id/widget_start" android:layout_width="58dp" android:layout_height="32dp" android:minHeight="0dp" android:minWidth="0dp" android:paddingLeft="2dp" android:paddingRight="2dp" android:text="Start" android:textSize="10sp" />
+        <Button android:id="@+id/widget_stop" android:layout_width="58dp" android:layout_height="32dp" android:minHeight="0dp" android:minWidth="0dp" android:paddingLeft="2dp" android:paddingRight="2dp" android:text="Reset" android:textSize="10sp" />
     </LinearLayout>
 </LinearLayout>
