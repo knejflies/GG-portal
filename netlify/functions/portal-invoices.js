@@ -218,6 +218,48 @@ async function saveInvoice(path, method, body) {
   }
 }
 
+async function recordFertilizerApplications(invoice) {
+  if (!invoice || String(invoice.status || "").toLowerCase() !== "paid") return [];
+  const lines = normalizeLineItems(invoice.line_items).filter((item) => /fertilizer|fertilization|fertiliser/i.test(`${item.category} ${item.description}`));
+  if (!lines.length || !invoice.id) return [];
+  const existing = await supabase("green_grin_expenses?select=id,notes&expense_type=eq.fertilizer_application&limit=1000").catch(() => []);
+  const marker = `Invoice ID: ${invoice.id}`;
+  const saved = [];
+  for (const line of lines) {
+    if ((existing || []).some((row) => String(row.notes || "").includes(marker) && String(row.notes || "").includes(`Product: ${line.description}`))) continue;
+    const notes = [
+      marker,
+      `Applied amount: ${line.quantity} ${line.unit}`,
+      `Product: ${line.description}`,
+      invoice.customer_name ? `Customer: ${invoice.customer_name}` : ""
+    ].filter(Boolean).join(" | ").slice(0, 800);
+    const rows = await supabase("green_grin_expenses", {
+      method: "POST",
+      body: JSON.stringify({
+        expense_type: "fertilizer_application",
+        expense_date: invoice.due_date || new Date().toISOString().slice(0, 10),
+        vendor: `Fertilizer - ${invoice.customer_name || "Customer"}`.slice(0, 120),
+        category: "Materials",
+        amount: 0,
+        subtotal: null,
+        tax: null,
+        payment_method: "Application record",
+        notes,
+        receipt_filename: "",
+        mileage_start: null,
+        mileage_end: null,
+        mileage_miles: null,
+        mileage_rate: null,
+        ai_confidence: null,
+        ai_raw: null,
+        active: true
+      })
+    });
+    if (rows?.[0]) saved.push(rows[0]);
+  }
+  return saved;
+}
+
 async function notifyInvoice(invoice) {
   if (!invoice || invoice.status !== "Sent") return null;
   const customer = await sendPushToTarget(supabase, {
@@ -264,18 +306,20 @@ exports.handler = async (event) => {
     if (event.httpMethod === "POST") {
       const rows = await saveInvoice("green_grin_invoices", "POST", body);
       const invoice = rows?.[0] || null;
+      const fertilizerRecords = await recordFertilizerApplications(invoice);
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
       const email = body.notify_customer === true ? await sendInvoiceEmail(invoice) : null;
-      return json(200, { invoice, push, email });
+      return json(200, { invoice, fertilizer_records: fertilizerRecords, push, email });
     }
 
     if (event.httpMethod === "PATCH") {
       if (!body.id) return json(400, { error: "Invoice id is required." });
       const rows = await saveInvoice(`green_grin_invoices?id=eq.${encodeURIComponent(body.id)}`, "PATCH", body);
       const invoice = rows?.[0] || null;
+      const fertilizerRecords = await recordFertilizerApplications(invoice);
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
       const email = body.notify_customer === true ? await sendInvoiceEmail(invoice) : null;
-      return json(200, { invoice, push, email });
+      return json(200, { invoice, fertilizer_records: fertilizerRecords, push, email });
     }
 
     if (event.httpMethod === "DELETE") {

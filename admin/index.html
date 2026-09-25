@@ -11583,13 +11583,14 @@
         const nextStatus = button.dataset.invoiceAction === "paid" ? "Paid" : "Draft";
         try {
           $("#invoice-result").innerHTML = notice(nextStatus === "Paid" ? "Moving invoice to paid..." : "Moving invoice back to open...");
-          await requestJson("portal-invoices", {
+          const paymentData = await requestJson("portal-invoices", {
             method: "PATCH",
             headers: adminHeaders(),
             body: JSON.stringify({ ...invoice, status: nextStatus, notify_customer: false })
           });
           await loadInvoices();
-          $("#invoice-result").innerHTML = notice(nextStatus === "Paid" ? "Invoice moved to paid." : "Invoice moved back to open invoices.");
+          const fertNotice = nextStatus === "Paid" && paymentData.fertilizer_records?.length ? ` ${paymentData.fertilizer_records.length} fertilizer record${paymentData.fertilizer_records.length === 1 ? "" : "s"} added.` : "";
+          $("#invoice-result").innerHTML = notice(nextStatus === "Paid" ? `Invoice moved to paid.${fertNotice}` : "Invoice moved back to open invoices.");
         } catch (error) {
           $("#invoice-result").innerHTML = notice(error.message, true);
         }
