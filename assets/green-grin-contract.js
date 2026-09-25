@@ -151,6 +151,13 @@
           ]
         },
         {
+          title: "11. Nonpayment and Lien Rights",
+          paragraphs: [
+            "If payment is overdue, Green Grin Lawns may suspend service until the account is current. Green Grin Lawns reserves collection remedies available under Idaho law and, to the extent permitted by law, may pursue a construction lien for qualifying unpaid amounts.",
+            "The Customer agrees to reasonable collection costs and attorney fees to the extent permitted by law."
+          ]
+        },
+        {
           title: "Signatures and Authorization",
           paragraphs: [
             "The electronic signature on this agreement confirms that the Client reviewed and authorized the selected services, frequency, price, billing option, and terms above."
