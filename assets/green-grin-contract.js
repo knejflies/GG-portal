@@ -104,7 +104,7 @@
         {
           title: "3. Payment Terms",
           paragraphs: [
-            "Invoices are sent via email at the end of each month for lawn services and any chemicals or fertilizer applied during that month.",
+            "Invoices are issued through the Green Grin app at the end of each month for lawn services and any chemicals or fertilizer applied during that month.",
             "Unpaid balances 15 days past the invoice date are subject to a late fee of $15.00 or 1.5% of the outstanding balance per month, whichever is greater. Green Grin Lawns reserves the right to stop service on accounts with past-due balances."
           ]
         },
