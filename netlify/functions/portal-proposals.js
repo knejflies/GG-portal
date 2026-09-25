@@ -10,7 +10,6 @@ const PROPOSAL_URL = process.env.GREEN_GRIN_PROPOSAL_URL || "https://portal.gree
 const CONTRACTOR_REGISTRATION_NUMBER = process.env.GREEN_GRIN_CONTRACTOR_REGISTRATION_NUMBER || "";
 const { groupedTotals } = require("../../assets/green-grin-project-estimator.js");
 const { BUSINESS_NAME, buildContract } = require("../../assets/green-grin-contract.js");
-const { fillableMowingContractPdf } = require("./mowing-contract-pdf.js");
 
 const headers = {
   "Content-Type": "application/json",
@@ -314,10 +313,7 @@ exports.handler = async (event) => {
       const link = `${PROPOSAL_URL}${PROPOSAL_URL.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
       const sentAt = new Date().toISOString();
       await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, { method: "PATCH", body: JSON.stringify({ proposal_token_hash: hash(token), proposal_sent_at: sentAt, proposal_expires_at: expiry, deposit_amount: isMowingContract(estimate, contract) ? 0 : contract.pricing.initial_payment, status: "Quoted", updated_at: sentAt }) });
-      const emailAttachments = isMowingContract(estimate, contract)
-        ? (() => { const pdf = fillableMowingContractPdf(estimate); return [{ filename: pdf.filename, content: pdf.content.toString("base64") }]; })()
-        : [];
-      await sendEmail(estimate.email, `${BUSINESS_NAME} ${contract.title} ${estimate.estimate_number}`, proposalEmail({ ...estimate, proposal_sent_at: sentAt }, link), emailAttachments);
+      await sendEmail(estimate.email, `${BUSINESS_NAME} ${contract.title} ${estimate.estimate_number}`, proposalEmail({ ...estimate, proposal_sent_at: sentAt }, link));
       return json(200, { ok: true, link, message: `${contract.title} emailed to ${estimate.email}.` });
     }
 
