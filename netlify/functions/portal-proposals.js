@@ -10,6 +10,7 @@ const PROPOSAL_URL = process.env.GREEN_GRIN_PROPOSAL_URL || "https://portal.gree
 const CONTRACTOR_REGISTRATION_NUMBER = process.env.GREEN_GRIN_CONTRACTOR_REGISTRATION_NUMBER || "";
 const { groupedTotals } = require("../../assets/green-grin-project-estimator.js");
 const { BUSINESS_NAME, buildContract } = require("../../assets/green-grin-contract.js");
+const { fillableMowingContractPdf } = require("./mowing-contract-pdf.js");
 
 const headers = {
   "Content-Type": "application/json",
@@ -96,12 +97,12 @@ async function supabase(path, options = {}) {
   return data;
 }
 
-async function sendEmail(to, subject, html) {
+async function sendEmail(to, subject, html, attachments = []) {
   if (!RESEND_API_KEY) throw new Error("Proposal email is not configured. Add RESEND_API_KEY in Netlify.");
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, html })
+    body: JSON.stringify({ from: EMAIL_FROM, to: [to], subject, html, attachments })
   });
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(data?.message || "The contract email could not be sent.");
@@ -152,7 +153,8 @@ function proposalEmail(estimate, link) {
   const paymentCopy = isMowingContract(estimate, contract)
     ? `<p><strong>Billing:</strong> Recurring mowing is billed according to the customer account billing schedule. No project deposit is required.</p>`
     : `<p><strong>${escapeHtml(`${contract.pricing.initial_percent}% initial payment`)}:</strong> ${money(contract.pricing.initial_payment)}</p><p><strong>${escapeHtml(`${contract.pricing.final_percent}% final payment`)}:</strong> ${money(contract.pricing.final_payment)}</p>`;
-  return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">${escapeHtml(BUSINESS_NAME)}</h1><p style="color:#4f6556;font-weight:700">${escapeHtml(contract.title)} | ${escapeHtml(estimate.estimate_number)}</p>${registration}<h2 style="color:#07351d">${escapeHtml(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${escapeHtml(estimate.customer_name)}</p><p>${escapeHtml(estimate.service_address || "")}</p><h3 style="color:#07351d">Scope of work</h3><div style="white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(estimate.project_scope || "")}</div><h3 style="color:#07351d">Project price</h3>${groups}<p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(contract.pricing.project_total)}</p>${paymentCopy}<p><strong>Payment due:</strong> ${escapeHtml(due)}</p>${estimate.customer_notes ? `<h3 style="color:#07351d">Project notes</h3><p style="white-space:pre-wrap">${escapeHtml(estimate.customer_notes)}</p>` : ""}<p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Sign Contract</a></p><p style="color:#5c6e62">Review the complete contract and required disclosures at the secure link before signing.</p></div>`;
+  const attachmentCopy = isMowingContract(estimate, contract) ? `<p style="color:#5c6e62">A two-page fillable PDF is attached. You can type into the fields, check the service boxes, and print it double-sided. The secure link below is still required to submit the signed agreement.</p>` : "";
+  return `<div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#102419"><h1 style="color:#07351d">${escapeHtml(BUSINESS_NAME)}</h1><p style="color:#4f6556;font-weight:700">${escapeHtml(contract.title)} | ${escapeHtml(estimate.estimate_number)}</p>${registration}<h2 style="color:#07351d">${escapeHtml(estimate.project_title)}</h2><p><strong>Prepared for:</strong> ${escapeHtml(estimate.customer_name)}</p><p>${escapeHtml(estimate.service_address || "")}</p><h3 style="color:#07351d">Scope of work</h3><div style="white-space:pre-wrap;padding:16px;background:#f2f8ef;border-left:4px solid #78c653">${escapeHtml(estimate.project_scope || "")}</div><h3 style="color:#07351d">Project price</h3>${groups}<p style="font-size:22px;font-weight:800;text-align:right">Project total: ${money(contract.pricing.project_total)}</p>${paymentCopy}<p><strong>Payment due:</strong> ${escapeHtml(due)}</p>${estimate.customer_notes ? `<h3 style="color:#07351d">Project notes</h3><p style="white-space:pre-wrap">${escapeHtml(estimate.customer_notes)}</p>` : ""}${attachmentCopy}<p style="text-align:center;margin:30px 0"><a href="${escapeHtml(link)}" style="display:inline-block;padding:14px 22px;background:#78c653;color:#071b0f;text-decoration:none;border-radius:6px;font-weight:800">Review &amp; Sign Contract</a></p><p style="color:#5c6e62">Review the complete contract and required disclosures at the secure link before signing.</p></div>`;
 }
 
 function documentSnapshot(estimate, customerDetails = {}) {
@@ -312,7 +314,10 @@ exports.handler = async (event) => {
       const link = `${PROPOSAL_URL}${PROPOSAL_URL.includes("?") ? "&" : "?"}token=${encodeURIComponent(token)}`;
       const sentAt = new Date().toISOString();
       await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, { method: "PATCH", body: JSON.stringify({ proposal_token_hash: hash(token), proposal_sent_at: sentAt, proposal_expires_at: expiry, deposit_amount: isMowingContract(estimate, contract) ? 0 : contract.pricing.initial_payment, status: "Quoted", updated_at: sentAt }) });
-      await sendEmail(estimate.email, `${BUSINESS_NAME} ${contract.title} ${estimate.estimate_number}`, proposalEmail({ ...estimate, proposal_sent_at: sentAt }, link));
+      const emailAttachments = isMowingContract(estimate, contract)
+        ? (() => { const pdf = fillableMowingContractPdf(estimate); return [{ filename: pdf.filename, content: pdf.content.toString("base64") }]; })()
+        : [];
+      await sendEmail(estimate.email, `${BUSINESS_NAME} ${contract.title} ${estimate.estimate_number}`, proposalEmail({ ...estimate, proposal_sent_at: sentAt }, link), emailAttachments);
       return json(200, { ok: true, link, message: `${contract.title} emailed to ${estimate.email}.` });
     }
 
