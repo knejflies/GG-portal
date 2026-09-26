@@ -10067,11 +10067,32 @@
           <div class="customer-file-block"><strong>Property</strong><p>${cleanText(property.address || "No address saved")}</p><p class="muted">Gate: ${cleanText(property.gate_code || "None")}</p><p class="muted">Pets: ${cleanText(property.pets || "None listed")}</p></div>
         </div>
         <div class="customer-file-block" style="margin-top:12px"><strong>Service and billing</strong><p>${cleanText(customer.plan || "No plan set")}</p><p class="muted">${cleanText(preferenceLine(customer))}</p><p class="muted">${cleanText(notificationLine(customer))}</p></div>
+        <div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Contact history</strong><span class="badge">In-app messages</span></div><div id="customer-file-contact-history" class="status-box">Loading contact history...</div></div>
         <div class="customer-file-block" style="margin-top:12px"><strong>Jobs</strong>${jobs.length ? jobs.map((job) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(job.service_type || "Service")}</strong><p class="muted">${cleanText(jobCategory(job))} | ${cleanText(jobFrequency(job))} | ${cleanText(scheduleLine(job))}</p><p class="muted">${cleanText(job.address || property.address || "No address")}</p></div><span class="badge">${cleanText(job.status || "New")}</span></div>`).join("") : `<p class="muted">No jobs created for this customer yet.</p>`}</div>
         <div class="admin-actions" style="margin-top:14px"><button class="button small secondary" data-file-action="fill-job" type="button">Create Booking</button><button class="button small secondary" data-file-action="details" type="button">Open Details</button><button class="button small ghost" data-file-action="chat" type="button">Open Chat</button></div>
       `;
       modal.hidden = false;
       modal.dataset.customerIndex = String(invoiceCustomers.indexOf(customer));
+      loadCustomerContactHistory(customer);
+    }
+
+    async function loadCustomerContactHistory(customer) {
+      const target = $("#customer-file-contact-history");
+      if (!target) return;
+      const customerUserId = customer.customer_user_id || customer.id;
+      if (!customerUserId) {
+        target.innerHTML = notice("No customer account is linked yet.");
+        return;
+      }
+      try {
+        const data = await requestJson(`portal-chat?customer_user_id=${encodeURIComponent(customerUserId)}`, { headers: adminHeaders() });
+        const messages = Array.isArray(data.messages) ? data.messages.slice(-12) : [];
+        target.innerHTML = messages.length
+          ? messages.map(chatMessageCard).join("")
+          : notice("No in-app conversations yet. Messages sent from Open Chat will be saved here automatically.");
+      } catch (error) {
+        target.innerHTML = notice(`Contact history unavailable: ${error.message}`, true);
+      }
     }
 
     function closeCustomerFile() {
