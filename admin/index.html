@@ -6158,10 +6158,10 @@
       return `${fallback} No registered customer device was found yet.`;
     }
 
-    function invoiceDeliveryText(data, fallback) {
+    function invoiceDeliveryText(data, fallback, emailLabel = "Invoice") {
       const parts = [pushDeliveryText(data?.push, fallback)];
       const email = data?.email;
-      if (email?.sent) parts.push("Invoice email sent.");
+      if (email?.sent) parts.push(`${emailLabel} email sent.`);
       else if (email?.reason) parts.push(`Email not sent: ${cleanText(email.reason)}`);
       else if (email?.error) parts.push(`Email failed: ${cleanText(email.error)}`);
       return parts.join(" ");
@@ -11646,11 +11646,14 @@
           const paymentData = await requestJson("portal-invoices", {
             method: "PATCH",
             headers: adminHeaders(),
-            body: JSON.stringify({ ...invoice, status: nextStatus, notify_customer: false })
+            body: JSON.stringify({ ...invoice, status: nextStatus, notify_customer: nextStatus === "Paid" })
           });
           await loadInvoices();
           const fertNotice = nextStatus === "Paid" && paymentData.fertilizer_records?.length ? ` ${paymentData.fertilizer_records.length} fertilizer record${paymentData.fertilizer_records.length === 1 ? "" : "s"} added.` : "";
-          $("#invoice-result").innerHTML = notice(nextStatus === "Paid" ? `Invoice moved to paid.${fertNotice}` : "Invoice moved back to open invoices.");
+          const statusNotice = nextStatus === "Paid"
+            ? invoiceDeliveryText(paymentData, `Invoice moved to paid.${fertNotice}`, "Payment receipt")
+            : "Invoice moved back to open invoices.";
+          $("#invoice-result").innerHTML = notice(statusNotice);
         } catch (error) {
           $("#invoice-result").innerHTML = notice(error.message, true);
         }

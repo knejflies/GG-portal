@@ -136,7 +136,8 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
-function invoiceEmailPayload(invoice) {
+function invoiceEmailPayload(invoice, options = {}) {
+  const receipt = options.receipt === true;
   const amount = `$${Number(invoice.amount || 0).toFixed(2)}`;
   const service = invoice.service_line || invoice.notes || "Lawn and landscape service";
   const due = invoice.due_date
@@ -156,21 +157,21 @@ function invoiceEmailPayload(invoice) {
   const itemHead = isProjectInvoice
     ? `<tr style="background:#edf6e9"><th style="padding:9px;text-align:left">Description</th><th style="padding:9px;text-align:right">Amount</th></tr>`
     : `<tr style="background:#edf6e9"><th style="padding:9px;text-align:left">Description</th><th style="padding:9px;text-align:right">Quantity</th><th style="padding:9px;text-align:right">Rate</th><th style="padding:9px;text-align:right">Amount</th></tr>`;
-  const subject = `Green Grin invoice - ${amount}`;
+  const subject = receipt ? `Green Grin payment receipt - ${amount}` : `Green Grin invoice - ${amount}`;
   const venmoUrl = `https://venmo.com/u/${encodeURIComponent(VENMO_HANDLE)}`;
   const text = [
     `Hi ${customer},`,
     "",
-    "Your Green Grin invoice is ready.",
+    receipt ? "Thank you. Your Green Grin payment has been received." : "Your Green Grin invoice is ready.",
     `Service: ${service}`,
     address ? `Project address: ${address}` : "",
     `Amount: ${amount}`,
-    `Due: ${due}`,
+    receipt ? "Status: Paid" : `Due: ${due}`,
     ...itemText,
     scope ? `Project scope:\n${scope}` : "",
     invoice.notes ? `Notes: ${invoice.notes}` : "",
     "",
-    `View your invoice: ${PORTAL_URL}`,
+    receipt ? `View your account: ${PORTAL_URL}` : `View your invoice: ${PORTAL_URL}`,
     "",
     "Green Grin Lawns"
   ].filter(Boolean).join("\n");
@@ -179,7 +180,7 @@ function invoiceEmailPayload(invoice) {
     to: [invoice.email],
     subject,
     text,
-    html: `<!doctype html><html><body style="margin:0;background:#eef4ec;color:#102419;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#07351d;color:#fff;padding:24px;border-radius:8px 8px 0 0"><strong style="font-size:22px">Green Grin Lawns</strong></div><div style="background:#fff;padding:28px;border:1px solid #d5e2d2;border-top:0;border-radius:0 0 8px 8px"><p style="margin-top:0">Hi ${escapeHtml(customer)},</p><h1 style="font-size:25px;color:#07351d">Your invoice is ready</h1><div style="background:#f2f8ef;border-left:4px solid #78c653;padding:16px;margin:22px 0"><p style="margin:0 0 8px"><strong>Service:</strong> ${escapeHtml(service)}</p>${address ? `<p style="margin:0 0 8px"><strong>Project address:</strong> ${escapeHtml(address)}</p>` : ""}<p style="margin:0 0 8px"><strong>Amount:</strong> ${escapeHtml(amount)}</p><p style="margin:0"><strong>Due:</strong> ${escapeHtml(due)}</p></div>${scope ? `<div style="margin:22px 0"><h2 style="font-size:18px;color:#07351d">Project scope</h2><p style="white-space:pre-wrap;line-height:1.55">${escapeHtml(scope)}</p></div>` : ""}${items.length ? `<table style="width:100%;border-collapse:collapse;margin:20px 0"><thead>${itemHead}</thead><tbody>${itemRows}</tbody></table>` : ""}${invoice.notes ? `<p><strong>Notes:</strong> ${escapeHtml(invoice.notes)}</p>` : ""}<p style="margin:26px 0"><a href="${escapeHtml(PORTAL_URL)}" style="display:inline-block;background:#78c653;color:#092114;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px;margin-right:8px">Review${scope ? " &amp; Approve" : " Invoice"}</a><a href="${escapeHtml(venmoUrl)}" style="display:inline-block;background:#008cff;color:#fff;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px">Pay with Venmo</a></p><p style="color:#526458;font-size:13px">Confirm the Venmo profile is @${escapeHtml(VENMO_HANDLE)} and include the invoice number in the payment note.</p><p style="color:#526458;font-size:14px">Green Grin Lawns</p></div></div></body></html>`
+    html: `<!doctype html><html><body style="margin:0;background:#eef4ec;color:#102419;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#07351d;color:#fff;padding:24px;border-radius:8px 8px 0 0"><strong style="font-size:22px">Green Grin Lawns</strong></div><div style="background:#fff;padding:28px;border:1px solid #d5e2d2;border-top:0;border-radius:0 0 8px 8px"><p style="margin-top:0">Hi ${escapeHtml(customer)},</p><h1 style="font-size:25px;color:#07351d">${receipt ? "Payment received" : "Your invoice is ready"}</h1><div style="background:#f2f8ef;border-left:4px solid #78c653;padding:16px;margin:22px 0"><p style="margin:0 0 8px"><strong>Service:</strong> ${escapeHtml(service)}</p>${address ? `<p style="margin:0 0 8px"><strong>Project address:</strong> ${escapeHtml(address)}</p>` : ""}<p style="margin:0 0 8px"><strong>Amount:</strong> ${escapeHtml(amount)}</p><p style="margin:0"><strong>${receipt ? "Status" : "Due"}:</strong> ${escapeHtml(receipt ? "Paid" : due)}</p></div>${scope ? `<div style="margin:22px 0"><h2 style="font-size:18px;color:#07351d">Project scope</h2><p style="white-space:pre-wrap;line-height:1.55">${escapeHtml(scope)}</p></div>` : ""}${items.length ? `<table style="width:100%;border-collapse:collapse;margin:20px 0"><thead>${itemHead}</thead><tbody>${itemRows}</tbody></table>` : ""}${invoice.notes ? `<p><strong>Notes:</strong> ${escapeHtml(invoice.notes)}</p>` : ""}${receipt ? `<p style="margin:26px 0;padding:14px;background:#edf6e9;border-radius:6px"><strong>Receipt:</strong> This email confirms that your payment was recorded by Green Grin Lawns.</p>` : `<p style="margin:26px 0"><a href="${escapeHtml(PORTAL_URL)}" style="display:inline-block;background:#78c653;color:#092114;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px;margin-right:8px">Review${scope ? " &amp; Approve" : " Invoice"}</a><a href="${escapeHtml(venmoUrl)}" style="display:inline-block;background:#008cff;color:#fff;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px">Pay with Venmo</a></p><p style="color:#526458;font-size:13px">Confirm the Venmo profile is @${escapeHtml(VENMO_HANDLE)} and include the invoice number in the payment note.</p>`}<p style="color:#526458;font-size:14px">Green Grin Lawns</p></div></div></body></html>`
   };
 }
 
@@ -202,6 +203,24 @@ async function sendInvoiceEmail(invoice) {
     return { enabled: true, sent: true, id: data.id || null };
   } catch (error) {
     return { enabled: true, sent: false, error: error.message || "Invoice email could not be sent." };
+  }
+}
+
+async function sendPaymentReceiptEmail(invoice) {
+  if (!invoice || invoice.status !== "Paid") return null;
+  if (!invoice.email) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Customer has no email address." };
+  if (!RESEND_API_KEY) return { enabled: false, sent: false, skipped: true, reason: "Receipt email is not configured in Netlify." };
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" },
+      body: JSON.stringify(invoiceEmailPayload(invoice, { receipt: true }))
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { enabled: true, sent: false, error: data.message || "Email provider rejected the receipt." };
+    return { enabled: true, sent: true, id: data.id || null };
+  } catch (error) {
+    return { enabled: true, sent: false, error: error.message || "Receipt email could not be sent." };
   }
 }
 
@@ -308,7 +327,7 @@ exports.handler = async (event) => {
       const invoice = rows?.[0] || null;
       const fertilizerRecords = await recordFertilizerApplications(invoice);
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
-      const email = body.notify_customer === true ? await sendInvoiceEmail(invoice) : null;
+      const email = body.notify_customer === true ? (invoice.status === "Paid" ? await sendPaymentReceiptEmail(invoice) : await sendInvoiceEmail(invoice)) : null;
       return json(200, { invoice, fertilizer_records: fertilizerRecords, push, email });
     }
 
@@ -318,7 +337,7 @@ exports.handler = async (event) => {
       const invoice = rows?.[0] || null;
       const fertilizerRecords = await recordFertilizerApplications(invoice);
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
-      const email = body.notify_customer === true ? await sendInvoiceEmail(invoice) : null;
+      const email = body.notify_customer === true ? (invoice.status === "Paid" ? await sendPaymentReceiptEmail(invoice) : await sendInvoiceEmail(invoice)) : null;
       return json(200, { invoice, fertilizer_records: fertilizerRecords, push, email });
     }
 
@@ -334,4 +353,4 @@ exports.handler = async (event) => {
   }
 };
 
-exports._test = { invoicePayload, normalizeLineItems, legacyInvoicePayload, isMissingPaymentColumn, escapeHtml, invoiceEmailPayload, sendInvoiceEmail };
+exports._test = { invoicePayload, normalizeLineItems, legacyInvoicePayload, isMissingPaymentColumn, escapeHtml, invoiceEmailPayload, sendInvoiceEmail, sendPaymentReceiptEmail };
