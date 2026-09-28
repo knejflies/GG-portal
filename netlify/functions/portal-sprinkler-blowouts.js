@@ -70,7 +70,10 @@ exports.handler = async (event) => {
       if (!current) return json(404, { error: "Sprinkler blowout lead not found." });
       const update = { status, referral_active: !["Paid", "Not Successful"].includes(status) };
       if (status === "Successful" && !current.referral_credited_at && current.referred_by_code) {
-        const referrers = await supabase(`green_grin_sprinkler_blowout_leads?select=id,referral_count&share_code=eq.${encodeURIComponent(current.referred_by_code)}&limit=1`);
+        const referrerQuery = current.referrer_lead_id
+          ? `id=eq.${encodeURIComponent(current.referrer_lead_id)}`
+          : `share_code=eq.${encodeURIComponent(current.referred_by_code)}`;
+        const referrers = await supabase(`green_grin_sprinkler_blowout_leads?select=id,referral_count&${referrerQuery}&limit=1`);
         const referrer = referrers?.[0];
         if (referrer) {
           update.referral_credited_at = new Date().toISOString();
@@ -91,6 +94,7 @@ exports.handler = async (event) => {
     const notes = clean(body.notes, 2000);
     const referredByCode = clean(body.referred_by_code, 40).toUpperCase();
     const waiverAgreed = body.waiver_agreed === true;
+    let referrerLeadId = null;
     if (!fullName || !email || !serviceAddress) return json(400, { error: "Name, email, and service address are required." });
     if (!/^\S+@\S+\.\S+$/.test(email)) return json(400, { error: "Enter a valid email address." });
     if (!waiverAgreed) return json(400, { error: "Check the waiver agreement before submitting the form." });
@@ -98,6 +102,7 @@ exports.handler = async (event) => {
     if (referredByCode) {
       const referrers = await supabase(`green_grin_sprinkler_blowout_leads?select=id,share_code,referral_count&share_code=eq.${encodeURIComponent(referredByCode)}&limit=1`);
       if (!referrers?.length) return json(400, { error: "That referral code was not found. Check it and try again." });
+      referrerLeadId = referrers[0].id;
     }
 
     let shareCode = newShareCode();
@@ -108,7 +113,7 @@ exports.handler = async (event) => {
     }
     const rows = await supabase("green_grin_sprinkler_blowout_leads", {
       method: "POST",
-      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, share_code: shareCode, referred_by_code: referredByCode || null, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString() })
+      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, share_code: shareCode, referred_by_code: referredByCode || null, referrer_lead_id: referrerLeadId, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString() })
     });
     const base = requestBaseUrl(event);
     return json(200, {

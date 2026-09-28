@@ -12,6 +12,7 @@ create table if not exists public.green_grin_sprinkler_blowout_leads (
   notes text,
   share_code text not null unique,
   referred_by_code text,
+  referrer_lead_id uuid references public.green_grin_sprinkler_blowout_leads(id) on delete set null,
   discount_percent numeric(5,2) not null default 0,
   referral_count integer not null default 0,
   referral_credit_cents_per_zone integer not null default 50,
@@ -29,6 +30,7 @@ alter table public.green_grin_sprinkler_blowout_leads add column if not exists r
 alter table public.green_grin_sprinkler_blowout_leads add column if not exists referral_credited_at timestamptz;
 alter table public.green_grin_sprinkler_blowout_leads add column if not exists waiver_agreed boolean not null default false;
 alter table public.green_grin_sprinkler_blowout_leads add column if not exists waiver_agreed_at timestamptz;
+alter table public.green_grin_sprinkler_blowout_leads add column if not exists referrer_lead_id uuid references public.green_grin_sprinkler_blowout_leads(id) on delete set null;
 alter table public.green_grin_sprinkler_blowout_leads enable row level security;
 create index if not exists green_grin_sprinkler_blowout_leads_created_at_idx on public.green_grin_sprinkler_blowout_leads(created_at desc);
 create index if not exists green_grin_sprinkler_blowout_leads_status_idx on public.green_grin_sprinkler_blowout_leads(status);
