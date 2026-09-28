@@ -4578,6 +4578,13 @@
           <p class="muted">Install the home-screen tracker with Start, Stop, live miles, and elapsed time.</p>
           <a class="button secondary" href="/downloads/green-grin-mileage.apk" download>Download Android Widget</a>
         </div>
+
+        <div class="card">
+          <span class="admin-eyebrow">Lead capture</span>
+          <h2>Sprinkler blowout link</h2>
+          <p class="muted">Send this form to homeowners. It saves their irrigation details and gives them a neighbor referral code.</p>
+          <a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Blowout Form</a>
+        </div>
       </div>
     </section>
 
@@ -4943,6 +4950,10 @@
           </div>
           <div id="marketing-admin-summary" class="marketing-summary"></div>
           <div id="marketing-admin-list" class="marketing-route-list"></div>
+        </div>
+        <div class="card owner-only">
+          <div class="job-head"><div><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
+          <div id="blowout-leads-list" class="marketing-route-list"></div>
         </div>
       </div>
     </section>
@@ -11271,6 +11282,25 @@
       }
     }
 
+    function renderBlowoutLeads(leads = []) {
+      const target = $("#blowout-leads-list");
+      if (!target) return;
+      target.innerHTML = leads.length
+        ? leads.map((lead) => `<div class="marketing-lead"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}</strong><span class="badge">${cleanText(lead.status || "New")}</span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}</div>`).join("")
+        : notice("No sprinkler blowout leads yet.");
+    }
+
+    async function loadBlowoutLeads() {
+      if (!adminPin()) return;
+      const target = $("#blowout-leads-list");
+      if (!target) return;
+      target.innerHTML = notice("Loading sprinkler leads...");
+      try {
+        const data = await requestJson("portal-sprinkler-blowouts", { headers: adminHeaders() });
+        renderBlowoutLeads(data.leads || []);
+      } catch (error) { target.innerHTML = notice(error.message, true); }
+    }
+
     $("#request-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);
@@ -12787,6 +12817,7 @@
 
     $("#marketing-route-cancel").addEventListener("click", clearMarketingRouteForm);
     $("#load-marketing-admin").addEventListener("click", loadMarketingAdmin);
+    $("#load-blowout-leads").addEventListener("click", loadBlowoutLeads);
     $("#marketing-plan-route-select").addEventListener("change", () => renderMarketingAdminMap(true));
     $("#marketing-admin-locate").addEventListener("click", async () => {
       $("#marketing-plan-result").innerHTML = notice("Finding your location...");

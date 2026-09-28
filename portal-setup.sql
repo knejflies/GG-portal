@@ -322,6 +322,25 @@ create table if not exists public.green_grin_work_sessions (
   notes text
 );
 
+create table if not exists public.green_grin_sprinkler_blowout_leads (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  full_name text not null,
+  email text not null,
+  phone text,
+  service_address text not null,
+  zones integer not null default 0,
+  spigots integer not null default 0,
+  notes text,
+  share_code text not null unique,
+  referred_by_code text,
+  discount_percent numeric(5,2) not null default 10,
+  status text not null default 'New',
+  contacted_at timestamptz,
+  next_year_target boolean not null default true
+);
+
 alter table public.green_grin_work_sessions add column if not exists estimate_id uuid;
 alter table public.green_grin_work_sessions add column if not exists work_type text not null default 'Project';
 alter table public.green_grin_work_sessions add column if not exists phase text;
@@ -772,6 +791,7 @@ alter table public.green_grin_estimates enable row level security;
 alter table public.green_grin_estimate_signatures enable row level security;
 alter table public.green_grin_marketing_routes enable row level security;
 alter table public.green_grin_marketing_leads enable row level security;
+alter table public.green_grin_sprinkler_blowout_leads enable row level security;
 alter table public.green_grin_daily_route_assignments enable row level security;
 
 drop policy if exists "Customers can read own profile" on public.green_grin_customers;
@@ -878,6 +898,9 @@ create index if not exists green_grin_marketing_leads_route_idx on public.green_
 create index if not exists green_grin_marketing_leads_employee_idx on public.green_grin_marketing_leads(assigned_employee_id);
 create index if not exists green_grin_marketing_leads_status_idx on public.green_grin_marketing_leads(status);
 create index if not exists green_grin_marketing_leads_created_at_idx on public.green_grin_marketing_leads(created_at desc);
+create index if not exists green_grin_sprinkler_blowout_leads_created_at_idx on public.green_grin_sprinkler_blowout_leads(created_at desc);
+create index if not exists green_grin_sprinkler_blowout_leads_status_idx on public.green_grin_sprinkler_blowout_leads(status);
+create index if not exists green_grin_sprinkler_blowout_leads_share_code_idx on public.green_grin_sprinkler_blowout_leads(share_code);
 
 create unique index if not exists green_grin_customers_customer_code_unique
   on public.green_grin_customers(customer_code)
