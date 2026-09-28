@@ -14,7 +14,7 @@
     <div class="brand">GREEN GRIN LAWNS</div>
     <section class="hero">
       <h1>Sprinkler blowout request</h1>
-      <p>Tell us about your irrigation system and we’ll follow up with scheduling and pricing. Refer a neighbor and they’ll receive a discount on their blowout.</p>
+      <p>Tell us about your irrigation system and we’ll follow up with scheduling and pricing. Every successful referral earns you <strong>$0.50 off each sprinkler zone</strong>.</p>
     </section>
     <section class="card">
       <form id="blowout-form">
@@ -25,7 +25,7 @@
           <label>Service address<input name="service_address" autocomplete="street-address" required /></label>
           <label>Sprinkler zones<input name="zones" type="number" min="0" max="200" value="0" required /><span class="hint">How many stations/zones?</span></label>
           <label>Spigots<input name="spigots" type="number" min="0" max="100" value="0" required /><span class="hint">Outdoor faucets to drain?</span></label>
-          <label class="full">Referral code <span class="hint">Optional. Your neighbor’s code gives you the discount.</span><input id="referral-code" name="referred_by_code" maxlength="40" /></label>
+          <label class="full">Referral code <span class="hint">Optional. Enter a neighbor’s code so they receive referral credit.</span><input id="referral-code" name="referred_by_code" maxlength="40" /></label>
           <label class="full">Notes <textarea name="notes" placeholder="Gate code, controller location, special instructions, or anything else we should know."></textarea></label>
         </div>
         <div class="actions"><button class="button" type="submit">Request sprinkler blowout</button></div>
@@ -48,7 +48,7 @@
         const response = await fetch("/.netlify/functions/portal-sprinkler-blowouts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Could not save the request.");
-        result.innerHTML = `<div class="notice"><strong>Request received.</strong><p>We’ll follow up about scheduling. Your neighbor referral code is:</p><div class="code">${esc(data.share_code)}</div><p class="small">Send this link to a neighbor so they can request a blowout with the discount: <br><span>${esc(data.referral_url)}</span></p><div class="actions"><button class="button secondary" id="copy-link" type="button">Copy referral link</button>${navigator.share ? `<button class="button secondary" id="share-link" type="button">Share link</button>` : ""}</div></div>`;
+        result.innerHTML = `<div class="notice"><strong>Request received.</strong><p>We’ll follow up about scheduling. Every successful referral earns <strong>$0.50 off each zone</strong> on your blowout. Your referral code is:</p><div class="code">${esc(data.share_code)}</div><p class="small">Send this link to a neighbor so they can submit their request: <br><span>${esc(data.referral_url)}</span></p><div class="actions"><button class="button secondary" id="copy-link" type="button">Copy referral link</button>${navigator.share ? `<button class="button secondary" id="share-link" type="button">Share link</button>` : ""}</div></div>`;
         document.querySelector("#copy-link")?.addEventListener("click", async () => { await navigator.clipboard.writeText(data.referral_url); document.querySelector("#copy-link").textContent = "Copied"; });
         document.querySelector("#share-link")?.addEventListener("click", async () => { await navigator.share({ title: "Sprinkler blowout discount", text: "Use my Green Grin referral link for a sprinkler blowout discount:", url: data.referral_url }); });
         form.reset();

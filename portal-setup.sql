@@ -335,11 +335,15 @@ create table if not exists public.green_grin_sprinkler_blowout_leads (
   notes text,
   share_code text not null unique,
   referred_by_code text,
-  discount_percent numeric(5,2) not null default 10,
+  discount_percent numeric(5,2) not null default 0,
+  referral_count integer not null default 0,
+  referral_credit_cents_per_zone integer not null default 50,
   status text not null default 'New',
   contacted_at timestamptz,
   next_year_target boolean not null default true
 );
+alter table public.green_grin_sprinkler_blowout_leads add column if not exists referral_count integer not null default 0;
+alter table public.green_grin_sprinkler_blowout_leads add column if not exists referral_credit_cents_per_zone integer not null default 50;
 
 alter table public.green_grin_work_sessions add column if not exists estimate_id uuid;
 alter table public.green_grin_work_sessions add column if not exists work_type text not null default 'Project';
