@@ -58,6 +58,28 @@ exports.handler = async (event) => {
       return json(200, { leads });
     }
 
+    if (event.httpMethod === "PATCH") {
+      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
+      const body = JSON.parse(event.body || "{}");
+      const id = clean(body.id, 80);
+      const status = clean(body.status, 40);
+      const allowed = new Set(["New", "Contacted", "Successful", "Paid", "Not Successful"]);
+      if (!id || !allowed.has(status)) return json(400, { error: "Choose a valid lead status." });
+      const currentRows = await supabase(`green_grin_sprinkler_blowout_leads?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);
+      const current = currentRows?.[0];
+      if (!current) return json(404, { error: "Sprinkler blowout lead not found." });
+      const update = { status, referral_active: !["Paid", "Not Successful"].includes(status) };
+      if (status === "Successful" && !current.referral_credited_at && current.referred_by_code) {
+        const referrers = await supabase(`green_grin_sprinkler_blowout_leads?select=id,referral_count&share_code=eq.${encodeURIComponent(current.referred_by_code)}&limit=1`);
+        const referrer = referrers?.[0];
+        if (referrer) {
+          update.referral_credited_at = new Date().toISOString();
+          await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(referrer.id)}`, { method: "PATCH", body: JSON.stringify({ referral_count: Math.max(0, Number(referrer.referral_count) || 0) + 1 }) });
+        }
+      }
+      const rows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(update) });
+      return json(200, { lead: rows?.[0] || null });
+    }
     if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed." });
     const body = JSON.parse(event.body || "{}");
     const fullName = clean(body.full_name, 160);
@@ -71,13 +93,9 @@ exports.handler = async (event) => {
     if (!fullName || !email || !serviceAddress) return json(400, { error: "Name, email, and service address are required." });
     if (!/^\S+@\S+\.\S+$/.test(email)) return json(400, { error: "Enter a valid email address." });
 
-    let referralCount = 0;
     if (referredByCode) {
       const referrers = await supabase(`green_grin_sprinkler_blowout_leads?select=id,share_code,referral_count&share_code=eq.${encodeURIComponent(referredByCode)}&limit=1`);
       if (!referrers?.length) return json(400, { error: "That referral code was not found. Check it and try again." });
-      const referrer = referrers[0];
-      referralCount = Math.max(0, Number(referrer.referral_count) || 0) + 1;
-      await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(referrer.id)}`, { method: "PATCH", body: JSON.stringify({ referral_count: referralCount }) });
     }
 
     let shareCode = newShareCode();
@@ -88,7 +106,7 @@ exports.handler = async (event) => {
     }
     const rows = await supabase("green_grin_sprinkler_blowout_leads", {
       method: "POST",
-      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, share_code: shareCode, referred_by_code: referredByCode || null, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE })
+      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, share_code: shareCode, referred_by_code: referredByCode || null, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true })
     });
     const base = requestBaseUrl(event);
     return json(200, {
@@ -96,8 +114,8 @@ exports.handler = async (event) => {
       share_code: shareCode,
       referral_url: `${base}/sprinkler-blowout.html?ref=${encodeURIComponent(shareCode)}`,
       referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE,
-      referral_count: referralCount,
-      message: referredByCode ? "Your request was saved and the referral was credited." : "Your sprinkler blowout request was saved. Share your referral link with neighbors to earn $0.50 off each zone per successful referral."
+      referral_count: 0,
+      message: referredByCode ? "Your request was saved. The referral will be reviewed by Green Grin before credit is applied." : "Your sprinkler blowout request was saved. Share your referral link with neighbors to earn $0.50 off each zone per successful referral."
     });
   } catch (error) {
     return json(500, { error: error.message || "Could not save the sprinkler blowout request." });

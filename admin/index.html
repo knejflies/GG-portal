@@ -11286,7 +11286,7 @@
       const target = $("#blowout-leads-list");
       if (!target) return;
       target.innerHTML = leads.length
-        ? leads.map((lead) => { const credit = (Number(lead.referral_count) || 0) * 0.5 * (Number(lead.zones) || 0); return `<div class="marketing-lead"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}</strong><span class="badge">${cleanText(lead.status || "New")}</span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p><p><strong>Referral credit:</strong> ${cleanText(`${lead.referral_count || 0} referrals × $0.50 × ${lead.zones || 0} zones = $${credit.toFixed(2)}`)}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}</div>`; }).join("")
+        ? leads.map((lead) => { const credit = (Number(lead.referral_count) || 0) * 0.5 * (Number(lead.zones) || 0); const status = lead.status || "New"; return `<div class="marketing-lead" data-blowout-id="${cleanText(lead.id)}"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}</strong><span class="badge">${cleanText(status)}${lead.referral_active === false ? " · Closed" : ""}</span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p><p><strong>Referral credit:</strong> ${cleanText(`${lead.referral_count || 0} successful referrals × $0.50 × ${lead.zones || 0} zones = $${credit.toFixed(2)}`)}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}<div class="admin-actions"><button class="button small secondary" data-blowout-status="Successful" type="button">Mark Successful</button><button class="button small secondary" data-blowout-status="Paid" type="button">Mark Paid</button><button class="button small ghost" data-blowout-status="Not Successful" type="button">Close Referral</button></div></div>`; }).join("")
         : notice("No sprinkler blowout leads yet.");
     }
 
@@ -12818,6 +12818,19 @@
     $("#marketing-route-cancel").addEventListener("click", clearMarketingRouteForm);
     $("#load-marketing-admin").addEventListener("click", loadMarketingAdmin);
     $("#load-blowout-leads").addEventListener("click", loadBlowoutLeads);
+    $("#blowout-leads-list").addEventListener("click", async (event) => {
+      const button = event.target.closest("button[data-blowout-status]");
+      const card = event.target.closest("[data-blowout-id]");
+      if (!button || !card) return;
+      button.disabled = true;
+      try {
+        await requestJson("portal-sprinkler-blowouts", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ id: card.dataset.blowoutId, status: button.dataset.blowoutStatus }) });
+        await loadBlowoutLeads();
+      } catch (error) {
+        $("#marketing-admin-result").innerHTML = notice(error.message, true);
+        button.disabled = false;
+      }
+    });
     $("#marketing-plan-route-select").addEventListener("change", () => renderMarketingAdminMap(true));
     $("#marketing-admin-locate").addEventListener("click", async () => {
       $("#marketing-plan-result").innerHTML = notice("Finding your location...");
