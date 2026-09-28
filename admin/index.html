@@ -4282,6 +4282,7 @@
       <span class="tab-section-label owner-only">Quoting tools</span>
       <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
       <button class="tab owner-only" data-tab="mowing-contract" type="button">Mowing Contract</button>
+      <button class="tab owner-only" data-tab="sprinkler-blowouts" type="button">Sprinkler Blowouts</button>
       <span class="tab-section-label owner-only">Team</span>
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
@@ -4951,10 +4952,14 @@
           <div id="marketing-admin-summary" class="marketing-summary"></div>
           <div id="marketing-admin-list" class="marketing-route-list"></div>
         </div>
-        <div class="card owner-only">
-          <div class="job-head"><div><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
-          <div id="blowout-leads-list" class="marketing-route-list"></div>
-        </div>
+      </div>
+    </section>
+
+    <section id="sprinkler-blowouts" class="panel owner-only" hidden>
+      <div class="card">
+        <div class="job-head"><div><span class="admin-eyebrow">Quoting tools</span><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form. Review each referral, approve successful ones, and close it when paid.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
+        <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a></div>
+        <div id="blowout-leads-list" class="marketing-route-list"></div>
       </div>
     </section>
 
@@ -6664,6 +6669,7 @@
         if (button.dataset.tab === "activity") loadActivity();
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
+        if (button.dataset.tab === "sprinkler-blowouts") loadBlowoutLeads();
       });
     });
 
