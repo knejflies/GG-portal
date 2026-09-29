@@ -10090,13 +10090,49 @@
           <div class="customer-file-block"><strong>Property</strong><p>${cleanText(property.address || "No address saved")}</p><p class="muted">Gate: ${cleanText(property.gate_code || "None")}</p><p class="muted">Pets: ${cleanText(property.pets || "None listed")}</p></div>
         </div>
         <div class="customer-file-block" style="margin-top:12px"><strong>Service and billing</strong><p>${cleanText(customer.plan || "No plan set")}</p><p class="muted">${cleanText(preferenceLine(customer))}</p><p class="muted">${cleanText(notificationLine(customer))}</p></div>
+        ${property.id ? `<div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Property service entries</strong><span class="badge">Monthly billing</span></div><form id="property-service-entry-form" class="customer-file-grid" style="margin-top:10px"><input id="property-service-property-id" type="hidden" value="${cleanText(property.id)}" /><input id="property-service-customer-id" type="hidden" value="${cleanText(customer.customer_user_id || customer.id || "")}" /><div><label for="property-service-date">Service date</label><input id="property-service-date" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></div><div><label for="property-service-category">Category</label><select id="property-service-category"><option>Mowing</option><option>Fertilizer</option><option>Spraying</option><option>Irrigation</option><option>Cleanup</option><option>Landscaping</option><option>Other</option></select></div><div><label for="property-service-description">Description</label><input id="property-service-description" value="Lawn mowing visit" required /></div><div><label for="property-service-quantity">Quantity</label><input id="property-service-quantity" type="number" min="0.01" step="0.01" value="1" required /></div><div><label for="property-service-price">Customer price</label><input id="property-service-price" type="number" min="0" step="0.01" value="0" required /></div><div><label for="property-service-material-cost">Internal material cost</label><input id="property-service-material-cost" type="number" min="0" step="0.01" value="0" /></div><div style="grid-column:1/-1"><label for="property-service-notes">Internal notes (never shown to customer unless selected)</label><textarea id="property-service-notes" rows="2" placeholder="Product, amount used, area treated, or crew notes"></textarea></div><div class="admin-actions" style="grid-column:1/-1"><button class="button small" type="submit">Add Completed Entry</button><label class="check"><input id="property-service-include-notes" type="checkbox" /> Include notes on invoice</label></div></form><div class="two" style="margin-top:12px"><div><label for="property-billing-cycle">Billing month</label><input id="property-billing-cycle" type="month" value="${new Date().toISOString().slice(0, 7)}" /></div><button id="property-generate-invoice" class="button small secondary" type="button">Build Monthly Draft</button></div><div id="property-service-result" aria-live="polite" style="margin-top:10px"></div><div id="property-service-entry-list" class="status-box" style="margin-top:10px">Loading service entries...</div></div>` : ""}
         <div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Contact history</strong><span class="badge">In-app messages</span></div><div id="customer-file-contact-history" class="status-box">Loading contact history...</div></div>
         <div class="customer-file-block" style="margin-top:12px"><strong>Jobs</strong>${jobs.length ? jobs.map((job) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(job.service_type || "Service")}</strong><p class="muted">${cleanText(jobCategory(job))} | ${cleanText(jobFrequency(job))} | ${cleanText(scheduleLine(job))}</p><p class="muted">${cleanText(job.address || property.address || "No address")}</p></div><span class="badge">${cleanText(job.status || "New")}</span></div>`).join("") : `<p class="muted">No jobs created for this customer yet.</p>`}</div>
         <div class="admin-actions" style="margin-top:14px"><button class="button small secondary" data-file-action="fill-job" type="button">Create Booking</button><button class="button small secondary" data-file-action="details" type="button">Open Details</button><button class="button small ghost" data-file-action="chat" type="button">Open Chat</button></div>
       `;
       modal.hidden = false;
       modal.dataset.customerIndex = String(invoiceCustomers.indexOf(customer));
+      wirePropertyBilling(customer);
       loadCustomerContactHistory(customer);
+    }
+
+    async function wirePropertyBilling(customer) {
+      const form = $("#property-service-entry-form");
+      const list = $("#property-service-entry-list");
+      if (!form || !list) return;
+      const propertyId = customer.property?.id;
+      const result = $("#property-service-result");
+      const render = (entries = []) => {
+        list.innerHTML = entries.length ? entries.slice(0, 20).map((entry) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(entry.description)}</strong><p class="muted">${cleanText(entry.service_date)} | ${cleanText(entry.service_category)} | ${cleanText(entry.quantity)} ${cleanText(entry.unit)} × $${Number(entry.customer_price || 0).toFixed(2)}</p></div><span class="badge">${cleanText(entry.status)}</span></div>`).join("") : notice("No service entries yet.");
+      };
+      const load = async () => {
+        const data = await requestJson(`portal-property-billing?property_id=${encodeURIComponent(propertyId)}`, { headers: adminHeaders() });
+        render(data.entries || []);
+      };
+      try { await load(); } catch (error) { list.innerHTML = notice(`Service entries unavailable: ${error.message}`, true); }
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try {
+          result.innerHTML = notice("Saving completed service entry...");
+          const entryPayload = { property_id: propertyId, customer_user_id: customer.customer_user_id || customer.id, service_date: $("#property-service-date").value, service_category: $("#property-service-category").value, description: $("#property-service-description").value, quantity: $("#property-service-quantity").value, customer_price: $("#property-service-price").value, material_cost: $("#property-service-material-cost").value, internal_notes: { notes: $("#property-service-notes").value }, include_internal_notes: $("#property-service-include-notes").checked };
+          await requestJson("portal-property-billing", { method: "POST", headers: adminHeaders(), body: JSON.stringify(entryPayload) });
+          result.innerHTML = notice("Completed service entry saved.");
+          await load();
+        } catch (error) { result.innerHTML = notice(error.message, true); }
+      });
+      $("#property-generate-invoice")?.addEventListener("click", async () => {
+        try {
+          result.innerHTML = notice("Building the monthly draft...");
+          const data = await requestJson("portal-property-billing", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "generate-invoice", property_id: propertyId, billing_cycle: $("#property-billing-cycle").value }) });
+          result.innerHTML = notice(data.created ? "Monthly draft invoice created. Review it in Invoices before sending." : (data.reason || "That month has already been billed."));
+          await load();
+        } catch (error) { result.innerHTML = notice(error.message, true); }
+      });
     }
 
     async function loadCustomerContactHistory(customer) {
