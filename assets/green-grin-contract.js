@@ -76,6 +76,7 @@
       const ratePerVisit = number(estimate.rate_per_visit ?? estimate.mowing_rate_per_visit ?? mowingLines.find((line) => Number(line?.rate) > 0)?.rate ?? 0);
       const frequency = String(estimate.service_frequency || estimate.mowing_frequency || "As Requested").trim();
       const billingOption = String(estimate.billing_option || estimate.mowing_billing_option || "Monthly").trim();
+      const propertyType = String(estimate.property_type || estimate.calculation_inputs?.property_type || "Residential").trim();
       return [
         {
           title: "Client and Property Information",
@@ -83,7 +84,8 @@
             `Client Name: ${String(estimate.customer_name || "")}`,
             `Service Address: ${String(estimate.service_address || "")}`,
             `Billing Address: ${String(estimate.billing_address || estimate.service_address || "")}`,
-            `Phone / Email: ${String(estimate.phone || "")} / ${String(estimate.email || "")}`
+            `Phone / Email: ${String(estimate.phone || "")} / ${String(estimate.email || "")}`,
+            `Property Type: ${propertyType}`
           ]
         },
         {
@@ -117,7 +119,8 @@
         {
           title: "5. Property Access and Gates",
           paragraphs: [
-            "The Client must ensure that gates are unlocked, paths are clear, and pets are indoors on service days. If the crew cannot access the yard or conditions are unsafe, a $25.00 trip fee applies, or the service may be billed at the standard rate."
+            "The Client must ensure that gates are unlocked, paths are clear, and pets are indoors on service days. If the crew cannot access the yard or conditions are unsafe, a $25.00 trip fee applies, or the service may be billed at the standard rate.",
+            ...(propertyType.toLowerCase().includes("commercial") || propertyType.toLowerCase().includes("hoa") ? ["For a commercial or HOA property, the authorized representative confirms they have authority to approve access, scheduling, and payment for the property."] : [])
           ]
         },
         {
