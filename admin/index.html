@@ -9099,13 +9099,15 @@
       const monthAmount = monthBilling.weeks !== null
         ? monthBilling.amount
         : monthBilling.amount || customer.monthly_price || job?.monthly_price;
-      const price = money(monthAmount);
+      const price = monthBilling.weeks === null ? money(monthAmount) : `${monthBilling.weeks} × ${fixedMoney(monthBilling.weeklyPrice)}`;
       const annual = money(customer.annual_price || job?.annual_price);
+      const priceLabel = monthBilling.weeks === null ? "this month" : "service weeks × weekly rate";
       const status = customer.billing_status || job?.status || "Active";
       return `
         <div class="plan">
           <strong>${cleanText(plan)}</strong>
           <div class="price">${price || "Quote"} <span>this month</span></div>
+          <div class="price">${price || "Quote"} <span>${priceLabel}</span></div>
           <ul class="clean-list">
             <li>${cleanText(status)}</li>
             <li>${cleanText(monthBilling.weeks === null ? "Monthly price set by Green Grin" : `${monthBilling.weeks} scheduled service week${monthBilling.weeks === 1 ? "" : "s"} at ${fixedMoney(monthBilling.weeklyPrice)} each`)}</li>
@@ -12190,6 +12192,9 @@
         : customerMonthBilling.amount || customer.monthly_price || newestCustomerJob?.monthly_price || "";
       const customerAnnualPrice = customer.annual_price || newestCustomerJob?.annual_price || "";
       const customerPlan = customer.plan || newestCustomerJob?.service_type || "Monthly service";
+      const recurringQuantity = customerMonthBilling.weeks === null ? 1 : customerMonthBilling.weeks;
+      const recurringUnit = customerMonthBilling.weeks === null ? "month" : "service week";
+      const recurringRate = customerMonthBilling.weeks === null ? Number(customerMonthlyPrice) || 0 : Number(customerMonthBilling.weeklyPrice) || 0;
 
       if (action === "toggle") {
         const collapse = card.querySelector(".customer-collapse");
@@ -12255,7 +12260,7 @@
         $("#invoice_status").value = "Draft";
         $("#invoice_custom_service").value = customerPlan || "";
         $("#invoice_notes").value = customerPlan || "Monthly service";
-        renderInvoiceLines([{ description: customerPlan || "Monthly service", category: "Service", quantity: 1, unit: "each", rate: Number(customerMonthlyPrice) || 0 }]);
+        renderInvoiceLines([{ description: customerPlan || "Monthly service", category: "Service", quantity: recurringQuantity, unit: recurringUnit, rate: recurringRate }]);
         $("#invoice-submit").textContent = "Save Draft";
         openTab("invoices");
         return;
@@ -12286,7 +12291,7 @@
               discount: 0,
               tax_rate: 0,
               tax_amount: 0,
-              line_items: [{ description: customerPlan || "Monthly service", category: "Service", quantity: 1, unit: "each", rate: Number(customerMonthlyPrice) }],
+              line_items: [{ description: customerPlan || "Monthly service", category: "Service", quantity: recurringQuantity, unit: recurringUnit, rate: recurringRate }],
               due_date: dueDate,
               status: "Sent",
               service_line: customerPlan,
@@ -13178,4 +13183,7 @@
   </script>
 </body>
 </html>
+
+
+
 
