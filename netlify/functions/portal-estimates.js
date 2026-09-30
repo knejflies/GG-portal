@@ -82,7 +82,7 @@ function estimatePayload(body, current = {}) {
   const grossProfit = signedMoneyNumber(taxable - internalCost);
   const grossMargin = taxable > 0 ? Math.round((grossProfit / taxable) * 10000) / 10000 : 0;
   const depositAmount = moneyNumber(lineItems.filter((item) => item.deposit_eligible).reduce((sum, item) => sum + item.amount, 0));
-  const initialPaymentPercent = Math.min(100, Math.max(0, moneyNumber(body.initial_payment_percent ?? current.initial_payment_percent ?? 50)));
+  const initialPaymentPercent = Math.min(100, Math.max(0, moneyNumber(body.initial_payment_percent ?? current.initial_payment_percent ?? 0)));
   const customerGroups = groupedTotals(lineItems);
   const groupedSubtotal = moneyNumber(Object.values(customerGroups).reduce((sum, amount) => sum + Number(amount || 0), 0));
   if (Math.abs(groupedSubtotal - subtotal) > 0.01) throw new Error("Project groups do not match the estimate subtotal. Review the estimate before sending it.");
@@ -175,3 +175,4 @@ exports.handler = async (event) => {
 };
 
 exports._test = { normalizeEstimateLines, estimatePayload };
+

@@ -24,7 +24,7 @@
     return Math.round(number(value) * 100) / 100;
   }
 
-  function paymentSchedule(total, initialPercent = 50) {
+  function paymentSchedule(total, initialPercent = 0) {
     const projectTotal = money(total);
     const normalizedInitialPercent = Math.min(100, Math.max(0, Number.isFinite(Number(initialPercent)) ? Number(initialPercent) : 50));
     const initialPayment = money(projectTotal * normalizedInitialPercent / 100);
@@ -174,7 +174,7 @@
         "The recurring price assumes normal mowing conditions and the service frequency shown in the account. Significant overgrowth, blocked access, unusually heavy debris, or requested extra work may require a separately approved charge."
       ]
       : [
-        `The initial payment shown in the approved proposal is due upon signing and must be received before ${BUSINESS_NAME} schedules work, orders project materials, or begins the Project. The remaining balance is due upon substantial completion.`,
+        `Payment is due according to the invoice terms for the approved proposal. Work outside the approved scope requires a written change order before it is performed.`,
         `${BUSINESS_NAME}' internal costs, margins, supplier pricing, and material acquisition costs are confidential business information and are not part of the Customer's pricing information.`
       ];
     const sections = [
@@ -335,3 +335,4 @@
     buildContract
   };
 });
+
