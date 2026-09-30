@@ -125,6 +125,11 @@ exports.handler = async (event) => {
       const rows = await supabase("green_grin_service_visibility_settings?on_conflict=service_key", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ service_key: "sprinkler_blowout", enabled: body.enabled !== false, visible_from: body.visible_from || null, visible_until: body.visible_until || null, updated_at: new Date().toISOString(), updated_by: "Owner" }) });
       return json(200, { setting: rows?.[0] || null });
     }
+    if (event.httpMethod === "PATCH" && body.action === "followup-response") {
+      if (!body.followup_id) return json(400, { error: "Follow-up id is required." });
+      const rows = await supabase(`green_grin_spring_followups?id=eq.${encodeURIComponent(body.followup_id)}`, { method: "PATCH", body: JSON.stringify({ response: clean(body.response, 100), status: clean(body.status || "Contacted", 40), contacted_at: new Date().toISOString(), scheduled_date: body.scheduled_date || null }) });
+      return json(200, { followup: rows?.[0] || null });
+    }
     const lead = await getLead(body.lead_id || body.id);
     if (event.httpMethod === "POST" && body.action === "sync") {
       const result = await ensureCustomerProperty(lead);
@@ -169,11 +174,6 @@ exports.handler = async (event) => {
       if (!lead.email_marketing_allowed && !lead.sms_marketing_allowed) return json(400, { error: "This customer has not opted in to promotional follow-up." });
       const result = await ensureCustomerProperty(lead);
       const rows = await supabase("green_grin_spring_followups", { method: "POST", body: JSON.stringify({ lead_id: lead.id, customer_user_id: result.customer_user_id, property_id: result.property_id, service_interest: clean(body.service_interest || "Irrigation start-up", 100), area: clean(body.area, 100), contact_method: lead.email_marketing_allowed ? "Email" : "SMS", status: "Queued" }) });
-      return json(200, { followup: rows?.[0] || null });
-    }
-    if (event.httpMethod === "PATCH" && body.action === "followup-response") {
-      if (!body.followup_id) return json(400, { error: "Follow-up id is required." });
-      const rows = await supabase(`green_grin_spring_followups?id=eq.${encodeURIComponent(body.followup_id)}`, { method: "PATCH", body: JSON.stringify({ response: clean(body.response, 100), status: clean(body.status || "Contacted", 40), contacted_at: new Date().toISOString(), scheduled_date: body.scheduled_date || null }) });
       return json(200, { followup: rows?.[0] || null });
     }
     return json(405, { error: "Method not allowed." });
