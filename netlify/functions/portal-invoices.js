@@ -123,6 +123,11 @@ function legacyInvoicePayload(payload) {
   return legacy;
 }
 
+function firstInvoiceRow(rows) {
+  if (Array.isArray(rows)) return rows[0] || null;
+  return rows && typeof rows === "object" ? rows : null;
+}
+
 function isMissingPaymentColumn(error) {
   return /payment_method|payment_reference|payment_reported_at|payment_confirmed_at|subtotal|discount|tax_rate|tax_amount|line_items|service_address|project_scope|source_estimate_id|source_estimate_number|schema cache/i.test(error?.message || "");
 }
@@ -324,7 +329,8 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "POST") {
       const rows = await saveInvoice("green_grin_invoices", "POST", body);
-      const invoice = rows?.[0] || null;
+      const invoice = firstInvoiceRow(rows);
+      if (!invoice) return json(500, { error: "The invoice could not be saved. Supabase returned no invoice record." });
       const fertilizerRecords = await recordFertilizerApplications(invoice);
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
       const email = body.notify_customer === true ? (invoice.status === "Paid" ? await sendPaymentReceiptEmail(invoice) : await sendInvoiceEmail(invoice)) : null;
@@ -334,7 +340,8 @@ exports.handler = async (event) => {
     if (event.httpMethod === "PATCH") {
       if (!body.id) return json(400, { error: "Invoice id is required." });
       const rows = await saveInvoice(`green_grin_invoices?id=eq.${encodeURIComponent(body.id)}`, "PATCH", body);
-      const invoice = rows?.[0] || null;
+      const invoice = firstInvoiceRow(rows);
+      if (!invoice) return json(404, { error: "The invoice was not found or could not be updated." });
       const fertilizerRecords = await recordFertilizerApplications(invoice);
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
       const email = body.notify_customer === true ? (invoice.status === "Paid" ? await sendPaymentReceiptEmail(invoice) : await sendInvoiceEmail(invoice)) : null;
@@ -353,4 +360,4 @@ exports.handler = async (event) => {
   }
 };
 
-exports._test = { invoicePayload, normalizeLineItems, legacyInvoicePayload, isMissingPaymentColumn, escapeHtml, invoiceEmailPayload, sendInvoiceEmail, sendPaymentReceiptEmail };
+exports._test = { invoicePayload, normalizeLineItems, legacyInvoicePayload, firstInvoiceRow, isMissingPaymentColumn, escapeHtml, invoiceEmailPayload, sendInvoiceEmail, sendPaymentReceiptEmail };
