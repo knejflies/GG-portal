@@ -27,6 +27,8 @@
           <label>Spigots<input name="spigots" type="number" min="0" max="100" value="0" required /><span class="hint">Outdoor faucets to drain?</span></label>
           <label class="full">Referral code <span class="hint">Optional. Enter a neighbor’s code so they receive referral credit.</span><input id="referral-code" name="referred_by_code" maxlength="40" /></label>
           <label class="full">Notes <textarea name="notes" placeholder="Gate code, controller location, special instructions, or anything else we should know."></textarea></label>
+          <label class="full" style="display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px;font-weight:400"><input name="email_marketing_allowed" type="checkbox" value="true" style="width:auto;margin-top:5px" /><span>Yes, email me about spring irrigation start-up, repairs, and maintenance offers. I can opt out anytime.</span></label>
+          <label class="full" style="display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px;font-weight:400"><input name="sms_marketing_allowed" type="checkbox" value="true" style="width:auto;margin-top:5px" /><span>Yes, text me about spring irrigation start-up, repairs, and maintenance offers. Message rates may apply.</span></label>
           <label class="full" style="display:flex;grid-template-columns:auto 1fr;align-items:flex-start;gap:10px;font-weight:400"><input name="waiver_agreed" type="checkbox" required style="width:auto;margin-top:5px" /><span>By submitting this form, I agree that Green Grin Lawns may contact me about sprinkler blowout service, and I authorize the requested service at the address provided. I understand this is a request, not a guaranteed appointment, and Green Grin Lawns is not responsible for pre-existing damage or undisclosed irrigation conditions.</span></label>
         </div>
         <div class="actions"><button class="button" type="submit">Request sprinkler blowout</button></div>
@@ -39,6 +41,7 @@
     const result = document.querySelector("#form-result");
     const referral = new URLSearchParams(location.search).get("ref");
     if (referral) document.querySelector("#referral-code").value = referral.toUpperCase();
+    fetch("/.netlify/functions/portal-sprinkler-operations?settings=1").then((response) => response.json()).then((data) => { if (data.active === false) { document.querySelector("#blowout-form").innerHTML = "<div class='notice'>Sprinkler blowout scheduling is currently closed. Please check back during the service season.</div>"; } }).catch(() => null);
     const esc = (value) => String(value || "").replace(/[&<>\"]/g, (char) => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[char]));
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -47,6 +50,8 @@
       try {
         const body = Object.fromEntries(new FormData(form).entries());
         body.waiver_agreed = form.querySelector("[name=waiver_agreed]").checked;
+        body.email_marketing_allowed = form.querySelector("[name=email_marketing_allowed]").checked;
+        body.sms_marketing_allowed = form.querySelector("[name=sms_marketing_allowed]").checked;
         const response = await fetch("/.netlify/functions/portal-sprinkler-blowouts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Could not save the request.");

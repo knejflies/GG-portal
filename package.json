@@ -30,7 +30,8 @@
     "test:project-estimator-integration": "node tests/project-estimator-integration.test.cjs",
     "test:persistent-sessions": "node tests/persistent-sessions.test.cjs",
     "test:admin-calendar": "node tests/admin-calendar.test.cjs",
-    "test:property-billing": "node tests/property-billing.test.cjs"
+    "test:property-billing": "node tests/property-billing.test.cjs",
+    "test:sprinkler-operations": "node tests/sprinkler-operations.test.cjs"
   },
   "dependencies": {
     "web-push": "^3.6.7"

@@ -94,6 +94,8 @@ exports.handler = async (event) => {
     const notes = clean(body.notes, 2000);
     const referredByCode = clean(body.referred_by_code, 40).toUpperCase();
     const waiverAgreed = body.waiver_agreed === true;
+    const emailMarketingAllowed = body.email_marketing_allowed === true;
+    const smsMarketingAllowed = body.sms_marketing_allowed === true;
     let referrerLeadId = null;
     if (!fullName || !email || !serviceAddress) return json(400, { error: "Name, email, and service address are required." });
     if (!/^\S+@\S+\.\S+$/.test(email)) return json(400, { error: "Enter a valid email address." });
@@ -113,7 +115,7 @@ exports.handler = async (event) => {
     }
     const rows = await supabase("green_grin_sprinkler_blowout_leads", {
       method: "POST",
-      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, share_code: shareCode, referred_by_code: referredByCode || null, referrer_lead_id: referrerLeadId, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString() })
+      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, share_code: shareCode, referred_by_code: referredByCode || null, referrer_lead_id: referrerLeadId, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString(), email_marketing_allowed: emailMarketingAllowed, sms_marketing_allowed: smsMarketingAllowed, followup_status: emailMarketingAllowed || smsMarketingAllowed ? "Queued" : "Opted out" })
     });
     const base = requestBaseUrl(event);
     return json(200, {

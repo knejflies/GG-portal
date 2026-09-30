@@ -3526,6 +3526,12 @@
     .quick-project-field[hidden], .quick-labor-fields[hidden] { display: none !important; }
     .quick-project-toggle { display: flex; align-items: center; gap: 9px; min-height: 46px; }
     .quick-project-toggle input { width: 20px; min-height: 20px; }
+    .settings-switch { display:inline-flex; align-items:center; gap:9px; cursor:pointer; font-weight:800; }
+    .settings-switch input { position:absolute; opacity:0; pointer-events:none; }
+    .settings-switch .switch-track { width:48px; height:26px; border-radius:99px; background:#405448; border:1px solid rgba(215,238,207,.35); padding:3px; transition:.2s; }
+    .settings-switch .switch-track::after { content:""; display:block; width:18px; height:18px; border-radius:50%; background:#d7eed0; transition:.2s; }
+    .settings-switch input:checked + .switch-track { background:#78c653; }
+    .settings-switch input:checked + .switch-track::after { transform:translateX(22px); background:#07351d; }
     .quick-project-result { margin-top: 14px; }
     .quick-project-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
     .quick-project-summary > div { padding: 11px; border: 1px solid rgba(210, 232, 204, .14); border-radius: 7px; background: rgba(1, 10, 6, .48); }
@@ -4958,7 +4964,9 @@
     <section id="sprinkler-blowouts" class="panel owner-only">
       <div class="card">
         <div class="job-head"><div><span class="admin-eyebrow">Quoting tools</span><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form. Review each referral, approve successful ones, and close it when paid.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
-        <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a></div>
+        <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a><input id="blowout-search" type="search" placeholder="Search name, address, phone, or email" /><select id="blowout-status-filter"><option>All</option><option>New</option><option>Scheduled</option><option>Completed</option><option>Invoiced</option><option>Paid</option><option>Needs Correction</option></select></div>
+        <details class="customer-file-block" style="margin:14px 0"><summary><strong>Seasonal visibility settings</strong></summary><div class="admin-actions" style="margin-top:12px"><label class="settings-switch"><input id="blowout-visibility-enabled" type="checkbox" checked /><span class="switch-track" aria-hidden="true"></span><span>Show blowout form</span></label><label>Visible from <input id="blowout-visible-from" type="date" /></label><label>Visible until <input id="blowout-visible-until" type="date" /></label><button id="save-blowout-visibility" class="button small" type="button">Save Settings</button></div><div id="blowout-visibility-result" aria-live="polite"></div></details>
+        <div id="blowout-map" style="height:360px;margin:14px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(142,210,62,.35)" aria-label="Sprinkler blowout property map"></div>
         <div id="blowout-leads-list" class="marketing-route-list"></div>
       </div>
     </section>
@@ -5998,6 +6006,9 @@
     let marketingAdminMarkerLayer = null;
     let marketingAdminAddingHouse = false;
     let marketingLastHouseClickAt = 0;
+    let blowoutLeads = [];
+    let blowoutMap = null;
+    let blowoutMarkerLayer = null;
     let leafletPromise = null;
     let deferredInstallPrompt = null;
     let adminSessionPin = "";
@@ -11330,10 +11341,41 @@
       }
     }
 
-    function renderBlowoutLeads(leads = []) {
+    function filteredBlowoutLeads() {
+      const query = String($("#blowout-search")?.value || "").trim().toLowerCase();
+      const status = $("#blowout-status-filter")?.value || "All";
+      return blowoutLeads.filter((lead) => {
+        const matchesStatus = status === "All" || lead.status === status || (status === "Needs Correction" && lead.geocode_status === "Needs Correction");
+        const haystack = [lead.full_name, lead.email, lead.phone, lead.service_address, lead.status].map((value) => String(value || "").toLowerCase()).join(" ");
+        return matchesStatus && (!query || haystack.includes(query));
+      });
+    }
+    function renderBlowoutMap(leads = []) {
+      const container = $("#blowout-map");
+      if (!container || !window.L) return;
+      if (!blowoutMap) {
+        blowoutMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 12);
+        addMarketingBasemapControl(blowoutMap, "street");
+        blowoutMarkerLayer = window.L.layerGroup().addTo(blowoutMap);
+      }
+      blowoutMarkerLayer.clearLayers();
+      const bounds = [];
+      leads.forEach((lead) => {
+        const lat = Number(lead.latitude); const lng = Number(lead.longitude);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || lead.geocode_status !== "Located") return;
+        bounds.push([lat, lng]);
+        const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}`;
+        window.L.marker([lat, lng]).bindPopup(`<strong>${cleanText(lead.full_name)}</strong><br>${cleanText(lead.service_address)}<br>${cleanText(lead.status || "New")}<br><a href="${directions}" target="_blank" rel="noopener">Driving directions</a>`).addTo(blowoutMarkerLayer);
+      });
+      if (bounds.length) blowoutMap.fitBounds(bounds, { padding: [28, 28], maxZoom: 16 });
+      window.setTimeout(() => blowoutMap.invalidateSize(), 60);
+    }
+    function renderBlowoutLeads(leads = blowoutLeads) {
       const target = $("#blowout-leads-list");
       if (!target) return;
-      if (!leads.length) { target.innerHTML = notice("No sprinkler blowout leads yet."); return; }
+      const visibleLeads = Array.isArray(leads) ? leads : [];
+      renderBlowoutMap(visibleLeads);
+      if (!visibleLeads.length) { target.innerHTML = notice("No sprinkler blowout leads match this filter."); return; }
       const byCode = new Map(leads.filter((lead) => lead.share_code).map((lead) => [String(lead.share_code).toUpperCase(), lead]));
       const children = new Map();
       leads.forEach((lead) => {
@@ -11346,7 +11388,7 @@
         const credit = (Number(lead.referral_count) || 0) * 0.5 * (Number(lead.zones) || 0);
         const status = lead.status || "New";
         const nested = children.get(lead.id) || children.get(String(lead.share_code || "").toUpperCase()) || [];
-        return `<div class="marketing-lead" data-blowout-id="${cleanText(lead.id)}"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}</strong><span class="badge">${cleanText(status)}${lead.referral_active === false ? " · Closed" : ""}</span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p><p class="muted">${lead.waiver_agreed ? `Waiver accepted${lead.waiver_agreed_at ? ` ${cleanText(new Date(lead.waiver_agreed_at).toLocaleDateString())}` : ""}` : "Waiver not accepted"}</p><p><strong>Referral credit:</strong> ${cleanText(`${lead.referral_count || 0} successful referrals × $0.50 × ${lead.zones || 0} zones = $${credit.toFixed(2)}`)}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}<div class="admin-actions"><button class="button small secondary" data-blowout-status="Successful" type="button">Mark Successful</button><button class="button small secondary" data-blowout-status="Paid" type="button">Mark Paid</button><button class="button small ghost" data-blowout-status="Not Successful" type="button">Close Referral</button></div>${nested.length ? `<div style="margin:14px 0 0 18px;padding-left:14px;border-left:3px solid var(--lime)"><strong>Direct referrals (${nested.length})</strong>${nested.map(renderCard).join("")}</div>` : ""}</div>`;
+        return `<div class="marketing-lead" data-blowout-id="${cleanText(lead.id)}"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}</strong><span class="badge">${cleanText(status)}${lead.referral_active === false ? " · Closed" : ""}</span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">${lead.geocode_status === "Needs Correction" ? "Address needs correction before mapping" : lead.geocode_status === "Located" ? "Address located" : "Address not located yet"}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p><p class="muted">${lead.waiver_agreed ? `Waiver accepted${lead.waiver_agreed_at ? ` ${cleanText(new Date(lead.waiver_agreed_at).toLocaleDateString())}` : ""}` : "Waiver not accepted"}</p><p><strong>Referral credit:</strong> ${cleanText(`${lead.referral_count || 0} successful referrals × $0.50 × ${lead.zones || 0} zones = $${credit.toFixed(2)}`)}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}<div class="admin-actions"><button class="button small secondary" data-blowout-action="sync" type="button">Create / Link Customer</button><button class="button small secondary" data-blowout-action="schedule" type="button">Schedule</button><button class="button small secondary" data-blowout-action="complete" type="button">Mark Complete</button><button class="button small secondary" data-blowout-action="invoice" type="button">Create Draft Invoice</button><a class="button small ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}" target="_blank" rel="noopener">Directions</a><button class="button small ghost" data-blowout-action="archive" type="button">Archive</button></div>${nested.length ? `<div style="margin:14px 0 0 18px;padding-left:14px;border-left:3px solid var(--lime)"><strong>Direct referrals (${nested.length})</strong>${nested.map(renderCard).join("")}</div>` : ""}</div>`;
       };
       const roots = leads.filter((lead) => !lead.referrer_lead_id && (!lead.referred_by_code || !byCode.has(String(lead.referred_by_code).toUpperCase())));
       target.innerHTML = roots.map(renderCard).join("");
@@ -11358,9 +11400,22 @@
       if (!target) return;
       target.innerHTML = notice("Loading sprinkler leads...");
       try {
-        const data = await requestJson("portal-sprinkler-blowouts", { headers: adminHeaders() });
-        renderBlowoutLeads(data.leads || []);
+        const data = await requestJson("portal-sprinkler-operations", { headers: adminHeaders() });
+        blowoutLeads = data.leads || [];
+        renderBlowoutLeads(filteredBlowoutLeads());
+        await ensureLeaflet();
+        renderBlowoutMap(filteredBlowoutLeads());
       } catch (error) { target.innerHTML = notice(error.message, true); }
+    }
+    async function loadBlowoutVisibilitySettings() {
+      const result = $("#blowout-visibility-result");
+      try {
+        const data = await requestJson("portal-sprinkler-operations?settings=1", { headers: adminHeaders() });
+        const setting = data.setting || {};
+        $("#blowout-visibility-enabled").checked = setting.enabled !== false;
+        $("#blowout-visible-from").value = setting.visible_from || "";
+        $("#blowout-visible-until").value = setting.visible_until || "";
+      } catch (error) { if (result) result.innerHTML = notice(error.message, true); }
     }
 
     $("#request-form").addEventListener("submit", async (event) => {
@@ -12880,16 +12935,43 @@
     $("#marketing-route-cancel").addEventListener("click", clearMarketingRouteForm);
     $("#load-marketing-admin").addEventListener("click", loadMarketingAdmin);
     $("#load-blowout-leads").addEventListener("click", loadBlowoutLeads);
+    $("#save-blowout-visibility").addEventListener("click", async () => {
+      const result = $("#blowout-visibility-result");
+      try {
+        const data = await requestJson("portal-sprinkler-operations", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ action: "settings", enabled: $("#blowout-visibility-enabled").checked, visible_from: $("#blowout-visible-from").value || null, visible_until: $("#blowout-visible-until").value || null }) });
+        result.innerHTML = notice(data.setting?.enabled === false ? "Blowout form hidden." : "Blowout visibility settings saved.");
+      } catch (error) { result.innerHTML = notice(error.message, true); }
+    });
+    loadBlowoutVisibilitySettings();
+    $("#blowout-search").addEventListener("input", () => renderBlowoutLeads(filteredBlowoutLeads()));
+    $("#blowout-status-filter").addEventListener("change", () => renderBlowoutLeads(filteredBlowoutLeads()));
     $("#blowout-leads-list").addEventListener("click", async (event) => {
-      const button = event.target.closest("button[data-blowout-status]");
+      const button = event.target.closest("button[data-blowout-action]");
       const card = event.target.closest("[data-blowout-id]");
       if (!button || !card) return;
       button.disabled = true;
       try {
-        await requestJson("portal-sprinkler-blowouts", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ id: card.dataset.blowoutId, status: button.dataset.blowoutStatus }) });
+        const lead = blowoutLeads.find((item) => String(item.id) === String(card.dataset.blowoutId)) || {};
+        const action = button.dataset.blowoutAction;
+        if (action === "archive") {
+          await requestJson("portal-sprinkler-blowouts", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ id: card.dataset.blowoutId, status: "Not Successful" }) });
+        } else if (action === "schedule") {
+          const date = window.prompt("Service date (YYYY-MM-DD)", lead.scheduled_date || new Date().toISOString().slice(0, 10));
+          if (!date) { button.disabled = false; return; }
+          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "schedule", lead_id: card.dataset.blowoutId, scheduled_date: date }) });
+        } else if (action === "complete") {
+          const date = window.prompt("Completion date (YYYY-MM-DD)", lead.scheduled_date || new Date().toISOString().slice(0, 10));
+          if (!date) { button.disabled = false; return; }
+          const amount = window.prompt("Base blowout price", "0");
+          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "complete", lead_id: card.dataset.blowoutId, service_date: date, base_amount: amount || 0 }) });
+        } else if (action === "invoice") {
+          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "invoice", lead_id: card.dataset.blowoutId }) });
+        } else {
+          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action, lead_id: card.dataset.blowoutId }) });
+        }
         await loadBlowoutLeads();
       } catch (error) {
-        $("#marketing-admin-result").innerHTML = notice(error.message, true);
+        $("#blowout-leads-list").insertAdjacentHTML("afterbegin", notice(error.message, true));
         button.disabled = false;
       }
     });
