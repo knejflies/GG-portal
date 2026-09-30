@@ -4297,6 +4297,7 @@
       <button class="tab owner-only" data-tab="expenses" type="button">Expenses</button>
       <span class="tab-section-label owner-only">Records</span>
       <button class="tab owner-only" data-tab="activity" type="button">Activity</button>
+      <button class="tab owner-only" data-tab="settings" type="button">Settings</button>
       <button class="tab employee-only" data-tab="employee-work" type="button">My Jobs</button>
       <button id="marketing-tab" class="tab employee-only" data-tab="marketing" type="button" hidden>Marketing Route</button>
     </div>
@@ -4965,7 +4966,6 @@
       <div class="card">
         <div class="job-head"><div><span class="admin-eyebrow">Quoting tools</span><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form. Review each referral, approve successful ones, and close it when paid.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
         <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a><input id="blowout-search" type="search" placeholder="Search name, address, phone, or email" /><select id="blowout-status-filter"><option>All</option><option>New</option><option>Scheduled</option><option>Completed</option><option>Invoiced</option><option>Paid</option><option>Needs Correction</option></select></div>
-        <details class="customer-file-block" style="margin:14px 0"><summary><strong>Seasonal visibility settings</strong></summary><div class="admin-actions" style="margin-top:12px"><label class="settings-switch"><input id="blowout-visibility-enabled" type="checkbox" checked /><span class="switch-track" aria-hidden="true"></span><span>Show blowout form</span></label><label>Visible from <input id="blowout-visible-from" type="date" /></label><label>Visible until <input id="blowout-visible-until" type="date" /></label><button id="save-blowout-visibility" class="button small" type="button">Save Settings</button></div><div id="blowout-visibility-result" aria-live="polite"></div></details>
         <div id="blowout-map" style="height:360px;margin:14px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(142,210,62,.35)" aria-label="Sprinkler blowout property map"></div>
         <div id="blowout-leads-list" class="marketing-route-list"></div>
       </div>
@@ -5644,6 +5644,16 @@
           </div>
           <div id="activity-result" class="status-box" aria-live="polite"></div>
         </div>
+      </div>
+    </section>
+
+    <section id="settings" class="panel owner-only">
+      <div class="card">
+        <h2>Settings</h2>
+        <p class="muted">Control whether the public sprinkler blowout sign-up is visible.</p>
+        <label class="settings-switch"><input id="blowout-visibility-enabled" type="checkbox" checked /><span class="switch-track" aria-hidden="true"></span><span>Show sprinkler blowouts</span></label>
+        <button id="save-blowout-visibility" class="button small" type="button" style="margin-top:14px">Save</button>
+        <div id="blowout-visibility-result" aria-live="polite"></div>
       </div>
     </section>
 
@@ -11412,8 +11422,8 @@
         const data = await requestJson("portal-sprinkler-operations?settings=1", { headers: adminHeaders() });
         const setting = data.setting || {};
         $("#blowout-visibility-enabled").checked = setting.enabled !== false;
-        $("#blowout-visible-from").value = setting.visible_from || "";
-        $("#blowout-visible-until").value = setting.visible_until || "";
+        if ($("#blowout-visible-from")) $("#blowout-visible-from").value = setting.visible_from || "";
+        if ($("#blowout-visible-until")) $("#blowout-visible-until").value = setting.visible_until || "";
       } catch (error) { if (result) result.innerHTML = notice(error.message, true); }
     }
 
@@ -12937,7 +12947,7 @@
     $("#save-blowout-visibility").addEventListener("click", async () => {
       const result = $("#blowout-visibility-result");
       try {
-        const data = await requestJson("portal-sprinkler-operations", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ action: "settings", enabled: $("#blowout-visibility-enabled").checked, visible_from: $("#blowout-visible-from").value || null, visible_until: $("#blowout-visible-until").value || null }) });
+        const data = await requestJson("portal-sprinkler-operations", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ action: "settings", enabled: $("#blowout-visibility-enabled").checked, visible_from: $("#blowout-visible-from")?.value || null, visible_until: $("#blowout-visible-until")?.value || null }) });
         result.innerHTML = notice(data.setting?.enabled === false ? "Blowout form hidden." : "Blowout visibility settings saved.");
       } catch (error) { result.innerHTML = notice(error.message, true); }
     });
