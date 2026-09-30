@@ -4285,8 +4285,8 @@
       <button class="tab customer-only" data-tab="billing" type="button">Billing</button>
       <button class="tab customer-only" data-tab="property" type="button">Property</button>
       <span class="tab-section-label owner-only">Customers &amp; work</span>
-      <button class="tab owner-only" data-tab="customers" type="button">Customers</button>
-      <button class="tab owner-only" data-tab="owner" type="button">Jobs</button>
+      <button class="tab owner-only" data-tab="customers" type="button">Properties &amp; Customers</button>
+      <button class="tab owner-only" data-tab="owner" type="button">Schedule &amp; Jobs</button>
       <button class="tab owner-only" data-tab="calendar" type="button">Calendar</button>
       <span class="tab-section-label owner-only">Quoting tools</span>
       <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
@@ -4296,7 +4296,7 @@
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
       <span class="tab-section-label owner-only">Money</span>
-      <button class="tab owner-only" data-tab="invoices" type="button">Invoices</button>
+      <button class="tab owner-only" data-tab="invoices" type="button">Billing</button>
       <button class="tab owner-only" data-tab="expenses" type="button">Expenses</button>
       <span class="tab-section-label owner-only">Records</span>
       <button class="tab owner-only" data-tab="activity" type="button">Activity</button>
@@ -4474,7 +4474,7 @@
     <section id="billing" class="panel">
       <div class="card">
         <h2>Billing and monthly service</h2>
-        <p id="billing-summary">Your monthly service and payment details will appear here.</p>
+        <p id="billing-summary">Your monthly bill is based on completed services and approved extras. The total can vary from month to month.</p>
 
         <div id="customer-billing-plans" class="plans"></div>
 
@@ -10097,7 +10097,7 @@
               <button class="button small secondary" data-customer-list-action="chat" type="button">Open Chat</button>
               <button class="button small" data-customer-list-action="fill-job" type="button">Create Booking</button>
               <button class="button small" data-customer-list-action="invoice" type="button">Create Invoice</button>
-              <button class="button small" data-customer-list-action="monthly-invoice" type="button">Send Monthly Invoice</button>
+              <button class="button small" data-customer-list-action="monthly-invoice" type="button">Send Monthly Bill</button>
               <button class="button small secondary" data-customer-list-action="test-notification" type="button">Test Notification</button>
               <button class="button small ghost" data-customer-list-action="delete" type="button">Delete Customer</button>
             </div>
@@ -12304,7 +12304,7 @@
           $("#customer-detail-result").innerHTML = notice(error.message, true);
         } finally {
           button.disabled = false;
-          button.textContent = "Send Monthly Invoice";
+          button.textContent = "Send Monthly Bill";
         }
         return;
       }
