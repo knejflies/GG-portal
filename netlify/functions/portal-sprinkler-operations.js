@@ -180,4 +180,5 @@ exports.handler = async (event) => {
   } catch (error) { return json(500, { error: error.message || "Sprinkler operation failed." }); }
 };
 
+exports.ensureCustomerProperty = ensureCustomerProperty;
 exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey };

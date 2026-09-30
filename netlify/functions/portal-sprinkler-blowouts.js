@@ -3,6 +3,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const REFERRAL_CREDIT_CENTS_PER_ZONE = 50;
 const PUBLIC_URL = process.env.GREEN_GRIN_PUBLIC_URL || "https://portal.greengrinlawns.com";
+const { ensureCustomerProperty } = require("./portal-sprinkler-operations");
 
 const headers = {
   "Content-Type": "application/json",
@@ -117,9 +118,12 @@ exports.handler = async (event) => {
       method: "POST",
       body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, share_code: shareCode, referred_by_code: referredByCode || null, referrer_lead_id: referrerLeadId, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString(), email_marketing_allowed: emailMarketingAllowed, sms_marketing_allowed: smsMarketingAllowed, followup_status: emailMarketingAllowed || smsMarketingAllowed ? "Queued" : "Opted out" })
     });
+    const linked = await ensureCustomerProperty(rows?.[0] || { id: null, full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots }).catch(() => null);
     const base = requestBaseUrl(event);
     return json(200, {
       lead: rows?.[0] || null,
+      customer_user_id: linked?.customer_user_id || null,
+      property_id: linked?.property_id || null,
       share_code: shareCode,
       referral_url: `${base}/sprinkler-blowout.html?ref=${encodeURIComponent(shareCode)}`,
       referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE,
