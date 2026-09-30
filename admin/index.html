@@ -3407,6 +3407,9 @@
       gap: 8px;
       margin-top: 16px;
     }
+    .estimate-flow-hint { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 16px; padding:10px 12px; border:1px solid rgba(142,210,62,.22); border-radius:10px; background:rgba(142,210,62,.06); color:var(--muted); font-size:.82rem; font-weight:800; }
+    .estimate-flow-hint span { display:inline-flex; align-items:center; gap:6px; }
+    .estimate-flow-hint strong { display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; background:var(--role-accent); color:#082313; font-size:.72rem; }
 
     .estimate-internal-notes {
       margin-top: 12px;
@@ -5309,8 +5312,12 @@
 
       <div class="estimator-workspace-nav" role="tablist" aria-label="Landscape estimating workspace">
         <button class="estimator-workspace-button active" data-estimator-view="builder" type="button" role="tab" aria-selected="true">Build Estimate</button>
-        <button class="estimator-workspace-button" data-estimator-view="catalog" type="button" role="tab" aria-selected="false">Cost Library</button>
         <button class="estimator-workspace-button" data-estimator-view="saved" type="button" role="tab" aria-selected="false">Saved Estimates</button>
+        <button class="estimator-workspace-button" data-estimator-view="catalog" type="button" role="tab" aria-selected="false">Cost Library</button>
+      </div>
+
+      <div class="estimate-flow-hint" aria-label="Estimate workflow">
+        <span><strong>1</strong> Choose customer</span><span><strong>2</strong> Add services and prices</span><span><strong>3</strong> Preview, save, or send</span>
       </div>
 
       <div class="card mowing-contract-launcher">
@@ -5328,7 +5335,7 @@
             <input id="estimate-id" type="hidden" />
             <input id="estimate-number" type="hidden" />
 
-            <div class="auto-bid-shell">
+            <div class="auto-bid-shell" hidden>
               <div class="estimator-section-heading"><div><span>A</span><div><strong>Auto Bid</strong><small>Describe the job normally. Green Grin will build the measurements, labor plan, assumptions, and warnings.</small></div></div><span class="badge">One input</span></div>
               <label for="auto-bid-description">Job description</label>
               <textarea id="auto-bid-description" rows="4" placeholder="6150 sqft rock, 67 yards, weed mat and staples, push through swale with mini ex and tractor, me and one other"></textarea>
@@ -5363,10 +5370,10 @@
             <div><label for="estimate-project-scope">Customer-facing scope of work</label><textarea id="estimate-project-scope" rows="6" required placeholder="Describe preparation, materials, installation, cleanup, exclusions, and what completion includes."></textarea></div>
 
             <div class="estimator-section-heading">
-              <div><span>2</span><div><strong>Build the price</strong><small>Enter the measurements once and let Green Grin calculate the job.</small></div></div>
+              <div><span>2</span><div><strong>Add services and prices</strong><small>Add each customer-facing service, material, or charge. Your private costs stay internal.</small></div></div>
               <button class="button small ghost" data-estimator-go="catalog" type="button">Manage Cost Library</button>
             </div>
-            <div class="quick-project-estimator">
+            <div class="quick-project-estimator" hidden>
               <h3>Quick Project Calculator</h3>
               <p>Choose the work, enter the field measurements, and get the complete material order and selling price.</p>
               <div class="quick-project-grid">
@@ -5442,7 +5449,7 @@
               <div><label for="estimate-tax-rate">Tax rate %</label><input id="estimate-tax-rate" type="number" min="0" max="100" step="0.01" value="0" /></div>
               <div><label for="estimate-invoice-due">Payment due date</label><input id="estimate-invoice-due" type="date" /></div>
             </div>
-            <div id="payment-schedule-editor" class="payment-schedule-editor">
+            <div id="payment-schedule-editor" class="payment-schedule-editor" hidden>
               <label for="estimate-initial-payment-percent">Initial payment percentage</label>
               <input id="estimate-initial-payment-percent" type="number" min="0" max="100" step="1" value="50" inputmode="decimal" />
               <small class="muted">Set the amount due when the customer signs. The remaining percentage is due at completion. This is saved per estimate.</small>
@@ -5468,7 +5475,7 @@
               <small class="muted">This loads the matching starting wording. You can edit every section below for this job.</small>
               <div class="contract-quick-actions"><button id="estimate-start-mowing" class="button small secondary" type="button">Start Mowing Contract</button></div>
             </div>
-            <details class="estimate-contract-editor" open>
+            <details class="estimate-contract-editor">
               <summary>Edit contract wording for this job</summary>
               <p class="contract-editor-intro">Type directly into these fields to change what this customer's contract says. Changes are saved with this estimate and appear in the preview, email, and signature copy.</p>
               <div id="contract-sections-editor"></div>
@@ -5671,8 +5678,8 @@
       <div id="email-test-result" class="owner-only" aria-live="polite"></div>
       <div class="grid">
         <div class="card owner-only">
-          <h2>Invoice center</h2>
-          <p>Create invoices, track amounts, and keep billing organized.</p>
+          <h2>Create invoice</h2>
+          <p>Choose a customer, add the work, then save a draft or send it.</p>
           <form id="invoice-form">
             <input id="invoice_id" type="hidden" />
             <div class="two">
@@ -5754,7 +5761,7 @@
         </div>
 
         <div class="card owner-only">
-          <h2>Invoice list</h2>
+          <h2>Recent invoices</h2>
           <div id="invoice-list" class="status-box">
             <div class="invoice">
               <div class="invoice-head"><strong>No invoices yet</strong><span class="badge warn">Draft</span></div>
