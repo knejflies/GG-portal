@@ -3,6 +3,8 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const REFERRAL_CREDIT_CENTS_PER_ZONE = 50;
 const PUBLIC_URL = process.env.GREEN_GRIN_PUBLIC_URL || "https://portal.greengrinlawns.com";
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const { ensureCustomerProperty } = require("./portal-sprinkler-operations");
 
 const headers = {
@@ -48,6 +50,35 @@ function requestBaseUrl(event) {
   return host ? `${forwarded}://${host}` : PUBLIC_URL;
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function blowoutConfirmationPayload(lead) {
+  const name = lead.full_name || "Customer";
+  const code = lead.share_code || "";
+  return {
+    from: EMAIL_FROM,
+    to: [lead.email],
+    subject: "Green Grin sprinkler blowout request received",
+    text: ["Hi " + name + ",", "", "Your Green Grin sprinkler blowout request was received.", "Service address: " + (lead.service_address || "To be confirmed"), "Zones: " + (lead.zones || 0), "Spigots: " + (lead.spigots || 0), code ? "Your referral code: " + code : "", "", "We will follow up with scheduling and payment details.", "Green Grin Lawns"].join("\n"),
+    html: "<p>Hi " + escapeHtml(name) + ",</p><h1>Request received</h1><p>Your Green Grin sprinkler blowout request was received.</p><p><strong>Service address:</strong> " + escapeHtml(lead.service_address || "To be confirmed") + "<br><strong>Zones:</strong> " + escapeHtml(lead.zones || 0) + "<br><strong>Spigots:</strong> " + escapeHtml(lead.spigots || 0) + (code ? "<br><strong>Your referral code:</strong> " + escapeHtml(code) : "") + "</p><p>We will follow up with scheduling and payment details.</p><p>Green Grin Lawns</p>"
+  };
+}
+
+async function sendBlowoutConfirmation(lead) {
+  if (!lead?.email) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Sign-up has no email address." };
+  if (!RESEND_API_KEY) return { enabled: false, sent: false, skipped: true, reason: "Email is not configured in Netlify." };
+  try {
+    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify(blowoutConfirmationPayload(lead)) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { enabled: true, sent: false, error: data.message || "Email provider rejected the confirmation." };
+    return { enabled: true, sent: true, id: data.id || null };
+  } catch (error) {
+    return { enabled: true, sent: false, error: error.message || "Confirmation could not be sent." };
+  }
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return json(500, { error: "Supabase is not configured yet." });
@@ -86,6 +117,16 @@ exports.handler = async (event) => {
     }
     if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed." });
     const body = JSON.parse(event.body || "{}");
+    if (body.action === "send-confirmations" || body.action === "send-confirmation") {
+      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
+      const leads = body.action === "send-confirmation"
+        ? await supabase("green_grin_sprinkler_blowout_leads?select=*&id=eq." + encodeURIComponent(clean(body.id, 80)) + "&limit=1")
+        : await supabase("green_grin_sprinkler_blowout_leads?select=*&order=created_at.asc&limit=1000");
+      if (body.action === "send-confirmation" && !leads?.[0]) return json(404, { error: "Sprinkler blowout sign-up was not found." });
+      const results = [];
+      for (const lead of leads || []) results.push({ id: lead.id, full_name: lead.full_name, email: lead.email || "", confirmation: await sendBlowoutConfirmation(lead) });
+      return json(200, { total: results.length, sent: results.filter((row) => row.confirmation.sent).length, skipped: results.filter((row) => row.confirmation.skipped).length, failed: results.filter((row) => row.confirmation.error).length, results, confirmation: results[0]?.confirmation || null });
+    }
     const fullName = clean(body.full_name, 160);
     const email = clean(body.email, 180).toLowerCase();
     const phone = clean(body.phone, 40);
