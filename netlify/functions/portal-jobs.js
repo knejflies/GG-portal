@@ -60,8 +60,8 @@ function bookingConfirmationPayload(job) {
   const frequency = job?.schedule_frequency || (job?.recurring_weekly ? "Weekly" : "One-time");
   const date = job?.scheduled_date || job?.preferred_date || "";
   const dateText = date || "Green Grin will confirm the service date with you.";
-  const referral = job?.referral?.share_code ? "Your referral code: " + job.referral.share_code + "\nShare your referral link: " + job.referral.referral_url : "";
-  const referralHtml = job?.referral?.share_code ? "<p><strong>Your referral code:</strong> " + escapeHtml(job.referral.share_code) + "<br><a href=\"" + escapeHtml(job.referral.referral_url) + "\">Share your referral link</a></p>" : "";
+  const referral = job?.referral?.share_code ? "Your referral code: " + job.referral.share_code : "";
+  const referralHtml = job?.referral?.share_code ? "<p><strong>Your referral code:</strong> " + escapeHtml(job.referral.share_code) + "</p>" : "";
   return {
     from: JOB_EMAIL_FROM,
     to: [job.email],
