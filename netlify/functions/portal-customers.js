@@ -107,19 +107,23 @@ exports.handler = async (event) => {
       const devices = await supabase("green_grin_push_subscriptions?select=owner_email,customer_user_id,customer_code,updated_at&active=eq.true&owner_type=eq.customer&limit=1000").catch(() => []);
       const propertyByUser = new Map();
       for (const property of properties || []) {
-        if (!propertyByUser.has(property.customer_user_id)) propertyByUser.set(property.customer_user_id, property);
+        if (!propertyByUser.has(property.customer_user_id)) propertyByUser.set(property.customer_user_id, []);
+        propertyByUser.get(property.customer_user_id).push(property);
       }
       const byKey = new Map();
 
       for (const customer of customers || []) {
         const key = customer.customer_code || customer.id || customer.email || customer.phone;
-        const property = propertyByUser.get(customer.id) || {};
+        const customerProperties = propertyByUser.get(customer.id) || [];
+        const property = customerProperties[0] || {};
         const customerJobs = (jobs || []).filter((job) =>
           (customer.id && job.customer_user_id === customer.id) ||
           (customer.customer_code && job.customer_code === customer.customer_code) ||
           (customer.email && job.email === customer.email) ||
           (customer.phone && job.phone === customer.phone)
         );
+        const blowoutOnly = !customerJobs.length && customerProperties.length > 0 && customerProperties.every((row) => String(row.property_name || "").trim().toLowerCase() === "sprinkler blowout property");
+        if (blowoutOnly) continue;
         const customerDevices = (devices || []).filter((device) =>
           (customer.id && device.customer_user_id === customer.id) ||
           (customer.customer_code && device.customer_code === customer.customer_code) ||
@@ -173,6 +177,10 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "PATCH") {
       if (!customerUserId) return json(400, { error: "Only account customers can be updated." });
+      if (body.archive === true) {
+        const rows = await supabase(`green_grin_customers?id=eq.${encodeURIComponent(customerUserId)}`, { method: "PATCH", body: JSON.stringify({ active: false, billing_status: "Archived" }) });
+        return json(200, { customer: rows?.[0] || null });
+      }
       const editableFields = {};
       if (Object.prototype.hasOwnProperty.call(body, "billing_plan")) editableFields.billing_plan = String(body.billing_plan || "").trim().slice(0, 160) || null;
       if (Object.prototype.hasOwnProperty.call(body, "monthly_price")) editableFields.monthly_price = body.monthly_price === "" || body.monthly_price === null ? null : Math.max(0, Number(body.monthly_price) || 0);

@@ -10102,6 +10102,7 @@
               <button class="button small" data-customer-list-action="invoice" type="button">Create Invoice</button>
               <button class="button small" data-customer-list-action="monthly-invoice" type="button">Send Monthly Bill</button>
               <button class="button small secondary" data-customer-list-action="test-notification" type="button">Test Notification</button>
+              <button class="button small ghost" data-customer-list-action="archive" type="button">Archive Customer</button>
               <button class="button small ghost" data-customer-list-action="delete" type="button">Delete Customer</button>
             </div>
           </div>
@@ -10637,7 +10638,7 @@
               <button class="button small secondary" data-action="completed" type="button">Notify: Done</button>
               <button class="button small ghost" data-action="send-confirmation" type="button">Send Confirmation</button>
               <button class="button small ghost" data-action="delete-job" type="button">Delete Job</button>
-              <button class="button small ghost" data-customer-action="deactivate" type="button">Deactivate Customer</button>
+              <button class="button small ghost" data-customer-action="deactivate" type="button">Archive Customer</button>
               <button class="button small ghost" data-customer-action="delete" type="button">Delete Customer</button>
             </div>
           ` : ""}
@@ -12224,6 +12225,17 @@
         button.textContent = willOpen ? "v" : ">";
         button.setAttribute("aria-expanded", String(willOpen));
         button.setAttribute("aria-label", willOpen ? "Collapse customer" : "Expand customer");
+        return;
+      }
+
+      if (action === "archive") {
+        if (!confirm("Archive this customer from the active customer list? Their history will be kept.")) return;
+        try {
+          await requestJson("portal-customers", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ customer_user_id: customer.customer_user_id || customer.id, archive: true }) });
+          await loadCustomers();
+          await loadAdminJobs();
+          $("#customer-detail-result").innerHTML = notice("Customer archived. Their history is still preserved.");
+        } catch (error) { $("#customer-detail-result").innerHTML = notice(error.message, true); }
         return;
       }
 
