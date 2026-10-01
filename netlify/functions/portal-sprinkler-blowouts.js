@@ -73,7 +73,9 @@ async function sendBlowoutConfirmation(lead) {
     const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify(blowoutConfirmationPayload(lead)) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) return { enabled: true, sent: false, error: data.message || "Email provider rejected the confirmation." };
-    return { enabled: true, sent: true, id: data.id || null };
+    const sentAt = new Date().toISOString();
+    await supabase("green_grin_sprinkler_blowout_leads?id=eq." + encodeURIComponent(lead.id), { method: "PATCH", body: JSON.stringify({ confirmation_sent_at: sentAt }) }).catch(() => null);
+    return { enabled: true, sent: true, id: data.id || null, sent_at: sentAt };
   } catch (error) {
     return { enabled: true, sent: false, error: error.message || "Confirmation could not be sent." };
   }

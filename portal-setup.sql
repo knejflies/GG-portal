@@ -354,6 +354,7 @@ alter table public.green_grin_sprinkler_blowout_leads add column if not exists r
 alter table public.green_grin_sprinkler_blowout_leads add column if not exists waiver_agreed boolean not null default false;
 alter table public.green_grin_sprinkler_blowout_leads add column if not exists waiver_agreed_at timestamptz;
 alter table public.green_grin_sprinkler_blowout_leads add column if not exists referrer_lead_id uuid references public.green_grin_sprinkler_blowout_leads(id) on delete set null;
+alter table public.green_grin_sprinkler_blowout_leads add column if not exists confirmation_sent_at timestamptz;
 
 alter table public.green_grin_work_sessions add column if not exists estimate_id uuid;
 alter table public.green_grin_work_sessions add column if not exists work_type text not null default 'Project';
