@@ -4748,6 +4748,7 @@
         </div>
           <div class="card owner-only">
             <h2>Jobs</h2>
+            <div class="admin-bar"><button id="send-booking-confirmations" class="button secondary" type="button">Send confirmations to booked customers</button><span id="booking-confirmation-result" aria-live="polite"></span></div>
             <div class="two job-filters">
               <label for="job-category-filter">Show category</label>
               <select id="job-category-filter"><option value="All">All jobs</option><option value="Mowing">Mowing</option><option value="Cleanup">Cleanup / Aeration</option><option value="Landscaping">Landscaping</option><option value="Fertilization">Fertilization</option><option value="Other">Other</option></select>
@@ -10634,6 +10635,7 @@
               <button class="button small ghost" data-action="schedule" type="button">Save Schedule</button>
               <button class="button small secondary" data-action="arrived" type="button">Notify: Arrived</button>
               <button class="button small secondary" data-action="completed" type="button">Notify: Done</button>
+              <button class="button small ghost" data-action="send-confirmation" type="button">Send Confirmation</button>
               <button class="button small ghost" data-action="delete-job" type="button">Delete Job</button>
               <button class="button small ghost" data-customer-action="deactivate" type="button">Deactivate Customer</button>
               <button class="button small ghost" data-customer-action="delete" type="button">Delete Customer</button>
@@ -12099,6 +12101,20 @@
     });
 
     $("#load-admin").addEventListener("click", loadAdminJobs);
+    $("#send-booking-confirmations").addEventListener("click", async () => {
+      const button = $("#send-booking-confirmations");
+      const result = $("#booking-confirmation-result");
+      try {
+        button.disabled = true;
+        result.innerHTML = notice("Sending booking confirmations...");
+        const data = await requestJson("portal-jobs", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send-confirmations" }) });
+        result.innerHTML = notice(`${data.sent || 0} sent. ${data.skipped || 0} skipped without an email. ${data.failed || 0} failed.`);
+      } catch (error) {
+        result.innerHTML = notice(error.message, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
     $("#job-category-filter")?.addEventListener("change", renderAdminJobList);
     $("#job-frequency-filter")?.addEventListener("change", renderAdminJobList);
     $("#load-customers").addEventListener("click", loadCustomers);
@@ -12788,6 +12804,11 @@
             headers: adminHeaders(),
             body: JSON.stringify({ id, scheduled_date, schedule_start_date: scheduled_date, schedule_end_date, cleanup_reminder_time, annual_price, monthly_price, status, assigned_employee_id, assigned_employee_name })
           });
+        } else if (action === "send-confirmation") {
+          const data = await requestJson("portal-jobs", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send-confirmation", id }) });
+          actionFeedback = data.confirmation?.sent
+            ? "Booking confirmation email sent."
+            : (data.confirmation?.reason || data.confirmation?.error || "Booking confirmation was not sent.");
         } else {
           const selectedJob = adminJobRows.find((entry) => entry.id === id);
           const fertilizer = action === "completed" && /fertiliz|fertiliser|\bfert\b/i.test(String(selectedJob?.service_type || ""));

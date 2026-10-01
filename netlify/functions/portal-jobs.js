@@ -2,6 +2,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const JOB_EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const { sendPushToTarget } = require("./push-helper");
 
 const headers = {
@@ -44,6 +46,39 @@ async function supabase(path, options = {}) {
     throw new Error(data?.message || "Supabase request failed.");
   }
   return data;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function bookingConfirmationPayload(job) {
+  const customer = job?.customer_name || "Customer";
+  const service = job?.service_type || "Service";
+  const address = job?.address || "Address to be confirmed";
+  const frequency = job?.schedule_frequency || (job?.recurring_weekly ? "Weekly" : "One-time");
+  const date = job?.scheduled_date || job?.preferred_date || "";
+  const dateText = date || "Green Grin will confirm the service date with you.";
+  return {
+    from: JOB_EMAIL_FROM,
+    to: [job.email],
+    subject: "Green Grin booking confirmation - " + service,
+    text: ["Hi " + customer + ",", "", "Your Green Grin booking request has been received.", "Service: " + service, "Address: " + address, "Frequency: " + frequency, "Date: " + dateText, "", "If anything needs to be corrected, reply to this email.", "Green Grin Lawns"].join("\n"),
+    html: "<p>Hi " + escapeHtml(customer) + ",</p><h1>Booking received</h1><p>We received your service booking.</p><p><strong>Service:</strong> " + escapeHtml(service) + "<br><strong>Address:</strong> " + escapeHtml(address) + "<br><strong>Frequency:</strong> " + escapeHtml(frequency) + "<br><strong>Date:</strong> " + escapeHtml(dateText) + "</p><p>If anything needs to be corrected, reply to this email.</p><p>Green Grin Lawns</p>"
+  };
+}
+
+async function sendBookingConfirmation(job) {
+  if (!job?.email) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Booking has no email address." };
+  if (!RESEND_API_KEY) return { enabled: false, sent: false, skipped: true, reason: "Email is not configured in Netlify." };
+  try {
+    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify(bookingConfirmationPayload(job)) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { enabled: true, sent: false, error: data.message || "Email provider rejected the confirmation." };
+    return { enabled: true, sent: true, id: data.id || null };
+  } catch (error) {
+    return { enabled: true, sent: false, error: error.message || "Booking confirmation could not be sent." };
+  }
 }
 
 async function optionalUser(event) {
@@ -193,6 +228,19 @@ exports.handler = async (event) => {
       const adminCreate = Boolean(event.headers["x-admin-pin"]);
       const adminError = adminCreate ? requireAdmin(event) : null;
       if (adminError) return json(401, { error: adminError });
+      if (body.action === "send-confirmations") {
+        if (!adminCreate) return json(401, { error: "Admin access is required." });
+        const jobs = await supabase("green_grin_jobs?select=*&order=created_at.asc&limit=1000");
+        const results = [];
+        for (const job of jobs || []) results.push({ id: job.id, customer_name: job.customer_name, email: job.email || "", confirmation: await sendBookingConfirmation(job) });
+        return json(200, { total: results.length, sent: results.filter((row) => row.confirmation.sent).length, skipped: results.filter((row) => row.confirmation.skipped).length, failed: results.filter((row) => row.confirmation.error).length, results });
+      }
+      if (body.action === "send-confirmation") {
+        if (!adminCreate || !body.id) return json(400, { error: "Admin access and a job id are required." });
+        const jobs = await supabase("green_grin_jobs?select=*&id=eq." + encodeURIComponent(body.id) + "&limit=1");
+        if (!jobs?.[0]) return json(404, { error: "Booking was not found." });
+        return json(200, { job: jobs[0], confirmation: await sendBookingConfirmation(jobs[0]) });
+      }
       const user = adminCreate ? null : await optionalUser(event);
       const normalizedPhone = normalizePhone(body.phone);
       const customer = adminCreate ? await matchingCustomer(body) : null;
@@ -237,7 +285,8 @@ exports.handler = async (event) => {
         body: JSON.stringify(job)
       });
       await syncCustomerPlan(created?.[0]?.customer_user_id, created?.[0] || job);
-      return json(200, { job: created?.[0] });
+      const savedJob = created?.[0] || job;
+      return json(200, { job: savedJob, confirmation: await sendBookingConfirmation(savedJob) });
     }
 
     if (event.httpMethod === "GET") {
@@ -348,3 +397,6 @@ exports.handler = async (event) => {
     return json(500, { error: error.message });
   }
 };
+
+exports._test = { bookingConfirmationPayload };
+
