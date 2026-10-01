@@ -12109,7 +12109,9 @@
         button.disabled = true;
         result.innerHTML = notice("Sending booking confirmations...");
         const data = await requestJson("portal-jobs", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send-confirmations" }) });
-        result.innerHTML = notice(`${data.sent || 0} sent. ${data.skipped || 0} skipped without an email. ${data.failed || 0} failed.`);
+        const problemRows = (data.results || []).filter((row) => row.confirmation?.skipped || row.confirmation?.error);
+        const problemText = problemRows.length ? `<details style="margin-top:8px"><summary>Show skipped or failed sign-ups</summary><ul>${problemRows.map((row) => `<li>${cleanText(row.full_name || "Unnamed sign-up")}: ${cleanText(row.confirmation.reason || row.confirmation.error || "Unknown error")}</li>`).join("")}</ul></details>` : "";
+        result.innerHTML = notice(`${data.sent || 0} sent. ${data.skipped || 0} skipped without an email. ${data.failed || 0} failed.${problemText}`);
       } catch (error) {
         result.innerHTML = notice(error.message, true);
       } finally {
