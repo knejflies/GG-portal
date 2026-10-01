@@ -4,6 +4,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const JOB_EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
+const PUBLIC_SITE_URL = process.env.URL || process.env.DEPLOY_PRIME_URL || "https://portal.greengrinlawns.com";
 const { sendPushToTarget } = require("./push-helper");
 
 const headers = {
@@ -59,13 +60,30 @@ function bookingConfirmationPayload(job) {
   const frequency = job?.schedule_frequency || (job?.recurring_weekly ? "Weekly" : "One-time");
   const date = job?.scheduled_date || job?.preferred_date || "";
   const dateText = date || "Green Grin will confirm the service date with you.";
+  const referral = job?.referral?.share_code ? "Your referral code: " + job.referral.share_code + "\nShare your referral link: " + job.referral.referral_url : "";
+  const referralHtml = job?.referral?.share_code ? "<p><strong>Your referral code:</strong> " + escapeHtml(job.referral.share_code) + "<br><a href=\"" + escapeHtml(job.referral.referral_url) + "\">Share your referral link</a></p>" : "";
   return {
     from: JOB_EMAIL_FROM,
     to: [job.email],
     subject: "Green Grin booking confirmation - " + service,
-    text: ["Hi " + customer + ",", "", "Your Green Grin booking request has been received.", "Service: " + service, "Address: " + address, "Frequency: " + frequency, "Date: " + dateText, "", "If anything needs to be corrected, reply to this email.", "Green Grin Lawns"].join("\n"),
-    html: "<p>Hi " + escapeHtml(customer) + ",</p><h1>Booking received</h1><p>We received your service booking.</p><p><strong>Service:</strong> " + escapeHtml(service) + "<br><strong>Address:</strong> " + escapeHtml(address) + "<br><strong>Frequency:</strong> " + escapeHtml(frequency) + "<br><strong>Date:</strong> " + escapeHtml(dateText) + "</p><p>If anything needs to be corrected, reply to this email.</p><p>Green Grin Lawns</p>"
+    text: ["Hi " + customer + ",", "", "Your Green Grin booking request has been received.", "Service: " + service, "Address: " + address, "Frequency: " + frequency, "Date: " + dateText, "", referral, referral ? "" : null, "If anything needs to be corrected, reply to this email.", "Green Grin Lawns"].filter((line) => line !== null).join("\n"),
+    html: "<p>Hi " + escapeHtml(customer) + ",</p><h1>Booking received</h1><p>We received your service booking.</p><p><strong>Service:</strong> " + escapeHtml(service) + "<br><strong>Address:</strong> " + escapeHtml(address) + "<br><strong>Frequency:</strong> " + escapeHtml(frequency) + "<br><strong>Date:</strong> " + escapeHtml(dateText) + "</p>" + referralHtml + "<p>If anything needs to be corrected, reply to this email.</p><p>Green Grin Lawns</p>"
   };
+}
+
+async function referralForJob(job) {
+  const email = String(job?.email || "").trim().toLowerCase();
+  const phone = String(job?.phone || "").replace(/\D/g, "");
+  let rows = [];
+  if (email) rows = await supabase("green_grin_sprinkler_blowout_leads?select=share_code&email=eq." + encodeURIComponent(email) + "&order=created_at.desc&limit=1").catch(() => []);
+  if (!rows?.length && phone) rows = await supabase("green_grin_sprinkler_blowout_leads?select=share_code&phone=eq." + encodeURIComponent(phone) + "&order=created_at.desc&limit=1").catch(() => []);
+  const shareCode = rows?.[0]?.share_code;
+  return shareCode ? { share_code: shareCode, referral_url: PUBLIC_SITE_URL.replace(/\/$/, "") + "/sprinkler-blowout.html?ref=" + encodeURIComponent(shareCode) } : null;
+}
+
+async function withReferral(job) {
+  const referral = await referralForJob(job);
+  return referral ? { ...job, referral } : job;
 }
 
 async function sendBookingConfirmation(job) {
@@ -232,14 +250,18 @@ exports.handler = async (event) => {
         if (!adminCreate) return json(401, { error: "Admin access is required." });
         const jobs = await supabase("green_grin_jobs?select=*&order=created_at.asc&limit=1000");
         const results = [];
-        for (const job of jobs || []) results.push({ id: job.id, customer_name: job.customer_name, email: job.email || "", confirmation: await sendBookingConfirmation(job) });
+        for (const job of jobs || []) {
+          const enrichedJob = await withReferral(job);
+          results.push({ id: job.id, customer_name: job.customer_name, email: job.email || "", referral_code: enrichedJob.referral?.share_code || null, confirmation: await sendBookingConfirmation(enrichedJob) });
+        }
         return json(200, { total: results.length, sent: results.filter((row) => row.confirmation.sent).length, skipped: results.filter((row) => row.confirmation.skipped).length, failed: results.filter((row) => row.confirmation.error).length, results });
       }
       if (body.action === "send-confirmation") {
         if (!adminCreate || !body.id) return json(400, { error: "Admin access and a job id are required." });
         const jobs = await supabase("green_grin_jobs?select=*&id=eq." + encodeURIComponent(body.id) + "&limit=1");
         if (!jobs?.[0]) return json(404, { error: "Booking was not found." });
-        return json(200, { job: jobs[0], confirmation: await sendBookingConfirmation(jobs[0]) });
+        const enrichedJob = await withReferral(jobs[0]);
+        return json(200, { job: jobs[0], referral: enrichedJob.referral || null, confirmation: await sendBookingConfirmation(enrichedJob) });
       }
       const user = adminCreate ? null : await optionalUser(event);
       const normalizedPhone = normalizePhone(body.phone);
@@ -286,7 +308,8 @@ exports.handler = async (event) => {
       });
       await syncCustomerPlan(created?.[0]?.customer_user_id, created?.[0] || job);
       const savedJob = created?.[0] || job;
-      return json(200, { job: savedJob, confirmation: await sendBookingConfirmation(savedJob) });
+      const enrichedJob = await withReferral(savedJob);
+      return json(200, { job: savedJob, referral: enrichedJob.referral || null, confirmation: await sendBookingConfirmation(enrichedJob) });
     }
 
     if (event.httpMethod === "GET") {
