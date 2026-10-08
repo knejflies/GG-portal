@@ -11410,6 +11410,7 @@
           else blowoutRouteOrder.push(leadId);
           blowoutRouteSelectedIds = [...blowoutRouteOrder];
           renderBlowoutMap(leads);
+          updateBlowoutSequence();
         });
       });
       if (bounds.length) blowoutMap.fitBounds(bounds, { padding: [28, 28], maxZoom: 16 });
@@ -11447,12 +11448,12 @@
       const routeDate = $("#blowout-route-date")?.value || "";
       let ids = [...blowoutRouteOrder];
       if (!ids.length && routeDate) ids = blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === routeDate).map((lead) => String(lead.id));
-      if (!startAddress || !ids.length) { $("#blowout-route-result").innerHTML = notice("Choose a route start and tap the blowout pins you want to visit.", true); return; }
+      if (!ids.length) { $("#blowout-route-result").innerHTML = notice("Tap the blowout pins you want to visit first.", true); return; }
       const button = $("#blowout-route-optimize");
       button.disabled = true;
       $("#blowout-route-result").innerHTML = notice("Calculating blowout drive times...");
       try {
-        const data = await requestJson("portal-route-optimize", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ blowout_lead_ids: ids, start_address: startAddress }) });
+        const data = await requestJson("portal-route-optimize", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ blowout_lead_ids: ids, start_address: startAddress, preserve_order: !startAddress }) });
         blowoutRouteOrder = (data.blowout_lead_ids || []).map(String);
         blowoutRouteSelectedIds = [...blowoutRouteOrder];
         renderBlowoutMap(filteredBlowoutLeads());
@@ -11462,6 +11463,18 @@
         $("#blowout-route-result").innerHTML = notice(`Blowout route: ${blowoutRouteOrder.length} stops, ${miles} miles, about ${minutes} minutes.${legs ? `<details style="margin-top:8px"><summary>Show each drive leg</summary><ol>${legs}</ol></details>` : ""}`);
       } catch (error) { $("#blowout-route-result").innerHTML = notice(error.message, true); }
       button.disabled = false;
+    }
+
+    async function updateBlowoutSequence() {
+      const result = $("#blowout-route-result");
+      if (blowoutRouteOrder.length < 2) { result.innerHTML = blowoutRouteOrder.length ? notice("1 stop selected. Tap another pin to calculate the drive time.") : ""; return; }
+      try {
+        const data = await requestJson("portal-route-optimize", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ blowout_lead_ids: blowoutRouteOrder, preserve_order: true }) });
+        const minutes = Math.round(Number(data.total_drive_seconds || 0) / 60);
+        const miles = (Number(data.total_distance_meters || 0) / 1609.344).toFixed(1);
+        const legs = (data.legs || []).map((leg) => `<li>${cleanText(leg.from_name)} → ${cleanText(leg.to_name)}: ${Math.max(1, Math.round(Number(leg.drive_seconds || 0) / 60))} min, ${(Number(leg.distance_meters || 0) / 1609.344).toFixed(1)} mi</li>`).join("");
+        result.innerHTML = notice(`${blowoutRouteOrder.length} pins selected: ${miles} miles, about ${Math.max(1, minutes)} minutes.${legs ? `<details style="margin-top:8px"><summary>Show drive legs</summary><ol>${legs}</ol></details>` : ""}`);
+      } catch (error) { result.innerHTML = notice(error.message, true); }
     }
 
     async function loadBlowoutLeads() {

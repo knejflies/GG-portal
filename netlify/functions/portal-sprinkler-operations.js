@@ -29,10 +29,9 @@ function geocodeDecision(result, requestedAddress) {
   const display = String(result.display_name || "");
   const requestedNumber = String(requestedAddress || "").match(/^\s*(\d+[a-z]?)/i)?.[1];
   const hasHouseNumber = !requestedNumber || new RegExp(`\\b${requestedNumber.replace(/[a-z]/i, "[a-z]?")}\\b`, "i").test(display);
-  const importance = Number(result.importance || 0);
   const latitude = Number(result.lat);
   const longitude = Number(result.lon);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !hasHouseNumber || importance < 0.1) return { status: "Needs Correction", latitude: null, longitude: null, display_name: display || null };
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !hasHouseNumber) return { status: "Needs Correction", latitude: null, longitude: null, display_name: display || null };
   return { status: "Located", latitude, longitude, display_name: display };
 }
 async function geocodeAddress(address) {

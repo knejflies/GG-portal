@@ -146,10 +146,11 @@ exports.handler = async (event) => {
       const leadsById = new Map(leads.map((lead) => [String(lead.id), lead]));
       const orderedLeads = blowoutIds.map((id) => leadsById.get(id)).filter(Boolean);
       if (orderedLeads.length !== blowoutIds.length) return json(400, { error: "One or more selected blowout sign-ups no longer exist." });
-      let start;
-      if (Number.isFinite(Number(body.start_latitude)) && Number.isFinite(Number(body.start_longitude))) start = { latitude: Number(body.start_latitude), longitude: Number(body.start_longitude), display_name: String(body.start_address || "Starting point") };
-      else { start = await geocode(body.start_address); await wait(1050); }
-      const points = [start];
+      const hasStart = Number.isFinite(Number(body.start_latitude)) && Number.isFinite(Number(body.start_longitude)) || Boolean(String(body.start_address || "").trim());
+      let start = null;
+      if (hasStart && Number.isFinite(Number(body.start_latitude)) && Number.isFinite(Number(body.start_longitude))) start = { latitude: Number(body.start_latitude), longitude: Number(body.start_longitude), display_name: String(body.start_address || "Starting point") };
+      else if (hasStart) { start = await geocode(body.start_address); await wait(1050); }
+      const points = start ? [start] : [];
       for (const lead of orderedLeads) {
         let point;
         if (lead.latitude !== null && lead.latitude !== "" && lead.longitude !== null && lead.longitude !== "" && Number.isFinite(Number(lead.latitude)) && Number.isFinite(Number(lead.longitude))) point = { latitude: Number(lead.latitude), longitude: Number(lead.longitude), display_name: lead.service_address };
@@ -157,11 +158,12 @@ exports.handler = async (event) => {
         points.push(point);
       }
       const matrix = await roadMatrix(points);
-      const route = optimizePath(matrix.durations);
+      const route = body.preserve_order ? Array.from({ length: points.length }, (_, index) => index) : optimizePath(matrix.durations);
       if (route.length !== points.length || !Number.isFinite(routeCost(route, matrix.durations))) throw new Error("Not every blowout stop could be reached by road. Check the addresses and try again.");
       const summary = summarizeRoute(route, matrix.durations, matrix.distances);
-      const legs = route.slice(1).map((to, index) => { const from = route[index]; return { from: from, to, from_name: from === 0 ? start.display_name : orderedLeads[from - 1]?.full_name || "Stop", to_name: to === 0 ? start.display_name : orderedLeads[to - 1]?.full_name || "Stop", drive_seconds: Math.round(Number(matrix.durations[from]?.[to]) || 0), distance_meters: Math.round(Number(matrix.distances[from]?.[to]) || 0) }; });
-      return json(200, { blowout_lead_ids: route.slice(1).map((pointIndex) => orderedLeads[pointIndex - 1].id), start, ...summary, legs, note: "Blowout route is optimized from the starting point using road travel estimates. Live traffic is not included." });
+      const legs = route.slice(1).map((to, index) => { const from = route[index]; const fromLead = start ? orderedLeads[from - 1] : orderedLeads[from]; const toLead = start ? orderedLeads[to - 1] : orderedLeads[to]; return { from: from, to, from_name: fromLead?.full_name || start?.display_name || "Stop", to_name: toLead?.full_name || start?.display_name || "Stop", drive_seconds: Math.round(Number(matrix.durations[from]?.[to]) || 0), distance_meters: Math.round(Number(matrix.distances[from]?.[to]) || 0) }; });
+      const resultIds = route.slice(start ? 1 : 0).map((pointIndex) => orderedLeads[start ? pointIndex - 1 : pointIndex].id);
+      return json(200, { blowout_lead_ids: resultIds, start, ...summary, legs, note: body.preserve_order ? "Drive times follow the pin order you selected." : "Blowout route is optimized using road travel estimates. Live traffic is not included." });
     }
     const jobIds = Array.isArray(body.job_ids) ? [...new Set(body.job_ids.map(String))] : [];
     if (!jobIds.length) return json(400, { error: "Select at least one job to optimize." });
