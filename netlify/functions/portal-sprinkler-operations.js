@@ -32,7 +32,7 @@ function geocodeDecision(result, requestedAddress) {
   const importance = Number(result.importance || 0);
   const latitude = Number(result.lat);
   const longitude = Number(result.lon);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !hasHouseNumber || importance < 0.35) return { status: "Needs Correction", latitude: null, longitude: null, display_name: display || null };
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !hasHouseNumber || importance < 0.1) return { status: "Needs Correction", latitude: null, longitude: null, display_name: display || null };
   return { status: "Located", latitude, longitude, display_name: display };
 }
 async function geocodeAddress(address) {
