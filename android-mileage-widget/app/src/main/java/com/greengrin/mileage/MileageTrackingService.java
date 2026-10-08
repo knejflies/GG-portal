@@ -15,6 +15,9 @@ import android.os.IBinder;
 import android.os.Handler;
 import android.os.Looper;
 import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -82,7 +85,17 @@ public class MileageTrackingService extends Service implements LocationListener 
                 connection.setDoOutput(true);
                 try (OutputStream output = connection.getOutputStream()) { output.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
                 int status = connection.getResponseCode();
-                notifyResult(status >= 200 && status < 300 ? "Trip saved to Green Grin Mileage log." : "Trip stayed on phone. Portal rejected the owner PIN.");
+                String serverMessage = "";
+                InputStream responseStream = status >= 200 && status < 300 ? connection.getInputStream() : connection.getErrorStream();
+                if (responseStream != null) {
+                    StringBuilder responseText = new StringBuilder();
+                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseStream, StandardCharsets.UTF_8))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) responseText.append(line);
+                    }
+                    try { serverMessage = new JSONObject(responseText.toString()).optString("error", ""); } catch (Exception ignored) { }
+                }
+                notifyResult(status >= 200 && status < 300 ? "Trip saved to Green Grin Mileage log." : "Trip stayed on phone. " + (serverMessage.isEmpty() ? "Portal rejected the sync." : serverMessage));
                 connection.disconnect();
             } catch (Exception error) { notifyResult("Trip stayed on phone. Check the portal connection and try again."); }
         }).start();

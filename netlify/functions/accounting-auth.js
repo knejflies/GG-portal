@@ -25,7 +25,9 @@ async function bookkeeperFromRequest(event, supabase) {
 }
 
 async function requireAccounting(event, supabase) {
-  if (ADMIN_PIN && event.headers["x-admin-pin"] === ADMIN_PIN) return { role: "Owner" };
+  const headers = event.headers || {};
+  const adminPin = headers["x-admin-pin"] || headers["X-Admin-Pin"] || headers["X-ADMIN-PIN"] || "";
+  if (ADMIN_PIN && adminPin === ADMIN_PIN) return { role: "Owner" };
   const employee = await bookkeeperFromRequest(event, supabase);
   if (employee) return { role: "Bookkeeper", employee };
   throw new Error("Accounting access is required.");
