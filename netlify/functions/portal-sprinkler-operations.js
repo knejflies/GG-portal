@@ -121,6 +121,19 @@ exports.handler = async (event) => {
       return json(200, { leads: area ? leads.filter((lead) => String(lead.service_address || "").toLowerCase().includes(area.toLowerCase())) : leads });
     }
     const body = JSON.parse(event.body || "{}");
+    if (event.httpMethod === "POST" && body.action === "locate-missing") {
+      const leads = await supabase("green_grin_sprinkler_blowout_leads?select=*&order=created_at.asc&limit=1000");
+      let located = 0;
+      let needsCorrection = 0;
+      for (const lead of (leads || []).filter((item) => item.geocode_status !== "Located").slice(0, 40)) {
+        const geocode = await geocodeAddress(lead.service_address);
+        const update = { geocode_status: geocode.status, latitude: geocode.latitude, longitude: geocode.longitude, geocode_display_name: geocode.display_name };
+        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(update) });
+        if (geocode.status === "Located") located += 1;
+        else needsCorrection += 1;
+      }
+      return json(200, { located, needs_correction: needsCorrection, remaining: Math.max(0, (leads || []).filter((item) => item.geocode_status !== "Located").length - 40) });
+    }
     if (event.httpMethod === "PATCH" && body.action === "settings") {
       const rows = await supabase("green_grin_service_visibility_settings?on_conflict=service_key", { method: "POST", headers: { Prefer: "resolution=merge-duplicates,return=representation" }, body: JSON.stringify({ service_key: "sprinkler_blowout", enabled: body.enabled !== false, visible_from: body.visible_from || null, visible_until: body.visible_until || null, updated_at: new Date().toISOString(), updated_by: "Owner" }) });
       return json(200, { setting: rows?.[0] || null });
