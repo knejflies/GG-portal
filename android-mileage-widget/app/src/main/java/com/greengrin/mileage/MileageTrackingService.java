@@ -59,15 +59,15 @@ public class MileageTrackingService extends Service implements LocationListener 
         locationManager = null;
         ticker.removeCallbacks(tickerTask);
         MileageStore.stop(this);
+        if (upload && completedMiles > 0f) { uploadTrip(completedMiles, route, purpose); return; }
         stopForeground(STOP_FOREGROUND_REMOVE);
         stopSelf();
-        if (upload && completedMiles > 0f) uploadTrip(completedMiles, route, purpose);
         update();
     }
 
     private void uploadTrip(float miles, String route, String purpose) {
         String pin = MileageStore.prefs(this).getString("admin_pin", "");
-        if (pin.isEmpty()) { notifyResult("Trip saved on phone. Add the owner PIN in the widget app to sync it."); return; }
+        if (pin.isEmpty()) { notifyResult("Trip saved on phone. Add the owner PIN in the widget app to sync it."); stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); return; }
         new Thread(() -> {
             try {
                 JSONObject body = new JSONObject();
@@ -98,6 +98,9 @@ public class MileageTrackingService extends Service implements LocationListener 
                 notifyResult(status >= 200 && status < 300 ? "Trip saved to Green Grin Mileage log." : "Trip stayed on phone. " + (serverMessage.isEmpty() ? "Portal rejected the sync." : serverMessage));
                 connection.disconnect();
             } catch (Exception error) { notifyResult("Trip stayed on phone. Check the portal connection and try again."); }
+            stopForeground(STOP_FOREGROUND_REMOVE);
+            stopSelf();
+            update();
         }).start();
     }
     private void notifyResult(String message) { createChannel(); ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(43, new Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("Green Grin mileage").setContentText(message).setAutoCancel(true).build()); }
