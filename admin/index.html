@@ -11402,7 +11402,8 @@
         const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}`;
         const leadId = String(lead.id);
         const routeNumber = blowoutRouteOrder.indexOf(leadId);
-        const marker = window.L.marker([lat, lng]).addTo(blowoutMarkerLayer);
+        const markerIcon = window.L.divIcon({ className: "blowout-route-pin", html: `<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:${routeNumber >= 0 ? "#9bea32" : "#123b27"};color:${routeNumber >= 0 ? "#072116" : "#f4fff0"};border:3px solid #f4fff0;box-shadow:0 2px 8px rgba(0,0,0,.35);font-weight:800;font-size:14px">${routeNumber >= 0 ? routeNumber + 1 : ""}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+        const marker = window.L.marker([lat, lng], { icon: markerIcon }).addTo(blowoutMarkerLayer);
         marker.bindPopup(`<strong>${routeNumber >= 0 ? `${routeNumber + 1}. ` : ""}${cleanText(lead.full_name)}</strong><br>${cleanText(lead.service_address)}<br>${cleanText(lead.status || "New")}<br><a href="${directions}" target="_blank" rel="noopener">Driving directions</a><br><small>Tap the pin to ${routeNumber >= 0 ? "remove it from" : "add it to"} the route</small>`);
         marker.on("click", () => {
           const index = blowoutRouteOrder.indexOf(leadId);
@@ -11410,6 +11411,7 @@
           else blowoutRouteOrder.push(leadId);
           blowoutRouteSelectedIds = [...blowoutRouteOrder];
           renderBlowoutMap(leads);
+          window.setTimeout(() => blowoutMap?.setView([lat, lng], Math.max(Number(blowoutMap?.getZoom?.() || 15), 16)), 0);
           updateBlowoutSequence();
         });
       });
