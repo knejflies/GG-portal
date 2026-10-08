@@ -71,10 +71,19 @@ function summarizeRoute(route, durations, distances) {
   let seconds = 0;
   let meters = 0;
   for (let index = 1; index < route.length; index += 1) {
-    seconds += Number(durations[route[index - 1]]?.[route[index]]) || 0;
-    meters += Number(distances[route[index - 1]]?.[route[index]]) || 0;
+    const legSeconds = Number(durations[route[index - 1]]?.[route[index]]) || 0;
+    const legMeters = Number(distances[route[index - 1]]?.[route[index]]) || 0;
+    seconds += legSeconds;
+    meters += legMeters;
   }
   return { total_drive_seconds: Math.round(seconds), total_distance_meters: Math.round(meters) };
+}
+
+function routeLegs(route, durations, distances) {
+  return route.slice(1).map((to, index) => {
+    const from = route[index];
+    return { from, to, drive_seconds: Math.round(Number(durations[from]?.[to]) || 0), distance_meters: Math.round(Number(distances[from]?.[to]) || 0) };
+  });
 }
 
 async function supabase(path, options = {}) {
@@ -183,7 +192,9 @@ exports.handler = async (event) => {
     return json(200, {
       job_ids: optimizedJobIds,
       start,
-      ...summary,
+      total_drive_seconds: summary.total_drive_seconds,
+      total_distance_meters: summary.total_distance_meters,
+      legs: routeLegs(route, matrix.durations, matrix.distances).map((leg) => ({ ...leg, from_name: leg.from === 0 ? start.display_name : orderedJobs[leg.from - 1]?.customer_name || "Stop", to_name: leg.to === 0 ? start.display_name : orderedJobs[leg.to - 1]?.customer_name || "Stop" })),
       note: "Order is optimized from the starting point using road travel estimates. Live traffic is not included."
     });
   } catch (error) {
