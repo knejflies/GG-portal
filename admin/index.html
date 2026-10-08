@@ -4970,6 +4970,7 @@
       <div class="card">
         <div class="job-head"><div><span class="admin-eyebrow">Quoting tools</span><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form. Review each referral, approve successful ones, and close it when paid.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
         <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a><button id="send-blowout-confirmations" class="button secondary" type="button">Send confirmations to blowout sign-ups</button><span id="blowout-confirmation-result" aria-live="polite"></span><input id="blowout-search" type="search" placeholder="Search name, address, phone, or email" /><select id="blowout-status-filter"><option>All</option><option>New</option><option>Scheduled</option><option>Completed</option><option>Invoiced</option><option>Paid</option><option>Needs Correction</option></select></div>
+        <div class="admin-actions"><label>Route date <input id="blowout-route-date" type="date" /></label><input id="blowout-route-start" type="text" placeholder="Starting address" autocomplete="street-address" /><button id="blowout-route-optimize" class="button secondary" type="button">Optimize Blowout Route</button><button id="blowout-route-clear" class="button ghost" type="button">Clear Stops</button><span id="blowout-route-result" aria-live="polite"></span></div><div id="blowout-route-days" class="admin-actions" aria-label="Blowout route days"></div>
         <div id="blowout-map" style="height:360px;margin:14px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(142,210,62,.35)" aria-label="Sprinkler blowout property map"></div>
         <div id="blowout-leads-list" class="marketing-route-list"></div>
       </div>
@@ -6027,6 +6028,8 @@
     let blowoutLeads = [];
     let blowoutMap = null;
     let blowoutMarkerLayer = null;
+    let blowoutRouteSelectedIds = [];
+    let blowoutRouteOrder = [];
     let leafletPromise = null;
     let deferredInstallPrompt = null;
     let adminSessionPin = "";
@@ -11371,6 +11374,17 @@
         return matchesStatus && (!query || haystack.includes(query));
       });
     }
+    function blowoutRouteWeekday(lead) {
+      const raw = String(lead.scheduled_date || lead.completed_at || lead.created_at || "").split("T")[0];
+      return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(`${raw}T12:00:00`).getDay() : null;
+    }
+    function renderBlowoutRouteDays() {
+      const target = $("#blowout-route-days");
+      if (!target) return;
+      const names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const groups = names.map((name, day) => ({ name, day, count: blowoutLeads.filter((lead) => lead.status !== "Paid" && lead.status !== "Not Successful" && blowoutRouteWeekday(lead) === day).length })).filter((group) => group.count);
+      target.innerHTML = groups.length ? groups.map((group) => `<button class="button small ghost" type="button" data-blowout-route-day="${group.day}">${group.name} (${group.count})</button>`).join("") : `<span class="muted">Schedule blowouts to group them by day.</span>`;
+    }
     function renderBlowoutMap(leads = []) {
       const container = $("#blowout-map");
       if (!container || !window.L) return;
@@ -11386,7 +11400,17 @@
         if (!Number.isFinite(lat) || !Number.isFinite(lng) || lead.geocode_status !== "Located") return;
         bounds.push([lat, lng]);
         const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}`;
-        window.L.marker([lat, lng]).bindPopup(`<strong>${cleanText(lead.full_name)}</strong><br>${cleanText(lead.service_address)}<br>${cleanText(lead.status || "New")}<br><a href="${directions}" target="_blank" rel="noopener">Driving directions</a>`).addTo(blowoutMarkerLayer);
+        const leadId = String(lead.id);
+        const routeNumber = blowoutRouteOrder.indexOf(leadId);
+        const marker = window.L.marker([lat, lng]).addTo(blowoutMarkerLayer);
+        marker.bindPopup(`<strong>${routeNumber >= 0 ? `${routeNumber + 1}. ` : ""}${cleanText(lead.full_name)}</strong><br>${cleanText(lead.service_address)}<br>${cleanText(lead.status || "New")}<br><a href="${directions}" target="_blank" rel="noopener">Driving directions</a><br><small>Tap the pin to ${routeNumber >= 0 ? "remove it from" : "add it to"} the route</small>`);
+        marker.on("click", () => {
+          const index = blowoutRouteOrder.indexOf(leadId);
+          if (index >= 0) blowoutRouteOrder.splice(index, 1);
+          else blowoutRouteOrder.push(leadId);
+          blowoutRouteSelectedIds = [...blowoutRouteOrder];
+          renderBlowoutMap(leads);
+        });
       });
       if (bounds.length) blowoutMap.fitBounds(bounds, { padding: [28, 28], maxZoom: 16 });
       window.setTimeout(() => blowoutMap.invalidateSize(), 60);
@@ -11395,6 +11419,7 @@
       const target = $("#blowout-leads-list");
       if (!target) return;
       const visibleLeads = Array.isArray(leads) ? leads : [];
+      renderBlowoutRouteDays();
       renderBlowoutMap(visibleLeads);
       if (!visibleLeads.length) { target.innerHTML = notice("No sprinkler blowout leads match this filter."); return; }
       const byCode = new Map(leads.filter((lead) => lead.share_code).map((lead) => [String(lead.share_code).toUpperCase(), lead]));
@@ -11415,6 +11440,28 @@
       };
       const roots = leads.filter((lead) => !lead.referrer_lead_id && (!lead.referred_by_code || !byCode.has(String(lead.referred_by_code).toUpperCase())));
       target.innerHTML = roots.map(renderCard).join("");
+    }
+
+    async function optimizeBlowoutRoute() {
+      const startAddress = $("#blowout-route-start")?.value.trim() || "";
+      const routeDate = $("#blowout-route-date")?.value || "";
+      let ids = [...blowoutRouteOrder];
+      if (!ids.length && routeDate) ids = blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === routeDate).map((lead) => String(lead.id));
+      if (!startAddress || !ids.length) { $("#blowout-route-result").innerHTML = notice("Choose a route start and tap the blowout pins you want to visit.", true); return; }
+      const button = $("#blowout-route-optimize");
+      button.disabled = true;
+      $("#blowout-route-result").innerHTML = notice("Calculating blowout drive times...");
+      try {
+        const data = await requestJson("portal-route-optimize", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ blowout_lead_ids: ids, start_address: startAddress }) });
+        blowoutRouteOrder = (data.blowout_lead_ids || []).map(String);
+        blowoutRouteSelectedIds = [...blowoutRouteOrder];
+        renderBlowoutMap(filteredBlowoutLeads());
+        const miles = (Number(data.total_distance_meters || 0) / 1609.344).toFixed(1);
+        const minutes = Math.max(1, Math.round(Number(data.total_drive_seconds || 0) / 60));
+        const legs = (data.legs || []).map((leg) => `<li>${cleanText(leg.from_name)} → ${cleanText(leg.to_name)}: ${Math.max(1, Math.round(Number(leg.drive_seconds || 0) / 60))} min, ${(Number(leg.distance_meters || 0) / 1609.344).toFixed(1)} mi</li>`).join("");
+        $("#blowout-route-result").innerHTML = notice(`Blowout route: ${blowoutRouteOrder.length} stops, ${miles} miles, about ${minutes} minutes.${legs ? `<details style="margin-top:8px"><summary>Show each drive leg</summary><ol>${legs}</ol></details>` : ""}`);
+      } catch (error) { $("#blowout-route-result").innerHTML = notice(error.message, true); }
+      button.disabled = false;
     }
 
     async function loadBlowoutLeads() {
@@ -13001,6 +13048,18 @@
       } catch (error) { result.innerHTML = notice(error.message, true); }
     });
     loadBlowoutVisibilitySettings();
+    $("#blowout-route-optimize").addEventListener("click", optimizeBlowoutRoute);
+    $("#blowout-route-clear").addEventListener("click", () => { blowoutRouteOrder = []; blowoutRouteSelectedIds = []; $("#blowout-route-result").innerHTML = ""; renderBlowoutMap(filteredBlowoutLeads()); });
+    $("#blowout-route-days").addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-blowout-route-day]");
+      if (!button) return;
+      const day = Number(button.dataset.blowoutRouteDay);
+      const lead = blowoutLeads.find((item) => blowoutRouteWeekday(item) === day && item.scheduled_date);
+      if (lead) $("#blowout-route-date").value = String(lead.scheduled_date).slice(0, 10);
+      blowoutRouteOrder = blowoutLeads.filter((item) => blowoutRouteWeekday(item) === day && item.status !== "Paid" && item.status !== "Not Successful").map((item) => String(item.id));
+      blowoutRouteSelectedIds = [...blowoutRouteOrder];
+      renderBlowoutMap(filteredBlowoutLeads());
+    });
     $("#send-blowout-confirmations").addEventListener("click", async () => {
       const button = $("#send-blowout-confirmations");
       const result = $("#blowout-confirmation-result");

@@ -138,6 +138,31 @@ exports.handler = async (event) => {
 
   try {
     const body = JSON.parse(event.body || "{}");
+    const blowoutIds = Array.isArray(body.blowout_lead_ids) ? [...new Set(body.blowout_lead_ids.map(String))] : [];
+    if (blowoutIds.length) {
+      if (blowoutIds.length > 40) return json(400, { error: "Optimize up to 40 blowout stops at a time." });
+      const encodedBlowoutIds = blowoutIds.map((id) => encodeURIComponent(id)).join(",");
+      const leads = await supabase(`green_grin_sprinkler_blowout_leads?select=id,full_name,service_address,latitude,longitude,geocode_status&id=in.(${encodedBlowoutIds})`);
+      const leadsById = new Map(leads.map((lead) => [String(lead.id), lead]));
+      const orderedLeads = blowoutIds.map((id) => leadsById.get(id)).filter(Boolean);
+      if (orderedLeads.length !== blowoutIds.length) return json(400, { error: "One or more selected blowout sign-ups no longer exist." });
+      let start;
+      if (Number.isFinite(Number(body.start_latitude)) && Number.isFinite(Number(body.start_longitude))) start = { latitude: Number(body.start_latitude), longitude: Number(body.start_longitude), display_name: String(body.start_address || "Starting point") };
+      else { start = await geocode(body.start_address); await wait(1050); }
+      const points = [start];
+      for (const lead of orderedLeads) {
+        let point;
+        if (lead.latitude !== null && lead.latitude !== "" && lead.longitude !== null && lead.longitude !== "" && Number.isFinite(Number(lead.latitude)) && Number.isFinite(Number(lead.longitude))) point = { latitude: Number(lead.latitude), longitude: Number(lead.longitude), display_name: lead.service_address };
+        else { point = await geocode(lead.service_address); await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ latitude: point.latitude, longitude: point.longitude, geocode_status: "Located", geocode_display_name: point.display_name }) }); await wait(1050); }
+        points.push(point);
+      }
+      const matrix = await roadMatrix(points);
+      const route = optimizePath(matrix.durations);
+      if (route.length !== points.length || !Number.isFinite(routeCost(route, matrix.durations))) throw new Error("Not every blowout stop could be reached by road. Check the addresses and try again.");
+      const summary = summarizeRoute(route, matrix.durations, matrix.distances);
+      const legs = route.slice(1).map((to, index) => { const from = route[index]; return { from: from, to, from_name: from === 0 ? start.display_name : orderedLeads[from - 1]?.full_name || "Stop", to_name: to === 0 ? start.display_name : orderedLeads[to - 1]?.full_name || "Stop", drive_seconds: Math.round(Number(matrix.durations[from]?.[to]) || 0), distance_meters: Math.round(Number(matrix.distances[from]?.[to]) || 0) }; });
+      return json(200, { blowout_lead_ids: route.slice(1).map((pointIndex) => orderedLeads[pointIndex - 1].id), start, ...summary, legs, note: "Blowout route is optimized from the starting point using road travel estimates. Live traffic is not included." });
+    }
     const jobIds = Array.isArray(body.job_ids) ? [...new Set(body.job_ids.map(String))] : [];
     if (!jobIds.length) return json(400, { error: "Select at least one job to optimize." });
     if (jobIds.length > 40) return json(400, { error: "Optimize up to 40 stops at a time." });
