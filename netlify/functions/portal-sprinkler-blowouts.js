@@ -95,6 +95,15 @@ exports.handler = async (event) => {
       if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
       const body = JSON.parse(event.body || "{}");
       const id = clean(body.id, 80);
+      if (id && Object.prototype.hasOwnProperty.call(body, "service_address")) {
+        const serviceAddress = clean(body.service_address, 300);
+        if (!serviceAddress) return json(400, { error: "A service address is required." });
+        const rows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ service_address: serviceAddress, geocode_status: "Not Located", latitude: null, longitude: null, geocode_display_name: null })
+        });
+        return json(200, { lead: rows?.[0] || null });
+      }
       const status = clean(body.status, 40);
       const allowed = new Set(["New", "Contacted", "Successful", "Paid", "Not Successful"]);
       if (!id || !allowed.has(status)) return json(400, { error: "Choose a valid lead status." });
@@ -175,3 +184,4 @@ exports.handler = async (event) => {
     return json(500, { error: error.message || "Could not save the sprinkler blowout request." });
   }
 };
+
