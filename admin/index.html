@@ -4997,6 +4997,7 @@
         <div class="job-head"><div><span class="admin-eyebrow">Quoting tools</span><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form. Review each referral, approve successful ones, and close it when paid.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
         <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a><button id="send-blowout-confirmations" class="button secondary" type="button">Send confirmations to blowout sign-ups</button><button id="locate-blowout-pins" class="button secondary" type="button">Locate Missing Pins</button><span id="blowout-confirmation-result" aria-live="polite"></span><span id="blowout-location-result" aria-live="polite"></span><input id="blowout-search" type="search" placeholder="Search name, address, phone, or email" /><select id="blowout-status-filter"><option>All</option><option>New</option><option>Scheduled</option><option>Completed</option><option>Invoiced</option><option>Paid</option><option>Needs Correction</option></select></div>
         <div class="admin-actions"><label>Route date <input id="blowout-route-date" type="date" /></label><input id="blowout-route-start" type="text" placeholder="Starting address" autocomplete="street-address" /><button id="blowout-route-optimize" class="button secondary" type="button">Optimize Blowout Route</button><button id="blowout-route-clear" class="button ghost" type="button">Clear Stops</button><span id="blowout-route-result" aria-live="polite"></span></div><div id="blowout-route-days" class="admin-actions" aria-label="Blowout route days"></div>
+        <div id="blowout-map-summary" class="marketing-summary" aria-live="polite"></div>
         <div id="blowout-map" style="height:360px;margin:14px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(142,210,62,.35)" aria-label="Sprinkler blowout property map"></div>
         <div id="blowout-leads-list" class="marketing-route-list"></div>
       </div>
@@ -5405,8 +5406,8 @@
             </div>
             <div class="three">
               <div><label for="estimate-customer">Customer</label><select id="estimate-customer"><option value="manual">One-time customer</option></select></div>
-              <div><label for="estimate-status">Estimate status</label><select id="estimate-status"><option>Draft</option><option>Quoted</option><option>Approved</option><option>Declined</option><option>Converted</option></select></div>
 
+              <div><label for="estimate-status">Estimate status</label><select id="estimate-status"><option>Draft</option><option>Quoted</option><option>Approved</option><option>Declined</option><option>Converted</option></select></div>
               <div><label for="estimate-valid-until">Estimate valid until</label><input id="estimate-valid-until" type="date" /></div>
             </div>
             <div id="estimate-manual-customer">
@@ -6006,8 +6007,8 @@
               <div><label for="fert-record-amount">Amount applied</label><input id="fert-record-amount" placeholder="22 lb, 3 bags, 1.5 gal" /></div>
               <div class="row-actions" style="align-items:end"><button class="button" type="submit">Save Application</button></div>
             </div>
-          </form>
 
+          </form>
           <div id="fertilizer-record-result" aria-live="polite"></div>
           <div id="fertilizer-record-list" class="status-box"></div>
         </div>
@@ -6607,8 +6608,8 @@
           setSignedOut({ clearSaved: false });
           return false;
         }
-      }
 
+      }
 
       return false;
     }
@@ -7208,8 +7209,8 @@
       if (!item) {
         $("#estimate-result").innerHTML = notice("Choose a saved cost item first.", true);
         return;
-      }
 
+      }
       $("#estimate-line-items").insertAdjacentHTML("beforeend", estimateLineRow(item));
       calculateEstimateForm();
       openEstimatorView("builder");
@@ -7809,8 +7810,8 @@
       const defaultFertilizer = defaults.fertilizerBid || {};
       const incomingFertilizer = incoming.fertilizerBid || {};
       const productIds = Object.keys(defaultFertilizer.products || {});
-      const products = productIds.reduce((result, productId) => {
 
+      const products = productIds.reduce((result, productId) => {
         result[productId] = {
           ...(defaultFertilizer.products?.[productId] || {}),
           ...(incomingFertilizer.products?.[productId] || {})
@@ -8410,8 +8411,8 @@
       if (!select) return;
       const previous = select.value;
       select.innerHTML = `<option value="manual">One-time customer</option>` + invoiceCustomers.map((customer, index) => {
-        const code = customer.customer_code ? `${customer.customer_code} - ` : "";
 
+        const code = customer.customer_code ? `${customer.customer_code} - ` : "";
         return `<option value="${index}">${cleanText(`${code}${customer.name}${customer.phone ? ` (${customer.phone})` : ""}`)}</option>`;
       }).join("");
       if (previous === "manual" || invoiceCustomers[Number(previous)]) select.value = previous;
@@ -9011,8 +9012,8 @@
         : `<span class="profit-check warn"><strong>Profit check: REVIEW.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin is below the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal. Raise the minimum or price per 1,000.</span>`;
       $("#fert-visit-check").innerHTML = `${programCheck}${marginCheck}`;
 
-      $("#fert-application-rows").innerHTML = bid.applications.map((application) => `
 
+      $("#fert-application-rows").innerHTML = bid.applications.map((application) => `
         <tr>
           <td>${cleanText(application.stage)}</td>
           <td>${cleanText(application.timing)}</td>
@@ -9612,8 +9613,8 @@
     }
 
     function renderPaidInvoices() {
-      const paidInvoices = invoiceDrafts.filter(isPaidInvoice);
 
+      const paidInvoices = invoiceDrafts.filter(isPaidInvoice);
       const search = ($("#paid-invoice-search")?.value || "").trim().toLowerCase();
       const filtered = search
         ? paidInvoices.filter((invoice) => invoiceSearchText(invoice).includes(search))
@@ -10213,8 +10214,8 @@
         const data = await requestJson(`portal-property-billing?property_id=${encodeURIComponent(propertyId)}`, { headers: adminHeaders() });
         render(data.entries || []);
       };
-      try { await load(); } catch (error) { list.innerHTML = notice(`Service entries unavailable: ${error.message}`, true); }
 
+      try { await load(); } catch (error) { list.innerHTML = notice(`Service entries unavailable: ${error.message}`, true); }
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
@@ -10814,8 +10815,8 @@
     function renderTimeClock(data = {}) {
       const open = data.open || null;
       const recent = data.recent || [];
-      const employeeName = data.employee?.full_name || data.employee?.email || "Employee";
 
+      const employeeName = data.employee?.full_name || data.employee?.email || "Employee";
       const periodLabel = `${data.count || $("#timeclock-count").value || 1} ${data.unit || $("#timeclock-unit").value || "weeks"}`;
       $("#timeclock-status").textContent = open
         ? `${employeeName} is clocked in since ${formatDateTime(open.clock_in_at)}.`
@@ -11415,8 +11416,8 @@
       $("#marketing-route-form").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
-    function renderMarketingPlanRouteOptions() {
 
+    function renderMarketingPlanRouteOptions() {
       const select = $("#marketing-plan-route-select");
       if (!select) return;
       const previous = select.value;
@@ -11558,6 +11559,10 @@
     function renderBlowoutMap(leads = []) {
       const container = $("#blowout-map");
       if (!container || !window.L) return;
+      const located = leads.filter((lead) => lead.geocode_status === "Located" && Number.isFinite(Number(lead.latitude)) && Number.isFinite(Number(lead.longitude))).length;
+      const needsCorrection = leads.filter((lead) => lead.geocode_status === "Needs Correction").length;
+      const notLocated = Math.max(0, leads.length - located - needsCorrection);
+      if ($("#blowout-map-summary")) $("#blowout-map-summary").innerHTML = `<span><strong>${located}</strong>On map</span><span><strong>${needsCorrection}</strong>Needs correction</span><span><strong>${notLocated}</strong>Not located</span><span><strong>${leads.length}</strong>Total shown</span>`;
       if (!blowoutMap) {
         blowoutMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 12);
         addMarketingBasemapControl(blowoutMap, "street");
@@ -11609,7 +11614,8 @@
         const nested = children.get(lead.id) || children.get(String(lead.share_code || "").toUpperCase()) || [];
         const confirmationMark = lead.confirmation_sent_at ? ` <span title="Confirmation emailed ${cleanText(new Date(lead.confirmation_sent_at).toLocaleString())}" aria-label="Confirmation emailed" style="color:var(--lime)">✓</span>` : "";
         const referralUrl = lead.share_code ? `${location.origin}/sprinkler-blowout.html?ref=${encodeURIComponent(lead.share_code)}` : "";
-        return `<div class="marketing-lead" data-blowout-id="${cleanText(lead.id)}" data-referral-url="${cleanText(referralUrl)}" data-referral-code="${cleanText(lead.share_code || "")}"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}${confirmationMark}</strong><span class="badge">${cleanText(status)}${lead.referral_active === false ? " · Closed" : ""}</span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">${lead.geocode_status === "Needs Correction" ? "Address needs correction before mapping" : lead.geocode_status === "Located" ? "Address located" : "Address not located yet"}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p><p class="muted">${lead.waiver_agreed ? `Waiver accepted${lead.waiver_agreed_at ? ` ${cleanText(new Date(lead.waiver_agreed_at).toLocaleDateString())}` : ""}` : "Waiver not accepted"}</p><p><strong>Referral credit:</strong> ${cleanText(`${lead.referral_count || 0} successful referrals × $0.50 × ${lead.zones || 0} zones = $${credit.toFixed(2)}`)}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}<div class="admin-actions">${lead.share_code ? `<button class="button small ghost" data-blowout-action="share" type="button">Share Referral</button>` : ""}${lead.email ? `<button class="button small ghost" data-blowout-action="send-confirmation" type="button">Send Confirmation</button>` : ""}<button class="button small secondary" data-blowout-action="sync" type="button">Create / Link Customer</button><button class="button small secondary" data-blowout-action="schedule" type="button">Schedule</button><button class="button small secondary" data-blowout-action="complete" type="button">Mark Complete</button><button class="button small secondary" data-blowout-action="invoice" type="button">Create Draft Invoice</button><a class="button small ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}" target="_blank" rel="noopener">Directions</a><button class="button small ghost" data-blowout-action="archive" type="button">Archive</button></div>${nested.length ? `<div style="margin:14px 0 0 18px;padding-left:14px;border-left:3px solid var(--lime)"><strong>Direct referrals (${nested.length})</strong>${nested.map(renderCard).join("")}</div>` : ""}</div>`;
+        const mapStatus = lead.geocode_status === "Located" ? `<span class="badge" style="background:#e5f4dc;color:#123324">● On map</span>` : lead.geocode_status === "Needs Correction" ? `<span class="badge warn">● Needs correction</span>` : `<span class="badge">● Not located</span>`;
+        return `<div class="marketing-lead" data-blowout-id="${cleanText(lead.id)}" data-referral-url="${cleanText(referralUrl)}" data-referral-code="${cleanText(lead.share_code || "")}"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}${confirmationMark}</strong><span>${mapStatus} <span class="badge">${cleanText(status)}${lead.referral_active === false ? " · Closed" : ""}</span></span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">${lead.geocode_status === "Needs Correction" ? "Address needs correction before mapping" : lead.geocode_status === "Located" ? "Address located and included on map" : "Address not located yet"}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p><p class="muted">${lead.waiver_agreed ? `Waiver accepted${lead.waiver_agreed_at ? ` ${cleanText(new Date(lead.waiver_agreed_at).toLocaleDateString())}` : ""}` : "Waiver not accepted"}</p><p><strong>Referral credit:</strong> ${cleanText(`${lead.referral_count || 0} successful referrals × $0.50 × ${lead.zones || 0} zones = $${credit.toFixed(2)}`)}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}<div class="admin-actions">${lead.share_code ? `<button class="button small ghost" data-blowout-action="share" type="button">Share Referral</button>` : ""}${lead.email ? `<button class="button small ghost" data-blowout-action="send-confirmation" type="button">Send Confirmation</button>` : ""}<button class="button small secondary" data-blowout-action="sync" type="button">Create / Link Customer</button><button class="button small secondary" data-blowout-action="schedule" type="button">Schedule</button><button class="button small secondary" data-blowout-action="complete" type="button">Mark Complete</button><button class="button small secondary" data-blowout-action="invoice" type="button">Create Draft Invoice</button><a class="button small ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}" target="_blank" rel="noopener">Directions</a><button class="button small ghost" data-blowout-action="archive" type="button">Archive</button></div>${nested.length ? `<div style="margin:14px 0 0 18px;padding-left:14px;border-left:3px solid var(--lime)"><strong>Direct referrals (${nested.length})</strong>${nested.map(renderCard).join("")}</div>` : ""}</div>`;
       };
       const roots = leads.filter((lead) => !lead.referrer_lead_id && (!lead.referred_by_code || !byCode.has(String(lead.referred_by_code).toUpperCase())));
       target.innerHTML = roots.map(renderCard).join("");
@@ -12011,13 +12017,13 @@
         (invoice.customer_code && customer.customer_code === invoice.customer_code) ||
         (invoice.email && customer.email === invoice.email)
       );
+
       $("#invoice_customer").value = index >= 0 ? String(index) : "manual";
       $("#invoice_manual_name").value = index >= 0 ? "" : (invoice.customer_name || "");
       $("#invoice_manual_email").value = index >= 0 ? "" : (invoice.email || "");
       $("#invoice_manual_phone").value = index >= 0 ? "" : (invoice.phone || "");
       $("#invoice_service_address").value = index >= 0 ? "" : (invoice.service_address || "");
       $("#invoice_saved_address").value = index >= 0 ? (invoice.service_address || invoiceCustomers[index]?.property?.address || "") : "";
-
       toggleManualInvoiceCustomer();
       $("#invoice_amount").value = invoice.amount || "";
       $("#invoice_due").value = invoice.due_date || "";
@@ -12612,13 +12618,13 @@
         try {
           const result = await requestJson("portal-customers", {
             method: "DELETE",
+
             headers: adminHeaders(),
             body: JSON.stringify({
               customer_user_id: customer.customer_user_id || customer.id || "",
               phone: customer.phone || "",
               email: customer.email || ""
             })
-
           });
           downloadArchive(result.archive);
           await loadCustomers();
@@ -13213,13 +13219,13 @@
         const savedMessage = routeId ? "Route updated." : "Subdivision assigned.";
         const deliveryMessage = data.push?.sent > 0
           ? " Employee notified."
+
           : data.push?.enabled === false
             ? " App notifications are not configured yet."
             : data.push
               ? " Employee notification was not delivered; they may need to enable notifications on their device."
               : "";
         $("#marketing-admin-result").innerHTML = notice(savedMessage + deliveryMessage, Boolean(data.push && data.push.sent < 1));
-
       } catch (error) {
         $("#marketing-admin-result").innerHTML = notice(error.message, true);
       }
