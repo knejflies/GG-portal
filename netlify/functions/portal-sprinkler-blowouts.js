@@ -95,6 +95,16 @@ exports.handler = async (event) => {
       if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
       const body = JSON.parse(event.body || "{}");
       const id = clean(body.id, 80);
+      if (id && body.manual_pin === true) {
+        const latitude = Number(body.latitude);
+        const longitude = Number(body.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return json(400, { error: "A valid map pin is required." });
+        const rows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ geocode_status: "Located", latitude, longitude, geocode_display_name: "Manual map pin" })
+        });
+        return json(200, { lead: rows?.[0] || null });
+      }
       if (id && Object.prototype.hasOwnProperty.call(body, "service_address")) {
         const serviceAddress = clean(body.service_address, 300);
         if (!serviceAddress) return json(400, { error: "A service address is required." });
