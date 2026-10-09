@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sales yard measurement — draft</title>
+  <style>
+    :root { color-scheme: dark; --ink: #eff7ee; --muted: #9cb6a3; --panel: #0c241b; --panel-2: #112e22; --line: #28533d; --accent: #b4e75e; --warn: #ffd166; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.45 system-ui, sans-serif; color: var(--ink); background: #06140e; }
+    main { max-width: 1240px; margin: 0 auto; padding: 24px; }
+    .eyebrow { color: var(--accent); letter-spacing: .12em; text-transform: uppercase; font-size: .75rem; font-weight: 800; }
+    h1 { margin: 5px 0 8px; font-size: clamp(1.8rem, 4vw, 3rem); }
+    .intro { color: var(--muted); max-width: 780px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(300px, .9fr); gap: 18px; margin-top: 22px; }
+    .panel { border: 1px solid var(--line); background: linear-gradient(145deg, var(--panel-2), var(--panel)); border-radius: 16px; padding: 18px; box-shadow: 0 14px 35px #0005; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+    button, input, select { font: inherit; color: inherit; border: 1px solid var(--line); border-radius: 10px; background: #071b12; padding: 10px 12px; }
+    button { cursor: pointer; font-weight: 750; }
+    button.primary { color: #07150c; background: var(--accent); border-color: var(--accent); }
+    button.ghost { background: transparent; }
+    .search { display: flex; gap: 9px; margin: 15px 0; }
+    .search input { flex: 1; min-width: 0; }
+    #map { min-height: 520px; border-radius: 13px; border: 1px solid var(--line); background: radial-gradient(circle at 26% 33%, #2b603f 0 6%, transparent 7%), radial-gradient(circle at 66% 65%, #285a3c 0 9%, transparent 10%), linear-gradient(145deg, #193d2b, #092015); position: relative; overflow: hidden; }
+    #map::after { content: "SATELLITE PREVIEW · provider adapter pending"; position: absolute; inset: auto 14px 12px; color: #d6f0d4; font-size: .75rem; letter-spacing: .08em; opacity: .72; }
+    .parcel { position: absolute; left: 18%; top: 22%; width: 64%; height: 57%; border: 2px dashed #c9ef9c; transform: rotate(-4deg); opacity: .8; }
+    .house { position: absolute; left: 43%; top: 39%; width: 18%; height: 17%; background: #b7a98d; border: 3px solid #6b6657; transform: rotate(-4deg); }
+    .lawn { position: absolute; border: 3px solid var(--accent); background: #b4e75e38; }
+    .lawn.front { left: 26%; top: 32%; width: 20%; height: 20%; transform: skew(-12deg) rotate(-4deg); }
+    .lawn.back { left: 50%; top: 60%; width: 26%; height: 15%; transform: skew(10deg) rotate(-4deg); }
+    .exclusion { position: absolute; left: 42%; top: 38%; width: 20%; height: 19%; border: 2px solid #ffbf69; background: #ffbf6940; transform: rotate(-4deg); }
+    .map-label { position: absolute; left: 18px; top: 16px; padding: 7px 10px; border-radius: 8px; background: #06140ecc; color: var(--muted); font-size: .8rem; }
+    .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin: 14px 0; }
+    .metric { border: 1px solid var(--line); border-radius: 11px; padding: 12px; background: #071b12; }
+    .metric strong { display: block; font-size: 1.45rem; }
+    .metric span { color: var(--muted); font-size: .8rem; }
+    .status { border-left: 4px solid var(--accent); padding: 10px 12px; background: #173722; border-radius: 8px; }
+    .warning { border-left-color: var(--warn); background: #3b321a; }
+    .row { display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .row:last-child { border-bottom: 0; }
+    .muted { color: var(--muted); }
+    .check { color: var(--accent); font-weight: 800; }
+    .stepper { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 16px; }
+    .step { border: 1px solid var(--line); border-radius: 10px; padding: 9px; color: var(--muted); font-size: .84rem; }
+    .step.active { color: var(--ink); border-color: var(--accent); background: #173722; }
+    .step b { display: block; color: var(--accent); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; }
+    details { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+    summary { cursor: pointer; font-weight: 750; }
+    .sticky-summary { position: sticky; bottom: 12px; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 12px 14px; border: 1px solid var(--accent); border-radius: 12px; background: #071b12ee; box-shadow: 0 10px 25px #0008; }
+    .sticky-summary strong { font-size: 1.2rem; }
+    @media (max-width: 850px) { main { padding: 15px; } .layout { grid-template-columns: 1fr; } #map { min-height: 390px; } .metric-grid { grid-template-columns: 1fr 1fr 1fr; } .stepper { grid-template-columns: 1fr 1fr; } .sticky-summary { position: sticky; bottom: 8px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Local draft · sales tools</div>
+    <h1>Measure a yard before you quote</h1>
+    <p class="intro">Search the property, confirm the imagery, edit the lawn zones, remove hard surfaces, and carry a reviewed turf total into the existing estimate builder.</p>
+    <div class="search"><input value="1124 North Michigan Avenue, Caldwell ID 83607" aria-label="Property search" /><button class="ghost">Use my location</button><button class="primary">Find property</button></div>
+    <div class="stepper" aria-label="Measurement progress"><div class="step active"><b>1 · Confirm</b>Property and imagery</div><div class="step active"><b>2 · Measure</b>Lawn zones and exclusions</div><div class="step"><b>3 · Review</b>Area and pricing</div><div class="step"><b>4 · Save</b>Attach to quote</div></div>
+    <section class="panel" style="margin-top:18px">
+      <div class="toolbar"><strong style="font-size:1.15rem">1124 North Michigan Avenue</strong><span class="muted">· Caldwell, ID</span><span class="status" style="margin-left:auto;padding:7px 10px;border-left-width:3px">Property ready</span></div>
+      <div class="toolbar" style="margin-top:12px"><button class="primary">Measure yard</button><button class="ghost">Mowing plan</button><button class="ghost">Fertilizer plan</button><button class="ghost">Estimates</button><button class="ghost">Billing history</button></div>
+    </section>
+    <div class="layout">
+      <section class="panel">
+        <div class="toolbar"><button class="primary">Satellite</button><button class="ghost">Parcel outline</button><button class="ghost">Undo</button><button class="ghost">Redo</button><span class="muted" style="margin-left:auto;font-size:.82rem">Tap a zone to edit</span></div>
+        <div id="map" aria-label="Satellite imagery measurement map"><div class="map-label">Confirmed address · imagery 2026-08-14 · 0.3 m resolution</div><div class="parcel"></div><div class="house"></div><div class="lawn front"></div><div class="lawn back"></div><div class="exclusion"></div></div>
+        <div class="toolbar" style="margin-top:12px"><button class="primary">Draw lawn zone</button><button class="ghost">Add exclusion</button><details style="flex-basis:100%"><summary>Advanced editing</summary><div class="toolbar" style="margin-top:10px"><button class="ghost">Split zone</button><button class="ghost">Edit corners</button><button class="ghost">Snap to parcel</button><button class="ghost">Clear shapes</button></div></details></div>
+      </section>
+      <aside class="panel">
+        <div class="status"><strong>High confidence · ready to review</strong><br><span class="muted">Address, imagery, geometry, and exclusions passed the draft checks.</span></div>
+        <div class="metric-grid"><div class="metric"><strong>9,740</strong><span>Gross sq ft</span></div><div class="metric"><strong>1,320</strong><span>Excluded sq ft</span></div><div class="metric"><strong>8,420</strong><span>Net turf sq ft</span></div></div>
+        <div class="row"><div><strong>Front lawn</strong><br><span class="muted">3,120 sq ft · reviewed</span></div><span class="check">✓</span></div>
+        <div class="row"><div><strong>Back lawn</strong><br><span class="muted">5,300 sq ft · reviewed</span></div><span class="check">✓</span></div>
+        <div class="row"><div><strong>Exclusions</strong><br><span class="muted">House, driveway, sidewalk</span></div><span class="muted">1,320 sq ft</span></div>
+        <div class="row"><div><strong>Measurement status</strong><br><span class="muted">Draft · last edited just now</span></div><select aria-label="Measurement status"><option>Draft</option><option>Reviewed</option><option>Approved</option></select></div>
+        <div class="row"><div><strong>Fertilizer plan</strong><br><span class="muted">Recurring monthly · measurement feeds the tier</span></div><button class="ghost">Set monthly price</button></div>
+        <div class="sticky-summary"><div><strong>8,420 sq ft</strong><br><span class="muted">Ready for pricing review</span></div><button class="primary">Review and save</button></div>
+        <details><summary>Choose where to use this measurement</summary><div class="toolbar" style="margin-top:10px"><button class="ghost">Mowing quote</button><button class="ghost">Fertilizer plan</button><button class="ghost">Landscape estimate</button></div></details>
+        <div class="status" style="margin-top:12px"><strong>Saved locally · ready to sync</strong><br><span class="muted">The draft is safe if service drops while you are at the property.</span></div>
+        <p class="muted" style="font-size:.82rem;margin-bottom:0">The approved polygon, imagery date, provider, confidence reasons, and exact square-foot total are kept with the quote for later review.</p>
+      </aside>
+    </div>
+    <section class="panel" style="margin-top:18px">
+      <div class="toolbar"><strong style="font-size:1.15rem">Plans and billing preview</strong><span class="muted">Amounts stay separate from internal costs.</span></div>
+      <div class="metric-grid">
+        <div class="metric"><strong>$185</strong><span>Mowing · monthly</span><button class="ghost" style="margin-top:10px;width:100%">Edit plan</button></div>
+        <div class="metric"><strong>$79</strong><span>Fertilizer · recurring monthly</span><button class="ghost" style="margin-top:10px;width:100%">Edit price</button></div>
+        <div class="metric"><strong>Autopay off</strong><span>Customer authorization required</span><button class="ghost" style="margin-top:10px;width:100%">Set up autopay</button></div>
+      </div>
+      <div class="row"><div><strong>September billing preview</strong><br><span class="muted">4 mowing visits · 1 fertilizer application · no duplicate items</span></div><strong>$264.00</strong><button class="primary">Review monthly invoice</button></div>
+      <div class="row"><div><strong>Measurement history</strong><br><span class="muted">Approved 8,420 sq ft · previous 8,105 sq ft · changed by sales</span></div><button class="ghost">View history</button></div>
+    </section>
+    <section class="panel" style="margin-top:18px">
+      <div class="toolbar"><strong style="font-size:1.15rem">Blowout address quality queue</strong><span class="muted">3 blowout sign-ups need attention before routing</span></div>
+      <div class="row"><div><strong>Daniel Vanderpool</strong><br><span class="muted">22109 Aura Vista Way · Caldwell, ID</span><br><span style="color:var(--warn)">⚠ Address match 62% · unit number may be missing</span></div><button class="primary">Fix address</button></div>
+      <div class="row"><div><strong>Mike Thompson</strong><br><span class="muted">1124 North Michigan Avenue · Caldwell, ID</span><br><span style="color:var(--warn)">⚠ Pin is 148 ft from the entered address</span></div><button class="primary">Review pin</button></div>
+      <div class="row"><div><strong>Sarah Jensen</strong><br><span class="muted">78 Farm Road · Caldwell, ID</span><br><span class="check">✓ Address confirmed · ready to measure</span></div><button class="ghost">Open property</button></div>
+      <p class="muted" style="font-size:.82rem;margin-bottom:0">Blowout addresses stay out of grouping and driving routes until they are confirmed. Each correction records the original entry, the selected match, who fixed it, and when.</p>
+    </section>
+    <section class="panel" style="margin-top:18px">
+      <div class="toolbar"><strong style="font-size:1.15rem">Blowout route days</strong><span class="muted">Assign confirmed leads before routing or emailing.</span></div>
+      <div class="row"><div><strong>Thursday · October 15</strong><br><span class="muted">12 confirmed · 2 need review · route order saved</span><br><span class="check">Notice scheduled Wednesday, October 14 at 5:00 PM</span></div><button class="ghost">Open route</button><button class="primary">Review notice</button></div>
+      <div class="row"><div><strong>Friday · October 16</strong><br><span class="muted">8 confirmed · 0 need review · route not started</span><br><span class="muted">Notice sends Thursday, October 15 at 5:00 PM</span></div><button class="ghost">Open route</button><button class="primary">Review notice</button></div>
+      <div class="row"><div><strong>Unassigned</strong><br><span class="muted">5 confirmed leads still need a service day</span></div><button class="ghost">Assign days</button></div>
+      <div class="status" style="margin-top:12px"><strong>Email preview · Thursday customers</strong><br><span class="muted">Sends Wednesday at 5:00 PM · “Thanks for choosing Green Grin Lawn &amp; Landscape! Your sprinkler blowout is expected tomorrow. Please keep access to the irrigation controls clear. We appreciate your business.”</span><div class="toolbar" style="margin-top:10px"><button class="primary">Save scheduled notice</button><button class="ghost">Send now</button><span class="muted">12 recipients · 0 skipped</span></div></div>
+    </section>
+    <section class="panel" style="margin-top:18px">
+      <div class="toolbar"><strong style="font-size:1.15rem">Today’s decisions</strong><span class="muted">Only items that need attention now.</span></div>
+      <div class="row"><div><strong>Marketing follow-up</strong><br><span class="muted">3 leads have permission and are due for contact today</span></div><button class="primary">Open follow-ups</button></div>
+      <div class="row"><div><strong>Fertilizer billing</strong><br><span class="muted">5 applications ready for the next monthly invoice · no duplicates</span></div><button class="primary">Review fertilizer</button></div>
+      <div class="row"><div><strong>Blowout correction</strong><br><span class="muted">3 sign-ups need address review before routing</span></div><button class="primary">Fix addresses</button></div>
+    </section>
+  </main>
+</body>
+</html>
+
