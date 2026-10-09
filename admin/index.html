@@ -598,6 +598,7 @@
     }
 
     .step {
+
       display: grid;
       grid-template-columns: auto 1fr auto;
       gap: 12px;
@@ -1198,6 +1199,7 @@
 
       body.admin-site .admin-actions .button,
       body.employee-site .admin-actions .button,
+
       body.admin-site .row-actions .button,
       body.employee-site .row-actions .button {
         width: 100%;
@@ -1799,6 +1801,7 @@
       border-color: rgba(219, 240, 211, 0.16);
     }
 
+
     .hero {
       background:
         linear-gradient(112deg, rgba(2, 13, 8, 0.93), rgba(5, 36, 21, 0.66)),
@@ -2398,6 +2401,7 @@
     .marketing-list,
     .marketing-route-list {
       display: grid;
+
       gap: 10px;
       max-height: 680px;
       overflow: auto;
@@ -2513,6 +2517,20 @@
       text-align: center;
       padding: 24px;
     }
+
+    .yard-measurement-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, .8fr); gap: 18px; align-items: start; }
+    #yard-measurement-map { min-height: 480px; border: 1px solid rgba(120, 198, 83, .45); border-radius: 12px; overflow: hidden; background: #dfead8; }
+    .yard-measurement-toolbar, .yard-measurement-actions { display: flex; flex-wrap: wrap; gap: 9px; align-items: end; }
+    .yard-measurement-toolbar { margin: 14px 0; }
+    .yard-measurement-toolbar > div { flex: 1 1 280px; }
+    .yard-measurement-toolbar input { width: 100%; }
+    .yard-measurement-status { margin-top: 12px; min-height: 24px; }
+    .yard-measurement-metric { background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: 13px; }
+    .yard-measurement-metric strong { display: block; color: var(--pine); font-size: 1.55rem; }
+    .yard-measurement-metric span { color: var(--muted); font-size: .82rem; }
+    .yard-measurement-checks { display: grid; gap: 9px; margin-top: 14px; }
+    .yard-measurement-check { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 9px; }
+    @media (max-width: 860px) { .yard-measurement-grid { grid-template-columns: 1fr; } #yard-measurement-map { min-height: 390px; } }
 
     .bid-page-head {
       display: flex;
@@ -2984,6 +3002,7 @@
       color: #dcebd8;
       cursor: pointer;
       font: inherit;
+
       font-weight: 900;
     }
 
@@ -3584,6 +3603,7 @@
     .project-scope {
       margin: 14px 0;
       padding: 14px;
+
       border-left: 4px solid var(--role-accent);
       background: rgba(var(--role-accent-rgb), 0.08);
     }
@@ -4184,6 +4204,7 @@
           <div>
             <label for="auth-email">Email</label>
             <input id="auth-email" type="email" required placeholder="you@example.com" />
+
           </div>
           <div>
             <label for="auth-password">Password</label>
@@ -4290,6 +4311,7 @@
       <button class="tab owner-only" data-tab="calendar" type="button">Calendar</button>
       <span class="tab-section-label owner-only">Quoting tools</span>
       <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
+      <button class="tab owner-only" data-tab="yard-measurement" type="button">Sales Yard Measure</button>
       <button class="tab owner-only" data-tab="mowing-contract" type="button">Mowing Contract</button>
       <button class="tab owner-only" data-tab="sprinkler-blowouts" type="button">Sprinkler Blowouts</button>
       <span class="tab-section-label owner-only">Team</span>
@@ -4783,6 +4805,7 @@
             <button id="save-daily-route" class="button secondary" type="button">Save Daily Route</button>
           </div>
           <div id="daily-route-job-list" class="daily-route-job-list" aria-live="polite"></div>
+
           <div id="daily-route-result" class="daily-route-summary" aria-live="polite"></div>
         </div>
       </div>
@@ -4973,6 +4996,30 @@
         <div class="admin-actions"><label>Route date <input id="blowout-route-date" type="date" /></label><input id="blowout-route-start" type="text" placeholder="Starting address" autocomplete="street-address" /><button id="blowout-route-optimize" class="button secondary" type="button">Optimize Blowout Route</button><button id="blowout-route-clear" class="button ghost" type="button">Clear Stops</button><span id="blowout-route-result" aria-live="polite"></span></div><div id="blowout-route-days" class="admin-actions" aria-label="Blowout route days"></div>
         <div id="blowout-map" style="height:360px;margin:14px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(142,210,62,.35)" aria-label="Sprinkler blowout property map"></div>
         <div id="blowout-leads-list" class="marketing-route-list"></div>
+      </div>
+    </section>
+
+    <section id="yard-measurement" class="panel owner-only" hidden>
+      <div class="card">
+        <div class="job-head"><div><span class="admin-eyebrow">Sales tools</span><h2>Sales yard measurement</h2><p class="muted">Confirm the property, outline the lawn, subtract hard surfaces, and carry the reviewed area into a quote.</p></div><span id="yard-measurement-sync" class="badge">Local draft ready</span></div>
+        <div class="yard-measurement-toolbar">
+          <div><label for="yard-measurement-address">Property address</label><input id="yard-measurement-address" autocomplete="street-address" placeholder="Search an address or customer property" /></div>
+          <button id="yard-measurement-find" class="button secondary" type="button">Find property</button>
+          <button id="yard-measurement-locate" class="button ghost" type="button">Use my location</button>
+        </div>
+        <div id="yard-measurement-status" class="yard-measurement-status status-box" aria-live="polite">Confirm the property before drawing.</div>
+        <div class="yard-measurement-grid">
+          <div>
+            <div id="yard-measurement-map" aria-label="Satellite lawn measurement map"></div>
+            <div class="yard-measurement-actions" style="margin-top:12px"><button id="yard-measurement-draw" class="button" type="button" disabled>Draw lawn zone</button><button id="yard-measurement-exclusion" class="button ghost" type="button" disabled>Add exclusion</button><button id="yard-measurement-undo" class="button ghost" type="button" disabled>Undo point</button><button id="yard-measurement-clear" class="button ghost" type="button" disabled>Clear shapes</button></div>
+          </div>
+          <aside class="card" style="padding:16px">
+            <div class="three"><div class="yard-measurement-metric"><strong id="yard-measurement-gross">0</strong><span>Gross sq ft</span></div><div class="yard-measurement-metric"><strong id="yard-measurement-excluded">0</strong><span>Excluded sq ft</span></div><div class="yard-measurement-metric"><strong id="yard-measurement-net">0</strong><span>Net turf sq ft</span></div></div>
+            <div class="yard-measurement-checks"><div class="yard-measurement-check"><span>Address match</span><strong id="yard-measurement-address-check">Needs confirmation</strong></div><div class="yard-measurement-check"><span>Imagery</span><strong id="yard-measurement-imagery-check">Satellite ready</strong></div><div class="yard-measurement-check"><span>Review state</span><strong id="yard-measurement-review-check">Draft</strong></div></div>
+            <div class="yard-measurement-actions" style="margin-top:16px"><button id="yard-measurement-save" class="button" type="button" disabled>Save measurement</button><button id="yard-measurement-mowing" class="button ghost" type="button" disabled>Use in mowing quote</button><button id="yard-measurement-fertilizer" class="button ghost" type="button" disabled>Use in fertilizer plan</button></div>
+            <p class="muted" style="margin-top:12px;font-size:.82rem">Measurements save as a local draft until the property and shape pass review. The live database handoff can be added after the provider and schema are approved.</p>
+          </aside>
+        </div>
       </div>
     </section>
 
@@ -5359,6 +5406,7 @@
               <div><label for="estimate-valid-until">Estimate valid until</label><input id="estimate-valid-until" type="date" /></div>
             </div>
             <div id="estimate-manual-customer">
+
               <div class="three">
                 <div><label for="estimate-customer-name">Customer name</label><input id="estimate-customer-name" autocomplete="name" required /></div>
                 <div><label for="estimate-customer-phone">Phone</label><input id="estimate-customer-phone" type="tel" autocomplete="tel" required /></div>
@@ -5960,6 +6008,7 @@
           <div id="fertilizer-record-list" class="status-box"></div>
         </div>
 
+
         <div class="card owner-only expense-view" data-expense-view="mileage-maps" hidden>
           <h2>Mileage Maps</h2>
           <p class="muted">GPS trips with a saved route are shown here with their date and miles. Older trips without route points remain available in Mileage.</p>
@@ -6028,6 +6077,11 @@
     let blowoutLeads = [];
     let blowoutMap = null;
     let blowoutMarkerLayer = null;
+    let yardMeasurementMap = null;
+    let yardMeasurementLayer = null;
+    let yardMeasurementPoints = [];
+    let yardMeasurementMode = "zone";
+    let yardMeasurementAddress = null;
     let blowoutRouteSelectedIds = [];
     let blowoutRouteOrder = [];
     let leafletPromise = null;
@@ -6555,6 +6609,7 @@
       return false;
     }
 
+
     async function handleAuthSession(session) {
       if (!session?.user) return false;
       const employee = await loadCurrentEmployee();
@@ -6703,6 +6758,7 @@
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
         if (button.dataset.tab === "sprinkler-blowouts") loadBlowoutLeads();
+        if (button.dataset.tab === "yard-measurement") initYardMeasurement();
       });
     });
 
@@ -7153,6 +7209,7 @@
       $("#estimate-line-items").insertAdjacentHTML("beforeend", estimateLineRow(item));
       calculateEstimateForm();
       openEstimatorView("builder");
+
     });
 
     $("#estimate-add-custom").addEventListener("click", () => {
@@ -7753,6 +7810,7 @@
         result[productId] = {
           ...(defaultFertilizer.products?.[productId] || {}),
           ...(incomingFertilizer.products?.[productId] || {})
+
         };
         return result;
       }, {});
@@ -8353,6 +8411,7 @@
         return `<option value="${index}">${cleanText(`${code}${customer.name}${customer.phone ? ` (${customer.phone})` : ""}`)}</option>`;
       }).join("");
       if (previous === "manual" || invoiceCustomers[Number(previous)]) select.value = previous;
+
     }
 
     function selectedEstimateCustomer() {
@@ -8953,6 +9012,7 @@
         <tr>
           <td>${cleanText(application.stage)}</td>
           <td>${cleanText(application.timing)}</td>
+
           <td>${cleanText(application.productName)}</td>
           <td>${cleanText(application.analysis)}</td>
           <td>${cleanText(fixedNumber(application.nitrogenRateLbPer1000, 2))}</td>
@@ -9553,6 +9613,7 @@
       const search = ($("#paid-invoice-search")?.value || "").trim().toLowerCase();
       const filtered = search
         ? paidInvoices.filter((invoice) => invoiceSearchText(invoice).includes(search))
+
         : paidInvoices;
       $("#paid-invoice-summary").textContent = `Paid invoices (${paidInvoices.length})`;
       $("#paid-invoice-list").innerHTML = filtered.length
@@ -10153,6 +10214,7 @@
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
+
           result.innerHTML = notice("Saving completed service entry...");
           const entryPayload = { property_id: propertyId, customer_user_id: customer.customer_user_id || customer.id, service_date: $("#property-service-date").value, service_category: $("#property-service-category").value, description: $("#property-service-description").value, quantity: $("#property-service-quantity").value, customer_price: $("#property-service-price").value, material_cost: $("#property-service-material-cost").value, internal_notes: { notes: $("#property-service-notes").value }, include_internal_notes: $("#property-service-include-notes").checked };
           await requestJson("portal-property-billing", { method: "POST", headers: adminHeaders(), body: JSON.stringify(entryPayload) });
@@ -10753,6 +10815,7 @@
       const periodLabel = `${data.count || $("#timeclock-count").value || 1} ${data.unit || $("#timeclock-unit").value || "weeks"}`;
       $("#timeclock-status").textContent = open
         ? `${employeeName} is clocked in since ${formatDateTime(open.clock_in_at)}.`
+
         : `${employeeName} is clocked out.`;
       $("#clock-in").disabled = Boolean(open);
       $("#clock-out").disabled = !open;
@@ -10877,6 +10940,109 @@
         <span><strong>${stats.interested}</strong>Interested</span>
         <span><strong>${stats.declined}</strong>Not interested</span>
       `;
+    }
+
+    function yardMeasurementNotice(message, error = false) {
+      const target = $("#yard-measurement-status");
+      if (target) target.innerHTML = notice(message, error);
+    }
+
+    function yardRingAreaSquareFeet(points) {
+      const ring = Array.isArray(points) ? points : [];
+      if (ring.length < 3) return 0;
+      const radius = 6371008.8;
+      let total = 0;
+      for (let index = 0; index < ring.length; index += 1) {
+        const current = ring[index];
+        const next = ring[(index + 1) % ring.length];
+        const lng1 = current.lng * Math.PI / 180;
+        const lng2 = next.lng * Math.PI / 180;
+        const lat1 = current.lat * Math.PI / 180;
+        const lat2 = next.lat * Math.PI / 180;
+        total += (lng2 - lng1) * (2 + Math.sin(lat1) + Math.sin(lat2));
+      }
+      return Math.round(Math.abs(total * radius ** 2 / 2) * 10.7639104167);
+    }
+
+    function updateYardMeasurementTotals() {
+      const area = yardRingAreaSquareFeet(yardMeasurementPoints);
+      ["#yard-measurement-gross", "#yard-measurement-net"].forEach((selector) => { if ($(selector)) $(selector).textContent = area.toLocaleString(); });
+      if ($("#yard-measurement-excluded")) $("#yard-measurement-excluded").textContent = "0";
+      const ready = Boolean(yardMeasurementAddress && yardMeasurementPoints.length >= 3);
+      ["#yard-measurement-save", "#yard-measurement-mowing", "#yard-measurement-fertilizer"].forEach((selector) => { if ($(selector)) $(selector).disabled = !ready; });
+      if ($("#yard-measurement-review-check")) $("#yard-measurement-review-check").textContent = ready ? "Ready to review" : "Draft";
+    }
+
+    function renderYardMeasurementShape() {
+      if (!yardMeasurementMap || !window.L) return;
+      yardMeasurementLayer?.clearLayers();
+      yardMeasurementLayer = window.L.layerGroup().addTo(yardMeasurementMap);
+      yardMeasurementPoints.forEach((point, index) => window.L.circleMarker([point.lat, point.lng], { radius: 6, color: yardMeasurementMode === "exclusion" ? "#d98731" : "#4d9f35", fillColor: yardMeasurementMode === "exclusion" ? "#ffd166" : "#78c653", fillOpacity: .9 }).bindTooltip(`Point ${index + 1}`).addTo(yardMeasurementLayer));
+      if (yardMeasurementPoints.length >= 3) window.L.polygon(yardMeasurementPoints.map((point) => [point.lat, point.lng]), { color: yardMeasurementMode === "exclusion" ? "#d98731" : "#4d9f35", fillColor: yardMeasurementMode === "exclusion" ? "#ffd166" : "#78c653", fillOpacity: .22, weight: 3 }).addTo(yardMeasurementLayer);
+      updateYardMeasurementTotals();
+    }
+
+    async function initYardMeasurement() {
+      await ensureLeaflet();
+      if (yardMeasurementMap) { window.setTimeout(() => yardMeasurementMap.invalidateSize(), 30); return; }
+      yardMeasurementMap = window.L.map("yard-measurement-map").setView([43.6629, -116.6874], 18);
+      window.L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 20, attribution: "Tiles © Esri" }).addTo(yardMeasurementMap);
+      yardMeasurementMap.on("click", (event) => {
+        if (!yardMeasurementAddress) { yardMeasurementNotice("Confirm an address before drawing.", true); return; }
+        yardMeasurementPoints.push({ lat: event.latlng.lat, lng: event.latlng.lng });
+        renderYardMeasurementShape();
+      });
+      $("#yard-measurement-draw")?.addEventListener("click", () => { yardMeasurementMode = "zone"; yardMeasurementNotice("Tap three or more corners around the lawn. Tap the first corner again conceptually by using Close shape when ready."); });
+      $("#yard-measurement-exclusion")?.addEventListener("click", () => { yardMeasurementMode = "exclusion"; yardMeasurementNotice("Exclusion mode selected. Clear the shape before drawing a separate exclusion."); });
+      $("#yard-measurement-undo")?.addEventListener("click", () => { yardMeasurementPoints.pop(); renderYardMeasurementShape(); });
+      $("#yard-measurement-clear")?.addEventListener("click", () => { yardMeasurementPoints = []; renderYardMeasurementShape(); });
+      $("#yard-measurement-find")?.addEventListener("click", findYardMeasurementAddress);
+      $("#yard-measurement-locate")?.addEventListener("click", locateYardMeasurement);
+      $("#yard-measurement-save")?.addEventListener("click", saveYardMeasurementDraft);
+      $("#yard-measurement-mowing")?.addEventListener("click", () => yardMeasurementHandoff("mowing"));
+      $("#yard-measurement-fertilizer")?.addEventListener("click", () => yardMeasurementHandoff("fertilizer"));
+      const saved = readSavedValue("yardMeasurementDraft");
+      if (saved) { try { const draft = JSON.parse(saved); if (draft.address) { $("#yard-measurement-address").value = draft.address; yardMeasurementAddress = draft; $("#yard-measurement-address-check").textContent = "Confirmed locally"; } } catch (_error) {} }
+    }
+
+    async function findYardMeasurementAddress() {
+      const value = $("#yard-measurement-address")?.value.trim();
+      if (!value) return yardMeasurementNotice("Enter a property address first.", true);
+      yardMeasurementNotice("Finding the property and checking the address match…");
+      try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(value)}`, { headers: { Accept: "application/json" } });
+        const rows = await response.json();
+        if (!rows[0]) throw new Error("No confident address match was found.");
+        yardMeasurementAddress = { address: rows[0].display_name, lat: Number(rows[0].lat), lng: Number(rows[0].lon), confidence: rows[0].importance || 0 };
+        yardMeasurementMap.setView([yardMeasurementAddress.lat, yardMeasurementAddress.lng], 19);
+        window.L.marker([yardMeasurementAddress.lat, yardMeasurementAddress.lng]).addTo(yardMeasurementMap).bindPopup("Confirmed property").openPopup();
+        $("#yard-measurement-address").value = yardMeasurementAddress.address;
+        $("#yard-measurement-address-check").textContent = yardMeasurementAddress.confidence >= .5 ? "Confirmed" : "Review pin";
+        ["#yard-measurement-draw", "#yard-measurement-exclusion", "#yard-measurement-undo", "#yard-measurement-clear"].forEach((selector) => { if ($(selector)) $(selector).disabled = false; });
+        yardMeasurementNotice("Address confirmed. Draw the lawn boundary on the satellite image.");
+      } catch (error) { yardMeasurementAddress = null; yardMeasurementNotice(error.message || "Address could not be confirmed.", true); }
+    }
+
+    function locateYardMeasurement() {
+      if (!navigator.geolocation) return yardMeasurementNotice("Location is not available on this device.", true);
+      yardMeasurementNotice("Requesting your current location…");
+      navigator.geolocation.getCurrentPosition((position) => { yardMeasurementAddress = { address: "Current location — confirm the property address", lat: position.coords.latitude, lng: position.coords.longitude, confidence: .5 }; yardMeasurementMap.setView([yardMeasurementAddress.lat, yardMeasurementAddress.lng], 19); window.L.marker([yardMeasurementAddress.lat, yardMeasurementAddress.lng]).addTo(yardMeasurementMap).bindPopup("Current location — confirm address").openPopup(); $("#yard-measurement-address").value = yardMeasurementAddress.address; $("#yard-measurement-address-check").textContent = "Review pin"; ["#yard-measurement-draw", "#yard-measurement-exclusion", "#yard-measurement-undo", "#yard-measurement-clear"].forEach((selector) => { if ($(selector)) $(selector).disabled = false; }); yardMeasurementNotice("Location loaded. Confirm this is the right property before saving."); }, () => yardMeasurementNotice("Location permission was not granted.", true), { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    function saveYardMeasurementDraft() {
+      const area = yardRingAreaSquareFeet(yardMeasurementPoints);
+      if (!yardMeasurementAddress || yardMeasurementPoints.length < 3 || area <= 0) return yardMeasurementNotice("Confirm the property and draw at least three lawn corners.", true);
+      saveValue("yardMeasurementDraft", JSON.stringify({ ...yardMeasurementAddress, points: yardMeasurementPoints, netSquareFeet: area, savedAt: new Date().toISOString() }));
+      $("#yard-measurement-sync").textContent = "Saved locally";
+      $("#yard-measurement-review-check").textContent = "Saved draft";
+      yardMeasurementNotice(`Saved ${area.toLocaleString()} sq ft as a local draft. Review it before adding it to a quote.`);
+    }
+
+    function yardMeasurementHandoff(service) {
+      const area = yardRingAreaSquareFeet(yardMeasurementPoints);
+      if (!area) return yardMeasurementNotice("Save a measured lawn first.", true);
+      saveYardMeasurementDraft();
+      yardMeasurementNotice(`${area.toLocaleString()} sq ft is ready for the ${service === "fertilizer" ? "fertilizer plan" : "mowing quote"}.`);
     }
 
     function ensureLeaflet() {
@@ -11250,6 +11416,7 @@
       const select = $("#marketing-plan-route-select");
       if (!select) return;
       const previous = select.value;
+
       select.innerHTML = `<option value="">Choose route</option>` + marketingAdminRoutes.map((route) =>
         `<option value="${cleanText(route.id)}">${cleanText(marketingRouteLabel(route))}</option>`
       ).join("");
@@ -11850,6 +12017,7 @@
       toggleManualInvoiceCustomer();
       $("#invoice_amount").value = invoice.amount || "";
       $("#invoice_due").value = invoice.due_date || "";
+
       $("#invoice_status").value = invoice.status;
       $("#invoice_custom_service").value = invoice.service_line || "";
       $("#invoice_project_scope").value = invoice.project_scope || "";
@@ -12450,6 +12618,7 @@
           });
           downloadArchive(result.archive);
           await loadCustomers();
+
           await loadAdminJobs();
           $("#customer-detail-result").innerHTML = notice("Customer deleted and archive downloaded.");
         } catch (error) {
@@ -13050,6 +13219,7 @@
       } catch (error) {
         $("#marketing-admin-result").innerHTML = notice(error.message, true);
       }
+
     });
 
     $("#marketing-route-cancel").addEventListener("click", clearMarketingRouteForm);
