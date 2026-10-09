@@ -282,7 +282,7 @@
       display: block;
     }
 
-    .employee-mode #portal-app .tabs .tab:not([data-tab="employee-work"]):not([data-tab="marketing"]),
+    .employee-mode #portal-app .tabs .tab:not([data-tab="employee-work"]):not([data-tab="marketing"]):not([data-tab="yard-measurement"]),
     .employee-mode .owner-only {
       display: none;
     }
@@ -348,12 +348,15 @@
     }
 
     .tab.owner-only,
-    .tab.employee-only {
+    .tab.employee-only,
+    .tab.salesman-access {
       display: none;
     }
 
     body.admin-site .tab.owner-only,
-    body.employee-site .tab.employee-only {
+    body.employee-site .tab.employee-only,
+    body.admin-site .tab.salesman-access,
+    body.employee-site .tab.salesman-access {
       display: block;
     }
 
@@ -595,10 +598,10 @@
       font-size: 1.08rem;
       font-weight: 950;
       font-variant-numeric: tabular-nums;
+
     }
 
     .step {
-
       display: grid;
       grid-template-columns: auto 1fr auto;
       gap: 12px;
@@ -1197,9 +1200,9 @@
         grid-template-columns: 1fr;
       }
 
+
       body.admin-site .admin-actions .button,
       body.employee-site .admin-actions .button,
-
       body.admin-site .row-actions .button,
       body.employee-site .row-actions .button {
         width: 100%;
@@ -1797,10 +1800,10 @@
 
     .button.ghost {
       background: rgba(239, 247, 235, 0.06);
+
       color: #eff9eb;
       border-color: rgba(219, 240, 211, 0.16);
     }
-
 
     .hero {
       background:
@@ -2398,10 +2401,10 @@
       outline-offset: 1px;
     }
 
+
     .marketing-list,
     .marketing-route-list {
       display: grid;
-
       gap: 10px;
       max-height: 680px;
       overflow: auto;
@@ -2999,10 +3002,10 @@
       border: 1px solid rgba(210, 232, 204, 0.16);
       border-radius: 8px;
       background: rgba(12, 42, 26, 0.84);
+
       color: #dcebd8;
       cursor: pointer;
       font: inherit;
-
       font-weight: 900;
     }
 
@@ -3600,10 +3603,10 @@
       background: rgba(var(--role-accent-rgb), 0.07);
     }
 
+
     .project-scope {
       margin: 14px 0;
       padding: 14px;
-
       border-left: 4px solid var(--role-accent);
       background: rgba(var(--role-accent-rgb), 0.08);
     }
@@ -4201,10 +4204,10 @@
       <div class="auth-card customer-login-card">
         <h2>Customer sign in</h2>
         <form id="auth-form">
+
           <div>
             <label for="auth-email">Email</label>
             <input id="auth-email" type="email" required placeholder="you@example.com" />
-
           </div>
           <div>
             <label for="auth-password">Password</label>
@@ -4311,7 +4314,7 @@
       <button class="tab owner-only" data-tab="calendar" type="button">Calendar</button>
       <span class="tab-section-label owner-only">Quoting tools</span>
       <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
-      <button class="tab owner-only" data-tab="yard-measurement" type="button">Sales Yard Measure</button>
+      <button class="tab salesman-access" data-tab="yard-measurement" type="button">Sales Yard Measure</button>
       <button class="tab owner-only" data-tab="mowing-contract" type="button">Mowing Contract</button>
       <button class="tab owner-only" data-tab="sprinkler-blowouts" type="button">Sprinkler Blowouts</button>
       <span class="tab-section-label owner-only">Team</span>
@@ -4802,10 +4805,10 @@
             <button id="select-all-route-jobs" class="button ghost" type="button">Select All</button>
             <button id="clear-route-jobs" class="button ghost" type="button">Clear</button>
             <button id="optimize-daily-route" class="button" type="button">Optimize by Drive Time</button>
+
             <button id="save-daily-route" class="button secondary" type="button">Save Daily Route</button>
           </div>
           <div id="daily-route-job-list" class="daily-route-job-list" aria-live="polite"></div>
-
           <div id="daily-route-result" class="daily-route-summary" aria-live="polite"></div>
         </div>
       </div>
@@ -4999,7 +5002,7 @@
       </div>
     </section>
 
-    <section id="yard-measurement" class="panel owner-only" hidden>
+    <section id="yard-measurement" class="panel salesman-access" hidden>
       <div class="card">
         <div class="job-head"><div><span class="admin-eyebrow">Sales tools</span><h2>Sales yard measurement</h2><p class="muted">Confirm the property, outline the lawn, subtract hard surfaces, and carry the reviewed area into a quote.</p></div><span id="yard-measurement-sync" class="badge">Local draft ready</span></div>
         <div class="yard-measurement-toolbar">
@@ -5403,10 +5406,10 @@
             <div class="three">
               <div><label for="estimate-customer">Customer</label><select id="estimate-customer"><option value="manual">One-time customer</option></select></div>
               <div><label for="estimate-status">Estimate status</label><select id="estimate-status"><option>Draft</option><option>Quoted</option><option>Approved</option><option>Declined</option><option>Converted</option></select></div>
+
               <div><label for="estimate-valid-until">Estimate valid until</label><input id="estimate-valid-until" type="date" /></div>
             </div>
             <div id="estimate-manual-customer">
-
               <div class="three">
                 <div><label for="estimate-customer-name">Customer name</label><input id="estimate-customer-name" autocomplete="name" required /></div>
                 <div><label for="estimate-customer-phone">Phone</label><input id="estimate-customer-phone" type="tel" autocomplete="tel" required /></div>
@@ -6004,10 +6007,10 @@
               <div class="row-actions" style="align-items:end"><button class="button" type="submit">Save Application</button></div>
             </div>
           </form>
+
           <div id="fertilizer-record-result" aria-live="polite"></div>
           <div id="fertilizer-record-list" class="status-box"></div>
         </div>
-
 
         <div class="card owner-only expense-view" data-expense-view="mileage-maps" hidden>
           <h2>Mileage Maps</h2>
@@ -6606,9 +6609,9 @@
         }
       }
 
+
       return false;
     }
-
 
     async function handleAuthSession(session) {
       if (!session?.user) return false;
@@ -7206,10 +7209,10 @@
         $("#estimate-result").innerHTML = notice("Choose a saved cost item first.", true);
         return;
       }
+
       $("#estimate-line-items").insertAdjacentHTML("beforeend", estimateLineRow(item));
       calculateEstimateForm();
       openEstimatorView("builder");
-
     });
 
     $("#estimate-add-custom").addEventListener("click", () => {
@@ -7807,10 +7810,10 @@
       const incomingFertilizer = incoming.fertilizerBid || {};
       const productIds = Object.keys(defaultFertilizer.products || {});
       const products = productIds.reduce((result, productId) => {
+
         result[productId] = {
           ...(defaultFertilizer.products?.[productId] || {}),
           ...(incomingFertilizer.products?.[productId] || {})
-
         };
         return result;
       }, {});
@@ -8408,10 +8411,10 @@
       const previous = select.value;
       select.innerHTML = `<option value="manual">One-time customer</option>` + invoiceCustomers.map((customer, index) => {
         const code = customer.customer_code ? `${customer.customer_code} - ` : "";
+
         return `<option value="${index}">${cleanText(`${code}${customer.name}${customer.phone ? ` (${customer.phone})` : ""}`)}</option>`;
       }).join("");
       if (previous === "manual" || invoiceCustomers[Number(previous)]) select.value = previous;
-
     }
 
     function selectedEstimateCustomer() {
@@ -9009,10 +9012,10 @@
       $("#fert-visit-check").innerHTML = `${programCheck}${marginCheck}`;
 
       $("#fert-application-rows").innerHTML = bid.applications.map((application) => `
+
         <tr>
           <td>${cleanText(application.stage)}</td>
           <td>${cleanText(application.timing)}</td>
-
           <td>${cleanText(application.productName)}</td>
           <td>${cleanText(application.analysis)}</td>
           <td>${cleanText(fixedNumber(application.nitrogenRateLbPer1000, 2))}</td>
@@ -9610,10 +9613,10 @@
 
     function renderPaidInvoices() {
       const paidInvoices = invoiceDrafts.filter(isPaidInvoice);
+
       const search = ($("#paid-invoice-search")?.value || "").trim().toLowerCase();
       const filtered = search
         ? paidInvoices.filter((invoice) => invoiceSearchText(invoice).includes(search))
-
         : paidInvoices;
       $("#paid-invoice-summary").textContent = `Paid invoices (${paidInvoices.length})`;
       $("#paid-invoice-list").innerHTML = filtered.length
@@ -10211,10 +10214,10 @@
         render(data.entries || []);
       };
       try { await load(); } catch (error) { list.innerHTML = notice(`Service entries unavailable: ${error.message}`, true); }
+
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
         try {
-
           result.innerHTML = notice("Saving completed service entry...");
           const entryPayload = { property_id: propertyId, customer_user_id: customer.customer_user_id || customer.id, service_date: $("#property-service-date").value, service_category: $("#property-service-category").value, description: $("#property-service-description").value, quantity: $("#property-service-quantity").value, customer_price: $("#property-service-price").value, material_cost: $("#property-service-material-cost").value, internal_notes: { notes: $("#property-service-notes").value }, include_internal_notes: $("#property-service-include-notes").checked };
           await requestJson("portal-property-billing", { method: "POST", headers: adminHeaders(), body: JSON.stringify(entryPayload) });
@@ -10812,10 +10815,10 @@
       const open = data.open || null;
       const recent = data.recent || [];
       const employeeName = data.employee?.full_name || data.employee?.email || "Employee";
+
       const periodLabel = `${data.count || $("#timeclock-count").value || 1} ${data.unit || $("#timeclock-unit").value || "weeks"}`;
       $("#timeclock-status").textContent = open
         ? `${employeeName} is clocked in since ${formatDateTime(open.clock_in_at)}.`
-
         : `${employeeName} is clocked out.`;
       $("#clock-in").disabled = Boolean(open);
       $("#clock-out").disabled = !open;
@@ -11413,10 +11416,10 @@
     }
 
     function renderMarketingPlanRouteOptions() {
+
       const select = $("#marketing-plan-route-select");
       if (!select) return;
       const previous = select.value;
-
       select.innerHTML = `<option value="">Choose route</option>` + marketingAdminRoutes.map((route) =>
         `<option value="${cleanText(route.id)}">${cleanText(marketingRouteLabel(route))}</option>`
       ).join("");
@@ -12014,10 +12017,10 @@
       $("#invoice_manual_phone").value = index >= 0 ? "" : (invoice.phone || "");
       $("#invoice_service_address").value = index >= 0 ? "" : (invoice.service_address || "");
       $("#invoice_saved_address").value = index >= 0 ? (invoice.service_address || invoiceCustomers[index]?.property?.address || "") : "";
+
       toggleManualInvoiceCustomer();
       $("#invoice_amount").value = invoice.amount || "";
       $("#invoice_due").value = invoice.due_date || "";
-
       $("#invoice_status").value = invoice.status;
       $("#invoice_custom_service").value = invoice.service_line || "";
       $("#invoice_project_scope").value = invoice.project_scope || "";
@@ -12615,10 +12618,10 @@
               phone: customer.phone || "",
               email: customer.email || ""
             })
+
           });
           downloadArchive(result.archive);
           await loadCustomers();
-
           await loadAdminJobs();
           $("#customer-detail-result").innerHTML = notice("Customer deleted and archive downloaded.");
         } catch (error) {
@@ -13216,10 +13219,10 @@
               ? " Employee notification was not delivered; they may need to enable notifications on their device."
               : "";
         $("#marketing-admin-result").innerHTML = notice(savedMessage + deliveryMessage, Boolean(data.push && data.push.sent < 1));
+
       } catch (error) {
         $("#marketing-admin-result").innerHTML = notice(error.message, true);
       }
-
     });
 
     $("#marketing-route-cancel").addEventListener("click", clearMarketingRouteForm);
