@@ -4157,6 +4157,8 @@
       .calendar-toolbar-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .calendar-toolbar input { width: 100%; }
     }
+    .blowout-name-label { background: #123324; border: 1px solid #9bea32; border-radius: 5px; color: #f4fff0; font-weight: 800; padding: 2px 6px; box-shadow: 0 2px 8px rgba(0,0,0,.25); white-space: nowrap; }
+    .blowout-name-label::before { border-top-color: #123324; }
   </style>
 </head>
 <body>
@@ -4202,9 +4204,9 @@
   <section id="auth-gate" class="wrap auth-gate active">
     <div class="auth-shell">
       <div class="auth-card customer-login-card">
+
         <h2>Customer sign in</h2>
         <form id="auth-form">
-
           <div>
             <label for="auth-email">Email</label>
             <input id="auth-email" type="email" required placeholder="you@example.com" />
@@ -4803,9 +4805,9 @@
           <div class="daily-route-actions">
             <button id="load-daily-route" class="button ghost" type="button">Load Date</button>
             <button id="select-all-route-jobs" class="button ghost" type="button">Select All</button>
+
             <button id="clear-route-jobs" class="button ghost" type="button">Clear</button>
             <button id="optimize-daily-route" class="button" type="button">Optimize by Drive Time</button>
-
             <button id="save-daily-route" class="button secondary" type="button">Save Daily Route</button>
           </div>
           <div id="daily-route-job-list" class="daily-route-job-list" aria-live="polite"></div>
@@ -5404,9 +5406,9 @@
               <div><span>1</span><div><strong>Customer and project</strong><small>Choose an account or enter a one-time customer.</small></div></div>
               <span id="estimate-current-number" class="badge">New estimate</span>
             </div>
+
             <div class="three">
               <div><label for="estimate-customer">Customer</label><select id="estimate-customer"><option value="manual">One-time customer</option></select></div>
-
               <div><label for="estimate-status">Estimate status</label><select id="estimate-status"><option>Draft</option><option>Quoted</option><option>Approved</option><option>Declined</option><option>Converted</option></select></div>
               <div><label for="estimate-valid-until">Estimate valid until</label><input id="estimate-valid-until" type="date" /></div>
             </div>
@@ -6005,9 +6007,9 @@
             </div>
             <div class="two">
               <div><label for="fert-record-amount">Amount applied</label><input id="fert-record-amount" placeholder="22 lb, 3 bags, 1.5 gal" /></div>
+
               <div class="row-actions" style="align-items:end"><button class="button" type="submit">Save Application</button></div>
             </div>
-
           </form>
           <div id="fertilizer-record-result" aria-live="polite"></div>
           <div id="fertilizer-record-list" class="status-box"></div>
@@ -6606,9 +6608,9 @@
           saveValue(sessionKeys.employeePin, "");
           saveValue(sessionKeys.employeeLogin, "");
           $("#staff-login-result").innerHTML = notice("Saved employee session expired. Sign in again.", true);
+
           setSignedOut({ clearSaved: false });
           return false;
-
         }
       }
 
@@ -7207,9 +7209,9 @@
 
     $("#estimate-add-catalog").addEventListener("click", () => {
       const item = estimateCatalogItems().find((entry) => entry.id === $("#estimate-catalog-select").value);
+
       if (!item) {
         $("#estimate-result").innerHTML = notice("Choose a saved cost item first.", true);
-
         return;
       }
       $("#estimate-line-items").insertAdjacentHTML("beforeend", estimateLineRow(item));
@@ -7808,9 +7810,9 @@
     function mergeBidPricingConfig(config) {
       const defaults = cloneJson(bidDefaultPricingConfig || config || {});
       const incoming = config || {};
+
       const defaultFertilizer = defaults.fertilizerBid || {};
       const incomingFertilizer = incoming.fertilizerBid || {};
-
       const productIds = Object.keys(defaultFertilizer.products || {});
       const products = productIds.reduce((result, productId) => {
         result[productId] = {
@@ -8409,9 +8411,9 @@
 
     function renderEstimateCustomerOptions() {
       const select = $("#estimate-customer");
+
       if (!select) return;
       const previous = select.value;
-
       select.innerHTML = `<option value="manual">One-time customer</option>` + invoiceCustomers.map((customer, index) => {
         const code = customer.customer_code ? `${customer.customer_code} - ` : "";
         return `<option value="${index}">${cleanText(`${code}${customer.name}${customer.phone ? ` (${customer.phone})` : ""}`)}</option>`;
@@ -9010,9 +9012,9 @@
         : `<strong>Program check: REVIEW.</strong> ${cleanText(String(bid.applications.length))} schedule rows do not match ${cleanText(String(bid.fertilizerVisitsPerSeason))} fertilizer visits.`;
       const marginCheck = bid.marginGoalMet
         ? `<span class="profit-check pass"><strong>Profit check: PASS.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin meets the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal.</span>`
+
         : `<span class="profit-check warn"><strong>Profit check: REVIEW.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin is below the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal. Raise the minimum or price per 1,000.</span>`;
       $("#fert-visit-check").innerHTML = `${programCheck}${marginCheck}`;
-
 
       $("#fert-application-rows").innerHTML = bid.applications.map((application) => `
         <tr>
@@ -9611,8 +9613,8 @@
             </div>
           </div>
         `;
-    }
 
+    }
 
     function renderPaidInvoices() {
       const paidInvoices = invoiceDrafts.filter(isPaidInvoice);
@@ -10212,9 +10214,9 @@
         list.innerHTML = entries.length ? entries.slice(0, 20).map((entry) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(entry.description)}</strong><p class="muted">${cleanText(entry.service_date)} | ${cleanText(entry.service_category)} | ${cleanText(entry.quantity)} ${cleanText(entry.unit)} × $${Number(entry.customer_price || 0).toFixed(2)}</p></div><span class="badge">${cleanText(entry.status)}</span></div>`).join("") : notice("No service entries yet.");
       };
       const load = async () => {
+
         const data = await requestJson(`portal-property-billing?property_id=${encodeURIComponent(propertyId)}`, { headers: adminHeaders() });
         render(data.entries || []);
-
       };
       try { await load(); } catch (error) { list.innerHTML = notice(`Service entries unavailable: ${error.message}`, true); }
       form.addEventListener("submit", async (event) => {
@@ -10813,9 +10815,9 @@
       `;
     }
 
+
     function renderTimeClock(data = {}) {
       const open = data.open || null;
-
       const recent = data.recent || [];
       const employeeName = data.employee?.full_name || data.employee?.email || "Employee";
       const periodLabel = `${data.count || $("#timeclock-count").value || 1} ${data.unit || $("#timeclock-unit").value || "weeks"}`;
@@ -11414,9 +11416,9 @@
       $("#marketing-route-form-title").textContent = `Edit ${route.subdivision_name || "subdivision route"}`;
       $("#marketing-route-submit").textContent = "Save Route";
       $("#marketing-route-cancel").hidden = false;
+
       $("#marketing-route-form").scrollIntoView({ behavior: "smooth", block: "start" });
     }
-
 
     function renderMarketingPlanRouteOptions() {
       const select = $("#marketing-plan-route-select");
@@ -11541,6 +11543,7 @@
       const query = String($("#blowout-search")?.value || "").trim().toLowerCase();
       const status = $("#blowout-status-filter")?.value || "All";
       return blowoutLeads.filter((lead) => {
+        if (lead.status === "Not Successful") return false;
         const matchesStatus = status === "All" || lead.status === status || (status === "Needs Correction" && lead.geocode_status === "Needs Correction");
         const haystack = [lead.full_name, lead.email, lead.phone, lead.service_address, lead.status].map((value) => String(value || "").toLowerCase()).join(" ");
         return matchesStatus && (!query || haystack.includes(query));
@@ -11590,9 +11593,12 @@
         const directions = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}`;
         const leadId = String(lead.id);
         const routeNumber = blowoutRouteOrder.indexOf(leadId);
-        const markerIcon = window.L.divIcon({ className: "blowout-route-pin", html: `<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:${routeNumber >= 0 ? "#9bea32" : "#123b27"};color:${routeNumber >= 0 ? "#072116" : "#f4fff0"};border:3px solid #f4fff0;box-shadow:0 2px 8px rgba(0,0,0,.35);font-weight:800;font-size:14px">${routeNumber >= 0 ? routeNumber + 1 : ""}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] });
+        const markerLabel = routeNumber >= 0 ? routeNumber + 1 : (String(lead.full_name || "?").trim().split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "?");
+        const markerIcon = window.L.divIcon({ className: "blowout-route-pin", html: `<span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:${routeNumber >= 0 ? "#9bea32" : "#123b27"};color:${routeNumber >= 0 ? "#072116" : "#f4fff0"};border:3px solid #f4fff0;box-shadow:0 2px 8px rgba(0,0,0,.35);font-weight:800;font-size:12px">${markerLabel}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] });
         const marker = window.L.marker([lat, lng], { icon: markerIcon }).addTo(blowoutMarkerLayer);
-        marker.bindPopup(`<strong>${routeNumber >= 0 ? `${routeNumber + 1}. ` : ""}${cleanText(lead.full_name)}</strong><br>${cleanText(lead.service_address)}<br>${cleanText(lead.status || "New")}<br><a href="${directions}" target="_blank" rel="noopener">Driving directions</a><br><small>Tap the pin to ${routeNumber >= 0 ? "remove it from" : "add it to"} the route</small>`);
+        const signupDate = lead.created_at ? new Date(lead.created_at).toLocaleDateString() : "Unknown";
+        marker.bindTooltip(cleanText(lead.full_name || "Unnamed lead"), { permanent: true, direction: "top", offset: [0, -15], opacity: 0.92, className: "blowout-name-label" });
+        marker.bindPopup(`<strong>${routeNumber >= 0 ? `${routeNumber + 1}. ` : ""}${cleanText(lead.full_name)}</strong><br>${cleanText(lead.service_address)}<br>Signed up: ${cleanText(signupDate)}<br>${cleanText(lead.status || "New")}<br><a href="${directions}" target="_blank" rel="noopener">Driving directions</a><br><small>Tap the pin to ${routeNumber >= 0 ? "remove it from" : "add it to"} the route</small>`);
         marker.on("click", () => {
           const index = blowoutRouteOrder.indexOf(leadId);
           if (index >= 0) blowoutRouteOrder.splice(index, 1);
@@ -12011,13 +12017,13 @@
       }
       if (!$("#invoice_custom_service").value) {
         $("#invoice_custom_service").value = selectedCustomer.plan || "";
+
       }
       $("#invoice_saved_address").value = selectedCustomer.property?.address || selectedJob?.address || "";
       renderInvoiceLines([{
         description: selectedCustomer.plan || selectedJob?.service_type || "Monthly lawn service",
         category: "Service",
         quantity: 1,
-
         unit: "each",
         rate: Number(amount) || 0
       }]);
@@ -12612,13 +12618,13 @@
                 customer_user_id: customer.customer_user_id || customer.id || "",
                 customer_code: customer.customer_code || "",
                 email: customer.email || ""
+
               }
             })
           });
           $("#customer-detail-result").innerHTML = notice(pushDeliveryText(data.push, "Customer notification test sent."));
           await loadCustomers();
         } catch (error) {
-
           $("#customer-detail-result").innerHTML = notice(error.message, true);
         } finally {
           button.disabled = false;
@@ -13213,13 +13219,13 @@
       const form = event.currentTarget;
       const routeId = $("#marketing-route-id").value;
       $("#marketing-admin-result").innerHTML = notice(routeId ? "Saving route..." : "Assigning subdivision...");
+
       try {
         const data = await requestJson("portal-marketing", {
           method: routeId ? "PATCH" : "POST",
           headers: adminHeaders(),
           body: JSON.stringify({
             action: routeId ? "update-route" : "create-route",
-
             id: routeId || undefined,
             subdivision_name: $("#marketing-subdivision").value,
             city: $("#marketing-city").value,
