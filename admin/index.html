@@ -13386,9 +13386,7 @@
           const amount = window.prompt("Base blowout price", "0");
           await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "complete", lead_id: card.dataset.blowoutId, service_date: date, base_amount: amount || 0 }) });
         } else if (action === "invoice") {
-          const amount = window.prompt("Customer price for this blowout", "");
-          if (amount === null) { button.disabled = false; return; }
-          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "invoice", lead_id: card.dataset.blowoutId, base_amount: amount }) });
+          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "invoice", lead_id: card.dataset.blowoutId }) });
         } else {
           await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action, lead_id: card.dataset.blowoutId }) });
         }
