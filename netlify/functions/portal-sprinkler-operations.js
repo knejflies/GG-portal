@@ -154,6 +154,10 @@ exports.handler = async (event) => {
       const rows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ status: "Scheduled", scheduled_date: body.scheduled_date }) });
       return json(200, { lead: rows?.[0] || null, directions_url: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address)}` });
     }
+    if (event.httpMethod === "POST" && body.action === "unschedule") {
+      const rows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ status: "New", scheduled_date: null }) });
+      return json(200, { lead: rows?.[0] || null });
+    }
     if (event.httpMethod === "POST" && body.action === "complete") {
       const result = await ensureCustomerProperty(lead);
       const serviceDate = body.service_date || lead.scheduled_date || new Date().toISOString().slice(0, 10);
