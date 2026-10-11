@@ -38,7 +38,7 @@ function first(...values) {
 }
 
 function authorized(event) {
-  if (!WEBHOOK_SECRET) return true;
+  if (!WEBHOOK_SECRET) return false;
   const supplied = event.headers["x-webhook-secret"] || event.headers["x-helcim-webhook-secret"] || String(event.headers.authorization || "").replace(/^Bearer\s+/i, "");
   return supplied === WEBHOOK_SECRET;
 }
@@ -80,6 +80,7 @@ exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
   if (event.httpMethod !== "POST") return json(405, { error: "POST is required." });
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return json(500, { error: "Supabase is not configured." });
+  if (!WEBHOOK_SECRET) return json(500, { error: "Webhook secret is not configured." });
   if (!authorized(event)) return json(401, { error: "Webhook authorization failed." });
 
   try {
@@ -90,9 +91,12 @@ exports.handler = async (event) => {
     const state = paymentState(payload);
     if (!reference && !invoiceRef) return json(202, { ok: true, ignored: true, reason: "No invoice or payment reference was supplied." });
 
-    const filters = invoiceRef
+    const invoiceIsUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(invoiceRef);
+    const filters = invoiceRef && invoiceIsUuid
       ? `id=eq.${encodeURIComponent(invoiceRef)}`
-      : `provider_payment_ref=eq.${encodeURIComponent(reference)}`;
+      : invoiceRef
+        ? `source_estimate_number=eq.${encodeURIComponent(invoiceRef)}`
+        : `provider_payment_ref=eq.${encodeURIComponent(reference)}`;
     const invoices = await supabase(`green_grin_invoices?select=*&${filters}&limit=1`);
     const invoice = invoices?.[0];
     if (!invoice) return json(202, { ok: true, ignored: true, reason: "Invoice was not found yet.", invoice_reference: invoiceRef || null, payment_reference: reference || null });

@@ -13526,7 +13526,7 @@
       const day = Number(button.dataset.blowoutRouteDay);
       const lead = blowoutLeads.find((item) => blowoutRouteWeekday(item) === day && item.scheduled_date);
       if (lead) $("#blowout-route-date").value = String(lead.scheduled_date).slice(0, 10);
-      blowoutRouteOrder = blowoutLeads.filter((item) => blowoutRouteWeekday(item) === day && item.status !== "Paid" && item.status !== "Not Successful").map((item) => String(item.id));
+      blowoutRouteOrder = blowoutLeads.filter((item) => blowoutRouteWeekday(item) === day && !["Paid", "Completed", "Not Successful"].includes(String(item.status || ""))).map((item) => String(item.id));
       blowoutRouteSelectedIds = [...blowoutRouteOrder];
       renderBlowoutMap(filteredBlowoutLeads());
     });
