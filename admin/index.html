@@ -4998,6 +4998,7 @@
       <div class="card">
         <div class="job-head"><div><span class="admin-eyebrow">Quoting tools</span><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form. Review each referral, approve successful ones, and close it when paid.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
         <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a><button id="send-blowout-confirmations" class="button secondary" type="button">Send confirmations to blowout sign-ups</button><button id="locate-blowout-pins" class="button secondary" type="button">Locate Missing Pins</button><span id="blowout-confirmation-result" aria-live="polite"></span><span id="blowout-location-result" aria-live="polite"></span><input id="blowout-search" type="search" placeholder="Search name, address, phone, or email" /><select id="blowout-status-filter"><option>All</option><option>New</option><option>Scheduled</option><option>Completed</option><option>Invoiced</option><option>Paid</option><option>Needs Correction</option></select></div>
+        <div class="admin-actions"><label>Assign selected to <input id="blowout-bulk-date" type="date" /></label><button id="blowout-bulk-schedule" class="button secondary" type="button">Put checked on this day</button><button id="blowout-bulk-email" class="button secondary" type="button">Email this day</button><span id="blowout-bulk-result" aria-live="polite"></span></div>
         <div class="admin-actions"><label>Route date <input id="blowout-route-date" type="date" /></label><input id="blowout-route-start" type="text" placeholder="Starting address" autocomplete="street-address" /><button id="blowout-route-optimize" class="button secondary" type="button">Optimize Blowout Route</button><button id="blowout-route-clear" class="button ghost" type="button">Clear Stops</button><span id="blowout-route-result" aria-live="polite"></span></div><div id="blowout-route-days" class="admin-actions" aria-label="Blowout route days"></div>
         <div id="blowout-map-summary" class="marketing-summary" aria-live="polite"></div>
         <div id="blowout-map" style="height:360px;margin:14px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(142,210,62,.35)" aria-label="Sprinkler blowout property map"></div>
@@ -5405,8 +5406,8 @@
             <div class="estimator-section-heading">
               <div><span>1</span><div><strong>Customer and project</strong><small>Choose an account or enter a one-time customer.</small></div></div>
               <span id="estimate-current-number" class="badge">New estimate</span>
-            </div>
 
+            </div>
             <div class="three">
               <div><label for="estimate-customer">Customer</label><select id="estimate-customer"><option value="manual">One-time customer</option></select></div>
               <div><label for="estimate-status">Estimate status</label><select id="estimate-status"><option>Draft</option><option>Quoted</option><option>Approved</option><option>Declined</option><option>Converted</option></select></div>
@@ -6006,8 +6007,8 @@
               <div><label for="fert-record-product">Product</label><input id="fert-record-product" placeholder="Product name" /></div>
             </div>
             <div class="two">
-              <div><label for="fert-record-amount">Amount applied</label><input id="fert-record-amount" placeholder="22 lb, 3 bags, 1.5 gal" /></div>
 
+              <div><label for="fert-record-amount">Amount applied</label><input id="fert-record-amount" placeholder="22 lb, 3 bags, 1.5 gal" /></div>
               <div class="row-actions" style="align-items:end"><button class="button" type="submit">Save Application</button></div>
             </div>
           </form>
@@ -6607,8 +6608,8 @@
         } catch (_error) {
           saveValue(sessionKeys.employeePin, "");
           saveValue(sessionKeys.employeeLogin, "");
-          $("#staff-login-result").innerHTML = notice("Saved employee session expired. Sign in again.", true);
 
+          $("#staff-login-result").innerHTML = notice("Saved employee session expired. Sign in again.", true);
           setSignedOut({ clearSaved: false });
           return false;
         }
@@ -7208,8 +7209,8 @@
     });
 
     $("#estimate-add-catalog").addEventListener("click", () => {
-      const item = estimateCatalogItems().find((entry) => entry.id === $("#estimate-catalog-select").value);
 
+      const item = estimateCatalogItems().find((entry) => entry.id === $("#estimate-catalog-select").value);
       if (!item) {
         $("#estimate-result").innerHTML = notice("Choose a saved cost item first.", true);
         return;
@@ -7809,8 +7810,8 @@
 
     function mergeBidPricingConfig(config) {
       const defaults = cloneJson(bidDefaultPricingConfig || config || {});
-      const incoming = config || {};
 
+      const incoming = config || {};
       const defaultFertilizer = defaults.fertilizerBid || {};
       const incomingFertilizer = incoming.fertilizerBid || {};
       const productIds = Object.keys(defaultFertilizer.products || {});
@@ -8410,8 +8411,8 @@
     }
 
     function renderEstimateCustomerOptions() {
-      const select = $("#estimate-customer");
 
+      const select = $("#estimate-customer");
       if (!select) return;
       const previous = select.value;
       select.innerHTML = `<option value="manual">One-time customer</option>` + invoiceCustomers.map((customer, index) => {
@@ -9011,8 +9012,8 @@
         ? `<strong>Program check: PASS.</strong> ${cleanText(String(bid.applications.length))} schedule rows match ${cleanText(String(bid.fertilizerVisitsPerSeason))} fertilizer visits.`
         : `<strong>Program check: REVIEW.</strong> ${cleanText(String(bid.applications.length))} schedule rows do not match ${cleanText(String(bid.fertilizerVisitsPerSeason))} fertilizer visits.`;
       const marginCheck = bid.marginGoalMet
-        ? `<span class="profit-check pass"><strong>Profit check: PASS.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin meets the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal.</span>`
 
+        ? `<span class="profit-check pass"><strong>Profit check: PASS.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin meets the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal.</span>`
         : `<span class="profit-check warn"><strong>Profit check: REVIEW.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin is below the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal. Raise the minimum or price per 1,000.</span>`;
       $("#fert-visit-check").innerHTML = `${programCheck}${marginCheck}`;
 
@@ -9612,8 +9613,8 @@
               <button class="button small ghost" data-invoice-action="delete" type="button">Delete</button>
             </div>
           </div>
-        `;
 
+        `;
     }
 
     function renderPaidInvoices() {
@@ -10213,8 +10214,8 @@
       const render = (entries = []) => {
         list.innerHTML = entries.length ? entries.slice(0, 20).map((entry) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(entry.description)}</strong><p class="muted">${cleanText(entry.service_date)} | ${cleanText(entry.service_category)} | ${cleanText(entry.quantity)} ${cleanText(entry.unit)} × $${Number(entry.customer_price || 0).toFixed(2)}</p></div><span class="badge">${cleanText(entry.status)}</span></div>`).join("") : notice("No service entries yet.");
       };
-      const load = async () => {
 
+      const load = async () => {
         const data = await requestJson(`portal-property-billing?property_id=${encodeURIComponent(propertyId)}`, { headers: adminHeaders() });
         render(data.entries || []);
       };
@@ -11415,8 +11416,8 @@
       $("#marketing-employee-select").value = route.assigned_employee_id || "";
       $("#marketing-route-form-title").textContent = `Edit ${route.subdivision_name || "subdivision route"}`;
       $("#marketing-route-submit").textContent = "Save Route";
-      $("#marketing-route-cancel").hidden = false;
 
+      $("#marketing-route-cancel").hidden = false;
       $("#marketing-route-form").scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
@@ -11638,6 +11639,13 @@
       };
       const roots = leads.filter((lead) => !lead.referrer_lead_id && (!lead.referred_by_code || !byCode.has(String(lead.referred_by_code).toUpperCase())));
       target.innerHTML = roots.map(renderCard).join("");
+      target.querySelectorAll(".marketing-lead[data-blowout-id]").forEach((card) => {
+        const label = document.createElement("label");
+        label.className = "muted";
+        label.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px";
+        label.innerHTML = `<input type="checkbox" data-blowout-select="${card.dataset.blowoutId}" /> Include in day assignment`;
+        card.prepend(label);
+      });
     }
 
     async function optimizeBlowoutRoute() {
@@ -12009,6 +12017,7 @@
       const amount = monthBilling.weeks !== null
         ? monthBilling.amount
         : monthBilling.amount || selectedCustomer.monthly_price || selectedJob?.monthly_price || 0;
+
       if (amount && !$("#invoice_amount").value) {
         $("#invoice_amount").value = Number(amount).toFixed(2);
       }
@@ -12017,7 +12026,6 @@
       }
       if (!$("#invoice_custom_service").value) {
         $("#invoice_custom_service").value = selectedCustomer.plan || "";
-
       }
       $("#invoice_saved_address").value = selectedCustomer.property?.address || selectedJob?.address || "";
       renderInvoiceLines([{
@@ -12610,6 +12618,7 @@
           button.textContent = "Testing...";
           const data = await requestJson("portal-push", {
             method: "POST",
+
             headers: adminHeaders(),
             body: JSON.stringify({
               testCustomer: true,
@@ -12618,7 +12627,6 @@
                 customer_user_id: customer.customer_user_id || customer.id || "",
                 customer_code: customer.customer_code || "",
                 email: customer.email || ""
-
               }
             })
           });
@@ -13211,6 +13219,7 @@
       if (saveButton) {
         saveButton.disabled = true;
         await updateMarketingLead(card, "Interested");
+
       }
     });
 
@@ -13219,7 +13228,6 @@
       const form = event.currentTarget;
       const routeId = $("#marketing-route-id").value;
       $("#marketing-admin-result").innerHTML = notice(routeId ? "Saving route..." : "Assigning subdivision...");
-
       try {
         const data = await requestJson("portal-marketing", {
           method: routeId ? "PATCH" : "POST",
@@ -13281,6 +13289,35 @@
       try {
         const data = await requestJson("portal-sprinkler-blowouts", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send-confirmations" }) });
         result.innerHTML = notice(`${data.sent || 0} sent. ${data.skipped || 0} skipped without an email. ${data.failed || 0} failed.`);
+      } catch (error) { result.innerHTML = notice(error.message, true); }
+      button.disabled = false;
+    });
+    $("#blowout-bulk-schedule").addEventListener("click", async () => {
+      const date = $("#blowout-bulk-date").value;
+      const ids = [...document.querySelectorAll("#blowout-leads-list input[data-blowout-select]:checked")].map((input) => input.dataset.blowoutSelect).filter(Boolean);
+      const result = $("#blowout-bulk-result");
+      if (!date) { result.innerHTML = notice("Choose the day first.", true); return; }
+      if (!ids.length) { result.innerHTML = notice("Check the customers you want to put on that day.", true); return; }
+      const button = $("#blowout-bulk-schedule");
+      button.disabled = true;
+      result.innerHTML = notice(`Assigning ${ids.length} blowout${ids.length === 1 ? "" : "s"}...`);
+      try {
+        for (const id of ids) await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "schedule", lead_id: id, scheduled_date: date }) });
+        result.innerHTML = notice(`${ids.length} blowout${ids.length === 1 ? "" : "s"} assigned to ${new Date(`${date}T12:00:00`).toLocaleDateString()}.`);
+        await loadBlowoutLeads();
+      } catch (error) { result.innerHTML = notice(error.message, true); }
+      button.disabled = false;
+    });
+    $("#blowout-bulk-email").addEventListener("click", async () => {
+      const date = $("#blowout-bulk-date").value;
+      const result = $("#blowout-bulk-result");
+      if (!date) { result.innerHTML = notice("Choose the scheduled day first.", true); return; }
+      const button = $("#blowout-bulk-email");
+      button.disabled = true;
+      result.innerHTML = notice("Sending the day’s expected-visit emails...");
+      try {
+        const data = await requestJson("portal-sprinkler-blowouts", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send-scheduled-notices", scheduled_date: date }) });
+        result.innerHTML = notice(`${data.sent || 0} sent. ${data.skipped || 0} skipped without email. ${data.failed || 0} failed.`);
       } catch (error) { result.innerHTML = notice(error.message, true); }
       button.disabled = false;
     });
