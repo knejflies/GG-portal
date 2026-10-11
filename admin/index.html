@@ -5692,9 +5692,10 @@
       <div class="card">
         <h2>Email Drafter</h2>
         <p class="muted">Write or revise any customer email here, then send it through your connected business email.</p>
+        <div id="email-drafter-day-mode" class="status-box" hidden></div>
         <form id="email-drafter-form">
           <div class="two">
-            <div><label for="email-drafter-to">To</label><input id="email-drafter-to" type="email" required placeholder="customer@example.com" /></div>
+            <div><label for="email-drafter-to">To</label><input id="email-drafter-to" type="email" placeholder="customer@example.com" /></div>
             <div><label for="email-drafter-subject">Subject</label><input id="email-drafter-subject" maxlength="180" required placeholder="Your Green Grin update" /></div>
           </div>
           <div><label for="email-drafter-message">Message</label><textarea id="email-drafter-message" rows="12" maxlength="20000" required placeholder="Type and edit your message here..."></textarea></div>
@@ -12394,7 +12395,17 @@
       $("#email-drafter-subject").value = "";
       $("#email-drafter-message").value = "";
       $("#email-drafter-result").innerHTML = "";
+      sessionStorage.removeItem("gg-email-drafter-day");
+      $("#email-drafter-day-mode").hidden = true;
     });
+    const emailDrafterDay = sessionStorage.getItem("gg-email-drafter-day");
+    if (emailDrafterDay) {
+      const dayLabel = new Date(`${emailDrafterDay}T12:00:00`).toLocaleDateString();
+      $("#email-drafter-day-mode").hidden = false;
+      $("#email-drafter-day-mode").textContent = `Day email mode: this will send individually to every scheduled blowout customer on ${dayLabel}. You can edit the wording below. Use {{name}}, {{address}}, and {{date}} as personal placeholders.`;
+      $("#email-drafter-subject").value = `Green Grin is expected ${dayLabel}`;
+      $("#email-drafter-message").value = `Hi {{name}},\n\nThanks for choosing Green Grin. We expect to be at {{address}} on {{date}} for your sprinkler blowout.\n\nWeather or route changes may shift the timing. We will keep you updated.\n\nGreen Grin Lawns`;
+    }
     $("#email-drafter-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const button = event.currentTarget.querySelector('button[type="submit"]');
@@ -12402,8 +12413,18 @@
       button.disabled = true;
       result.innerHTML = notice("Sending email...");
       try {
-        const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to: $("#email-drafter-to").value, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
-        result.innerHTML = notice(`Email sent to ${cleanText(data.to)}.`);
+        const dayDate = sessionStorage.getItem("gg-email-drafter-day");
+        if (dayDate) {
+          const data = await requestJson("portal-sprinkler-blowouts", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send-scheduled-notices", scheduled_date: dayDate, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
+          result.innerHTML = notice(`${data.sent || 0} sent. ${data.skipped || 0} skipped without an email. ${data.failed || 0} failed.`);
+          sessionStorage.removeItem("gg-email-drafter-day");
+          $("#email-drafter-day-mode").hidden = true;
+        } else {
+          const to = $("#email-drafter-to").value.trim();
+          if (!to) throw new Error("Enter a recipient email.");
+          const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
+          result.innerHTML = notice(`Email sent to ${cleanText(data.to)}.`);
+        }
       } catch (error) {
         result.innerHTML = notice(error.message, true);
       } finally {
@@ -13354,14 +13375,9 @@
       const date = $("#blowout-bulk-date").value;
       const result = $("#blowout-bulk-result");
       if (!date) { result.innerHTML = notice("Choose the scheduled day first.", true); return; }
-      const button = $("#blowout-bulk-email");
-      button.disabled = true;
-      result.innerHTML = notice("Sending the day’s expected-visit emails...");
-      try {
-        const data = await requestJson("portal-sprinkler-blowouts", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send-scheduled-notices", scheduled_date: date }) });
-        result.innerHTML = notice(`${data.sent || 0} sent. ${data.skipped || 0} skipped without email. ${data.failed || 0} failed.`);
-      } catch (error) { result.innerHTML = notice(error.message, true); }
-      button.disabled = false;
+      sessionStorage.setItem("gg-email-drafter-day", date);
+      document.querySelector('[data-tab="email-drafter"]')?.click();
+      result.innerHTML = notice("Email Drafter opened for this day. Edit the message, then send it.");
     });
     $("#locate-blowout-pins").addEventListener("click", async () => {
       const button = $("#locate-blowout-pins");

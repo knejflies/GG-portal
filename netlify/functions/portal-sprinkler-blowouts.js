@@ -80,12 +80,15 @@ async function sendBlowoutConfirmation(lead) {
   }
 }
 
-async function sendScheduledNotice(lead, scheduledDate) {
+async function sendScheduledNotice(lead, scheduledDate, subjectOverride = "", messageOverride = "") {
   if (!lead?.email) return { sent: false, skipped: true, reason: "No email address." };
   if (!RESEND_API_KEY) return { sent: false, skipped: true, reason: "Email is not configured in Netlify." };
   const dateLabel = new Date(`${scheduledDate}T12:00:00`).toLocaleDateString();
+  const defaultMessage = [`Hi {{name}},`, "", `Thanks for choosing Green Grin. We expect to be at {{address}} on {{date}} for your sprinkler blowout.`, "", "Weather or route changes may shift the timing. We will keep you updated.", "Green Grin Lawns"].join("\n");
+  const message = String(messageOverride || defaultMessage).replaceAll("{{name}}", lead.full_name || "there").replaceAll("{{address}}", lead.service_address || "your property").replaceAll("{{date}}", dateLabel);
+  const subject = String(subjectOverride || `Green Grin is expected ${dateLabel}`).replaceAll("{{name}}", lead.full_name || "there").replaceAll("{{date}}", dateLabel);
   try {
-    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [lead.email], subject: `Green Grin is expected ${dateLabel}`, text: [`Hi ${lead.full_name || "there"},`, "", `Thanks for choosing Green Grin. We expect to be at ${lead.service_address || "your property"} on ${dateLabel} for your sprinkler blowout.`, "", "Weather or route changes may shift the timing. We will keep you updated.", "Green Grin Lawns"].join("\n"), html: `<p>Hi ${escapeHtml(lead.full_name || "there")},</p><p>Thanks for choosing Green Grin. We expect to be at <strong>${escapeHtml(lead.service_address || "your property")}</strong> on <strong>${escapeHtml(dateLabel)}</strong> for your sprinkler blowout.</p><p>Weather or route changes may shift the timing. We will keep you updated.</p><p>Green Grin Lawns</p>` }) });
+    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [lead.email], subject, text: message, html: `<div style="font-family:Arial,sans-serif;line-height:1.55;white-space:pre-wrap">${escapeHtml(message)}</div>` }) });
     const data = await response.json().catch(() => ({}));
     return response.ok ? { sent: true, id: data.id || null } : { sent: false, error: data.message || "Email provider rejected the notice." };
   } catch (error) { return { sent: false, error: error.message || "Notice could not be sent." }; }
@@ -164,7 +167,9 @@ exports.handler = async (event) => {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) return json(400, { error: "Choose a valid service date." });
       const leads = await supabase(`green_grin_sprinkler_blowout_leads?select=*&scheduled_date=eq.${encodeURIComponent(scheduledDate)}&status=eq.Scheduled&order=created_at.asc&limit=1000`);
       const results = [];
-      for (const lead of leads || []) results.push({ id: lead.id, full_name: lead.full_name, notice: await sendScheduledNotice(lead, scheduledDate) });
+      const subject = clean(body.subject, 180);
+      const message = clean(body.message, 20000);
+      for (const lead of leads || []) results.push({ id: lead.id, full_name: lead.full_name, notice: await sendScheduledNotice(lead, scheduledDate, subject, message) });
       return json(200, { total: results.length, sent: results.filter((row) => row.notice.sent).length, skipped: results.filter((row) => row.notice.skipped).length, failed: results.filter((row) => row.notice.error).length, results });
     }
     const fullName = clean(body.full_name, 160);
