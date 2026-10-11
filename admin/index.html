@@ -3782,6 +3782,29 @@
     .operations-tile span { color: var(--muted); font-size: .82rem; }
     .operations-tile .button { align-self: end; justify-self: start; }
 
+    .operations-queue {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .operations-queue-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 7px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(215, 234, 209, 0.12);
+    }
+
+    .operations-queue-item strong,
+    .operations-queue-item span { display: block; }
+    .operations-queue-item span { color: var(--muted); font-size: .78rem; margin-top: 2px; }
+    .operations-queue-count { color: var(--role-accent) !important; font-size: 1.2rem !important; font-weight: 800; }
+
     .field-date-control { min-width: 190px; }
     .field-job-list { display: grid; gap: 11px; }
 
@@ -4165,7 +4188,8 @@
       .home-metric small { font-size: 0.66rem; }
       .admin-home-grid,
       .admin-quick-grid,
-      .operations-board { grid-template-columns: 1fr; }
+      .operations-board,
+      .operations-queue { grid-template-columns: 1fr; }
       .quick-command { min-height: 66px; }
       .field-job { padding: 14px; }
       .field-job-top { align-items: stretch; flex-direction: column; }
@@ -4687,6 +4711,7 @@
           <button class="button ghost small" data-home-expense="mileage-maps" type="button">View mileage maps</button>
           <button class="button ghost small" data-home-go="invoices" type="button">Review invoices</button>
         </div>
+        <div id="operations-queue" class="operations-queue" aria-live="polite"></div>
       </div>
     </section>
 
@@ -10656,6 +10681,20 @@
       $("#home-today-count").textContent = String(todayJobs.length);
       $("#home-customer-count").textContent = String(invoiceCustomers.length);
       $("#home-outstanding-total").textContent = money(outstanding);
+      const queue = $("#operations-queue");
+      if (queue) {
+        const openInvoices = invoiceDrafts.filter((invoice) => !isPaidInvoice(invoice) && invoice.status !== "Draft").length;
+        const unassignedJobs = adminJobRows.filter((job) => !job.assigned_employee_id && String(job.status || "").toLowerCase() !== "completed").length;
+        const completedJobs = adminJobRows.filter((job) => String(job.status || "").toLowerCase() === "completed").length;
+        const followUps = invoiceCustomers.filter((customer) => customer.follow_up_needed || customer.status === "Past due").length;
+        queue.innerHTML = [
+          { label: "Today’s route", count: todayJobs.length, detail: "scheduled visits", tab: "field-mode" },
+          { label: "Unassigned work", count: unassignedJobs, detail: "jobs need a crew", tab: "owner" },
+          { label: "Invoices to review", count: openInvoices, detail: "open balances", tab: "invoices" },
+          { label: "Customer follow-ups", count: followUps, detail: `${completedJobs} jobs completed`, tab: "customers" }
+        ].map((item) => `<button class="operations-queue-item" data-home-go="${item.tab}" type="button"><span><strong>${cleanText(item.label)}</strong><span>${cleanText(item.detail)}</span></span><strong class="operations-queue-count">${item.count}</strong></button>`).join("");
+        queue.querySelectorAll("[data-home-go]").forEach((button) => button.addEventListener("click", () => openTab(button.dataset.homeGo)));
+      }
       renderFieldMode();
       renderAdminSearch();
     }
