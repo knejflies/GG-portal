@@ -67,6 +67,7 @@ function blowoutConfirmationPayload(lead) {
 
 async function sendBlowoutConfirmation(lead) {
   if (!lead?.email) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Sign-up has no email address." };
+  if (lead.confirmation_sent_at) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Confirmation was already sent.", sent_at: lead.confirmation_sent_at };
   if (!RESEND_API_KEY) return { enabled: false, sent: false, skipped: true, reason: "Email is not configured in Netlify." };
   try {
     const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify(blowoutConfirmationPayload(lead)) });

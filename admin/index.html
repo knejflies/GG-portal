@@ -10351,6 +10351,7 @@
           <div class="customer-file-block"><strong>Property</strong><p>${cleanText(property.address || "No address saved")}</p><p class="muted">Gate: ${cleanText(property.gate_code || "None")}</p><p class="muted">Pets: ${cleanText(property.pets || "None listed")}</p></div>
         </div>
         <div class="customer-file-block" style="margin-top:12px"><strong>Service and billing</strong><p>${cleanText(customer.plan || "No plan set")}</p><p class="muted">${cleanText(preferenceLine(customer))}</p><p class="muted">${cleanText(notificationLine(customer))}</p></div>
+        ${property.id ? `<div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Recurring billing</strong><span id="property-billing-status" class="badge">Loading</span></div><p class="muted">Choose whether you review each monthly invoice or let an authorized Helcim payment method charge automatically. Venmo stays customer initiated.</p><form id="property-authorization-form" class="customer-file-grid" style="margin-top:10px"><div><label for="property-billing-mode">Billing mode</label><select id="property-billing-mode"><option>Review first</option><option>Automatic</option></select></div><div><label for="property-billing-provider">Payment provider</label><select id="property-billing-provider"><option value="helcim">Helcim</option><option value="manual">Manual / Venmo</option></select></div><div><label for="property-max-cycle">Maximum monthly charge</label><input id="property-max-cycle" type="number" min="0" step="0.01" placeholder="No limit" /></div><div><label for="property-notice-days">Notice days</label><input id="property-notice-days" type="number" min="0" max="30" value="3" /></div><div style="grid-column:1/-1"><strong>Authorized services</strong><div class="checklist" style="margin-top:6px"><label class="check"><input class="property-authorized-service" type="checkbox" value="Mowing" checked /> Mowing</label><label class="check"><input class="property-authorized-service" type="checkbox" value="Fertilizer" /> Fertilizer</label><label class="check"><input class="property-authorized-service" type="checkbox" value="Spraying" /> Spraying</label><label class="check"><input class="property-authorized-service" type="checkbox" value="Cleanup" /> Cleanup</label><label class="check"><input class="property-authorized-service" type="checkbox" value="Landscaping" /> Landscaping</label></div></div><div class="admin-actions" style="grid-column:1/-1"><button class="button small" type="submit">Save recurring billing</button><button class="button small ghost" id="property-revoke-authorization" type="button">Revoke automatic billing</button></div></form><div id="property-authorization-result" aria-live="polite" style="margin-top:10px"></div></div>` : ""}
         ${property.id ? `<div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Property service entries</strong><span class="badge">Monthly billing</span></div><form id="property-service-entry-form" class="customer-file-grid" style="margin-top:10px"><input id="property-service-property-id" type="hidden" value="${cleanText(property.id)}" /><input id="property-service-customer-id" type="hidden" value="${cleanText(customer.customer_user_id || customer.id || "")}" /><div><label for="property-service-date">Service date</label><input id="property-service-date" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></div><div><label for="property-service-category">Category</label><select id="property-service-category"><option>Mowing</option><option>Fertilizer</option><option>Spraying</option><option>Irrigation</option><option>Cleanup</option><option>Landscaping</option><option>Other</option></select></div><div><label for="property-service-description">Description</label><input id="property-service-description" value="Lawn mowing visit" required /></div><div><label for="property-service-quantity">Quantity</label><input id="property-service-quantity" type="number" min="0.01" step="0.01" value="1" required /></div><div><label for="property-service-price">Customer price</label><input id="property-service-price" type="number" min="0" step="0.01" value="0" required /></div><div><label for="property-service-material-cost">Internal material cost</label><input id="property-service-material-cost" type="number" min="0" step="0.01" value="0" /></div><div style="grid-column:1/-1"><label for="property-service-notes">Internal notes (never shown to customer unless selected)</label><textarea id="property-service-notes" rows="2" placeholder="Product, amount used, area treated, or crew notes"></textarea></div><div class="admin-actions" style="grid-column:1/-1"><button class="button small" type="submit">Add Completed Entry</button><label class="check"><input id="property-service-include-notes" type="checkbox" /> Include notes on invoice</label></div></form><div class="two" style="margin-top:12px"><div><label for="property-billing-cycle">Billing month</label><input id="property-billing-cycle" type="month" value="${new Date().toISOString().slice(0, 7)}" /></div><button id="property-generate-invoice" class="button small secondary" type="button">Build Monthly Draft</button></div><div id="property-service-result" aria-live="polite" style="margin-top:10px"></div><div id="property-service-entry-list" class="status-box" style="margin-top:10px">Loading service entries...</div></div>` : ""}
         <div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Contact history</strong><span class="badge">In-app messages</span></div><div id="customer-file-contact-history" class="status-box">Loading contact history...</div></div>
         <div class="customer-file-block" style="margin-top:12px"><strong>Jobs</strong>${jobs.length ? jobs.map((job) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(job.service_type || "Service")}</strong><p class="muted">${cleanText(jobCategory(job))} | ${cleanText(jobFrequency(job))} | ${cleanText(scheduleLine(job))}</p><p class="muted">${cleanText(job.address || property.address || "No address")}</p></div><span class="badge">${cleanText(job.status || "New")}</span></div>`).join("") : `<p class="muted">No jobs created for this customer yet.</p>`}</div>
@@ -10368,6 +10369,22 @@
       if (!form || !list) return;
       const propertyId = customer.property?.id;
       const result = $("#property-service-result");
+      const authorizationForm = $("#property-authorization-form");
+      const authorizationResult = $("#property-authorization-result");
+      const authorizationStatus = $("#property-billing-status");
+      const applyAuthorization = (authorization) => {
+        if (!authorization) {
+          if (authorizationStatus) authorizationStatus.textContent = "Not connected";
+          return;
+        }
+        if ($("#property-billing-mode")) $("#property-billing-mode").value = authorization.billing_mode || "Review first";
+        if ($("#property-billing-provider")) $("#property-billing-provider").value = authorization.provider || "stripe";
+        if ($("#property-max-cycle")) $("#property-max-cycle").value = authorization.max_cycle_charge ?? "";
+        if ($("#property-notice-days")) $("#property-notice-days").value = authorization.advance_notice_days ?? 3;
+        const allowed = new Set((authorization.authorized_services || []).map((value) => String(value).toLowerCase()));
+        document.querySelectorAll(".property-authorized-service").forEach((input) => { input.checked = allowed.has(input.value.toLowerCase()); });
+        if (authorizationStatus) authorizationStatus.textContent = authorization.status === "Active" ? authorization.billing_mode : "Pending";
+      };
 
       const render = (entries = []) => {
         list.innerHTML = entries.length ? entries.slice(0, 20).map((entry) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(entry.description)}</strong><p class="muted">${cleanText(entry.service_date)} | ${cleanText(entry.service_category)} | ${cleanText(entry.quantity)} ${cleanText(entry.unit)} × $${Number(entry.customer_price || 0).toFixed(2)}</p></div><span class="badge">${cleanText(entry.status)}</span></div>`).join("") : notice("No service entries yet.");
@@ -10375,6 +10392,7 @@
       const load = async () => {
         const data = await requestJson(`portal-property-billing?property_id=${encodeURIComponent(propertyId)}`, { headers: adminHeaders() });
         render(data.entries || []);
+        applyAuthorization((data.authorizations || [])[0]);
       };
       try { await load(); } catch (error) { list.innerHTML = notice(`Service entries unavailable: ${error.message}`, true); }
       form.addEventListener("submit", async (event) => {
@@ -10394,6 +10412,28 @@
           result.innerHTML = notice(data.created ? "Monthly draft invoice created. Review it in Invoices before sending." : (data.reason || "That month has already been billed."));
           await load();
         } catch (error) { result.innerHTML = notice(error.message, true); }
+      });
+      authorizationForm?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try {
+          authorizationResult.innerHTML = notice("Saving recurring billing settings...");
+          const services = Array.from(document.querySelectorAll(".property-authorized-service:checked")).map((input) => input.value);
+          if (!services.length) throw new Error("Choose at least one authorized service.");
+          const mode = $("#property-billing-mode").value;
+          const provider = $("#property-billing-provider").value;
+          if (mode === "Automatic" && provider !== "helcim") throw new Error("Automatic charging requires Helcim. Venmo remains customer initiated.");
+          await requestJson("portal-property-billing", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "authorization", property_id: propertyId, customer_user_id: customer.customer_user_id || customer.id, billing_mode: mode, provider, authorized_services: services, max_cycle_charge: $("#property-max-cycle").value, advance_notice_days: $("#property-notice-days").value, status: mode === "Automatic" ? "Pending" : "Active", authorization_version: "helcim-v1" }) });
+          authorizationResult.innerHTML = notice(mode === "Automatic" ? "Automatic billing saved as pending provider setup." : "Review-first billing saved.");
+          if (authorizationStatus) authorizationStatus.textContent = mode === "Automatic" ? "Pending" : "Review first";
+        } catch (error) { authorizationResult.innerHTML = notice(error.message, true); }
+      });
+      $("#property-revoke-authorization")?.addEventListener("click", async () => {
+        try {
+          authorizationResult.innerHTML = notice("Revoking automatic billing...");
+          await requestJson("portal-property-billing", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "authorization", property_id: propertyId, customer_user_id: customer.customer_user_id || customer.id, billing_mode: "Review first", authorized_services: ["Mowing"], provider: "manual", status: "Revoked", authorization_version: "helcim-v1" }) });
+          authorizationResult.innerHTML = notice("Automatic billing revoked. Future invoices require review.");
+          if (authorizationStatus) authorizationStatus.textContent = "Revoked";
+        } catch (error) { authorizationResult.innerHTML = notice(error.message, true); }
       });
     }
 
@@ -11729,16 +11769,18 @@
       const target = $("#blowout-route-days");
       if (!target) return;
       const names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      const groups = names.map((name, day) => ({ name, day, count: blowoutLeads.filter((lead) => lead.status !== "Paid" && lead.status !== "Not Successful" && blowoutRouteWeekday(lead) === day).length })).filter((group) => group.count);
+      const groups = names.map((name, day) => ({ name, day, count: blowoutLeads.filter((lead) => !["Paid", "Completed", "Not Successful"].includes(String(lead.status || "")) && blowoutRouteWeekday(lead) === day).length })).filter((group) => group.count);
       target.innerHTML = groups.length ? groups.map((group) => `<button class="button small ghost" type="button" data-blowout-route-day="${group.day}">${group.name} (${group.count})</button>`).join("") : `<span class="muted">Schedule blowouts to group them by day.</span>`;
     }
     function renderBlowoutMap(leads = []) {
       const container = $("#blowout-map");
       if (!container || !window.L) return;
-      const located = leads.filter((lead) => lead.geocode_status === "Located" && Number.isFinite(Number(lead.latitude)) && Number.isFinite(Number(lead.longitude))).length;
-      const needsCorrection = leads.filter((lead) => lead.geocode_status === "Needs Correction").length;
-      const notLocated = Math.max(0, leads.length - located - needsCorrection);
-      if ($("#blowout-map-summary")) $("#blowout-map-summary").innerHTML = `<span><strong>${located}</strong>On map</span><span><strong>${needsCorrection}</strong>Needs correction</span><span><strong>${notLocated}</strong>Not located</span><span><strong>${leads.length}</strong>Total shown</span>`;
+      // Completed/paid blowouts remain in the list and history, but leave the active route map.
+      const activeLeads = leads.filter((lead) => !["Paid", "Completed", "Not Successful"].includes(String(lead.status || "")));
+      const located = activeLeads.filter((lead) => lead.geocode_status === "Located" && Number.isFinite(Number(lead.latitude)) && Number.isFinite(Number(lead.longitude))).length;
+      const needsCorrection = activeLeads.filter((lead) => lead.geocode_status === "Needs Correction").length;
+      const notLocated = Math.max(0, activeLeads.length - located - needsCorrection);
+      if ($("#blowout-map-summary")) $("#blowout-map-summary").innerHTML = `<span><strong>${located}</strong>On map</span><span><strong>${needsCorrection}</strong>Needs correction</span><span><strong>${notLocated}</strong>Not located</span><span><strong>${activeLeads.length}</strong>Active shown</span>`;
       if (!blowoutMap) {
         blowoutMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 12);
         addMarketingBasemapControl(blowoutMap, "street");
@@ -11758,7 +11800,7 @@
       }
       blowoutMarkerLayer.clearLayers();
       const bounds = [];
-      leads.forEach((lead) => {
+      activeLeads.forEach((lead) => {
         const lat = Number(lead.latitude); const lng = Number(lead.longitude);
         if (!Number.isFinite(lat) || !Number.isFinite(lng) || lead.geocode_status !== "Located") return;
         bounds.push([lat, lng]);

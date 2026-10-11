@@ -112,7 +112,7 @@ exports.handler = async (event) => {
           authorization_version: String(body.authorization_version || "v1").slice(0, 40),
           authorized_at: body.authorized_at || null,
           revoked_at: null,
-          status: body.status === "Active" ? "Active" : "Pending"
+          status: body.status === "Revoked" ? "Revoked" : body.status === "Active" ? "Active" : "Pending"
         };
         const existing = await supabase(`green_grin_billing_authorizations?select=id&property_id=eq.${encodeURIComponent(body.property_id)}&status=neq.Revoked&limit=1`);
         const rows = existing?.[0]
