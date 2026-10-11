@@ -149,8 +149,9 @@ exports.handler = async (event) => {
     }
     if (event.httpMethod === "POST" && body.action === "schedule") {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(String(body.scheduled_date || ""))) return json(400, { error: "A valid service date is required." });
-      const result = await ensureCustomerProperty(lead);
-      const rows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ ...result.lead, status: "Scheduled", scheduled_date: body.scheduled_date, customer_user_id: result.customer_user_id, property_id: result.property_id }) });
+      // Scheduling is a planning step and must work before a customer/property is linked.
+      // Linking is still handled when the blowout is completed or synced.
+      const rows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ status: "Scheduled", scheduled_date: body.scheduled_date }) });
       return json(200, { lead: rows?.[0] || null, directions_url: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address)}` });
     }
     if (event.httpMethod === "POST" && body.action === "complete") {
