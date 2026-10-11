@@ -12590,14 +12590,19 @@
       sessionStorage.removeItem("gg-email-drafter-recipients");
       $("#email-drafter-day-mode").hidden = true;
     });
-    const dayEmailRecipients = JSON.parse(sessionStorage.getItem("gg-email-drafter-recipients") || "null");
-    if (Array.isArray(dayEmailRecipients) && dayEmailRecipients.length) {
-      const dayLabel = new Date(`${dayEmailRecipients[0].date}T12:00:00`).toLocaleDateString();
-      $("#email-drafter-day-mode").hidden = false;
-      $("#email-drafter-day-mode").textContent = `Day email mode: this will send individually to ${dayEmailRecipients.length} scheduled customer${dayEmailRecipients.length === 1 ? "" : "s"} on ${dayLabel}. Edit the wording below. Use {{name}}, {{address}}, and {{date}} as placeholders.`;
+    function loadDayEmailDraft() {
+      let recipients = null;
+      try { recipients = JSON.parse(sessionStorage.getItem("gg-email-drafter-recipients") || "null"); } catch (_error) { recipients = null; }
+      const mode = $("#email-drafter-day-mode");
+      if (!Array.isArray(recipients) || !recipients.length) { if (mode) mode.hidden = true; return false; }
+      const dayLabel = new Date(`${recipients[0].date}T12:00:00`).toLocaleDateString();
+      mode.hidden = false;
+      mode.textContent = `Day email mode: this will send individually to ${recipients.length} scheduled customer${recipients.length === 1 ? "" : "s"} on ${dayLabel}. Edit the wording below. Use {{name}}, {{address}}, and {{date}} as placeholders.`;
       $("#email-drafter-subject").value = `Green Grin is expected ${dayLabel}`;
       $("#email-drafter-message").value = `Hi {{name}},\n\nThanks for choosing Green Grin. We expect to be at {{address}} on {{date}} for your sprinkler blowout.\n\nWeather or route changes may shift the timing. We will keep you updated.\n\nGreen Grin Lawns`;
+      return true;
     }
+    loadDayEmailDraft();
     $("#email-drafter-form").addEventListener("submit", async (event) => {
       event.preventDefault();
       const button = event.currentTarget.querySelector('button[type="submit"]');
@@ -12605,7 +12610,8 @@
       button.disabled = true;
       result.innerHTML = notice("Sending email...");
       try {
-        const recipients = JSON.parse(sessionStorage.getItem("gg-email-drafter-recipients") || "null");
+        let recipients = null;
+        try { recipients = JSON.parse(sessionStorage.getItem("gg-email-drafter-recipients") || "null"); } catch (_error) { recipients = null; }
         const to = $("#email-drafter-to").value.trim();
         if (!recipients?.length && !to) throw new Error("Enter a recipient email.");
         const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, recipients, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
@@ -13565,6 +13571,7 @@
       const recipients = blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === date && !["Completed", "Paid", "Not Successful"].includes(String(lead.status || "")) && lead.email).map((lead) => ({ email: String(lead.email).trim().toLowerCase(), name: lead.full_name, address: lead.service_address, date })).filter((recipient) => { if (seen.has(recipient.email)) return false; seen.add(recipient.email); return true; });
       if (!recipients.length) { result.innerHTML = notice("No scheduled customers with email addresses were found for that day.", true); return; }
       sessionStorage.setItem("gg-email-drafter-recipients", JSON.stringify(recipients));
+      loadDayEmailDraft();
       document.querySelector('[data-tab="email-drafter"]')?.click();
       result.innerHTML = notice("Email Drafter opened for this day. Edit the message, then send it.");
     });
