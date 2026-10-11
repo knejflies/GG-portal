@@ -8707,7 +8707,7 @@
           <div class="row-actions">
             ${estimate.approved_at ? `<span class="badge">Signed by ${cleanText(estimate.approved_by || "customer")}</span><button class="button small" data-estimate-action="signed-copy" type="button">Signed Contract</button>` : `<button class="button small" data-estimate-action="send-proposal" type="button">Send Contract</button>`}
             <button class="button small ghost" data-estimate-action="edit" type="button">Edit</button>
-            <button class="button small ghost" data-estimate-action="print" type="button">Customer Preview</button>
+            <button class="button small ghost" data-estimate-action="print" data-estimate-intent="print" type="button">Customer Preview</button>
             <button class="button small ghost" data-estimate-action="delete" type="button">Delete</button>
           </div>
         </div>`).join("") : notice(query ? "No estimates match that search." : "No saved estimates yet.");
