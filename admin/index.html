@@ -13561,7 +13561,8 @@
       const date = $("#blowout-bulk-date").value;
       const result = $("#blowout-bulk-result");
       if (!date) { result.innerHTML = notice("Choose the scheduled day first.", true); return; }
-      const recipients = blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === date && lead.status === "Scheduled" && lead.email).map((lead) => ({ email: lead.email, name: lead.full_name, address: lead.service_address, date }));
+      const seen = new Set();
+      const recipients = blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === date && !["Completed", "Paid", "Not Successful"].includes(String(lead.status || "")) && lead.email).map((lead) => ({ email: String(lead.email).trim().toLowerCase(), name: lead.full_name, address: lead.service_address, date })).filter((recipient) => { if (seen.has(recipient.email)) return false; seen.add(recipient.email); return true; });
       if (!recipients.length) { result.innerHTML = notice("No scheduled customers with email addresses were found for that day.", true); return; }
       sessionStorage.setItem("gg-email-drafter-recipients", JSON.stringify(recipients));
       document.querySelector('[data-tab="email-drafter"]')?.click();
