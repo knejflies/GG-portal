@@ -5001,7 +5001,7 @@
     <section id="sprinkler-blowouts" class="panel owner-only">
       <div class="card">
         <div class="job-head"><div><span class="admin-eyebrow">Quoting tools</span><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form. Review each referral, approve successful ones, and close it when paid.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
-        <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a><button id="send-blowout-confirmations" class="button secondary" type="button">Send confirmations to blowout sign-ups</button><button id="locate-blowout-pins" class="button secondary" type="button">Locate Missing Pins</button><span id="blowout-confirmation-result" aria-live="polite"></span><span id="blowout-location-result" aria-live="polite"></span><input id="blowout-search" type="search" placeholder="Search name, address, phone, or email" /><select id="blowout-status-filter"><option>All</option><option>New</option><option>Scheduled</option><option>Completed</option><option>Invoiced</option><option>Paid</option><option>Needs Correction</option></select></div>
+        <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a><button id="send-blowout-confirmations" class="button secondary" type="button">Send confirmations to blowout sign-ups</button><button id="locate-blowout-pins" class="button secondary" type="button">Locate Missing Pins</button><span id="blowout-confirmation-result" aria-live="polite"></span><span id="blowout-location-result" aria-live="polite"></span><input id="blowout-search" type="search" placeholder="Search name, address, phone, or email" /><select id="blowout-status-filter"><option>All</option><option>Unscheduled</option><option>New</option><option>Scheduled</option><option>Completed</option><option>Invoiced</option><option>Paid</option><option>Needs Correction</option></select></div>
         <div class="admin-actions"><label>Assign selected to <input id="blowout-bulk-date" type="date" /></label><button id="blowout-bulk-schedule" class="button secondary" type="button">Put checked on this day</button><button id="blowout-bulk-email" class="button secondary" type="button">Email this day</button><span id="blowout-bulk-result" aria-live="polite"></span></div>
         <div class="admin-actions"><label>Route date <input id="blowout-route-date" type="date" /></label><input id="blowout-route-start" type="text" placeholder="Starting address" autocomplete="street-address" /><button id="blowout-route-optimize" class="button secondary" type="button">Optimize Blowout Route</button><button id="blowout-route-clear" class="button ghost" type="button">Clear Stops</button><span id="blowout-route-result" aria-live="polite"></span></div><div id="blowout-route-days" class="admin-actions" aria-label="Blowout route days"></div>
         <div id="blowout-map-summary" class="marketing-summary" aria-live="polite"></div>
@@ -11566,7 +11566,7 @@
       const status = $("#blowout-status-filter")?.value || "All";
       return blowoutLeads.filter((lead) => {
         if (lead.status === "Not Successful") return false;
-        const matchesStatus = status === "All" || lead.status === status || (status === "Needs Correction" && lead.geocode_status === "Needs Correction");
+        const matchesStatus = status === "All" || (status === "Unscheduled" ? !lead.scheduled_date && lead.status !== "Completed" && lead.status !== "Paid" : lead.status === status || (status === "Needs Correction" && lead.geocode_status === "Needs Correction"));
         const haystack = [lead.full_name, lead.email, lead.phone, lead.service_address, lead.status].map((value) => String(value || "").toLowerCase()).join(" ");
         return matchesStatus && (!query || haystack.includes(query));
       });
@@ -13651,6 +13651,7 @@
   </script>
 </body>
 </html>
+
 
 
 
