@@ -3759,6 +3759,29 @@
 
     .quick-command span { color: var(--muted); font-size: 0.8rem; }
 
+    .operations-board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .operations-tile {
+      display: grid;
+      gap: 7px;
+      min-height: 132px;
+      padding: 15px;
+      border: 1px solid rgba(215, 234, 209, 0.15);
+      border-radius: 8px;
+      background: linear-gradient(145deg, rgba(255,255,255,.06), rgba(2,15,9,.92));
+      color: #efffeb;
+      text-align: left;
+    }
+
+    .operations-tile strong { font-size: 1rem; }
+    .operations-tile span { color: var(--muted); font-size: .82rem; }
+    .operations-tile .button { align-self: end; justify-self: start; }
+
     .field-date-control { min-width: 190px; }
     .field-job-list { display: grid; gap: 11px; }
 
@@ -4141,7 +4164,8 @@
       .home-metric strong { font-size: 1.25rem; }
       .home-metric small { font-size: 0.66rem; }
       .admin-home-grid,
-      .admin-quick-grid { grid-template-columns: 1fr; }
+      .admin-quick-grid,
+      .operations-board { grid-template-columns: 1fr; }
       .quick-command { min-height: 66px; }
       .field-job { padding: 14px; }
       .field-job-top { align-items: stretch; flex-direction: column; }
@@ -4627,6 +4651,41 @@
           <h2>Sprinkler blowout link</h2>
           <p class="muted">Send this form to homeowners. It saves their irrigation details and gives them a neighbor referral code.</p>
           <a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Blowout Form</a>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <div class="job-head">
+          <div><span class="admin-eyebrow">Operations board</span><h2>Run the day from one place</h2></div>
+          <span class="muted">Quick links into the tools already in your portal</span>
+        </div>
+        <div class="operations-board">
+          <div class="operations-tile">
+            <strong>Mowing routes</strong>
+            <span>Open today’s jobs, mark visits complete, and keep weekly or bi-weekly work moving.</span>
+            <button class="button small" data-home-go="field-mode" type="button">Open Field Mode</button>
+          </div>
+          <div class="operations-tile">
+            <strong>Landscape work</strong>
+            <span>Keep estimates, cleanups, aeration, and project jobs separate from recurring mowing.</span>
+            <button class="button small" data-home-go="bids" type="button">Open Estimates</button>
+          </div>
+          <div class="operations-tile">
+            <strong>Seasonal services</strong>
+            <span>Manage blowouts and fertilizer records with their own dates, notes, prices, and follow-ups.</span>
+            <button class="button small" data-home-go="sprinkler-blowouts" type="button">Open Blowouts</button>
+          </div>
+          <div class="operations-tile">
+            <strong>Records &amp; billing</strong>
+            <span>Review mileage, fertilizer applications, receipts, maps, and invoices before sending.</span>
+            <button class="button small" data-home-go="expenses" type="button">Open Records</button>
+          </div>
+        </div>
+        <div class="row-actions" style="margin-top:14px">
+          <button class="button ghost small" data-home-expense="mileage" type="button">Log mileage</button>
+          <button class="button ghost small" data-home-expense="fertilizer" type="button">Add fertilizer record</button>
+          <button class="button ghost small" data-home-expense="mileage-maps" type="button">View mileage maps</button>
+          <button class="button ghost small" data-home-go="invoices" type="button">Review invoices</button>
         </div>
       </div>
     </section>
@@ -6803,6 +6862,13 @@
 
     document.querySelectorAll("[data-home-go]").forEach((button) => {
       button.addEventListener("click", () => openTab(button.dataset.homeGo));
+    });
+
+    document.querySelectorAll("[data-home-expense]").forEach((button) => {
+      button.addEventListener("click", () => {
+        openTab("expenses");
+        setExpenseView(button.dataset.homeExpense);
+      });
     });
 
     document.querySelectorAll("[data-mobile-tab]").forEach((button) => {
