@@ -11644,7 +11644,8 @@
         card.prepend(label);
         const priceRow = document.createElement("div");
         priceRow.className = "admin-actions blowout-price-row";
-        priceRow.innerHTML = `<label>Customer price <input class="blowout-price" type="number" min="0" step="0.01" placeholder="0.00" /></label><button class="button small secondary" data-blowout-action="set-price" type="button">Save price</button>`;
+        const draftPrice = localStorage.getItem(`gg-blowout-price-${card.dataset.blowoutId}`) || "";
+        priceRow.innerHTML = `<label>Customer price <input class="blowout-price" type="number" min="0" step="0.01" placeholder="0.00" value="${cleanText(draftPrice)}" /></label><button class="button small secondary" data-blowout-action="set-price" type="button">Save price</button>`;
         card.append(priceRow);
         card.classList.add("blowout-collapsed");
       });
@@ -13353,8 +13354,15 @@
         if (action === "set-price") {
           const price = card.querySelector(".blowout-price")?.value;
           if (price === "" || price === undefined) { button.disabled = false; return; }
-          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "set-price", lead_id: card.dataset.blowoutId, base_amount: price }) });
-          card.insertAdjacentHTML("afterbegin", notice("Customer price saved."));
+          try {
+            await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "set-price", lead_id: card.dataset.blowoutId, base_amount: price }) });
+            localStorage.removeItem(`gg-blowout-price-${card.dataset.blowoutId}`);
+            card.insertAdjacentHTML("afterbegin", notice("Customer price saved."));
+          } catch (error) {
+            if (!String(error.message || "").toLowerCase().includes("before setting its price")) throw error;
+            localStorage.setItem(`gg-blowout-price-${card.dataset.blowoutId}`, price);
+            card.insertAdjacentHTML("afterbegin", notice("Price saved as a draft. Mark the blowout complete and it will be used on the invoice."));
+          }
         } else if (action === "manual-pin") {
           blowoutManualPinLeadId = card.dataset.blowoutId;
           blowoutMap?.getContainer()?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -13383,8 +13391,9 @@
         } else if (action === "complete") {
           const date = window.prompt("Completion date (YYYY-MM-DD)", lead.scheduled_date || new Date().toISOString().slice(0, 10));
           if (!date) { button.disabled = false; return; }
-          const amount = window.prompt("Base blowout price", "0");
+          const amount = window.prompt("Base blowout price", localStorage.getItem(`gg-blowout-price-${card.dataset.blowoutId}`) || "0");
           await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "complete", lead_id: card.dataset.blowoutId, service_date: date, base_amount: amount || 0 }) });
+          localStorage.removeItem(`gg-blowout-price-${card.dataset.blowoutId}`);
         } else if (action === "invoice") {
           await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "invoice", lead_id: card.dataset.blowoutId }) });
         } else {
