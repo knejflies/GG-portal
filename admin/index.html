@@ -11642,6 +11642,10 @@
         label.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px";
         label.innerHTML = `<input type="checkbox" data-blowout-select="${card.dataset.blowoutId}" /> Include in day assignment`;
         card.prepend(label);
+        const priceRow = document.createElement("div");
+        priceRow.className = "admin-actions blowout-price-row";
+        priceRow.innerHTML = `<label>Customer price <input class="blowout-price" type="number" min="0" step="0.01" placeholder="0.00" /></label><button class="button small secondary" data-blowout-action="set-price" type="button">Save price</button>`;
+        card.append(priceRow);
         card.classList.add("blowout-collapsed");
       });
     }
@@ -12013,11 +12017,11 @@
       const selectedJob = newestJob(selectedCustomer.jobs || []);
       const monthBilling = selectedJob ? jobBillingForMonth(selectedJob) : { amount: 0 };
       const amount = monthBilling.weeks !== null
+
         ? monthBilling.amount
         : monthBilling.amount || selectedCustomer.monthly_price || selectedJob?.monthly_price || 0;
       if (amount && !$("#invoice_amount").value) {
         $("#invoice_amount").value = Number(amount).toFixed(2);
-
       }
       if (!$("#invoice_notes").value) {
         $("#invoice_notes").value = selectedCustomer.plan || "Monthly service";
@@ -12614,11 +12618,11 @@
         try {
           button.disabled = true;
           button.textContent = "Testing...";
+
           const data = await requestJson("portal-push", {
             method: "POST",
             headers: adminHeaders(),
             body: JSON.stringify({
-
               testCustomer: true,
               customer: {
                 id: customer.id || "",
@@ -13215,11 +13219,11 @@
       }
       const saveButton = event.target.closest("button[data-marketing-save-interest]");
       if (saveButton) {
+
         saveButton.disabled = true;
         await updateMarketingLead(card, "Interested");
       }
     });
-
 
     $("#marketing-route-form").addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -13346,7 +13350,12 @@
       try {
         const lead = blowoutLeads.find((item) => String(item.id) === String(card.dataset.blowoutId)) || {};
         const action = button.dataset.blowoutAction;
-        if (action === "manual-pin") {
+        if (action === "set-price") {
+          const price = card.querySelector(".blowout-price")?.value;
+          if (price === "" || price === undefined) { button.disabled = false; return; }
+          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "set-price", lead_id: card.dataset.blowoutId, base_amount: price }) });
+          card.insertAdjacentHTML("afterbegin", notice("Customer price saved."));
+        } else if (action === "manual-pin") {
           blowoutManualPinLeadId = card.dataset.blowoutId;
           blowoutMap?.getContainer()?.scrollIntoView({ behavior: "smooth", block: "center" });
           $("#blowout-location-result").innerHTML = notice("Tap the property location on the map to place this pin.");
