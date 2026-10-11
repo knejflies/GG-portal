@@ -166,6 +166,16 @@ exports.handler = async (event) => {
       await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ ...result.lead, status: "Completed", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_user_id: result.customer_user_id, property_id: result.property_id }) });
       return json(200, { history: rows?.[0] || null, duplicate: false });
     }
+    if (event.httpMethod === "POST" && body.action === "set-price") {
+      const historyRows = await supabase(`green_grin_sprinkler_blowout_history?select=*&lead_id=eq.${encodeURIComponent(lead.id)}&order=service_date.desc&limit=1`);
+      const history = historyRows?.[0];
+      if (!history) return json(400, { error: "Mark the blowout complete before setting its price." });
+      const baseAmount = Math.max(0, Number(body.base_amount) || 0);
+      const extras = extraRows(history.extra_charges);
+      const totalAmount = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
+      const rows = await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ base_amount: baseAmount, total_amount: totalAmount }) });
+      return json(200, { history: rows?.[0] || { ...history, base_amount: baseAmount, total_amount: totalAmount } });
+    }
     if (event.httpMethod === "POST" && body.action === "invoice") {
       const result = await ensureCustomerProperty(lead);
       const serviceDate = body.service_date || lead.completed_at?.slice(0, 10) || new Date().toISOString().slice(0, 10);
