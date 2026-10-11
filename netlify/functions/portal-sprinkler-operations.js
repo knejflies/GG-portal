@@ -170,8 +170,15 @@ exports.handler = async (event) => {
       const result = await ensureCustomerProperty(lead);
       const serviceDate = body.service_date || lead.completed_at?.slice(0, 10) || new Date().toISOString().slice(0, 10);
       const historyRows = await supabase(`green_grin_sprinkler_blowout_history?select=*&lead_id=eq.${encodeURIComponent(lead.id)}&service_date=eq.${encodeURIComponent(serviceDate)}&limit=1`);
-      const history = historyRows?.[0];
+      let history = historyRows?.[0];
       if (!history) return json(400, { error: "Mark the blowout complete before creating its invoice." });
+      if (Object.prototype.hasOwnProperty.call(body, "base_amount")) {
+        const baseAmount = Math.max(0, Number(body.base_amount) || 0);
+        const extras = extraRows(history.extra_charges);
+        const totalAmount = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
+        const updated = await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ base_amount: baseAmount, total_amount: totalAmount }) });
+        history = updated?.[0] || { ...history, base_amount: baseAmount, total_amount: totalAmount };
+      }
       if (history.invoice_id) return json(200, { duplicate: true, invoice_id: history.invoice_id });
       const lines = [{ description: `Sprinkler blowout (${Number(history.zones) || 0} zones)`, category: "Sprinkler Blowout", quantity: 1, unit: "service", rate: Number(history.base_amount) || 0, amount: Number(history.base_amount) || 0 }, ...extraRows(history.extra_charges).map((row) => ({ ...row, category: "Approved Extra", amount: Math.round(row.quantity * row.rate * 100) / 100 }))];
       const invoiceKey = `blowout:${history.id}`;
@@ -194,3 +201,4 @@ exports.handler = async (event) => {
 
 exports.ensureCustomerProperty = ensureCustomerProperty;
 exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey };
+
