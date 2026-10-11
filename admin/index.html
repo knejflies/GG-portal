@@ -12615,7 +12615,13 @@
         const to = $("#email-drafter-to").value.trim();
         if (!recipients?.length && !to) throw new Error("Enter a recipient email.");
         const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, recipients, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
-        result.innerHTML = notice(recipients?.length ? `${data.sent || 0} sent. ${data.failed || 0} failed.` : `Email sent to ${cleanText(data.to)}.`);
+        if (recipients?.length) {
+          const failedRows = (data.results || []).filter((row) => !row.sent);
+          const failedDetails = failedRows.length ? `<details style="margin-top:8px"><summary>Show failed recipients</summary><ul>${failedRows.map((row) => `<li>${cleanText(row.email || "Unknown email")}: ${cleanText(row.error || row.reason || "Provider did not accept the message.")}</li>`).join("")}</ul></details>` : "";
+          result.innerHTML = notice(`${data.sent || 0} sent. ${data.failed || 0} failed.${failedDetails}`);
+        } else {
+          result.innerHTML = notice(`Email sent to ${cleanText(data.to)}.`);
+        }
         if (recipients?.length) { sessionStorage.removeItem("gg-email-drafter-recipients"); $("#email-drafter-day-mode").hidden = true; }
       } catch (error) {
         result.innerHTML = notice(error.message, true);
