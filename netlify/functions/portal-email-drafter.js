@@ -1,4 +1,6 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, x-admin-pin", "Access-Control-Allow-Methods": "POST, OPTIONS" };
@@ -6,6 +8,10 @@ const json = (statusCode, body) => ({ statusCode, headers, body: JSON.stringify(
 const clean = (value, max = 20000) => String(value || "").trim().slice(0, max);
 const escapeHtml = (value) => clean(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
 const replaceTokens = (value, recipient) => clean(value).split("{{name}}").join(recipient.name || "there").split("{{address}}").join(recipient.address || "your property").split("{{date}}").join(recipient.date || "");
+async function recordAttempt(recipient, message, result) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/green_grin_message_log`, { method: "POST", headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify({ phone: recipient.email, template: result.sent ? "email-drafter-sent" : "email-drafter-failed", message: result.sent ? message : `${message}\n\nFailure: ${result.error || "Email was not accepted."}`, actor_type: "Owner", actor_name: "Owner", twilio_sid: result.id || null }) }).catch(() => null);
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
@@ -28,7 +34,9 @@ exports.handler = async (event) => {
       const personalizedMessage = replaceTokens(message, recipient);
       const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [recipient.email], subject: personalizedSubject, text: personalizedMessage, html: `<div style="font-family:Arial,sans-serif;line-height:1.55;white-space:pre-wrap">${escapeHtml(personalizedMessage)}</div>` }) });
       const data = await response.json().catch(() => ({}));
-      results.push({ email: recipient.email, sent: response.ok, id: data.id || null, error: response.ok ? null : (data?.message || "Email provider rejected the message.") });
+      const result = { email: recipient.email, sent: response.ok, id: data.id || null, error: response.ok ? null : (data?.message || "Email provider rejected the message.") };
+      results.push(result);
+      await recordAttempt(recipient, personalizedMessage, result);
     }
     const sent = results.filter((result) => result.sent).length;
     return json(200, { sent, failed: results.length - sent, results, to: targets[0].email, subject });

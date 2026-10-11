@@ -11096,6 +11096,10 @@
           ? "clicked Arrived / sent arrival notification"
           : log.template === "broadcast"
             ? "sent customer broadcast"
+            : log.template === "email-drafter-failed"
+              ? "email failed"
+              : log.template === "email-drafter-sent"
+                ? "email sent"
             : `sent ${log.template} notification`;
       return `
         <div class="message">
