@@ -4329,6 +4329,7 @@
       <button class="tab owner-only" data-tab="invoices" type="button">Billing</button>
       <button class="tab owner-only" data-tab="expenses" type="button">Expenses</button>
       <span class="tab-section-label owner-only">Records</span>
+      <button class="tab owner-only" data-tab="email-drafter" type="button">Email Drafter</button>
       <button class="tab owner-only" data-tab="activity" type="button">Activity</button>
       <button class="tab owner-only" data-tab="settings" type="button">Settings</button>
       <button class="tab employee-only" data-tab="employee-work" type="button">My Jobs</button>
@@ -5684,6 +5685,22 @@
           <h2>Fertilizer History</h2>
           <div id="fertilizer-history" class="fertilizer-history-list"></div>
         </div>
+      </div>
+    </section>
+
+    <section id="email-drafter" class="panel owner-only">
+      <div class="card">
+        <h2>Email Drafter</h2>
+        <p class="muted">Write or revise any customer email here, then send it through your connected business email.</p>
+        <form id="email-drafter-form">
+          <div class="two">
+            <div><label for="email-drafter-to">To</label><input id="email-drafter-to" type="email" required placeholder="customer@example.com" /></div>
+            <div><label for="email-drafter-subject">Subject</label><input id="email-drafter-subject" maxlength="180" required placeholder="Your Green Grin update" /></div>
+          </div>
+          <div><label for="email-drafter-message">Message</label><textarea id="email-drafter-message" rows="12" maxlength="20000" required placeholder="Type and edit your message here..."></textarea></div>
+          <div class="admin-actions"><button class="button" type="submit">Send Email</button><button id="email-drafter-clear" class="button ghost" type="button">Clear</button></div>
+        </form>
+        <div id="email-drafter-result" aria-live="polite"></div>
       </div>
     </section>
 
@@ -12369,6 +12386,28 @@
         await loadActivity();
       } catch (error) {
         $("#broadcast-result").innerHTML = notice(error.message, true);
+      }
+    });
+
+    $("#email-drafter-clear").addEventListener("click", () => {
+      $("#email-drafter-to").value = "";
+      $("#email-drafter-subject").value = "";
+      $("#email-drafter-message").value = "";
+      $("#email-drafter-result").innerHTML = "";
+    });
+    $("#email-drafter-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = event.currentTarget.querySelector('button[type="submit"]');
+      const result = $("#email-drafter-result");
+      button.disabled = true;
+      result.innerHTML = notice("Sending email...");
+      try {
+        const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to: $("#email-drafter-to").value, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
+        result.innerHTML = notice(`Email sent to ${cleanText(data.to)}.`);
+      } catch (error) {
+        result.innerHTML = notice(error.message, true);
+      } finally {
+        button.disabled = false;
       }
     });
 
