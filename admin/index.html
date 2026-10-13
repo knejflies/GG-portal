@@ -11100,6 +11100,10 @@
               ? "email failed"
               : log.template === "email-drafter-sent"
                 ? "email sent"
+                : log.template === "completed-email-failed"
+                  ? "completion email failed"
+                  : log.template === "completed-email-sent"
+                    ? "completion email sent"
             : `sent ${log.template} notification`;
       return `
         <div class="message">

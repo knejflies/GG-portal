@@ -2,6 +2,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const { pushReady, sendPushToTarget } = require("./push-helper");
 
 const headers = {
@@ -99,6 +101,25 @@ function messageFor(template, job) {
     return `Hi${name}, Green Grin has arrived for your ${service} and is starting work.`;
   }
   return `Hi${name}, Green Grin has an update about your ${service}.`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>\"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[char]));
+}
+
+async function sendCompletionEmail(job) {
+  if (!job?.email) return { sent: false, skipped: true, reason: "Customer has no email address." };
+  if (!RESEND_API_KEY) return { sent: false, skipped: true, reason: "Email is not configured in Netlify." };
+  const customer = job.customer_name || "there";
+  const service = job.service_type || "yard service";
+  const address = job.address || job.service_address || "your property";
+  const date = new Date().toLocaleDateString();
+  const text = `Hi ${customer},\n\nGreen Grin finished your ${service} at ${address} on ${date}. Thanks for choosing us.\n\nGreen Grin Lawns`;
+  try {
+    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [job.email], subject: `Green Grin finished your ${service}`, text, html: `<p>Hi ${escapeHtml(customer)},</p><p>Green Grin finished your <strong>${escapeHtml(service)}</strong> at ${escapeHtml(address)} on <strong>${escapeHtml(date)}</strong>.</p><p>Thanks for choosing us.<br>Green Grin Lawns</p>` }) });
+    const data = await response.json().catch(() => ({}));
+    return response.ok ? { sent: true, id: data.id || null } : { sent: false, error: data.message || "Email provider rejected the completion email." };
+  } catch (error) { return { sent: false, error: error.message || "Completion email could not be sent." }; }
 }
 
 function fertilizerJob(job) {
@@ -208,6 +229,7 @@ exports.handler = async (event) => {
       url: "/portal/",
       tag: notificationTag
     });
+    const completionEmail = body.template === "completed" ? await sendCompletionEmail(job) : null;
     let ownerPush = null;
     if (body.template === "completed") {
       ownerPush = await sendPushToTarget(supabase, { owner_type: "admin" }, {
@@ -240,12 +262,16 @@ exports.handler = async (event) => {
         twilio_sid: null
       })
     });
+    if (completionEmail) {
+      await supabase("green_grin_message_log", { method: "POST", body: JSON.stringify({ job_id: job.id, phone: job.email || "", template: completionEmail.sent ? "completed-email-sent" : "completed-email-failed", message: completionEmail.sent ? message : `${message} Failure: ${completionEmail.error || completionEmail.reason || "Unknown error."}`, actor_type: employeeActor ? "Employee" : "Owner", actor_name: employeeActor ? employeeActor.full_name || employeeActor.email : "Owner", actor_employee_id: employeeActor?.id || null, twilio_sid: completionEmail.id || null }) }).catch(() => null);
+    }
     const applicationRecord = body.template === "completed" ? fertilizerRecord(body, job) : null;
     if (applicationRecord) await supabase("green_grin_expenses", { method: "POST", body: JSON.stringify(applicationRecord) });
 
     return json(200, {
       ok: true,
-      push: ownerPush ? { customer: customerPush, owner: ownerPush } : customerPush
+      push: ownerPush ? { customer: customerPush, owner: ownerPush } : customerPush,
+      email: completionEmail
     });
   } catch (error) {
     return json(500, { error: error.message });
