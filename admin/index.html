@@ -11111,7 +11111,7 @@
             <strong>${actor}</strong>
             <span class="badge">${log.actor_type || "System"}</span>
           </div>
-          <p>${action}${["completed-email-failed", "completed-email-sent"].includes(log.template) && log.job_id ? ` <button class="button small ghost" type="button" data-resend-completion="${cleanText(log.job_id)}">Resend completion email</button>` : ""}</p>
+          <p>${action}${["completed", "completed-email-failed", "completed-email-sent"].includes(log.template) && log.job_id ? ` <button class="button small ghost" type="button" data-resend-completion="${cleanText(log.job_id)}">Resend completion email</button>` : ""}</p>
           <p class="muted">${job.customer_name || "Customer"} - ${job.address || log.phone || ""}</p>
           <p class="muted">${when}</p>
         </div>
