@@ -264,7 +264,7 @@ exports.handler = async (event) => {
       method: "POST",
       body: JSON.stringify({
         job_id: job.id,
-        phone: job.phone,
+        phone: job.phone || job.email || "",
         template: body.template,
         message,
         actor_type: employeeActor ? "Employee" : "Owner",
@@ -272,7 +272,7 @@ exports.handler = async (event) => {
         actor_employee_id: employeeActor?.id || null,
         twilio_sid: null
       })
-    });
+    }).catch(() => null);
     if (completionEmail) {
       await supabase("green_grin_message_log", { method: "POST", body: JSON.stringify({ job_id: job.id, phone: job.email || "", template: completionEmail.sent ? "completed-email-sent" : "completed-email-failed", message: completionEmail.sent ? message : `${message} Failure: ${completionEmail.error || completionEmail.reason || "Unknown error."}`, actor_type: employeeActor ? "Employee" : "Owner", actor_name: employeeActor ? employeeActor.full_name || employeeActor.email : "Owner", actor_employee_id: employeeActor?.id || null, twilio_sid: completionEmail.id || null }) }).catch(() => null);
     }
