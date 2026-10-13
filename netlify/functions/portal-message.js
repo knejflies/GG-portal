@@ -204,6 +204,17 @@ exports.handler = async (event) => {
     if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed." });
 
     const body = JSON.parse(event.body || "{}");
+    if (body.action === "resend-completion-email") {
+      const adminError = requireAdmin(event);
+      if (adminError) return json(401, { error: adminError });
+      if (!body.id) return json(400, { error: "Job id is required." });
+      const jobs = await supabase(`green_grin_jobs?select=*&id=eq.${encodeURIComponent(body.id)}&limit=1`);
+      const job = jobs?.[0];
+      if (!job) return json(404, { error: "Job not found." });
+      const email = await sendCompletionEmail(job);
+      await supabase("green_grin_message_log", { method: "POST", body: JSON.stringify({ job_id: job.id, phone: job.email || "", template: email.sent ? "completed-email-sent" : "completed-email-failed", message: email.sent ? `Resent completion email for ${job.customer_name || "Customer"}.` : `Resent completion email failed: ${email.error || email.reason || "Unknown error."}`, actor_type: "Owner", actor_name: "Owner", twilio_sid: email.id || null }) }).catch(() => null);
+      return json(200, { ok: true, email });
+    }
     if (!body.id || !body.template) return json(400, { error: "Job id and template are required." });
     const employeeActor = await employeeMessageActor(event, body.template);
     const adminError = employeeActor ? null : requireAdmin(event);

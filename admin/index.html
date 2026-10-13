@@ -11111,7 +11111,7 @@
             <strong>${actor}</strong>
             <span class="badge">${log.actor_type || "System"}</span>
           </div>
-          <p>${action}</p>
+          <p>${action}${["completed-email-failed", "completed-email-sent"].includes(log.template) && log.job_id ? ` <button class="button small ghost" type="button" data-resend-completion="${cleanText(log.job_id)}">Resend completion email</button>` : ""}</p>
           <p class="muted">${job.customer_name || "Customer"} - ${job.address || log.phone || ""}</p>
           <p class="muted">${when}</p>
         </div>
@@ -13079,6 +13079,17 @@
         $("#activity-result").innerHTML = notice(error.message, true);
       }
     }
+
+    $("#activity-result").addEventListener("click", async (event) => {
+      const button = event.target.closest("button[data-resend-completion]");
+      if (!button) return;
+      button.disabled = true;
+      try {
+        const data = await requestJson("portal-message", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "resend-completion-email", id: button.dataset.resendCompletion }) });
+        button.insertAdjacentHTML("afterend", notice(data.email?.sent ? "Completion email resent." : (data.email?.reason || data.email?.error || "Email was not sent.")));
+      } catch (error) { button.insertAdjacentHTML("afterend", notice(error.message, true)); }
+      button.disabled = false;
+    });
 
     async function saveDailyRoute() {
       const routeDate = $("#daily-route-date").value;
