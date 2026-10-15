@@ -12654,9 +12654,10 @@
       const dayLabel = new Date(`${recipients[0].date}T12:00:00`).toLocaleDateString();
       mode.hidden = false;
       const missingNames = Array.isArray(meta?.missing_email) ? meta.missing_email.map((row) => row.name || "Unnamed customer").join(", ") : "";
-      const assignedSummary = meta ? `${meta.assigned_total || 0} assigned, ${recipients.length} ready to email` : `${recipients.length} ready to email`;
+      const scheduledTotal = Number(meta?.active_total ?? meta?.assigned_total ?? recipients.length);
+      const assignedSummary = meta ? `${scheduledTotal} scheduled, ${recipients.length} ready to email` : `${recipients.length} ready to email`;
       const missingSummary = missingNames ? ` Missing or invalid email: ${missingNames}.` : "";
-      const closedSummary = Number(meta?.closed_total) ? ` ${meta.closed_total} completed, paid, or archived record${Number(meta.closed_total) === 1 ? " was" : "s were"} excluded.` : "";
+      const closedSummary = Number(meta?.closed_total) ? ` ${meta.closed_total} older completed, paid, or archived record${Number(meta.closed_total) === 1 ? " is" : "s are"} retained in history and not counted in today's schedule.` : "";
       mode.textContent = `Day email mode: ${assignedSummary} for ${dayLabel}.${missingSummary}${closedSummary} Nothing sends until you press Send Email. Edit the wording below. Use {{name}}, {{address}}, and {{date}} as placeholders.`;
       $("#email-drafter-subject").value = `Green Grin is expected ${dayLabel}`;
       $("#email-drafter-message").value = `Hi {{name}},\n\nThanks for choosing Green Grin. We expect to be at {{address}} on {{date}} for your sprinkler blowout.\n\nWeather or route changes may shift the timing. We will keep you updated.\n\nGreen Grin Lawns`;
@@ -13656,10 +13657,10 @@
           return;
         }
         sessionStorage.setItem("gg-email-drafter-recipients", JSON.stringify(recipients));
-        sessionStorage.setItem("gg-email-drafter-day-meta", JSON.stringify({ assigned_total: data.assigned_total || recipients.length, closed_total: data.closed_total || 0, missing_email: data.missing_email || [] }));
+        sessionStorage.setItem("gg-email-drafter-day-meta", JSON.stringify({ assigned_total: data.assigned_total || recipients.length, active_total: data.active_total ?? recipients.length, closed_total: data.closed_total || 0, missing_email: data.missing_email || [] }));
         loadDayEmailDraft();
         document.querySelector('[data-tab="email-drafter"]')?.click();
-        result.innerHTML = notice(`Email Drafter opened with ${recipients.length} of ${data.assigned_total || recipients.length} assigned customer${Number(data.assigned_total || recipients.length) === 1 ? "" : "s"}. Review the count and wording, then press Send Email.`);
+        result.innerHTML = notice(`Email Drafter opened with ${recipients.length} of ${Number(data.active_total ?? recipients.length)} scheduled customer${Number(data.active_total ?? recipients.length) === 1 ? "" : "s"}. Review the missing-email names and wording, then press Send Email.`);
       } catch (error) {
         result.innerHTML = notice(error.message, true);
       } finally {
