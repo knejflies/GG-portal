@@ -85,6 +85,28 @@ function extraRows(value) {
   return (Array.isArray(value) ? value : []).slice(0, 30).map((row) => ({ description: clean(row.description, 180), quantity: Math.max(0, Number(row.quantity) || 0), unit: clean(row.unit || "each", 24), rate: Math.max(0, Number(row.rate) || 0) })).filter((row) => row.description && row.quantity > 0);
 }
 function blowoutIdempotencyKey(leadId, serviceDate) { return `blowout:${leadId}:${serviceDate}`; }
+function scheduledEmailRoster(leads, scheduledDate) {
+  const rows = Array.isArray(leads) ? leads : [];
+  const closedStatuses = new Set(["Completed", "Paid", "Not Successful"]);
+  const active = rows.filter((lead) => !closedStatuses.has(String(lead?.status || "")));
+  const recipients = [];
+  const missingEmail = [];
+  for (const lead of active) {
+    const email = clean(lead?.email, 320).toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      missingEmail.push({ id: lead?.id || null, name: clean(lead?.full_name || "Unnamed customer", 160), email });
+      continue;
+    }
+    recipients.push({ id: lead?.id || null, email, name: clean(lead?.full_name, 160), address: clean(lead?.service_address, 300), date: scheduledDate });
+  }
+  return {
+    assigned_total: rows.length,
+    active_total: active.length,
+    recipients,
+    missing_email: missingEmail,
+    closed_total: rows.length - active.length
+  };
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
@@ -114,6 +136,12 @@ exports.handler = async (event) => {
       if (params.get("settings") === "1") {
         const rows = await supabase("green_grin_service_visibility_settings?select=*&service_key=eq.sprinkler_blowout&limit=1");
         return json(200, { setting: rows?.[0] || null });
+      }
+      if (params.get("email_recipients") === "1") {
+        const scheduledDate = clean(params.get("scheduled_date"), 20);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) return json(400, { error: "Choose a valid scheduled day." });
+        const leads = await supabase(`green_grin_sprinkler_blowout_leads?select=id,full_name,email,service_address,status,scheduled_date&scheduled_date=eq.${encodeURIComponent(scheduledDate)}&order=created_at.asc&limit=1000`);
+        return json(200, scheduledEmailRoster(leads, scheduledDate));
       }
       const filter = status && status !== "All" && status !== "Needs Correction" ? `&status=eq.${encodeURIComponent(status)}` : status === "Needs Correction" ? "&geocode_status=eq.Needs%20Correction" : "";
       const leads = await supabase(`green_grin_sprinkler_blowout_leads?select=*&order=created_at.desc&limit=1000${filter}`);
@@ -215,5 +243,5 @@ exports.handler = async (event) => {
 };
 
 exports.ensureCustomerProperty = ensureCustomerProperty;
-exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey };
+exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, scheduledEmailRoster };
 
