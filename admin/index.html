@@ -4782,6 +4782,12 @@
           <div id="customers-result" class="status-box" aria-live="polite"></div>
         </div>
         <div class="card owner-only">
+          <div class="job-head"><div><h2>Customer map</h2><p class="muted">Each located property is a clickable customer pin. Unlocated addresses stay in the correction count until confirmed.</p></div><button id="locate-customer-properties" class="button small secondary" type="button">Locate addresses</button></div>
+          <div id="customer-map-summary" class="marketing-summary" aria-live="polite"></div>
+          <div id="customer-map" style="height:360px;border-radius:12px;overflow:hidden;border:1px solid rgba(142,210,62,.35)" aria-label="Customer and property map"></div>
+          <div id="customer-map-result" class="status-box" aria-live="polite"></div>
+        </div>
+        <div class="card owner-only">
           <h2>Customer details</h2>
           <div id="customer-detail-result" class="status-box">
             <div class="notice">Select a customer to fill the job form or review their account details.</div>
@@ -6242,6 +6248,8 @@
     let yardMeasurementAddress = null;
     let blowoutRouteSelectedIds = [];
     let blowoutRouteOrder = [];
+    let customerMap = null;
+    let customerMarkerLayer = null;
     let leafletPromise = null;
     let deferredInstallPrompt = null;
     let adminSessionPin = "";
@@ -10489,6 +10497,32 @@
       $("#customers-result").innerHTML = visible.length
         ? visible.map((customer) => adminCustomerCard(customer, invoiceCustomers.indexOf(customer))).join("")
         : notice(query ? "No customers match that search." : "No customer accounts yet.");
+      renderCustomerMap();
+    }
+
+    async function renderCustomerMap() {
+      const container = $("#customer-map");
+      if (!container) return;
+      await ensureLeaflet();
+      if (!customerMap) {
+        customerMap = window.L.map(container, { zoomControl: true }).setView([43.6629, -116.6874], 12);
+        addMarketingBasemapControl(customerMap, "street");
+        customerMarkerLayer = window.L.layerGroup().addTo(customerMap);
+      }
+      const located = invoiceCustomers.filter((customer) => customer.property?.geocode_status === "Located" && Number.isFinite(Number(customer.property?.latitude)) && Number.isFinite(Number(customer.property?.longitude)));
+      const needsCorrection = invoiceCustomers.filter((customer) => customer.property && customer.property.geocode_status !== "Located");
+      $("#customer-map-summary").innerHTML = "<span><strong>" + located.length + "</strong>On map</span><span><strong>" + needsCorrection.length + "</strong>Needs correction</span><span><strong>" + invoiceCustomers.length + "</strong>Total customers</span>";
+      customerMarkerLayer.clearLayers();
+      const bounds = [];
+      located.forEach((customer) => {
+        const lat = Number(customer.property.latitude); const lng = Number(customer.property.longitude); bounds.push([lat, lng]);
+        const marker = window.L.circleMarker([lat, lng], { radius: 8, color: "#123b27", weight: 2, fillColor: "#9bea32", fillOpacity: .95 }).addTo(customerMarkerLayer);
+        const customerId = String(customer.customer_user_id || customer.id || "");
+        marker.bindPopup("<strong>" + cleanText(customer.name || "Customer") + "</strong><br>" + cleanText(customer.property.address || "No address") + "<br><button type=\"button\" class=\"button small\" data-map-customer=\"" + cleanText(customerId) + "\">Open customer file</button>");
+        marker.on("popupopen", () => { const button = [...document.querySelectorAll("[data-map-customer]")].find((item) => item.dataset.mapCustomer === customerId); button?.addEventListener("click", () => openCustomerFile(customer), { once: true }); });
+      });
+      if (bounds.length) customerMap.fitBounds(bounds, { padding: [24, 24], maxZoom: 15 });
+      window.setTimeout(() => customerMap.invalidateSize(), 60);
     }
 
     async function loadCustomers() {
@@ -10504,6 +10538,17 @@
         $("#customers-result").innerHTML = notice(error.message, true);
       }
     }
+
+    $("#locate-customer-properties")?.addEventListener("click", async () => {
+      const button = $("#locate-customer-properties"); const result = $("#customer-map-result");
+      button.disabled = true; result.innerHTML = notice("Locating customer properties...");
+      try {
+        const data = await requestJson("portal-customers", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "locate-properties" }) });
+        result.innerHTML = notice((data.located || 0) + " located. " + (data.needs_correction || 0) + " need address correction. " + (data.skipped || 0) + " already located.");
+        await loadCustomers();
+      } catch (error) { result.innerHTML = notice(error.message, true); }
+      button.disabled = false;
+    });
 
     function downloadArchive(archive) {
       if (!archive) return;

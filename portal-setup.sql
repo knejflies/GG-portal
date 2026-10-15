@@ -186,6 +186,11 @@ create table if not exists public.green_grin_properties (
   active boolean not null default true
 );
 
+alter table public.green_grin_properties add column if not exists latitude double precision;
+alter table public.green_grin_properties add column if not exists longitude double precision;
+alter table public.green_grin_properties add column if not exists geocode_status text not null default 'Pending';
+alter table public.green_grin_properties add column if not exists geocode_display_name text;
+
 create table if not exists public.green_grin_employees (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),

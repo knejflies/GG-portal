@@ -7,7 +7,7 @@ const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin, x-employee-pin",
-  "Access-Control-Allow-Methods": "GET, PATCH, DELETE, OPTIONS"
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS"
 };
 
 function json(statusCode, body) {
@@ -23,6 +23,23 @@ function requireAdmin(event) {
   if (!ADMIN_PIN) return "Admin PIN is not configured yet. Add GREEN_GRIN_ADMIN_PIN in Netlify.";
   if (event.headers["x-admin-pin"] !== ADMIN_PIN) return "Wrong admin PIN.";
   return null;
+}
+
+function clean(value, max = 300) { return String(value || "").trim().slice(0, max); }
+function geocodeDecision(result, requestedAddress) {
+  if (!result) return { status: "Needs Correction", latitude: null, longitude: null, display_name: null };
+  const display = String(result.display_name || "");
+  const requestedNumber = String(requestedAddress || "").match(/^\s*(\d+[a-z]?)/i)?.[1];
+  const hasHouseNumber = !requestedNumber || new RegExp(`\\b${requestedNumber.replace(/[a-z]/i, "[a-z]?")}\\b`, "i").test(display);
+  const latitude = Number(result.lat); const longitude = Number(result.lon);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !hasHouseNumber) return { status: "Needs Correction", latitude: null, longitude: null, display_name: display || null };
+  return { status: "Located", latitude, longitude, display_name: display };
+}
+async function geocodeAddress(address) {
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=3&addressdetails=1&q=${encodeURIComponent(address)}`, { headers: { "User-Agent": "Green-Grin-Portal/1.0 contact@greengrinlawns.com" } });
+  if (!response.ok) return geocodeDecision(null, address);
+  const rows = await response.json().catch(() => []);
+  return geocodeDecision(rows?.[0], address);
 }
 
 async function supabase(path, options = {}) {
@@ -167,6 +184,17 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const adminError = requireAdmin(event);
     if (adminError) return json(401, { error: adminError });
+    if (event.httpMethod === "POST" && body.action === "locate-properties") {
+      const properties = await supabase("green_grin_properties?select=*&active=eq.true&address=not.is.null&order=created_at.desc&limit=1000");
+      let located = 0; let needsCorrection = 0; let skipped = 0;
+      for (const property of properties || []) {
+        if (property.geocode_status === "Located" && Number.isFinite(Number(property.latitude)) && Number.isFinite(Number(property.longitude))) { skipped += 1; continue; }
+        const geocode = await geocodeAddress(property.address);
+        await supabase(`green_grin_properties?id=eq.${encodeURIComponent(property.id)}`, { method: "PATCH", body: JSON.stringify({ latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status, geocode_display_name: geocode.display_name }) });
+        if (geocode.status === "Located") located += 1; else needsCorrection += 1;
+      }
+      return json(200, { located, needs_correction: needsCorrection, skipped });
+    }
     const customerUserId = body.customer_user_id || null;
     const phone = body.phone || "";
     const email = body.email || "";
