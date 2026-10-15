@@ -65,9 +65,9 @@ function blowoutConfirmationPayload(lead) {
   };
 }
 
-async function sendBlowoutConfirmation(lead) {
+async function sendBlowoutConfirmation(lead, { force = false } = {}) {
   if (!lead?.email) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Sign-up has no email address." };
-  if (lead.confirmation_sent_at) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Confirmation was already sent.", sent_at: lead.confirmation_sent_at };
+  if (lead.confirmation_sent_at && !force) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Confirmation was already sent.", sent_at: lead.confirmation_sent_at };
   if (!RESEND_API_KEY) return { enabled: false, sent: false, skipped: true, reason: "Email is not configured in Netlify." };
   try {
     const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify(blowoutConfirmationPayload(lead)) });
@@ -149,14 +149,15 @@ exports.handler = async (event) => {
     }
     if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed." });
     const body = JSON.parse(event.body || "{}");
-    if (body.action === "send-confirmations" || body.action === "send-confirmation") {
+    if (body.action === "send-confirmations") {
+      return json(400, { error: "Bulk confirmation sending is disabled. New sign-ups are emailed automatically; use the individual Send Confirmation button for a specific customer." });
+    }
+    if (body.action === "send-confirmation") {
       if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
-      const leads = body.action === "send-confirmation"
-        ? await supabase("green_grin_sprinkler_blowout_leads?select=*&id=eq." + encodeURIComponent(clean(body.id, 80)) + "&limit=1")
-        : await supabase("green_grin_sprinkler_blowout_leads?select=*&order=created_at.asc&limit=1000");
-      if (body.action === "send-confirmation" && !leads?.[0]) return json(404, { error: "Sprinkler blowout sign-up was not found." });
+      const leads = await supabase("green_grin_sprinkler_blowout_leads?select=*&id=eq." + encodeURIComponent(clean(body.id, 80)) + "&limit=1");
+      if (!leads?.[0]) return json(404, { error: "Sprinkler blowout sign-up was not found." });
       const results = [];
-      for (const lead of leads || []) results.push({ id: lead.id, full_name: lead.full_name, email: lead.email || "", confirmation: await sendBlowoutConfirmation(lead) });
+      for (const lead of leads || []) results.push({ id: lead.id, full_name: lead.full_name, email: lead.email || "", confirmation: await sendBlowoutConfirmation(lead, { force: true }) });
       return json(200, { total: results.length, sent: results.filter((row) => row.confirmation.sent).length, skipped: results.filter((row) => row.confirmation.skipped).length, failed: results.filter((row) => row.confirmation.error).length, results, confirmation: results[0]?.confirmation || null });
     }
     if (body.action === "send-scheduled-notices") {
