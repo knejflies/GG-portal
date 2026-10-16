@@ -39,6 +39,11 @@ function positiveInteger(value, max = 999) {
   return Math.max(0, Math.min(max, Math.round(Number(value) || 0)));
 }
 
+function blowoutPriceForZones(zones) {
+  const zoneCount = positiveInteger(zones, 200);
+  return 55 + Math.max(0, zoneCount - 6) * 5;
+}
+
 function newShareCode() {
   return `GG-BLOW-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 }
@@ -56,12 +61,14 @@ function escapeHtml(value) {
 function blowoutConfirmationPayload(lead) {
   const name = lead.full_name || "Customer";
   const code = lead.share_code || "";
+  const price = Number(lead.customer_price) > 0 ? Number(lead.customer_price) : blowoutPriceForZones(lead.zones);
+  const priceLabel = "$" + price.toFixed(2);
   return {
     from: EMAIL_FROM,
     to: [lead.email],
     subject: "Green Grin sprinkler blowout request received",
-    text: ["Hi " + name + ",", "", "Your Green Grin sprinkler blowout request was received.", "Service address: " + (lead.service_address || "To be confirmed"), "Zones: " + (lead.zones || 0), "Spigots: " + (lead.spigots || 0), code ? "Your referral code: " + code : "", "", "We will follow up with scheduling and payment details.", "Green Grin Lawns"].join("\n"),
-    html: "<p>Hi " + escapeHtml(name) + ",</p><h1>Request received</h1><p>Your Green Grin sprinkler blowout request was received.</p><p><strong>Service address:</strong> " + escapeHtml(lead.service_address || "To be confirmed") + "<br><strong>Zones:</strong> " + escapeHtml(lead.zones || 0) + "<br><strong>Spigots:</strong> " + escapeHtml(lead.spigots || 0) + (code ? "<br><strong>Your referral code:</strong> " + escapeHtml(code) : "") + "</p><p>We will follow up with scheduling and payment details.</p><p>Green Grin Lawns</p>"
+    text: ["Hi " + name + ",", "", "Your Green Grin sprinkler blowout request was received.", "Service address: " + (lead.service_address || "To be confirmed"), "Zones: " + (lead.zones || 0), "Spigots: " + (lead.spigots || 0), "Price: " + priceLabel + " ($55 for up to 6 zones, plus $5 for each additional zone)", code ? "Your referral code: " + code : "", "", "We will follow up to schedule your service.", "Green Grin Lawns"].join("\n"),
+    html: "<p>Hi " + escapeHtml(name) + ",</p><h1>Request received</h1><p>Your Green Grin sprinkler blowout request was received.</p><p><strong>Service address:</strong> " + escapeHtml(lead.service_address || "To be confirmed") + "<br><strong>Zones:</strong> " + escapeHtml(lead.zones || 0) + "<br><strong>Spigots:</strong> " + escapeHtml(lead.spigots || 0) + "<br><strong>Price:</strong> " + escapeHtml(priceLabel) + " ($55 for up to 6 zones, plus $5 for each additional zone)" + (code ? "<br><strong>Your referral code:</strong> " + escapeHtml(code) : "") + "</p><p>We will follow up to schedule your service.</p><p>Green Grin Lawns</p>"
   };
 }
 
@@ -183,6 +190,7 @@ exports.handler = async (event) => {
     let referrerLeadId = null;
     if (!fullName || !email || !serviceAddress) return json(400, { error: "Name, email, and service address are required." });
     if (!/^\S+@\S+\.\S+$/.test(email)) return json(400, { error: "Enter a valid email address." });
+    if (zones < 1) return json(400, { error: "Enter at least 1 sprinkler zone." });
     if (!waiverAgreed) return json(400, { error: "Check the waiver agreement before submitting the form." });
 
     if (referredByCode) {
@@ -199,7 +207,7 @@ exports.handler = async (event) => {
     }
     const rows = await supabase("green_grin_sprinkler_blowout_leads", {
       method: "POST",
-      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, share_code: shareCode, referred_by_code: referredByCode || null, referrer_lead_id: referrerLeadId, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString(), status: "New", scheduled_date: null, email_marketing_allowed: emailMarketingAllowed, sms_marketing_allowed: smsMarketingAllowed, followup_status: emailMarketingAllowed || smsMarketingAllowed ? "Queued" : "Opted out" })
+      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, customer_price: blowoutPriceForZones(zones), share_code: shareCode, referred_by_code: referredByCode || null, referrer_lead_id: referrerLeadId, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString(), status: "New", scheduled_date: null, email_marketing_allowed: emailMarketingAllowed, sms_marketing_allowed: smsMarketingAllowed, followup_status: emailMarketingAllowed || smsMarketingAllowed ? "Queued" : "Opted out" })
     });
     const savedLead = rows?.[0] || null;
     const confirmation = savedLead ? await sendBlowoutConfirmation(savedLead) : { sent: false, skipped: true, reason: "Signup saved but the confirmation record was unavailable." };
@@ -213,10 +221,13 @@ exports.handler = async (event) => {
       referral_url: `${base}/sprinkler-blowout.html?ref=${encodeURIComponent(shareCode)}`,
       referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE,
       referral_count: 0,
+      customer_price: blowoutPriceForZones(zones),
       message: referredByCode ? "Your request was saved. The referral will be reviewed by Green Grin before credit is applied." : "Your sprinkler blowout request was saved. Share your referral link with neighbors to earn $0.50 off each zone per successful referral."
     });
   } catch (error) {
     return json(500, { error: error.message || "Could not save the sprinkler blowout request." });
   }
 };
+
+exports._test = { blowoutPriceForZones, blowoutConfirmationPayload };
 
