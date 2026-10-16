@@ -205,10 +205,15 @@ exports.handler = async (event) => {
       if (!existing?.length) break;
       shareCode = newShareCode();
     }
-    const rows = await supabase("green_grin_sprinkler_blowout_leads", {
-      method: "POST",
-      body: JSON.stringify({ full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, customer_price: blowoutPriceForZones(zones), share_code: shareCode, referred_by_code: referredByCode || null, referrer_lead_id: referrerLeadId, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString(), status: "New", scheduled_date: null, email_marketing_allowed: emailMarketingAllowed, sms_marketing_allowed: smsMarketingAllowed, followup_status: emailMarketingAllowed || smsMarketingAllowed ? "Queued" : "Opted out" })
-    });
+    const signup = { full_name: fullName, email, phone, service_address: serviceAddress, zones, spigots, notes, customer_price: blowoutPriceForZones(zones), share_code: shareCode, referred_by_code: referredByCode || null, referrer_lead_id: referrerLeadId, discount_percent: 0, referral_count: 0, referral_credit_cents_per_zone: REFERRAL_CREDIT_CENTS_PER_ZONE, referral_active: true, waiver_agreed: true, waiver_agreed_at: new Date().toISOString(), status: "New", scheduled_date: null, email_marketing_allowed: emailMarketingAllowed, sms_marketing_allowed: smsMarketingAllowed, followup_status: emailMarketingAllowed || smsMarketingAllowed ? "Queued" : "Opted out" };
+    let rows;
+    try {
+      rows = await supabase("green_grin_sprinkler_blowout_leads", { method: "POST", body: JSON.stringify(signup) });
+    } catch (error) {
+      if (!/customer_price/i.test(error.message || "")) throw error;
+      const { customer_price: omittedPrice, ...compatibleSignup } = signup;
+      rows = await supabase("green_grin_sprinkler_blowout_leads", { method: "POST", body: JSON.stringify(compatibleSignup) });
+    }
     const savedLead = rows?.[0] || null;
     const confirmation = savedLead ? await sendBlowoutConfirmation(savedLead) : { sent: false, skipped: true, reason: "Signup saved but the confirmation record was unavailable." };
     const base = requestBaseUrl(event);
