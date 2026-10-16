@@ -383,6 +383,15 @@
       gap: 14px;
     }
 
+    .financial-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+    }
+
+    #invoice-bookkeeping-summary .job-head { align-items: end; margin-bottom: 14px; }
+    #invoice-bookkeeping-summary select { min-width: 150px; }
+
     .two {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -4454,10 +4463,19 @@
     </section>
 
     <section id="invoices" class="panel">
-      <div id="invoice-bookkeeping-summary" class="three owner-only">
-        <div class="metric"><span>Total billed</span><strong id="books-total-billed">$0.00</strong><p class="muted">All active invoices</p></div>
-        <div class="metric"><span>Outstanding</span><strong id="books-outstanding">$0.00</strong><p class="muted">Sent, pending, and overdue</p></div>
-        <div class="metric"><span>Collected</span><strong id="books-collected">$0.00</strong><p class="muted">Invoices marked paid</p></div>
+      <div id="invoice-bookkeeping-summary" class="card owner-only">
+        <div class="job-head">
+          <div><span class="admin-eyebrow">Bookkeeping</span><h2>Financial overview</h2><p class="muted">Paid revenue minus recorded expenses. Outstanding invoices stay visible separately.</p></div>
+          <label>Period <select id="bookkeeping-period"><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></label>
+        </div>
+        <div class="financial-metrics">
+          <div class="metric"><span>Paid revenue</span><strong id="books-collected">$0.00</strong><p class="muted" id="books-paid-count">0 paid invoices</p></div>
+          <div class="metric"><span>Recorded expenses</span><strong id="books-expenses">$0.00</strong><p class="muted" id="books-expense-count">0 expense entries</p></div>
+          <div class="metric"><span>Net cash</span><strong id="books-net-cash">$0.00</strong><p class="muted">Paid revenue minus expenses</p></div>
+          <div class="metric"><span>Outstanding</span><strong id="books-outstanding">$0.00</strong><p class="muted">Sent, pending, and overdue</p></div>
+          <div class="metric"><span>Billed in period</span><strong id="books-total-billed">$0.00</strong><p class="muted">Active invoices created in period</p></div>
+        </div>
+        <p class="muted" style="margin-top:12px">This is an operating cash view. Tax deductions, payroll liabilities, owner draws, and unpaid bills may change accounting net income.</p>
       </div>
       <div class="row-actions owner-only" style="margin: 12px 0 18px;">
         <button id="export-invoices-csv" class="button ghost" type="button">Export Invoices CSV</button>
@@ -4725,6 +4743,7 @@
 
   <script src="/assets/green-grin-calculator.js"></script>
   <script src="/assets/green-grin-session.js"></script>
+  <script src="/assets/green-grin-bookkeeping.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const $ = (selector) => document.querySelector(selector);
@@ -4744,6 +4763,7 @@
     let bidSelectedPlan = "fresh";
     let latestFertBid = null;
     let expenseRows = [];
+    let expenseRowsLoaded = false;
     let employeeDirectory = [];
     let adminJobRows = [];
     let adminDailyRouteRows = [];
@@ -5373,6 +5393,7 @@
         if (button.dataset.tab === "invoices") {
           loadInvoiceCustomers();
           loadInvoices();
+          if (!expenseRowsLoaded) loadExpenses();
         }
         if (button.dataset.tab === "expenses") loadExpenses();
         if (button.dataset.tab === "bids") loadBidPricing();
@@ -5387,6 +5408,8 @@
     document.querySelectorAll(".go-tab").forEach((button) => {
       button.addEventListener("click", () => openTab(button.dataset.go));
     });
+
+    $("#bookkeeping-period")?.addEventListener("change", renderBookkeepingSummary);
 
     document.querySelectorAll("[data-bidder-section]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -7012,14 +7035,23 @@
         : notice(search ? "No paid invoices match that search." : "No paid invoices yet.");
     }
 
+    function renderBookkeepingSummary() {
+      if (!$("#books-net-cash") || !window.GreenGrinBookkeeping) return;
+      const period = $("#bookkeeping-period")?.value || "month";
+      const summary = window.GreenGrinBookkeeping.summarize(invoiceDrafts, expenseRows, { period });
+      $("#books-total-billed").textContent = money(summary.billed);
+      $("#books-collected").textContent = money(summary.paidRevenue);
+      $("#books-expenses").textContent = money(summary.loggedExpenses);
+      $("#books-net-cash").textContent = money(summary.netCash);
+      $("#books-net-cash").style.color = summary.netCash < 0 ? "#ffb39f" : "";
+      $("#books-outstanding").textContent = money(summary.outstanding);
+      $("#books-paid-count").textContent = `${summary.paidCount} paid invoice${summary.paidCount === 1 ? "" : "s"}`;
+      $("#books-expense-count").textContent = `${summary.expenseCount} expense entr${summary.expenseCount === 1 ? "y" : "ies"}`;
+    }
+
     function renderInvoiceDrafts() {
       const openInvoices = invoiceDrafts.filter((invoice) => !isPaidInvoice(invoice));
-      const billed = invoiceDrafts.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
-      const collected = invoiceDrafts.filter(isPaidInvoice).reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
-      const outstanding = invoiceDrafts.filter((invoice) => !isPaidInvoice(invoice) && invoice.status !== "Draft").reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
-      $("#books-total-billed").textContent = money(billed);
-      $("#books-collected").textContent = money(collected);
-      $("#books-outstanding").textContent = money(outstanding);
+      renderBookkeepingSummary();
       $("#invoice-list").innerHTML = openInvoices.length
         ? openInvoices.map((invoice) => invoiceListCard(invoice)).join("")
         : `<div class="invoice"><div class="invoice-head"><strong>No invoices yet</strong><span class="badge warn">Draft</span></div></div>`;
@@ -7301,6 +7333,7 @@
         ? receiptRows.map((expense) => expenseCard(expense)).join("")
         : notice("No expenses saved yet.");
       renderMileage();
+      renderBookkeepingSummary();
     }
 
     function setExpenseView(view = "receipts") {
@@ -7325,7 +7358,9 @@
       try {
         const data = await requestJson("portal-expenses?admin=1", { headers: adminHeaders() });
         renderExpenses(data);
+        expenseRowsLoaded = true;
       } catch (error) {
+        expenseRowsLoaded = false;
         $("#expense-list").innerHTML = notice(error.message, true);
       }
     }

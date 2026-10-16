@@ -12,12 +12,13 @@ const roster = scheduledEmailRoster([
   { id: "1", full_name: "First Property", email: "owner@example.com", service_address: "1 Main St", status: "Scheduled" },
   { id: "2", full_name: "Second Property", email: "owner@example.com", service_address: "2 Main St", status: "Scheduled" },
   { id: "3", full_name: "Missing Email", email: "", service_address: "3 Main St", status: "Scheduled" },
-  { id: "4", full_name: "Finished", email: "done@example.com", service_address: "4 Main St", status: "Completed" }
+  { id: "4", full_name: "Finished", email: "done@example.com", service_address: "4 Main St", status: "Completed" },
+  { id: "5", full_name: "Already Invoiced", email: "invoiced@example.com", service_address: "5 Main St", status: "Invoiced" }
 ], "2026-10-15");
-assert.equal(roster.assigned_total, 4);
+assert.equal(roster.assigned_total, 5);
 assert.equal(roster.active_total, 3);
 assert.equal(roster.recipients.length, 2, "Separate scheduled records sharing an email must both remain visible in the day count.");
 assert.equal(roster.missing_email[0].name, "Missing Email");
-assert.equal(roster.closed_total, 1);
+assert.equal(roster.closed_total, 2);
 
 console.log("Sprinkler operations tests passed.");

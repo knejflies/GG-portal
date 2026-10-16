@@ -386,6 +386,21 @@
       gap: 14px;
     }
 
+    .financial-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px;
+    }
+
+    #invoice-bookkeeping-summary .job-head {
+      align-items: end;
+      margin-bottom: 14px;
+    }
+
+    #invoice-bookkeeping-summary select {
+      min-width: 150px;
+    }
+
     .two {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -5132,7 +5147,7 @@
       <div class="card">
         <div class="job-head"><div><span class="admin-eyebrow">Quoting tools</span><h2>Sprinkler blowout leads</h2><p class="muted">Homeowners captured from the public blowout form. Review each referral, approve successful ones, and close it when paid.</p></div><button id="load-blowout-leads" class="button small secondary" type="button">Refresh Leads</button></div>
         <div class="admin-actions"><a class="button secondary" href="/sprinkler-blowout.html" target="_blank" rel="noopener">Open Public Form</a><button id="send-blowout-confirmations" class="button secondary" type="button" disabled>Automatic confirmations on</button><button id="locate-blowout-pins" class="button secondary" type="button">Locate Missing Pins</button><span id="blowout-confirmation-result" aria-live="polite"></span><span id="blowout-location-result" aria-live="polite"></span><input id="blowout-search" type="search" placeholder="Search name, address, phone, or email" /><select id="blowout-status-filter"><option>All</option><option>Unscheduled</option><option>New</option><option>Scheduled</option><option>Completed</option><option>Invoiced</option><option>Paid</option><option>Needs Correction</option></select></div>
-        <div class="admin-actions"><label>Assign selected to <input id="blowout-bulk-date" type="date" /></label><button id="blowout-bulk-schedule" class="button secondary" type="button">Put checked on this day</button><button id="blowout-bulk-email" class="button secondary" type="button">Email this day</button><span id="blowout-bulk-result" aria-live="polite"></span></div>
+        <div class="admin-actions"><label>Service date <input id="blowout-bulk-date" type="date" /></label><button id="blowout-bulk-schedule" class="button secondary" type="button">Assign checked customers</button><button id="blowout-bulk-email" class="button secondary" type="button">Email this day</button><span id="blowout-bulk-result" aria-live="polite"></span></div>
         <div class="admin-actions"><label>Route date <input id="blowout-route-date" type="date" /></label><input id="blowout-route-start" type="text" placeholder="Starting address" autocomplete="street-address" /><button id="blowout-route-optimize" class="button secondary" type="button">Optimize Blowout Route</button><button id="blowout-route-clear" class="button ghost" type="button">Clear Stops</button><span id="blowout-route-result" aria-live="polite"></span></div><div id="blowout-route-days" class="admin-actions" aria-label="Blowout route days"></div>
         <div id="blowout-map-summary" class="marketing-summary" aria-live="polite"></div>
         <div id="blowout-map" style="height:360px;margin:14px 0;border-radius:12px;overflow:hidden;border:1px solid rgba(142,210,62,.35)" aria-label="Sprinkler blowout property map"></div>
@@ -5873,10 +5888,19 @@
     </section>
 
     <section id="invoices" class="panel">
-      <div id="invoice-bookkeeping-summary" class="three owner-only">
-        <div class="metric"><span>Total billed</span><strong id="books-total-billed">$0.00</strong><p class="muted">All active invoices</p></div>
-        <div class="metric"><span>Outstanding</span><strong id="books-outstanding">$0.00</strong><p class="muted">Sent, pending, and overdue</p></div>
-        <div class="metric"><span>Collected</span><strong id="books-collected">$0.00</strong><p class="muted">Invoices marked paid</p></div>
+      <div id="invoice-bookkeeping-summary" class="card owner-only">
+        <div class="job-head">
+          <div><span class="admin-eyebrow">Bookkeeping</span><h2>Financial overview</h2><p class="muted">Paid revenue minus recorded expenses. Outstanding invoices stay visible separately.</p></div>
+          <label>Period <select id="bookkeeping-period"><option value="month">This month</option><option value="year">This year</option><option value="all">All time</option></select></label>
+        </div>
+        <div class="financial-metrics">
+          <div class="metric"><span>Paid revenue</span><strong id="books-collected">$0.00</strong><p class="muted" id="books-paid-count">0 paid invoices</p></div>
+          <div class="metric"><span>Recorded expenses</span><strong id="books-expenses">$0.00</strong><p class="muted" id="books-expense-count">0 expense entries</p></div>
+          <div class="metric"><span>Net cash</span><strong id="books-net-cash">$0.00</strong><p class="muted">Paid revenue minus expenses</p></div>
+          <div class="metric"><span>Outstanding</span><strong id="books-outstanding">$0.00</strong><p class="muted">Sent, pending, and overdue</p></div>
+          <div class="metric"><span>Billed in period</span><strong id="books-total-billed">$0.00</strong><p class="muted">Active invoices created in period</p></div>
+        </div>
+        <p class="muted" style="margin-top:12px">This is an operating cash view. Tax deductions, payroll liabilities, owner draws, and unpaid bills may change accounting net income.</p>
       </div>
       <div class="row-actions owner-only" style="margin: 12px 0 18px;">
         <button id="export-invoices-csv" class="button ghost" type="button">Export Invoices CSV</button>
@@ -6198,6 +6222,7 @@
   <script src="/assets/green-grin-project-estimator.js"></script>
   <script src="/assets/green-grin-auto-bid-engine.js"></script>
   <script src="/assets/green-grin-contract.js"></script>
+  <script src="/assets/green-grin-bookkeeping.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const $ = (selector) => document.querySelector(selector);
@@ -6909,6 +6934,7 @@
         if (button.dataset.tab === "invoices") {
           loadInvoiceCustomers();
           loadInvoices();
+          if (!expenseRowsLoaded) loadExpenses();
         }
         if (button.dataset.tab === "expenses") loadExpenses();
         if (requestedTab === "bids") {
@@ -6932,6 +6958,8 @@
     document.querySelectorAll(".go-tab").forEach((button) => {
       button.addEventListener("click", () => openTab(button.dataset.go));
     });
+
+    $("#bookkeeping-period")?.addEventListener("change", renderBookkeepingSummary);
 
     document.querySelectorAll("[data-home-go]").forEach((button) => {
       button.addEventListener("click", () => openTab(button.dataset.homeGo));
@@ -9795,14 +9823,23 @@
         : notice(search ? "No paid invoices match that search." : "No paid invoices yet.");
     }
 
+    function renderBookkeepingSummary() {
+      if (!$("#books-net-cash") || !window.GreenGrinBookkeeping) return;
+      const period = $("#bookkeeping-period")?.value || "month";
+      const summary = window.GreenGrinBookkeeping.summarize(invoiceDrafts, expenseRows, { period });
+      $("#books-total-billed").textContent = money(summary.billed);
+      $("#books-collected").textContent = money(summary.paidRevenue);
+      $("#books-expenses").textContent = money(summary.loggedExpenses);
+      $("#books-net-cash").textContent = money(summary.netCash);
+      $("#books-net-cash").style.color = summary.netCash < 0 ? "#ffb39f" : "";
+      $("#books-outstanding").textContent = money(summary.outstanding);
+      $("#books-paid-count").textContent = `${summary.paidCount} paid invoice${summary.paidCount === 1 ? "" : "s"}`;
+      $("#books-expense-count").textContent = `${summary.expenseCount} expense entr${summary.expenseCount === 1 ? "y" : "ies"}`;
+    }
+
     function renderInvoiceDrafts() {
       const openInvoices = invoiceDrafts.filter((invoice) => !isPaidInvoice(invoice));
-      const billed = invoiceDrafts.reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
-      const collected = invoiceDrafts.filter(isPaidInvoice).reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
-      const outstanding = invoiceDrafts.filter((invoice) => !isPaidInvoice(invoice) && invoice.status !== "Draft").reduce((sum, invoice) => sum + Number(invoice.amount || 0), 0);
-      $("#books-total-billed").textContent = money(billed);
-      $("#books-collected").textContent = money(collected);
-      $("#books-outstanding").textContent = money(outstanding);
+      renderBookkeepingSummary();
       $("#invoice-list").innerHTML = openInvoices.length
         ? openInvoices.map((invoice) => invoiceListCard(invoice)).join("")
         : `<div class="invoice"><div class="invoice-head"><strong>No invoices yet</strong><span class="badge warn">Draft</span></div></div>`;
@@ -10181,6 +10218,7 @@
       renderMileage();
       renderFertilizerRecords();
       renderMileageMaps();
+      renderBookkeepingSummary();
     }
 
     function setExpenseView(view = "receipts") {
@@ -11811,11 +11849,30 @@
       return blowoutLeads.filter((lead) => {
         if (lead.status === "Not Successful") return false;
         const matchesDate = !selectedBlowoutDate || String(lead.scheduled_date || "").slice(0, 10) === selectedBlowoutDate;
-        const matchesActiveDay = !selectedBlowoutDate || !["Completed", "Paid", "Not Successful"].includes(String(lead.status || ""));
-        const matchesStatus = status === "All" || (status === "Unscheduled" ? !lead.scheduled_date && lead.status !== "Completed" && lead.status !== "Paid" : lead.status === status || (status === "Needs Correction" && lead.geocode_status === "Needs Correction"));
+        const matchesActiveDay = !selectedBlowoutDate || !["Completed", "Invoiced", "Paid", "Not Successful"].includes(String(lead.status || ""));
+        const closed = ["Completed", "Invoiced", "Paid", "Not Successful"].includes(String(lead.status || ""));
+        const matchesStatus = status === "All"
+          ? !closed
+          : (status === "Unscheduled" ? !lead.scheduled_date && !closed : lead.status === status || (status === "Needs Correction" && lead.geocode_status === "Needs Correction"));
         const haystack = [lead.full_name, lead.email, lead.phone, lead.service_address, lead.status].map((value) => String(value || "").toLowerCase()).join(" ");
         return matchesDate && matchesActiveDay && matchesStatus && (!query || haystack.includes(query));
       });
+    }
+    function reconcileBlowoutRoute() {
+      const activeDayLeads = blowoutLeads.filter((lead) => {
+        const active = !["Completed", "Invoiced", "Paid", "Not Successful"].includes(String(lead.status || ""));
+        const onSelectedDay = !selectedBlowoutDate || String(lead.scheduled_date || "").slice(0, 10) === selectedBlowoutDate;
+        return active && onSelectedDay;
+      });
+      const activeIds = new Set(activeDayLeads.map((lead) => String(lead.id)));
+      blowoutRouteOrder = blowoutRouteOrder.filter((id) => activeIds.has(String(id)));
+      if (selectedBlowoutDate) {
+        activeDayLeads.forEach((lead) => {
+          const id = String(lead.id);
+          if (!blowoutRouteOrder.includes(id)) blowoutRouteOrder.push(id);
+        });
+      }
+      blowoutRouteSelectedIds = [...blowoutRouteOrder];
     }
     function blowoutDateLabel(value) {
       return new Date(`${value}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
@@ -11824,22 +11881,34 @@
       const target = $("#blowout-route-days");
       if (!target) return;
       const counts = new Map();
-      blowoutLeads.filter((lead) => !["Paid", "Completed", "Not Successful"].includes(String(lead.status || ""))).forEach((lead) => {
+      const activeLeads = blowoutLeads.filter((lead) => !["Paid", "Completed", "Invoiced", "Not Successful"].includes(String(lead.status || "")));
+      activeLeads.forEach((lead) => {
         const date = String(lead.scheduled_date || "").slice(0, 10);
         if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
         counts.set(date, (counts.get(date) || 0) + 1);
       });
+      const unscheduledCount = activeLeads.filter((lead) => !lead.scheduled_date).length;
       const groups = [...counts.entries()].sort(([left], [right]) => left.localeCompare(right));
-      target.innerHTML = groups.length
-        ? `<button class="button small ${selectedBlowoutDate ? "ghost" : ""}" type="button" data-blowout-route-date="">Show all</button>${groups.map(([date, count]) => `<button class="button small ${selectedBlowoutDate === date ? "" : "ghost"}" type="button" data-blowout-route-date="${date}">${cleanText(blowoutDateLabel(date))} (${count})</button>`).join("")}`
-        : `<span class="muted">Schedule blowouts to group them by day.</span>`;
+      const unscheduledActive = !selectedBlowoutDate && $("#blowout-status-filter")?.value === "Unscheduled";
+      target.innerHTML = `<button class="button small ${!selectedBlowoutDate && !unscheduledActive ? "" : "ghost"}" type="button" data-blowout-route-date="">All active (${activeLeads.length})</button><button class="button small ${unscheduledActive ? "" : "ghost"}" type="button" data-blowout-route-date="unscheduled">Unscheduled (${unscheduledCount})</button>${groups.map(([date, count]) => `<button class="button small ${selectedBlowoutDate === date ? "" : "ghost"}" type="button" data-blowout-route-date="${date}">${cleanText(blowoutDateLabel(date))} (${count})</button>`).join("")}`;
     }
     function selectBlowoutDate(date) {
+      if (date === "unscheduled") {
+        selectedBlowoutDate = "";
+        $("#blowout-status-filter").value = "Unscheduled";
+        if ($("#blowout-bulk-date")) $("#blowout-bulk-date").value = "";
+        if ($("#blowout-route-date")) $("#blowout-route-date").value = "";
+        blowoutRouteOrder = [];
+        blowoutRouteSelectedIds = [];
+        renderBlowoutLeads(filteredBlowoutLeads());
+        return;
+      }
       selectedBlowoutDate = /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) ? String(date) : "";
+      $("#blowout-status-filter").value = "All";
       if ($("#blowout-bulk-date")) $("#blowout-bulk-date").value = selectedBlowoutDate;
       if ($("#blowout-route-date")) $("#blowout-route-date").value = selectedBlowoutDate;
       const dayLeads = selectedBlowoutDate
-        ? blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === selectedBlowoutDate && !["Paid", "Completed", "Not Successful"].includes(String(lead.status || "")))
+        ? blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === selectedBlowoutDate && !["Paid", "Completed", "Invoiced", "Not Successful"].includes(String(lead.status || "")))
         : [];
       blowoutRouteOrder = dayLeads.map((lead) => String(lead.id));
       blowoutRouteSelectedIds = [...blowoutRouteOrder];
@@ -11848,8 +11917,8 @@
     function renderBlowoutMap(leads = []) {
       const container = $("#blowout-map");
       if (!container || !window.L) return;
-      // Completed/paid blowouts remain in the list and history, but leave the active route map.
-      const activeLeads = leads.filter((lead) => !["Paid", "Completed", "Not Successful"].includes(String(lead.status || "")));
+      // Closed blowouts stay available through status filters and history, but leave the active route map.
+      const activeLeads = leads.filter((lead) => !["Paid", "Completed", "Invoiced", "Not Successful"].includes(String(lead.status || "")));
       const located = activeLeads.filter((lead) => lead.geocode_status === "Located" && Number.isFinite(Number(lead.latitude)) && Number.isFinite(Number(lead.longitude))).length;
       const needsCorrection = activeLeads.filter((lead) => lead.geocode_status === "Needs Correction").length;
       const notLocated = Math.max(0, activeLeads.length - located - needsCorrection);
@@ -11888,6 +11957,12 @@
         marker.bindPopup(`<strong>${cleanText(lead.full_name)}</strong><br>${cleanText(lead.service_address)}<br>Signed up: ${cleanText(signupDate)}<br>${cleanText(lead.status || "New")}<br><a href="${directions}" target="_blank" rel="noopener">Driving directions</a>`);
         marker.on("click", () => {
           window.setTimeout(() => blowoutMap?.setView([lat, lng], Math.max(Number(blowoutMap?.getZoom?.() || 15), 16)), 0);
+          const card = [...document.querySelectorAll("#blowout-leads-list [data-blowout-id]")].find((item) => String(item.dataset.blowoutId) === leadId);
+          if (card) {
+            card.classList.remove("blowout-collapsed");
+            card.style.outline = "3px solid var(--lime)";
+            window.setTimeout(() => { card.style.outline = ""; }, 1800);
+          }
         });
       });
       if (bounds.length) blowoutMap.fitBounds(bounds, { padding: [28, 28], maxZoom: 16 });
@@ -11915,11 +11990,15 @@
         const confirmationMark = lead.confirmation_sent_at ? ` <span title="Confirmation emailed ${cleanText(new Date(lead.confirmation_sent_at).toLocaleString())}" aria-label="Confirmation emailed" style="color:var(--lime)">✓</span>` : "";
         const referralUrl = lead.share_code ? `${location.origin}/sprinkler-blowout.html?ref=${encodeURIComponent(lead.share_code)}` : "";
         const mapStatus = lead.geocode_status === "Located" ? `<span class="badge" style="background:#e5f4dc;color:#123324">● On map</span>` : lead.geocode_status === "Needs Correction" ? `<span class="badge warn">● Needs correction</span>` : `<span class="badge">● Not located</span>`;
-        return `<div class="marketing-lead" data-blowout-id="${cleanText(lead.id)}" data-referral-url="${cleanText(referralUrl)}" data-referral-code="${cleanText(lead.share_code || "")}"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}${confirmationMark}</strong><span>${mapStatus} <span class="badge">${cleanText(status)}${lead.referral_active === false ? " · Closed" : ""}</span></span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">${lead.geocode_status === "Needs Correction" ? "Address needs correction before mapping" : lead.geocode_status === "Located" ? "Address located and included on map" : "Address not located yet"}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p><p class="muted">${lead.waiver_agreed ? `Waiver accepted${lead.waiver_agreed_at ? ` ${cleanText(new Date(lead.waiver_agreed_at).toLocaleDateString())}` : ""}` : "Waiver not accepted"}</p><p><strong>Referral credit:</strong> ${cleanText(`${lead.referral_count || 0} successful referrals × $0.50 × ${lead.zones || 0} zones = $${credit.toFixed(2)}`)}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}<div class="admin-actions"><button class="button small ghost" data-blowout-action="edit-address" type="button">Edit Address</button><button class="button small ghost" data-blowout-action="manual-pin" type="button">Place Pin on Map</button>${lead.share_code ? `<button class="button small ghost" data-blowout-action="share" type="button">Share Referral</button>` : ""}${lead.email ? `<button class="button small ghost" data-blowout-action="send-confirmation" type="button">Send Confirmation</button>` : ""}<button class="button small secondary" data-blowout-action="sync" type="button">Create / Link Customer</button><button class="button small secondary" data-blowout-action="schedule" type="button">Schedule</button>${lead.scheduled_date ? `<button class="button small ghost" data-blowout-action="unschedule" type="button">Remove from day</button>` : ""}<button class="button small secondary" data-blowout-action="complete" type="button">Mark Complete</button><button class="button small secondary" data-blowout-action="invoice" type="button">Create Draft Invoice</button><a class="button small ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}" target="_blank" rel="noopener">Directions</a><button class="button small ghost" data-blowout-action="archive" type="button">Archive</button></div>${nested.length ? `<div style="margin:14px 0 0 18px;padding-left:14px;border-left:3px solid var(--lime)"><strong>Direct referrals (${nested.length})</strong>${nested.map(renderCard).join("")}</div>` : ""}</div>`;
+        const activeWorkflow = !["Completed", "Invoiced", "Paid"].includes(status)
+          ? `<button class="button small secondary" data-blowout-action="sync" type="button">Create / Link Customer</button><button class="button small secondary" data-blowout-action="schedule" type="button">Schedule</button>${lead.scheduled_date ? `<button class="button small ghost" data-blowout-action="unschedule" type="button">Remove from day</button>` : ""}<button class="button small secondary" data-blowout-action="complete" type="button">Mark Complete</button><button class="button small ghost" data-blowout-action="archive" type="button">Archive</button>`
+          : (status === "Completed" ? `<button class="button small secondary" data-blowout-action="invoice" type="button">Create Draft Invoice</button>` : "");
+        return `<div class="marketing-lead" data-blowout-id="${cleanText(lead.id)}" data-referral-url="${cleanText(referralUrl)}" data-referral-code="${cleanText(lead.share_code || "")}"><div class="marketing-lead-head"><strong>${cleanText(lead.full_name)}${confirmationMark}</strong><span>${mapStatus} <span class="badge">${cleanText(status)}${lead.referral_active === false ? " · Closed" : ""}</span></span></div><p>${cleanText(lead.email)}${lead.phone ? ` · ${cleanText(lead.phone)}` : ""}</p><p class="muted">${cleanText(lead.service_address)} · ${cleanText(`${lead.zones || 0} zones`)} · ${cleanText(`${lead.spigots || 0} spigots`)}</p><p class="muted">${lead.geocode_status === "Needs Correction" ? "Address needs correction before mapping" : lead.geocode_status === "Located" ? "Address located and included on map" : "Address not located yet"}</p><p class="muted">Referral code: ${cleanText(lead.share_code)}${lead.referred_by_code ? ` · Referred by ${cleanText(lead.referred_by_code)}` : ""} · ${lead.created_at ? cleanText(new Date(lead.created_at).toLocaleDateString()) : ""}</p><p class="muted">${lead.waiver_agreed ? `Waiver accepted${lead.waiver_agreed_at ? ` ${cleanText(new Date(lead.waiver_agreed_at).toLocaleDateString())}` : ""}` : "Waiver not accepted"}</p><p><strong>Referral credit:</strong> ${cleanText(`${lead.referral_count || 0} successful referrals × $0.50 × ${lead.zones || 0} zones = $${credit.toFixed(2)}`)}</p>${lead.notes ? `<p>${cleanText(lead.notes)}</p>` : ""}<div class="admin-actions"><button class="button small ghost" data-blowout-action="edit-address" type="button">Edit Address</button><button class="button small ghost" data-blowout-action="manual-pin" type="button">Place Pin on Map</button>${lead.share_code ? `<button class="button small ghost" data-blowout-action="share" type="button">Share Referral</button>` : ""}${lead.email ? `<button class="button small ghost" data-blowout-action="send-confirmation" type="button">Send Confirmation</button>` : ""}${activeWorkflow}<a class="button small ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(lead.service_address || "")}" target="_blank" rel="noopener">Directions</a></div>${nested.length ? `<div style="margin:14px 0 0 18px;padding-left:14px;border-left:3px solid var(--lime)"><strong>Direct referrals (${nested.length})</strong>${nested.map(renderCard).join("")}</div>` : ""}</div>`;
       };
       const roots = leads.filter((lead) => !lead.referrer_lead_id && (!lead.referred_by_code || !byCode.has(String(lead.referred_by_code).toUpperCase())));
       target.innerHTML = roots.map(renderCard).join("");
       target.querySelectorAll(".marketing-lead[data-blowout-id]").forEach((card) => {
+        const savedLead = blowoutLeads.find((item) => String(item.id) === String(card.dataset.blowoutId)) || {};
         const label = document.createElement("label");
         label.className = "muted";
         label.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:8px";
@@ -11927,7 +12006,7 @@
         card.prepend(label);
         const priceRow = document.createElement("div");
         priceRow.className = "admin-actions blowout-price-row";
-        const savedPrice = Number(lead.customer_price) > 0 ? Number(lead.customer_price).toFixed(2) : "";
+        const savedPrice = Number(savedLead.customer_price) > 0 ? Number(savedLead.customer_price).toFixed(2) : "";
         priceRow.innerHTML = `<label>Customer price <input class="blowout-price" type="number" min="0" step="0.01" placeholder="0.00" value="${cleanText(savedPrice)}" /></label><button class="button small secondary" data-blowout-action="set-price" type="button">Save price</button>`;
         card.append(priceRow);
         card.classList.add("blowout-collapsed");
@@ -11938,7 +12017,7 @@
       const startAddress = $("#blowout-route-start")?.value.trim() || "";
       const routeDate = $("#blowout-route-date")?.value || "";
       let ids = [...blowoutRouteOrder];
-      if (!ids.length && routeDate) ids = blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === routeDate).map((lead) => String(lead.id));
+      if (!ids.length && routeDate) ids = blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === routeDate && !["Completed", "Invoiced", "Paid", "Not Successful"].includes(String(lead.status || ""))).map((lead) => String(lead.id));
       if (!ids.length) { $("#blowout-route-result").innerHTML = notice("Tap the blowout pins you want to visit first.", true); return; }
       const button = $("#blowout-route-optimize");
       button.disabled = true;
@@ -11976,6 +12055,7 @@
       try {
         const data = await requestJson("portal-sprinkler-operations", { headers: adminHeaders() });
         blowoutLeads = data.leads || [];
+        reconcileBlowoutRoute();
         renderBlowoutLeads(filteredBlowoutLeads());
         await ensureLeaflet();
         renderBlowoutMap(filteredBlowoutLeads());
@@ -13642,7 +13722,6 @@
       if (!button) return;
       selectBlowoutDate(button.dataset.blowoutRouteDate || "");
     });
-    $("#blowout-bulk-date").addEventListener("change", (event) => selectBlowoutDate(event.currentTarget.value));
     $("#blowout-route-date").addEventListener("change", (event) => selectBlowoutDate(event.currentTarget.value));
     $("#send-blowout-confirmations").addEventListener("click", async () => {
       const button = $("#send-blowout-confirmations");
@@ -13764,13 +13843,10 @@
           await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "unschedule", lead_id: card.dataset.blowoutId }) });
           lead.scheduled_date = null;
           lead.status = "New";
-          const statusBadge = card.querySelector(".marketing-lead-head > span .badge:last-child");
-          if (statusBadge) statusBadge.textContent = "New";
-          button.textContent = "✓ Removed";
-          button.style.cssText = "background:#9bea32;color:#072116;border-color:#9bea32";
-          button.disabled = true;
-          card.insertAdjacentHTML("afterbegin", notice("Removed from the day. It is now unscheduled."));
-          if ($("#blowout-status-filter")?.value === "Scheduled") card.remove();
+          blowoutRouteOrder = blowoutRouteOrder.filter((id) => String(id) !== String(lead.id));
+          blowoutRouteSelectedIds = blowoutRouteSelectedIds.filter((id) => String(id) !== String(lead.id));
+          $("#blowout-bulk-result").innerHTML = notice(`${cleanText(lead.full_name || "Customer")} was removed from the day and is now unscheduled.`);
+          renderBlowoutLeads(filteredBlowoutLeads());
           refreshLeads = false;
         } else if (action === "complete") {
           const date = window.prompt("Completion date (YYYY-MM-DD)", lead.scheduled_date || new Date().toISOString().slice(0, 10));

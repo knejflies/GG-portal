@@ -90,7 +90,7 @@ function resolveBlowoutPrice(body, lead) {
 }
 function scheduledEmailRoster(leads, scheduledDate) {
   const rows = Array.isArray(leads) ? leads : [];
-  const closedStatuses = new Set(["Completed", "Paid", "Not Successful"]);
+  const closedStatuses = new Set(["Completed", "Invoiced", "Paid", "Not Successful"]);
   const active = rows.filter((lead) => !closedStatuses.has(String(lead?.status || "")));
   const recipients = [];
   const missingEmail = [];
@@ -226,14 +226,23 @@ exports.handler = async (event) => {
         const updated = await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ base_amount: baseAmount, total_amount: totalAmount }) });
         history = updated?.[0] || { ...history, base_amount: baseAmount, total_amount: totalAmount };
       }
-      if (history.invoice_id) return json(200, { duplicate: true, invoice_id: history.invoice_id });
+      if (history.invoice_id) {
+        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ status: "Invoiced", invoice_id: history.invoice_id }) });
+        return json(200, { duplicate: true, invoice_id: history.invoice_id });
+      }
       const lines = [{ description: `Sprinkler blowout (${Number(history.zones) || 0} zones)`, category: "Sprinkler Blowout", quantity: 1, unit: "service", rate: Number(history.base_amount) || 0, amount: Number(history.base_amount) || 0 }, ...extraRows(history.extra_charges).map((row) => ({ ...row, category: "Approved Extra", amount: Math.round(row.quantity * row.rate * 100) / 100 }))];
       const invoiceKey = `blowout:${history.id}`;
       const existing = await supabase(`green_grin_invoices?select=id&source_estimate_number=eq.${encodeURIComponent(invoiceKey)}&limit=1`);
-      if (existing?.[0]) return json(200, { duplicate: true, invoice_id: existing[0].id });
+      if (existing?.[0]) {
+        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ status: "Invoiced", invoice_id: existing[0].id }) });
+        return json(200, { duplicate: true, invoice_id: existing[0].id });
+      }
       const invoiceRows = await supabase("green_grin_invoices", { method: "POST", body: JSON.stringify({ customer_user_id: result.customer_user_id, customer_name: lead.full_name, phone: lead.phone || "", email: lead.email, amount: Number(history.total_amount) || 0, subtotal: Number(history.total_amount) || 0, line_items: lines, due_date: body.due_date || null, status: "Draft", service_line: "Sprinkler Blowout", service_address: lead.service_address, notes: "Review this itemized blowout invoice before sending.", payment_method: "Venmo Business", payment_url: `https://venmo.com/u/${encodeURIComponent(VENMO_HANDLE)}`, property_id: result.property_id, source_estimate_number: invoiceKey, blowout_history_id: history.id, active: true }) });
       const invoice = invoiceRows?.[0] || null;
-      if (invoice) await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ invoice_id: invoice.id, status: "Invoiced" }) });
+      if (invoice) {
+        await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ invoice_id: invoice.id, status: "Invoiced" }) });
+        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ status: "Invoiced", invoice_id: invoice.id }) });
+      }
       return json(200, { invoice, duplicate: false });
     }
     if (event.httpMethod === "POST" && body.action === "queue-followup") {
