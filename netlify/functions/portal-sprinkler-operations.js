@@ -85,6 +85,9 @@ function extraRows(value) {
   return (Array.isArray(value) ? value : []).slice(0, 30).map((row) => ({ description: clean(row.description, 180), quantity: Math.max(0, Number(row.quantity) || 0), unit: clean(row.unit || "each", 24), rate: Math.max(0, Number(row.rate) || 0) })).filter((row) => row.description && row.quantity > 0);
 }
 function blowoutIdempotencyKey(leadId, serviceDate) { return `blowout:${leadId}:${serviceDate}`; }
+function resolveBlowoutPrice(body, lead) {
+  return Math.max(0, Number(Object.prototype.hasOwnProperty.call(body || {}, "base_amount") ? body.base_amount : lead?.customer_price) || 0);
+}
 function scheduledEmailRoster(leads, scheduledDate) {
   const rows = Array.isArray(leads) ? leads : [];
   const closedStatuses = new Set(["Completed", "Paid", "Not Successful"]);
@@ -193,21 +196,22 @@ exports.handler = async (event) => {
       const existing = await supabase(`green_grin_sprinkler_blowout_history?select=*&idempotency_key=eq.${encodeURIComponent(key)}&limit=1`);
       if (existing?.[0]) return json(200, { history: existing[0], duplicate: true });
       const extras = extraRows(body.extra_charges);
-      const baseAmount = Math.max(0, Number(body.base_amount) || 0);
+      const baseAmount = resolveBlowoutPrice(body, lead);
       const total = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
       const rows = await supabase("green_grin_sprinkler_blowout_history", { method: "POST", body: JSON.stringify({ lead_id: lead.id, customer_user_id: result.customer_user_id, property_id: result.property_id, service_date: serviceDate, zones: Number(lead.zones) || 0, spigots: Number(lead.spigots) || 0, service_notes: clean(body.service_notes, 2000), extra_charges: extras, base_amount: baseAmount, total_amount: total, status: "Completed", idempotency_key: key }) });
-      await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ ...result.lead, status: "Completed", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_user_id: result.customer_user_id, property_id: result.property_id }) });
+      await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ ...result.lead, status: "Completed", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id }) });
       return json(200, { history: rows?.[0] || null, duplicate: false });
     }
     if (event.httpMethod === "POST" && body.action === "set-price") {
+      const baseAmount = Math.max(0, Number(body.base_amount) || 0);
+      const leadRows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ customer_price: baseAmount }) });
       const historyRows = await supabase(`green_grin_sprinkler_blowout_history?select=*&lead_id=eq.${encodeURIComponent(lead.id)}&order=service_date.desc&limit=1`);
       const history = historyRows?.[0];
-      if (!history) return json(400, { error: "Mark the blowout complete before setting its price." });
-      const baseAmount = Math.max(0, Number(body.base_amount) || 0);
+      if (!history) return json(200, { lead: leadRows?.[0] || { ...lead, customer_price: baseAmount }, history: null });
       const extras = extraRows(history.extra_charges);
       const totalAmount = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
       const rows = await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ base_amount: baseAmount, total_amount: totalAmount }) });
-      return json(200, { history: rows?.[0] || { ...history, base_amount: baseAmount, total_amount: totalAmount } });
+      return json(200, { lead: leadRows?.[0] || { ...lead, customer_price: baseAmount }, history: rows?.[0] || { ...history, base_amount: baseAmount, total_amount: totalAmount } });
     }
     if (event.httpMethod === "POST" && body.action === "invoice") {
       const result = await ensureCustomerProperty(lead);
@@ -243,5 +247,5 @@ exports.handler = async (event) => {
 };
 
 exports.ensureCustomerProperty = ensureCustomerProperty;
-exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, scheduledEmailRoster };
+exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster };
 

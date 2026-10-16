@@ -6241,6 +6241,7 @@
     let blowoutMap = null;
     let blowoutMarkerLayer = null;
     let blowoutManualPinLeadId = null;
+    let selectedBlowoutDate = "";
     let yardMeasurementMap = null;
     let yardMeasurementLayer = null;
     let yardMeasurementPoints = [];
@@ -11809,21 +11810,40 @@
       const status = $("#blowout-status-filter")?.value || "All";
       return blowoutLeads.filter((lead) => {
         if (lead.status === "Not Successful") return false;
+        const matchesDate = !selectedBlowoutDate || String(lead.scheduled_date || "").slice(0, 10) === selectedBlowoutDate;
+        const matchesActiveDay = !selectedBlowoutDate || !["Completed", "Paid", "Not Successful"].includes(String(lead.status || ""));
         const matchesStatus = status === "All" || (status === "Unscheduled" ? !lead.scheduled_date && lead.status !== "Completed" && lead.status !== "Paid" : lead.status === status || (status === "Needs Correction" && lead.geocode_status === "Needs Correction"));
         const haystack = [lead.full_name, lead.email, lead.phone, lead.service_address, lead.status].map((value) => String(value || "").toLowerCase()).join(" ");
-        return matchesStatus && (!query || haystack.includes(query));
+        return matchesDate && matchesActiveDay && matchesStatus && (!query || haystack.includes(query));
       });
     }
-    function blowoutRouteWeekday(lead) {
-      const raw = String(lead.scheduled_date || lead.completed_at || lead.created_at || "").split("T")[0];
-      return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(`${raw}T12:00:00`).getDay() : null;
+    function blowoutDateLabel(value) {
+      return new Date(`${value}T12:00:00`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
     }
     function renderBlowoutRouteDays() {
       const target = $("#blowout-route-days");
       if (!target) return;
-      const names = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-      const groups = names.map((name, day) => ({ name, day, count: blowoutLeads.filter((lead) => !["Paid", "Completed", "Not Successful"].includes(String(lead.status || "")) && blowoutRouteWeekday(lead) === day).length })).filter((group) => group.count);
-      target.innerHTML = groups.length ? groups.map((group) => `<button class="button small ghost" type="button" data-blowout-route-day="${group.day}">${group.name} (${group.count})</button>`).join("") : `<span class="muted">Schedule blowouts to group them by day.</span>`;
+      const counts = new Map();
+      blowoutLeads.filter((lead) => !["Paid", "Completed", "Not Successful"].includes(String(lead.status || ""))).forEach((lead) => {
+        const date = String(lead.scheduled_date || "").slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+        counts.set(date, (counts.get(date) || 0) + 1);
+      });
+      const groups = [...counts.entries()].sort(([left], [right]) => left.localeCompare(right));
+      target.innerHTML = groups.length
+        ? `<button class="button small ${selectedBlowoutDate ? "ghost" : ""}" type="button" data-blowout-route-date="">Show all</button>${groups.map(([date, count]) => `<button class="button small ${selectedBlowoutDate === date ? "" : "ghost"}" type="button" data-blowout-route-date="${date}">${cleanText(blowoutDateLabel(date))} (${count})</button>`).join("")}`
+        : `<span class="muted">Schedule blowouts to group them by day.</span>`;
+    }
+    function selectBlowoutDate(date) {
+      selectedBlowoutDate = /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")) ? String(date) : "";
+      if ($("#blowout-bulk-date")) $("#blowout-bulk-date").value = selectedBlowoutDate;
+      if ($("#blowout-route-date")) $("#blowout-route-date").value = selectedBlowoutDate;
+      const dayLeads = selectedBlowoutDate
+        ? blowoutLeads.filter((lead) => String(lead.scheduled_date || "").slice(0, 10) === selectedBlowoutDate && !["Paid", "Completed", "Not Successful"].includes(String(lead.status || "")))
+        : [];
+      blowoutRouteOrder = dayLeads.map((lead) => String(lead.id));
+      blowoutRouteSelectedIds = [...blowoutRouteOrder];
+      renderBlowoutLeads(filteredBlowoutLeads());
     }
     function renderBlowoutMap(leads = []) {
       const container = $("#blowout-map");
@@ -11907,8 +11927,8 @@
         card.prepend(label);
         const priceRow = document.createElement("div");
         priceRow.className = "admin-actions blowout-price-row";
-        const draftPrice = localStorage.getItem(`gg-blowout-price-${card.dataset.blowoutId}`) || "";
-        priceRow.innerHTML = `<label>Customer price <input class="blowout-price" type="number" min="0" step="0.01" placeholder="0.00" value="${cleanText(draftPrice)}" /></label><button class="button small secondary" data-blowout-action="set-price" type="button">Save price</button>`;
+        const savedPrice = Number(lead.customer_price) > 0 ? Number(lead.customer_price).toFixed(2) : "";
+        priceRow.innerHTML = `<label>Customer price <input class="blowout-price" type="number" min="0" step="0.01" placeholder="0.00" value="${cleanText(savedPrice)}" /></label><button class="button small secondary" data-blowout-action="set-price" type="button">Save price</button>`;
         card.append(priceRow);
         card.classList.add("blowout-collapsed");
       });
@@ -12651,6 +12671,12 @@
       try { meta = JSON.parse(sessionStorage.getItem("gg-email-drafter-day-meta") || "null"); } catch (_error) { meta = null; }
       const mode = $("#email-drafter-day-mode");
       if (!Array.isArray(recipients) || !recipients.length) { if (mode) mode.hidden = true; return false; }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(meta?.scheduled_date || "")) || recipients.some((recipient) => !recipient.id)) {
+        sessionStorage.removeItem("gg-email-drafter-recipients");
+        sessionStorage.removeItem("gg-email-drafter-day-meta");
+        if (mode) mode.hidden = true;
+        return false;
+      }
       const dayLabel = new Date(`${recipients[0].date}T12:00:00`).toLocaleDateString();
       mode.hidden = false;
       const missingNames = Array.isArray(meta?.missing_email) ? meta.missing_email.map((row) => row.name || "Unnamed customer").join(", ") : "";
@@ -12658,7 +12684,8 @@
       const assignedSummary = meta ? `${scheduledTotal} scheduled, ${recipients.length} ready to email` : `${recipients.length} ready to email`;
       const missingSummary = missingNames ? ` Missing or invalid email: ${missingNames}.` : "";
       const closedSummary = Number(meta?.closed_total) ? ` ${meta.closed_total} older completed, paid, or archived record${Number(meta.closed_total) === 1 ? " is" : "s are"} retained in history and not counted in today's schedule.` : "";
-      mode.textContent = `Day email mode: ${assignedSummary} for ${dayLabel}.${missingSummary}${closedSummary} Nothing sends until you press Send Email. Edit the wording below. Use {{name}}, {{address}}, and {{date}} as placeholders.`;
+      const recipientNames = recipients.map((recipient) => recipient.name || recipient.email).join(", ");
+      mode.textContent = `Day email mode: ${assignedSummary} for ${dayLabel}. Recipients: ${recipientNames}.${missingSummary}${closedSummary} Nothing sends until you press Send Email. The server will recheck this exact day before delivery. Edit the wording below. Use {{name}}, {{address}}, and {{date}} as placeholders.`;
       $("#email-drafter-subject").value = `Green Grin is expected ${dayLabel}`;
       $("#email-drafter-message").value = `Hi {{name}},\n\nThanks for choosing Green Grin. We expect to be at {{address}} on {{date}} for your sprinkler blowout.\n\nWeather or route changes may shift the timing. We will keep you updated.\n\nGreen Grin Lawns`;
       return true;
@@ -12672,10 +12699,16 @@
       result.innerHTML = notice("Sending email...");
       try {
         let recipients = null;
+        let dayMeta = null;
         try { recipients = JSON.parse(sessionStorage.getItem("gg-email-drafter-recipients") || "null"); } catch (_error) { recipients = null; }
+        try { dayMeta = JSON.parse(sessionStorage.getItem("gg-email-drafter-day-meta") || "null"); } catch (_error) { dayMeta = null; }
         const to = $("#email-drafter-to").value.trim();
         if (!recipients?.length && !to) throw new Error("Enter a recipient email.");
-        const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, recipients, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
+        if (recipients?.length) {
+          const dayLabel = new Date(`${dayMeta?.scheduled_date}T12:00:00`).toLocaleDateString();
+          if (!confirm(`Send ${recipients.length} separate email${recipients.length === 1 ? "" : "s"} to the customers currently scheduled for ${dayLabel}?`)) return;
+        }
+        const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, recipients: recipients?.length ? undefined : recipients, scheduled_date: recipients?.length ? dayMeta?.scheduled_date : undefined, recipient_ids: recipients?.length ? recipients.map((recipient) => recipient.id) : undefined, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
         if (recipients?.length) {
           const failedRows = (data.results || []).filter((row) => !row.sent);
           const failedDetails = failedRows.length ? `<details style="margin-top:8px"><summary>Show failed recipients</summary><ul>${failedRows.map((row) => `<li>${cleanText(row.email || "Unknown email")}: ${cleanText(row.error || row.reason || "Provider did not accept the message.")}</li>`).join("")}</ul></details>` : "";
@@ -13605,15 +13638,12 @@
     $("#blowout-route-optimize").addEventListener("click", optimizeBlowoutRoute);
     $("#blowout-route-clear").addEventListener("click", () => { blowoutRouteOrder = []; blowoutRouteSelectedIds = []; $("#blowout-route-result").innerHTML = ""; renderBlowoutMap(filteredBlowoutLeads()); });
     $("#blowout-route-days").addEventListener("click", (event) => {
-      const button = event.target.closest("button[data-blowout-route-day]");
+      const button = event.target.closest("button[data-blowout-route-date]");
       if (!button) return;
-      const day = Number(button.dataset.blowoutRouteDay);
-      const lead = blowoutLeads.find((item) => blowoutRouteWeekday(item) === day && item.scheduled_date);
-      if (lead) $("#blowout-route-date").value = String(lead.scheduled_date).slice(0, 10);
-      blowoutRouteOrder = blowoutLeads.filter((item) => blowoutRouteWeekday(item) === day && !["Paid", "Completed", "Not Successful"].includes(String(item.status || ""))).map((item) => String(item.id));
-      blowoutRouteSelectedIds = [...blowoutRouteOrder];
-      renderBlowoutMap(filteredBlowoutLeads());
+      selectBlowoutDate(button.dataset.blowoutRouteDate || "");
     });
+    $("#blowout-bulk-date").addEventListener("change", (event) => selectBlowoutDate(event.currentTarget.value));
+    $("#blowout-route-date").addEventListener("change", (event) => selectBlowoutDate(event.currentTarget.value));
     $("#send-blowout-confirmations").addEventListener("click", async () => {
       const button = $("#send-blowout-confirmations");
       const result = $("#blowout-confirmation-result");
@@ -13657,7 +13687,7 @@
           return;
         }
         sessionStorage.setItem("gg-email-drafter-recipients", JSON.stringify(recipients));
-        sessionStorage.setItem("gg-email-drafter-day-meta", JSON.stringify({ assigned_total: data.assigned_total || recipients.length, active_total: data.active_total ?? recipients.length, closed_total: data.closed_total || 0, missing_email: data.missing_email || [] }));
+        sessionStorage.setItem("gg-email-drafter-day-meta", JSON.stringify({ scheduled_date: date, assigned_total: data.assigned_total || recipients.length, active_total: data.active_total ?? recipients.length, closed_total: data.closed_total || 0, missing_email: data.missing_email || [] }));
         loadDayEmailDraft();
         document.querySelector('[data-tab="email-drafter"]')?.click();
         result.innerHTML = notice(`Email Drafter opened with ${recipients.length} of ${Number(data.active_total ?? recipients.length)} scheduled customer${Number(data.active_total ?? recipients.length) === 1 ? "" : "s"}. Review the missing-email names and wording, then press Send Email.`);
@@ -13699,21 +13729,12 @@
           const price = card.querySelector(".blowout-price")?.value;
           if (price === "" || price === undefined) { button.disabled = false; return; }
           refreshLeads = false;
-          try {
-            await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "set-price", lead_id: card.dataset.blowoutId, base_amount: price }) });
-            localStorage.removeItem(`gg-blowout-price-${card.dataset.blowoutId}`);
-            button.textContent = "✓ Saved";
-            button.style.cssText = "background:#9bea32;color:#072116;border-color:#9bea32";
-            button.disabled = false;
-            card.insertAdjacentHTML("afterbegin", notice("Customer price saved."));
-          } catch (error) {
-            if (!String(error.message || "").toLowerCase().includes("before setting its price")) throw error;
-            localStorage.setItem(`gg-blowout-price-${card.dataset.blowoutId}`, price);
-            button.textContent = "✓ Saved";
-            button.style.cssText = "background:#9bea32;color:#072116;border-color:#9bea32";
-            button.disabled = false;
-            card.insertAdjacentHTML("afterbegin", notice("Price saved as a draft. Mark the blowout complete and it will be used on the invoice."));
-          }
+          const data = await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "set-price", lead_id: card.dataset.blowoutId, base_amount: price }) });
+          lead.customer_price = Number(data.lead?.customer_price ?? price);
+          button.textContent = "✓ Saved";
+          button.style.cssText = "background:#9bea32;color:#072116;border-color:#9bea32";
+          button.disabled = false;
+          card.insertAdjacentHTML("afterbegin", notice("Customer price saved to the account and available on every device."));
         } else if (action === "manual-pin") {
           blowoutManualPinLeadId = card.dataset.blowoutId;
           blowoutMap?.getContainer()?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -13754,9 +13775,8 @@
         } else if (action === "complete") {
           const date = window.prompt("Completion date (YYYY-MM-DD)", lead.scheduled_date || new Date().toISOString().slice(0, 10));
           if (!date) { button.disabled = false; return; }
-          const amount = window.prompt("Base blowout price", localStorage.getItem(`gg-blowout-price-${card.dataset.blowoutId}`) || "0");
+          const amount = window.prompt("Base blowout price", String(lead.customer_price ?? card.querySelector(".blowout-price")?.value ?? "0"));
           await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "complete", lead_id: card.dataset.blowoutId, service_date: date, base_amount: amount || 0 }) });
-          localStorage.removeItem(`gg-blowout-price-${card.dataset.blowoutId}`);
         } else if (action === "invoice") {
           await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "invoice", lead_id: card.dataset.blowoutId }) });
         } else {

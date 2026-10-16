@@ -350,7 +350,8 @@ create table if not exists public.green_grin_sprinkler_blowout_leads (
   waiver_agreed_at timestamptz,
   status text not null default 'New',
   contacted_at timestamptz,
-  next_year_target boolean not null default true
+  next_year_target boolean not null default true,
+  customer_price numeric(10,2) not null default 0
 );
 alter table public.green_grin_sprinkler_blowout_leads add column if not exists referral_count integer not null default 0;
 alter table public.green_grin_sprinkler_blowout_leads add column if not exists referral_credit_cents_per_zone integer not null default 50;
@@ -1111,6 +1112,7 @@ alter table public.green_grin_sprinkler_blowout_leads
   add column if not exists scheduled_date date,
   add column if not exists completed_at timestamptz,
   add column if not exists completion_notes text,
+  add column if not exists customer_price numeric(10,2) not null default 0,
   add column if not exists invoice_id uuid references public.green_grin_invoices(id) on delete set null,
   add column if not exists email_marketing_allowed boolean not null default false,
   add column if not exists sms_marketing_allowed boolean not null default false,

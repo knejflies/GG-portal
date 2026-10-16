@@ -1,11 +1,13 @@
 const assert = require("assert");
-const { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, scheduledEmailRoster } = require("../netlify/functions/portal-sprinkler-operations.js")._test;
+const { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster } = require("../netlify/functions/portal-sprinkler-operations.js")._test;
 
 assert.equal(normalizeAddress("123 Main St., Caldwell, ID"), normalizeAddress("123 main st caldwell id"));
 assert.equal(geocodeDecision({ lat: "43.6", lon: "-116.6", importance: 0.8, display_name: "123 Main St, Caldwell, Idaho" }, "123 Main St").status, "Located");
 assert.equal(geocodeDecision({ lat: "43.6", lon: "-116.6", importance: 0.8, display_name: "Caldwell, Idaho" }, "123 Main St").status, "Needs Correction");
 assert.equal(extraRows([{ description: "Drain extra", quantity: 2, rate: 15 }])[0].amount, undefined);
 assert.equal(blowoutIdempotencyKey("lead-1", "2026-10-01"), "blowout:lead-1:2026-10-01");
+assert.equal(resolveBlowoutPrice({}, { customer_price: 85 }), 85, "Completion must use the account price saved from any device.");
+assert.equal(resolveBlowoutPrice({ base_amount: 95 }, { customer_price: 85 }), 95, "An explicitly reviewed completion price must win.");
 const roster = scheduledEmailRoster([
   { id: "1", full_name: "First Property", email: "owner@example.com", service_address: "1 Main St", status: "Scheduled" },
   { id: "2", full_name: "Second Property", email: "owner@example.com", service_address: "2 Main St", status: "Scheduled" },
