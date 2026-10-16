@@ -65,4 +65,15 @@ assert.doesNotMatch(projectEmail.html, />Rate<\/th>/);
 assert.match(projectEmail.text, /Decorative rock: \$825\.00/);
 assert.doesNotMatch(projectEmail.text, /3 ton/);
 
+const receiptEmail = invoiceEmailPayload({ ...project, status: "Paid" }, { receipt: true });
+assert.match(receiptEmail.subject, /payment receipt/i);
+assert.match(receiptEmail.text, /Status: Paid/);
+
+for (const file of ["admin/index.html", "portal/index.html", "portal.html"]) {
+  const html = require("fs").readFileSync(file, "utf8");
+  assert.ok(html.includes('notify_customer: nextStatus === "Paid"'), `${file} must request a receipt when an invoice is marked paid.`);
+  assert.ok(html.includes("Invoice closed and moved to paid."), `${file} must clearly confirm closeout.`);
+  assert.ok(html.includes('$("#paid-invoice-archive").open = false'), `${file} must close the paid archive after closeout.`);
+}
+
 console.log("Invoice email tests passed.");

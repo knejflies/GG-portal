@@ -10,6 +10,7 @@ assert.match(html, /status === "All"\s*\? !closed/, "The default blowout list sh
 assert.ok(html.includes("reconcileBlowoutRoute();"), "Reloading leads must clear stale route stops.");
 assert.match(html, /renderBlowoutLeads\(filteredBlowoutLeads\(\)\);\s*refreshLeads = false;/, "Removing a day must redraw the list and map immediately.");
 assert.ok(html.includes('card.classList.remove("blowout-collapsed")'), "Tapping a map marker must open the matching customer card.");
+assert.ok(html.includes('card.scrollIntoView({ behavior: "smooth", block: "center" })'), "Tapping a map marker must jump to the matching customer card.");
 assert.ok(html.includes('data-blowout-route-date="unscheduled"'), "Unscheduled sign-ups must have a separate assignment queue.");
 assert.ok(!html.includes('$("#blowout-bulk-date").addEventListener("change"'), "Choosing an assignment date must not discard checked unscheduled customers by navigating the list.");
 assert.match(signupFunction, /status: "New", scheduled_date: null/, "A new public sign-up must remain unscheduled until the owner assigns it.");

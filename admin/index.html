@@ -11960,7 +11960,13 @@
           const card = [...document.querySelectorAll("#blowout-leads-list [data-blowout-id]")].find((item) => String(item.dataset.blowoutId) === leadId);
           if (card) {
             card.classList.remove("blowout-collapsed");
+            let parentCard = card.parentElement?.closest(".marketing-lead[data-blowout-id]");
+            while (parentCard) {
+              parentCard.classList.remove("blowout-collapsed");
+              parentCard = parentCard.parentElement?.closest(".marketing-lead[data-blowout-id]");
+            }
             card.style.outline = "3px solid var(--lime)";
+            window.setTimeout(() => card.scrollIntoView({ behavior: "smooth", block: "center" }), 120);
             window.setTimeout(() => { card.style.outline = ""; }, 1800);
           }
         });
@@ -12464,6 +12470,7 @@
       }
       if (button.dataset.invoiceAction === "paid" || button.dataset.invoiceAction === "reopen") {
         const nextStatus = button.dataset.invoiceAction === "paid" ? "Paid" : "Draft";
+        button.disabled = true;
         try {
           $("#invoice-result").innerHTML = notice(nextStatus === "Paid" ? "Moving invoice to paid..." : "Moving invoice back to open...");
           const paymentData = await requestJson("portal-invoices", {
@@ -12471,14 +12478,21 @@
             headers: adminHeaders(),
             body: JSON.stringify({ ...invoice, status: nextStatus, notify_customer: nextStatus === "Paid" })
           });
+          if (paymentData.invoice) {
+            invoiceDrafts = invoiceDrafts.map((item) => item.id === id ? paymentData.invoice : item);
+            renderInvoiceDrafts();
+          }
+          if (nextStatus === "Paid" && $("#paid-invoice-archive")) $("#paid-invoice-archive").open = false;
           await loadInvoices();
           const fertNotice = nextStatus === "Paid" && paymentData.fertilizer_records?.length ? ` ${paymentData.fertilizer_records.length} fertilizer record${paymentData.fertilizer_records.length === 1 ? "" : "s"} added.` : "";
           const statusNotice = nextStatus === "Paid"
-            ? invoiceDeliveryText(paymentData, `Invoice moved to paid.${fertNotice}`, "Payment receipt")
+            ? invoiceDeliveryText(paymentData, `Invoice closed and moved to paid.${fertNotice}`, "Payment receipt")
             : "Invoice moved back to open invoices.";
-          $("#invoice-result").innerHTML = notice(statusNotice);
+          const receiptFailed = nextStatus === "Paid" && paymentData.email && paymentData.email.sent !== true;
+          $("#invoice-result").innerHTML = notice(statusNotice, receiptFailed);
         } catch (error) {
           $("#invoice-result").innerHTML = notice(error.message, true);
+          button.disabled = false;
         }
         return;
       }

@@ -4955,10 +4955,10 @@
       return `${fallback} No registered customer device was found yet.`;
     }
 
-    function invoiceDeliveryText(data, fallback) {
+    function invoiceDeliveryText(data, fallback, emailLabel = "Invoice") {
       const parts = [pushDeliveryText(data?.push, fallback)];
       const email = data?.email;
-      if (email?.sent) parts.push("Invoice email sent.");
+      if (email?.sent) parts.push(`${emailLabel} email sent.`);
       else if (email?.reason) parts.push(`Email not sent: ${cleanText(email.reason)}`);
       else if (email?.error) parts.push(`Email failed: ${cleanText(email.error)}`);
       return parts.join(" ");
@@ -8809,17 +8809,28 @@
       }
       if (button.dataset.invoiceAction === "paid" || button.dataset.invoiceAction === "reopen") {
         const nextStatus = button.dataset.invoiceAction === "paid" ? "Paid" : "Draft";
+        button.disabled = true;
         try {
           $("#invoice-result").innerHTML = notice(nextStatus === "Paid" ? "Moving invoice to paid..." : "Moving invoice back to open...");
-          await requestJson("portal-invoices", {
+          const paymentData = await requestJson("portal-invoices", {
             method: "PATCH",
             headers: adminHeaders(),
-            body: JSON.stringify({ ...invoice, status: nextStatus, notify_customer: false })
+            body: JSON.stringify({ ...invoice, status: nextStatus, notify_customer: nextStatus === "Paid" })
           });
+          if (paymentData.invoice) {
+            invoiceDrafts = invoiceDrafts.map((item) => item.id === id ? paymentData.invoice : item);
+            renderInvoiceDrafts();
+          }
+          if (nextStatus === "Paid" && $("#paid-invoice-archive")) $("#paid-invoice-archive").open = false;
           await loadInvoices();
-          $("#invoice-result").innerHTML = notice(nextStatus === "Paid" ? "Invoice moved to paid." : "Invoice moved back to open invoices.");
+          const statusNotice = nextStatus === "Paid"
+            ? invoiceDeliveryText(paymentData, "Invoice closed and moved to paid.", "Payment receipt")
+            : "Invoice moved back to open invoices.";
+          const receiptFailed = nextStatus === "Paid" && paymentData.email && paymentData.email.sent !== true;
+          $("#invoice-result").innerHTML = notice(statusNotice, receiptFailed);
         } catch (error) {
           $("#invoice-result").innerHTML = notice(error.message, true);
+          button.disabled = false;
         }
         return;
       }
