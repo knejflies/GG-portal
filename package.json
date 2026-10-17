@@ -4,7 +4,7 @@
   "private": true,
   "description": "Green Grin Lawns site and portals for Netlify.",
   "scripts": {
-    "test": "npm run test:account-signup && npm run test:lawn-bidder && npm run test:mowing-simple && npm run test:weekly-jobs && npm run test:morning-reminders && npm run test:fert-bidder && npm run test:fert-portal && npm run test:portal-pricing && npm run test:zelle && npm run test:invoice-email && npm run test:customer-plans && npm run test:route-optimizer && npm run test:auto-bid && npm run test:project-estimates && npm run test:project-assemblies && npm run test:project-bid-scenarios && npm run test:project-final-bid && npm run test:project-proposals && npm run test:landscaping-contract && npm run test:project-time && npm run test:project-estimator-integration && npm run test:persistent-sessions && npm run test:admin-calendar && npm run test:sprinkler-signup-pricing && npm run test:sprinkler-operations && npm run test:blowout-admin && npm run test:bookkeeping && npm run test:email-drafter-safety && npm run test:portal-html",
+    "test": "npm run test:account-signup && npm run test:lawn-bidder && npm run test:mowing-simple && npm run test:weekly-jobs && npm run test:morning-reminders && npm run test:fert-bidder && npm run test:fert-portal && npm run test:portal-pricing && npm run test:zelle && npm run test:invoice-email && npm run test:customer-plans && npm run test:route-optimizer && npm run test:auto-bid && npm run test:project-estimates && npm run test:project-assemblies && npm run test:project-bid-scenarios && npm run test:project-final-bid && npm run test:project-proposals && npm run test:landscaping-contract && npm run test:project-time && npm run test:project-estimator-integration && npm run test:persistent-sessions && npm run test:admin-calendar && npm run test:sprinkler-signup-pricing && npm run test:sprinkler-operations && npm run test:blowout-admin && npm run test:property-map-schema && npm run test:bookkeeping && npm run test:email-drafter-safety && npm run test:portal-html",
     "test:account-signup": "node tests/account-signup-flow.test.cjs",
     "test:lawn-bidder": "node tests/lawn-bidder.test.cjs",
     "test:mowing-simple": "node tests/mowing-bidder-simple.test.cjs",
@@ -34,6 +34,7 @@
     "test:sprinkler-operations": "node tests/sprinkler-operations.test.cjs",
     "test:sprinkler-signup-pricing": "node tests/sprinkler-signup-pricing.test.cjs",
     "test:blowout-admin": "node tests/blowout-admin-flow.test.cjs",
+    "test:property-map-schema": "node tests/property-map-schema-compatibility.test.cjs",
     "test:bookkeeping": "node tests/bookkeeping-summary.test.cjs",
     "test:email-drafter-safety": "node tests/email-drafter-safety.test.cjs"
   },

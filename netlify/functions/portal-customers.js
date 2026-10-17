@@ -42,6 +42,17 @@ async function geocodeAddress(address) {
   return geocodeDecision(rows?.[0], address);
 }
 
+async function savePropertyGeocode(propertyId, geocode) {
+  const update = { latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status, geocode_display_name: geocode.display_name };
+  try {
+    return await supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(update) });
+  } catch (error) {
+    if (!/geocode_display_name/i.test(error.message || "")) throw error;
+    const { geocode_display_name: omittedDisplayName, ...compatibleUpdate } = update;
+    return supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
+  }
+}
+
 async function supabase(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...options,
@@ -190,7 +201,7 @@ exports.handler = async (event) => {
       for (const property of properties || []) {
         if (property.geocode_status === "Located" && Number.isFinite(Number(property.latitude)) && Number.isFinite(Number(property.longitude))) { skipped += 1; continue; }
         const geocode = await geocodeAddress(property.address);
-        await supabase(`green_grin_properties?id=eq.${encodeURIComponent(property.id)}`, { method: "PATCH", body: JSON.stringify({ latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status, geocode_display_name: geocode.display_name }) });
+        await savePropertyGeocode(property.id, geocode);
         if (geocode.status === "Located") located += 1; else needsCorrection += 1;
       }
       return json(200, { located, needs_correction: needsCorrection, skipped });
