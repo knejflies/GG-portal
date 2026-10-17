@@ -289,12 +289,18 @@ exports.handler = async (event) => {
       const serviceDate = body.service_date || lead.scheduled_date || new Date().toISOString().slice(0, 10);
       const key = blowoutIdempotencyKey(lead.id, serviceDate);
       const existing = await supabase(`green_grin_sprinkler_blowout_history?select=*&idempotency_key=eq.${encodeURIComponent(key)}&limit=1`);
-      if (existing?.[0]) return json(200, { history: existing[0], duplicate: true });
-      const extras = extraRows(body.extra_charges);
+      const duplicate = Boolean(existing?.[0]);
+      const extras = duplicate ? extraRows(existing[0].extra_charges) : extraRows(body.extra_charges);
       const baseAmount = resolveBlowoutPrice(body, lead);
       const total = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
-      const rows = await supabase("green_grin_sprinkler_blowout_history", { method: "POST", body: JSON.stringify({ lead_id: lead.id, customer_user_id: result.customer_user_id, property_id: result.property_id, service_date: serviceDate, zones: Number(lead.zones) || 0, spigots: Number(lead.spigots) || 0, service_notes: clean(body.service_notes, 2000), extra_charges: extras, base_amount: baseAmount, total_amount: total, status: "Completed", idempotency_key: key }) });
-      const history = rows?.[0] || { service_date: serviceDate, zones: Number(lead.zones) || 0, extra_charges: extras, base_amount: baseAmount, total_amount: total };
+      let history;
+      if (duplicate) {
+        const rows = await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(existing[0].id)}`, { method: "PATCH", body: JSON.stringify({ customer_user_id: result.customer_user_id, property_id: result.property_id, base_amount: baseAmount, total_amount: total, status: "Paid" }) });
+        history = rows?.[0] || { ...existing[0], customer_user_id: result.customer_user_id, property_id: result.property_id, base_amount: baseAmount, total_amount: total, status: "Paid" };
+      } else {
+        const rows = await supabase("green_grin_sprinkler_blowout_history", { method: "POST", body: JSON.stringify({ lead_id: lead.id, customer_user_id: result.customer_user_id, property_id: result.property_id, service_date: serviceDate, zones: Number(lead.zones) || 0, spigots: Number(lead.spigots) || 0, service_notes: clean(body.service_notes, 2000), extra_charges: extras, base_amount: baseAmount, total_amount: total, status: "Paid", idempotency_key: key }) });
+        history = rows?.[0] || { service_date: serviceDate, zones: Number(lead.zones) || 0, extra_charges: extras, base_amount: baseAmount, total_amount: total, status: "Paid" };
+      }
       const invoice = await ensurePaidBlowoutInvoice(lead, history, result, body.payment_method);
       if (!invoice) throw new Error("The paid blowout invoice could not be recorded.");
       await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ invoice_id: invoice.id, status: "Paid" }) });
@@ -302,7 +308,7 @@ exports.handler = async (event) => {
       await patchBlowoutLead(lead.id, completionUpdate);
       const email = await sendBlowoutCompletionReceipt(lead, history);
       await logBlowoutReceipt(lead, email);
-      return json(200, { history: { ...history, invoice_id: invoice.id, status: "Paid" }, invoice, duplicate: false, email });
+      return json(200, { history: { ...history, invoice_id: invoice.id, status: "Paid" }, invoice, duplicate, recovered: duplicate, email });
     }
     if (event.httpMethod === "POST" && body.action === "set-price") {
       const baseAmount = Math.max(0, Number(body.base_amount) || 0);

@@ -33,5 +33,7 @@ assert.ok(operationSource.includes('body.action === "send-receipt"'), "Older pai
 const repeatedCustomerUpdate = compatibleBlowoutLeadUpdate({ customer_user_id: "customer-1", property_id: "property-2", status: "Paid" }, new Error('duplicate key value violates unique constraint "green_grin_blowout_leads_customer_user_idx"'));
 assert.equal(repeatedCustomerUpdate.customer_user_id, undefined, "Older unique-index schemas should omit the duplicate customer link.");
 assert.equal(repeatedCustomerUpdate.property_id, "property-2", "The repeated signup should still link to its property.");
+assert.doesNotMatch(operationSource, /if \(existing\?\.\[0\]\) return json\(200, \{ history: existing\[0\], duplicate: true \}\);/, "A prior partial completion must be repaired instead of returning early.");
+assert.ok(operationSource.includes("recovered: duplicate"), "A repaired partial completion should be reported as recovered.");
 
 console.log("Sprinkler operations tests passed.");
