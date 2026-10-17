@@ -133,6 +133,7 @@
     }
   },
   "fertilizerBid": {
+    "programVersion": 2,
     "applicationProductionSqFtPerHour": 30000,
     "fixedSetupHours": 0.15,
     "minimumBillableHours": 0.5,
@@ -140,20 +141,20 @@
     "vehicleEquipmentPerVisit": 10,
     "adminOverheadPerVisit": 5,
     "costReservePerVisit": 1,
-    "targetGrossMargin": 0.2,
+    "targetGrossMargin": 0.18,
     "protectTargetMargin": true,
-    "pricePer1000SqFtPerVisit": 35,
-    "minimumApplicationCharge": 125,
+    "pricePer1000SqFtPerVisit": 10.5,
+    "minimumApplicationCharge": 62,
     "roundChargeTo": 1,
     "fertilizerVisitsPerSeason": 4,
     "paymentsPerYear": 4,
     "planPricing": {
       "enabled": true,
-      "annualMinimum": 395,
-      "includedSqFt": 4000,
-      "smallLawnAnnualMinimum": 299,
+      "annualMinimum": 299,
+      "includedSqFt": 5000,
+      "smallLawnAnnualMinimum": 249,
       "smallLawnIncludedSqFt": 2500,
-      "annualAdditionalRatePerSqFt": 0.09,
+      "annualAdditionalRatePerSqFt": 0.025,
       "firstYearSalesCommissionRate": 0.06
     },
     "pricingGuide": {
@@ -164,36 +165,24 @@
       "currentChargePerBag": 60
     },
     "products": {
-      "nitrex": {
-        "name": "BEST Nitrex",
-        "analysis": "20-1-5",
-        "bagSizeLb": 50,
-        "bagCost": 60
-      },
-      "turfGold": {
-        "name": "BEST Turf Gold",
-        "analysis": "23-2-4",
-        "bagSizeLb": 50,
-        "bagCost": 59.99
-      },
       "umaxx": {
-        "name": "BEST 24-4-12 UMAXX Mini",
+        "name": "24-4-12 All-Season Fertilizer",
         "analysis": "24-4-12",
         "bagSizeLb": 50,
-        "bagCost": 74.04
+        "bagCost": 44
       }
     },
     "applications": [
       {
         "stage": "Spring Wake-Up",
         "timing": "Mar 15–Apr 1",
-        "productId": "nitrex",
+        "productId": "umaxx",
         "productRateLbPer1000": 5
       },
       {
         "stage": "Early Summer",
         "timing": "May 15–Jun 15",
-        "productId": "turfGold",
+        "productId": "umaxx",
         "productRateLbPer1000": 5
       },
       {

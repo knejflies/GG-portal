@@ -229,8 +229,15 @@ function normalizePricing(input, nextVersion) {
   };
 
   const fertilizerDefaults = DEFAULT_PRICING.fertilizerBid;
-  const fertilizer = source.fertilizerBid || fertilizerDefaults;
+  // The original draft used three premium products and an oversized price curve.
+  // Green Grin actually runs one 24-4-12 product year-round, so migrate that
+  // known legacy draft to the current program instead of carrying it forward.
+  const incomingFertilizer = source.fertilizerBid;
+  const fertilizer = Number(incomingFertilizer?.programVersion) >= fertilizerDefaults.programVersion
+    ? incomingFertilizer
+    : fertilizerDefaults;
   normalized.fertilizerBid = {
+    programVersion: fertilizerDefaults.programVersion,
     applicationProductionSqFtPerHour: finiteNumber(fertilizer.applicationProductionSqFtPerHour ?? fertilizerDefaults.applicationProductionSqFtPerHour, "Fertilizer production rate", { minimum: 1, maximum: 10000000 }),
     fixedSetupHours: finiteNumber(fertilizer.fixedSetupHours ?? fertilizerDefaults.fixedSetupHours, "Fertilizer setup time", { minimum: 0, maximum: 24 }),
     minimumBillableHours: finiteNumber(fertilizer.minimumBillableHours ?? fertilizerDefaults.minimumBillableHours, "Fertilizer minimum billable time", { minimum: 0, maximum: 24 }),

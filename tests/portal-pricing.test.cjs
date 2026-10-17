@@ -35,10 +35,10 @@ const event = (method, body) => ({
   assert.equal(defaultsResponse.statusCode, 200);
   assert.deepEqual(defaultsBody.config, defaultPricing);
   assert.equal(defaultsBody.config.mowingBid.pricePer1000SqFtPerVisit, 10);
-  assert.equal(defaultsBody.config.fertilizerBid.targetGrossMargin, 0.2);
+  assert.equal(defaultsBody.config.fertilizerBid.targetGrossMargin, 0.18);
   assert.equal(defaultsBody.config.fertilizerBid.paymentsPerYear, 4);
   assert.equal(defaultsBody.config.fertilizerBid.planPricing.firstYearSalesCommissionRate, 0.06);
-  assert.equal(defaultsBody.config.fertilizerBid.pricePer1000SqFtPerVisit, 35);
+  assert.equal(defaultsBody.config.fertilizerBid.pricePer1000SqFtPerVisit, 10.5);
   assert.equal(defaultsBody.config.fertilizerBid.applications.length, 4);
 
   const changed = JSON.parse(JSON.stringify(defaultPricing));
@@ -62,12 +62,21 @@ const event = (method, body) => ({
   assert.equal(saveBody.config.projectEstimator.autoBid.overheadPercent, 15);
   assert.equal(saveBody.version, 2);
 
-  delete savedRow.config.fertilizerBid;
+  savedRow.config.fertilizerBid.planPricing.annualMinimum = 395;
+  savedRow.config.fertilizerBid.products.nitrex = {
+    name: "Legacy premium product",
+    analysis: "20-1-5",
+    bagSizeLb: 50,
+    bagCost: 60
+  };
+  delete savedRow.config.fertilizerBid.programVersion;
   const legacyResponse = await handler(event("GET"));
   const legacyBody = JSON.parse(legacyResponse.body);
   assert.equal(legacyResponse.statusCode, 200);
   assert.equal(legacyBody.config.fertilizerBid.applications.length, 4);
-  assert.equal(legacyBody.config.fertilizerBid.products.nitrex.analysis, "20-1-5");
+  assert.equal(legacyBody.config.fertilizerBid.products.umaxx.analysis, "24-4-12");
+  assert.deepEqual(Object.keys(legacyBody.config.fertilizerBid.products), ["umaxx"]);
+  assert.equal(legacyBody.config.fertilizerBid.planPricing.annualMinimum, 299);
 
   const bad = JSON.parse(JSON.stringify(defaultPricing));
   bad.annualAgreementDiscount = 1.5;
@@ -75,7 +84,7 @@ const event = (method, body) => ({
   assert.equal(badResponse.statusCode, 400);
 
   const badFertilizer = JSON.parse(JSON.stringify(defaultPricing));
-  badFertilizer.fertilizerBid.products.nitrex.analysis = "invalid";
+  badFertilizer.fertilizerBid.products.umaxx.analysis = "invalid";
   const badFertilizerResponse = await handler(event("PATCH", { config: badFertilizer }));
   assert.equal(badFertilizerResponse.statusCode, 400);
 

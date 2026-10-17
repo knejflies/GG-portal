@@ -29,8 +29,9 @@ for (const marker of [
 assert.ok(!admin.includes('data-estimate-intent="send-invoice"'), "Project estimates must not expose a duplicate Send Invoice action");
 assert.ok(!admin.includes('data-estimate-intent="draft-invoice"'), "Project estimates must not expose a duplicate invoice draft action");
 
-assert.match(admin, /id="bids"[^>]*data-legacy-bidder="mowing"[^>]*hidden/);
-assert.match(admin, /id="fert-bids"[^>]*data-legacy-bidder="fertilizer"[^>]*hidden/);
+assert.match(admin, /id="bids"[^>]*data-legacy-bidder="mowing"/);
+assert.match(admin, /id="fert-bids"[^>]*data-legacy-bidder="fertilizer"/);
+assert.equal(/<section id="fert-bids"[^>]*\shidden(?:\s|>)/.test(admin), false, "The Fertilizer Plans menu must open a visible panel");
 
 for (const customerFile of ["portal/index.html", "portal.html", "employee/index.html"]) {
   const html = fs.readFileSync(customerFile, "utf8");

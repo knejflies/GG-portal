@@ -5468,27 +5468,7 @@
             <details class="settings-advanced">
               <summary>Products &amp; application schedule</summary>
             <fieldset class="bid-setting-group">
-              <legend>BEST Nitrex product</legend>
-              <div class="bid-setting-grid">
-                <div class="wide"><label for="fert_product_nitrex_name">Product name</label><input id="fert_product_nitrex_name" maxlength="80" required /></div>
-                <div><label for="fert_product_nitrex_analysis">Analysis</label><input id="fert_product_nitrex_analysis" maxlength="24" required /></div>
-                <div><label for="fert_product_nitrex_bag_size">Bag size (lb)</label><input id="fert_product_nitrex_bag_size" type="number" min="0.01" step="0.01" required /></div>
-                <div class="wide"><label for="fert_product_nitrex_bag_cost">Bag cost</label><input id="fert_product_nitrex_bag_cost" type="number" min="0" step="0.01" required /></div>
-              </div>
-            </fieldset>
-
-            <fieldset class="bid-setting-group">
-              <legend>BEST Turf Gold product</legend>
-              <div class="bid-setting-grid">
-                <div class="wide"><label for="fert_product_turfGold_name">Product name</label><input id="fert_product_turfGold_name" maxlength="80" required /></div>
-                <div><label for="fert_product_turfGold_analysis">Analysis</label><input id="fert_product_turfGold_analysis" maxlength="24" required /></div>
-                <div><label for="fert_product_turfGold_bag_size">Bag size (lb)</label><input id="fert_product_turfGold_bag_size" type="number" min="0.01" step="0.01" required /></div>
-                <div class="wide"><label for="fert_product_turfGold_bag_cost">Bag cost</label><input id="fert_product_turfGold_bag_cost" type="number" min="0" step="0.01" required /></div>
-              </div>
-            </fieldset>
-
-            <fieldset class="bid-setting-group">
-              <legend>BEST UMAXX product</legend>
+              <legend>Year-round 24-4-12 product</legend>
               <div class="bid-setting-grid">
                 <div class="wide"><label for="fert_product_umaxx_name">Product name</label><input id="fert_product_umaxx_name" maxlength="80" required /></div>
                 <div><label for="fert_product_umaxx_analysis">Analysis</label><input id="fert_product_umaxx_analysis" maxlength="24" required /></div>
@@ -9156,7 +9136,7 @@
       setPricingField("#fert_guide_max_rate", guide.maximumRateLbPer1000 ?? 7);
       setPricingField("#fert_guide_current_charge", guide.currentChargePerBag ?? 60);
 
-      const productIds = ["nitrex", "turfGold", "umaxx"];
+      const productIds = Object.keys(settings.products);
       productIds.forEach((productId) => {
         const product = settings.products[productId];
         setPricingField(`#fert_product_${productId}_name`, product.name);
@@ -9208,7 +9188,7 @@
     function fertilizerSettingsFromForm() {
       const number = (selector, name, allowZero = false) => requiredBidNumber(selector, name, allowZero);
       const products = {};
-      ["nitrex", "turfGold", "umaxx"].forEach((productId) => {
+      ["umaxx"].forEach((productId) => {
         products[productId] = {
           name: $(`#fert_product_${productId}_name`).value.trim(),
           analysis: $(`#fert_product_${productId}_analysis`).value.trim(),
@@ -9226,6 +9206,7 @@
         };
       });
       return {
+        programVersion: 2,
         applicationProductionSqFtPerHour: number("#fert_production", "Fertilizer production rate"),
         fixedSetupHours: number("#fert_setup_hours", "Fertilizer setup time", true),
         minimumBillableHours: number("#fert_min_hours", "Minimum billable time", true),

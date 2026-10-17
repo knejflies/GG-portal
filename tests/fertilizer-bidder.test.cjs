@@ -12,45 +12,45 @@ const bid = calculateFertilizerBid(
 );
 
 assert.equal(bid.customer, "Test Property");
-assert.equal(bid.annualPrice, 1014);
-assert.equal(bid.averageApplicationCharge, 253.5);
-assert.equal(bid.paymentAmount, 253.5);
+assert.equal(bid.annualPrice, 446);
+assert.equal(bid.averageApplicationCharge, 111.5);
+assert.equal(bid.paymentAmount, 111.5);
 assert.equal(bid.paymentsPerYear, 4);
-closeTo(bid.salesCommission, 60.84);
-closeTo(bid.operatingCost, 427.3075986666666);
-closeTo(bid.grossProfit, 525.8524013333334);
-closeTo(bid.grossMargin, 0.5185921117685734);
+closeTo(bid.salesCommission, 26.759999999999998);
+closeTo(bid.operatingCost, 327.17226666666664);
+closeTo(bid.grossProfit, 92.06773333333336);
+closeTo(bid.grossMargin, 0.2064298953662183);
 closeTo(bid.totalProductAppliedLb, 217.52);
 closeTo(bid.totalLaborHours, 2.050133333333333);
-closeTo(bid.cashProductPurchase, 462.1);
-closeTo(bid.firstJobCashProfit, 359.30533333333335);
-closeTo(bid.pricePer1000SqFtPerVisit, 23.30820154468555);
-assert.equal(bid.configuredPricePer1000SqFtPerVisit, 35);
-assert.deepEqual(bid.applications.map((application) => application.quotedCharge), [253.5, 253.5, 253.5, 253.5]);
-assert.deepEqual(bid.purchasePlan.map((product) => product.bagsToPurchase), [2, 2, 3]);
+closeTo(bid.cashProductPurchase, 220);
+closeTo(bid.firstJobCashProfit, 67.48533333333336);
+closeTo(bid.pricePer1000SqFtPerVisit, 10.251930856932697);
+assert.equal(bid.configuredPricePer1000SqFtPerVisit, 10.5);
+assert.deepEqual(bid.applications.map((application) => application.quotedCharge), [111.5, 111.5, 111.5, 111.5]);
+assert.deepEqual(bid.purchasePlan.map((product) => product.bagsToPurchase), [5]);
 assert.equal(bid.visitCountAligned, true);
 assert.equal(bid.marginGoalMet, true);
 
 const smallBid = calculateFertilizerBid({ lawnSqFt: 2000 }, pricing.fertilizerBid);
 const mediumBid = calculateFertilizerBid({ lawnSqFt: 10000 }, pricing.fertilizerBid);
-assert.equal(smallBid.annualPrice, 299, "2,000 sq ft should use the sellable small-lawn minimum");
-assert.equal(mediumBid.annualPrice, 935, "10,000 sq ft should use the configured annual plan ladder");
+assert.equal(smallBid.annualPrice, 249, "2,000 sq ft should use the sellable small-lawn minimum");
+assert.equal(mediumBid.annualPrice, 424, "10,000 sq ft should use the configured annual plan ladder");
 assert.equal(smallBid.marginGoalMet, true, "protected pricing should not allow a below-target quote");
 assert.equal(mediumBid.salesCommission, mediumBid.annualPrice * 0.06);
 
 const tierOnlySettings = JSON.parse(JSON.stringify(pricing.fertilizerBid));
 tierOnlySettings.protectTargetMargin = false;
-const includedPlan = calculateFertilizerBid({ lawnSqFt: 4000 }, tierOnlySettings);
-const largerPlan = calculateFertilizerBid({ lawnSqFt: 5000 }, tierOnlySettings);
-assert.equal(includedPlan.annualPrice, 395, "the annual minimum should include the configured 4,000 sq ft");
-assert.equal(largerPlan.annualPrice, 485, "the plan should add $0.09 annually for each square foot above 4,000");
-assert.equal(largerPlan.paymentAmount, 121.25, "the annual price should split into four quarterly payments");
-assert.equal(largerPlan.salesCommission, 29.099999999999998, "first-year commission should be 6% of the annual price");
+const includedPlan = calculateFertilizerBid({ lawnSqFt: 5000 }, tierOnlySettings);
+const largerPlan = calculateFertilizerBid({ lawnSqFt: 6000 }, tierOnlySettings);
+assert.equal(includedPlan.annualPrice, 299, "the annual minimum should include the configured 5,000 sq ft");
+assert.equal(largerPlan.annualPrice, 324, "the plan should add $0.025 annually for each square foot above 5,000");
+assert.equal(largerPlan.paymentAmount, 81, "the annual price should split into four quarterly payments");
+assert.equal(largerPlan.salesCommission, 19.439999999999998, "first-year commission should be 6% of the annual price");
 const postageStampPlan = calculateFertilizerBid({ lawnSqFt: 2500 }, tierOnlySettings);
 const transitionPlan = calculateFertilizerBid({ lawnSqFt: 3000 }, tierOnlySettings);
-assert.equal(postageStampPlan.annualPrice, 299);
-assert.equal(postageStampPlan.paymentAmount, 74.75);
-assert.equal(transitionPlan.annualPrice, 331, "small lawns should rise smoothly toward the standard breakpoint");
+assert.equal(postageStampPlan.annualPrice, 249);
+assert.equal(postageStampPlan.paymentAmount, 62.25);
+assert.equal(transitionPlan.annualPrice, 259, "small lawns should rise smoothly toward the standard breakpoint");
 
 const largerBid = calculateFertilizerBid(
   { lawnSqFt: 25000 },
