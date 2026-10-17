@@ -1119,7 +1119,8 @@ alter table public.green_grin_sprinkler_blowout_leads
   add column if not exists contact_response text,
   add column if not exists followup_status text not null default 'Not queued';
 
-create unique index if not exists green_grin_blowout_leads_customer_user_idx
+drop index if exists public.green_grin_blowout_leads_customer_user_idx;
+create index if not exists green_grin_blowout_leads_customer_user_idx
   on public.green_grin_sprinkler_blowout_leads(customer_user_id) where customer_user_id is not null;
 create index if not exists green_grin_blowout_leads_map_idx
   on public.green_grin_sprinkler_blowout_leads(status, geocode_status);

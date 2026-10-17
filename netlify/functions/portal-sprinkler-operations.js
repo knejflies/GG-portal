@@ -16,6 +16,32 @@ async function supabase(path, options = {}) {
   if (!response.ok) throw new Error(data?.message || "Supabase request failed.");
   return data;
 }
+function compatibleBlowoutLeadUpdate(update, error) {
+  const message = String(error?.message || "");
+  const compatible = { ...update };
+  if (/customer_price/i.test(message) && Object.prototype.hasOwnProperty.call(compatible, "customer_price")) {
+    delete compatible.customer_price;
+    return compatible;
+  }
+  if (/green_grin_blowout_leads_customer_user_idx/i.test(message) && Object.prototype.hasOwnProperty.call(compatible, "customer_user_id")) {
+    delete compatible.customer_user_id;
+    return compatible;
+  }
+  return null;
+}
+async function patchBlowoutLead(leadId, update) {
+  let payload = { ...update };
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      return await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(leadId)}`, { method: "PATCH", body: JSON.stringify(payload) });
+    } catch (error) {
+      const compatible = compatibleBlowoutLeadUpdate(payload, error);
+      if (!compatible) throw error;
+      payload = compatible;
+    }
+  }
+  throw new Error("The sprinkler blowout record could not be linked.");
+}
 async function authAdmin(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/${path}`, { ...options, headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json", ...(options.headers || {}) } });
   const data = await response.json().catch(() => null);
@@ -81,7 +107,7 @@ async function ensureCustomerProperty(lead) {
   if (!property) throw new Error("Customer property could not be created.");
   const geocode = lead.geocode_status === "Located" ? { status: lead.geocode_status, latitude: lead.latitude, longitude: lead.longitude, display_name: lead.geocode_display_name } : await geocodeAddress(lead.service_address);
   const update = { customer_user_id: customer.id, property_id: property.id, geocode_status: geocode.status, latitude: geocode.latitude, longitude: geocode.longitude, geocode_display_name: geocode.display_name };
-  const updated = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(update) });
+  const updated = await patchBlowoutLead(lead.id, update);
   return { customer_user_id: customer.id, property_id: property.id, geocode, lead: updated?.[0] || { ...lead, ...update } };
 }
 function extraRows(value) {
@@ -252,13 +278,7 @@ exports.handler = async (event) => {
       const invoice = await ensurePaidBlowoutInvoice(lead, history, result, body.payment_method);
       if (!invoice) return json(500, { error: "The paid blowout invoice could not be recorded." });
       const paidUpdate = { status: "Paid", completed_at: lead.completed_at || new Date().toISOString(), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id, invoice_id: invoice.id, referral_active: false };
-      try {
-        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(paidUpdate) });
-      } catch (error) {
-        if (!/customer_price/i.test(error.message || "")) throw error;
-        const { customer_price: omittedPrice, ...compatibleUpdate } = paidUpdate;
-        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
-      }
+      await patchBlowoutLead(lead.id, paidUpdate);
       const email = await sendBlowoutCompletionReceipt(lead, history);
       await logBlowoutReceipt(lead, email);
       return json(200, { history, invoice, email });
@@ -278,13 +298,7 @@ exports.handler = async (event) => {
       if (!invoice) throw new Error("The paid blowout invoice could not be recorded.");
       await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ invoice_id: invoice.id, status: "Paid" }) });
       const completionUpdate = { status: "Paid", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id, invoice_id: invoice.id, referral_active: false };
-      try {
-        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(completionUpdate) });
-      } catch (error) {
-        if (!/customer_price/i.test(error.message || "")) throw error;
-        const { customer_price: omittedPrice, ...compatibleUpdate } = completionUpdate;
-        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
-      }
+      await patchBlowoutLead(lead.id, completionUpdate);
       const email = await sendBlowoutCompletionReceipt(lead, history);
       await logBlowoutReceipt(lead, email);
       return json(200, { history: { ...history, invoice_id: invoice.id, status: "Paid" }, invoice, duplicate: false, email });
@@ -343,5 +357,5 @@ exports.handler = async (event) => {
 };
 
 exports.ensureCustomerProperty = ensureCustomerProperty;
-exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster, blowoutCompletionReceiptPayload };
+exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster, blowoutCompletionReceiptPayload, compatibleBlowoutLeadUpdate };
 

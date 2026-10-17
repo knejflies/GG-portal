@@ -1,6 +1,6 @@
 const assert = require("assert");
 const fs = require("fs");
-const { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster, blowoutCompletionReceiptPayload } = require("../netlify/functions/portal-sprinkler-operations.js")._test;
+const { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster, blowoutCompletionReceiptPayload, compatibleBlowoutLeadUpdate } = require("../netlify/functions/portal-sprinkler-operations.js")._test;
 const operationSource = fs.readFileSync("netlify/functions/portal-sprinkler-operations.js", "utf8");
 
 assert.equal(normalizeAddress("123 Main St., Caldwell, ID"), normalizeAddress("123 main st caldwell id"));
@@ -29,5 +29,8 @@ assert.ok(receipt.text.includes("October 16, 2026"), "Completion receipt should 
 assert.ok(operationSource.includes('status: "Paid", service_line: "Sprinkler Blowout"'), "Completing a paid blowout should create a paid invoice for bookkeeping.");
 assert.ok(operationSource.includes('const completionUpdate = { status: "Paid"'), "Completing a blowout should close the signup as paid.");
 assert.ok(operationSource.includes('body.action === "send-receipt"'), "Older paid blowouts should support sending or resending a receipt.");
+const repeatedCustomerUpdate = compatibleBlowoutLeadUpdate({ customer_user_id: "customer-1", property_id: "property-2", status: "Paid" }, new Error('duplicate key value violates unique constraint "green_grin_blowout_leads_customer_user_idx"'));
+assert.equal(repeatedCustomerUpdate.customer_user_id, undefined, "Older unique-index schemas should omit the duplicate customer link.");
+assert.equal(repeatedCustomerUpdate.property_id, "property-2", "The repeated signup should still link to its property.");
 
 console.log("Sprinkler operations tests passed.");
