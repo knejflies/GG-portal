@@ -35,9 +35,11 @@ const event = (method, body) => ({
   assert.equal(defaultsResponse.statusCode, 200);
   assert.deepEqual(defaultsBody.config, defaultPricing);
   assert.equal(defaultsBody.config.mowingBid.pricePer1000SqFtPerVisit, 10);
-  assert.equal(defaultsBody.config.fertilizerBid.targetGrossMargin, 0.5);
+  assert.equal(defaultsBody.config.fertilizerBid.targetGrossMargin, 0.2);
+  assert.equal(defaultsBody.config.fertilizerBid.paymentsPerYear, 4);
+  assert.equal(defaultsBody.config.fertilizerBid.planPricing.firstYearSalesCommissionRate, 0.06);
   assert.equal(defaultsBody.config.fertilizerBid.pricePer1000SqFtPerVisit, 35);
-  assert.equal(defaultsBody.config.fertilizerBid.applications.length, 5);
+  assert.equal(defaultsBody.config.fertilizerBid.applications.length, 4);
 
   const changed = JSON.parse(JSON.stringify(defaultPricing));
   changed.plans.fresh.minimumWeekly = 65;
@@ -64,7 +66,7 @@ const event = (method, body) => ({
   const legacyResponse = await handler(event("GET"));
   const legacyBody = JSON.parse(legacyResponse.body);
   assert.equal(legacyResponse.statusCode, 200);
-  assert.equal(legacyBody.config.fertilizerBid.applications.length, 5);
+  assert.equal(legacyBody.config.fertilizerBid.applications.length, 4);
   assert.equal(legacyBody.config.fertilizerBid.products.nitrex.analysis, "20-1-5");
 
   const bad = JSON.parse(JSON.stringify(defaultPricing));

@@ -1,4 +1,4 @@
-const CACHE_NAME = "green-grin-app-v95";
+const CACHE_NAME = "green-grin-app-v96";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -18,6 +18,7 @@ const APP_SHELL = [
   "/assets/green-grin-session.js",
   "/assets/green-grin-bookkeeping.js",
   "/assets/green-grin-contract.js",
+  "/assets/lawn-measurement-engine.js",
   "/assets/green-grin-proposal-label.js",
   "/assets/green-grin-pricing-config.json"
 ];

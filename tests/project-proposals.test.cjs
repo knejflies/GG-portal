@@ -22,18 +22,18 @@ const estimate = {
 assert.equal(hash("same"), hash("same"));
 assert.notEqual(hash("same"), hash("different"));
 const publicCopy = publicEstimate(estimate);
-assert.equal(publicCopy.deposit_amount, 1750);
+assert.equal(publicCopy.deposit_amount, 0);
 assert.equal(publicCopy.email_hint, "cu***@example.com");
 assert.equal(publicCopy.invoice_due_date, "2026-09-15");
 assert.equal(publicCopy.contract.business.name, "Green Grin Lawns");
 assert.equal(publicCopy.contract.business.contractor_registration_number, "RCE-TEST");
-assert.equal(publicCopy.contract.pricing.initial_payment, 1750);
-assert.equal(publicCopy.contract.pricing.final_payment, 1750);
+assert.equal(publicCopy.contract.pricing.initial_payment, 0);
+assert.equal(publicCopy.contract.pricing.final_payment, 3500);
 assert.equal(publicCopy.contract.disclosure_required, true);
 assert.equal(Object.hasOwn(publicCopy, "internal_cost"), false);
 assert.equal(Object.hasOwn(publicCopy, "line_items"), false);
 const snapshot = documentSnapshot(estimate);
-assert.match(snapshot.payment_terms, /completion/i);
+assert.match(snapshot.payment_terms, /No deposit is required/i);
 assert.equal(snapshot.grouped_totals.Materials, 2000);
 assert.equal(proposalPriceDisplay(estimate), "grouped");
 
@@ -41,7 +41,8 @@ const emailCopy = proposalEmail(estimate, "https://portal.example/proposal?token
 assert.match(emailCopy, /LANDSCAPING CUSTOMER CONTRACT/);
 assert.match(emailCopy, /Scope of work/);
 assert.match(emailCopy, /Project price/);
-assert.match(emailCopy, /50% initial payment/);
+assert.match(emailCopy, /No deposit is required/);
+assert.doesNotMatch(emailCopy, /0% initial payment/);
 assert.match(emailCopy, /Green Grin Lawns/);
 assert.match(emailCopy, /Payment due:/);
 assert.doesNotMatch(emailCopy, /Quantity|Rate/);

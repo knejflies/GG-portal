@@ -134,18 +134,35 @@
   },
   "fertilizerBid": {
     "applicationProductionSqFtPerHour": 30000,
-    "fixedSetupHours": 0.5,
-    "minimumBillableHours": 1,
+    "fixedSetupHours": 0.15,
+    "minimumBillableHours": 0.5,
     "loadedLaborRatePerHour": 35,
-    "vehicleEquipmentPerVisit": 35,
-    "adminOverheadPerVisit": 60,
+    "vehicleEquipmentPerVisit": 10,
+    "adminOverheadPerVisit": 5,
     "costReservePerVisit": 1,
-    "targetGrossMargin": 0.5,
+    "targetGrossMargin": 0.2,
+    "protectTargetMargin": true,
     "pricePer1000SqFtPerVisit": 35,
     "minimumApplicationCharge": 125,
-    "roundChargeTo": 5,
-    "fertilizerVisitsPerSeason": 5,
-    "paymentsPerYear": 12,
+    "roundChargeTo": 1,
+    "fertilizerVisitsPerSeason": 4,
+    "paymentsPerYear": 4,
+    "planPricing": {
+      "enabled": true,
+      "annualMinimum": 395,
+      "includedSqFt": 4000,
+      "smallLawnAnnualMinimum": 299,
+      "smallLawnIncludedSqFt": 2500,
+      "annualAdditionalRatePerSqFt": 0.09,
+      "firstYearSalesCommissionRate": 0.06
+    },
+    "pricingGuide": {
+      "bagSizeLb": 50,
+      "bagCost": 44,
+      "healthyRateLbPer1000": 5,
+      "maximumRateLbPer1000": 7,
+      "currentChargePerBag": 60
+    },
     "products": {
       "nitrex": {
         "name": "BEST Nitrex",
@@ -171,31 +188,25 @@
         "stage": "Spring Wake-Up",
         "timing": "Mar 15–Apr 1",
         "productId": "nitrex",
-        "nitrogenRateLbPer1000": 0.5
+        "productRateLbPer1000": 5
       },
       {
-        "stage": "Spring Growth",
-        "timing": "May 1–20",
+        "stage": "Early Summer",
+        "timing": "May 15–Jun 15",
         "productId": "turfGold",
-        "nitrogenRateLbPer1000": 0.5
+        "productRateLbPer1000": 5
       },
       {
-        "stage": "Summer Defense",
-        "timing": "Jun 10–25",
+        "stage": "Late Summer",
+        "timing": "Aug 1–Sep 1",
         "productId": "umaxx",
-        "nitrogenRateLbPer1000": 0.5
+        "productRateLbPer1000": 5
       },
       {
-        "stage": "Fall Recovery",
-        "timing": "Aug 25–Sep 15",
-        "productId": "turfGold",
-        "nitrogenRateLbPer1000": 1
-      },
-      {
-        "stage": "Winterizer",
-        "timing": "Oct 20–Nov 10",
+        "stage": "Fall Winterizer",
+        "timing": "Oct 1–Nov 1",
         "productId": "umaxx",
-        "nitrogenRateLbPer1000": 1
+        "productRateLbPer1000": 5
       }
     ]
   }

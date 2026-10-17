@@ -75,6 +75,21 @@ function selfIntersects(ring) {
   return false;
 }
 
+function pointInRing(value, ring) {
+  const point = asPoint(value);
+  const points = (ring || []).map(asPoint).filter(validPoint);
+  if (!validPoint(point) || points.length < 3) return false;
+  let inside = false;
+  for (let first = 0, second = points.length - 1; first < points.length; second = first++) {
+    const a = points[first];
+    const b = points[second];
+    const crosses = ((a.lat > point.lat) !== (b.lat > point.lat))
+      && (point.lng < ((b.lng - a.lng) * (point.lat - a.lat)) / ((b.lat - a.lat) || Number.EPSILON) + a.lng);
+    if (crosses) inside = !inside;
+  }
+  return inside;
+}
+
 function validateMeasurement({ zones = [], exclusions = [], geocodeConfidence = 0, imageryResolutionMeters = null }) {
   const errors = [];
   const warnings = [];
@@ -84,6 +99,11 @@ function validateMeasurement({ zones = [], exclusions = [], geocodeConfidence = 
     if (!ring || ring.length < 4) errors.push(`Shape ${index + 1} needs at least three corners.`);
     else if (selfIntersects(ring)) errors.push(`Shape ${index + 1} crosses itself.`);
   });
+  exclusions.forEach((feature, index) => {
+    const ring = feature?.geometry?.coordinates?.[0] || [];
+    const contained = ring.slice(0, -1).every((point) => zones.some((zone) => pointInRing(point, zone?.geometry?.coordinates?.[0])));
+    if (ring.length >= 4 && !contained) errors.push(`Exclusion ${index + 1} must stay inside a lawn zone.`);
+  });
   if (geocodeConfidence < 0.85) warnings.push("Address match needs confirmation before saving.");
   if (imageryResolutionMeters != null && imageryResolutionMeters > 0.6) warnings.push("Imagery is too soft for automatic outlining; keep the manual review step.");
   const totals = measurementTotals(zones, exclusions);
@@ -91,5 +111,7 @@ function validateMeasurement({ zones = [], exclusions = [], geocodeConfidence = 
   return { valid: errors.length === 0, errors, warnings, totals };
 }
 
-if (typeof module !== "undefined") module.exports = { ringAreaSquareMeters, polygonAreaSquareFeet, featureAreaSquareFeet, measurementTotals, selfIntersects, validateMeasurement };
+const lawnMeasurementEngine = { ringAreaSquareMeters, polygonAreaSquareFeet, featureAreaSquareFeet, measurementTotals, selfIntersects, pointInRing, validateMeasurement };
+if (typeof window !== "undefined") window.GreenGrinLawnMeasurement = lawnMeasurementEngine;
+if (typeof module !== "undefined") module.exports = lawnMeasurementEngine;
 

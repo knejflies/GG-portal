@@ -2548,6 +2548,14 @@
     .yard-measurement-metric span { color: var(--muted); font-size: .82rem; }
     .yard-measurement-checks { display: grid; gap: 9px; margin-top: 14px; }
     .yard-measurement-check { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 9px; }
+    .yard-measurement-shapes { display: grid; gap: 8px; margin-top: 14px; }
+    .yard-measurement-shape { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); }
+    .yard-measurement-shape strong { color: var(--pine); }
+    .yard-measurement-shape small { display: block; color: var(--muted); margin-top: 2px; }
+    .yard-measurement-shape-actions { display: flex; gap: 6px; flex: 0 0 auto; }
+    .yard-measurement-mode { outline: 3px solid rgba(120, 198, 83, .22); }
+    .yard-measurement-help { margin: 10px 0 0; color: var(--muted); font-size: .82rem; }
+    .yard-vertex-icon { width: 16px !important; height: 16px !important; margin: -8px 0 0 -8px !important; border: 3px solid #fff; border-radius: 50%; background: #4d9f35; box-shadow: 0 1px 6px rgba(0, 0, 0, .55); }
     @media (max-width: 860px) { .yard-measurement-grid { grid-template-columns: 1fr; } #yard-measurement-map { min-height: 390px; } }
 
     .bid-page-head {
@@ -5167,13 +5175,15 @@
         <div class="yard-measurement-grid">
           <div>
             <div id="yard-measurement-map" aria-label="Satellite lawn measurement map"></div>
-            <div class="yard-measurement-actions" style="margin-top:12px"><button id="yard-measurement-draw" class="button" type="button" disabled>Draw lawn zone</button><button id="yard-measurement-exclusion" class="button ghost" type="button" disabled>Add exclusion</button><button id="yard-measurement-undo" class="button ghost" type="button" disabled>Undo point</button><button id="yard-measurement-clear" class="button ghost" type="button" disabled>Clear shapes</button></div>
+            <div class="yard-measurement-actions" style="margin-top:12px"><button id="yard-measurement-draw" class="button" type="button" disabled>Draw lawn zone</button><button id="yard-measurement-exclusion" class="button ghost" type="button" disabled>Add exclusion</button><button id="yard-measurement-finish" class="button secondary" type="button" disabled>Finish shape</button><button id="yard-measurement-undo" class="button ghost" type="button" disabled>Undo point</button><button id="yard-measurement-clear" class="button ghost" type="button" disabled>Clear current</button><button id="yard-measurement-clear-all" class="button ghost" type="button" disabled>Clear all</button></div>
+            <p class="yard-measurement-help">Tap each corner of the turf, then tap <strong>Finish shape</strong>. Add another lawn zone or subtract buildings, pavement, beds, and pools with <strong>Add exclusion</strong>.</p>
           </div>
           <aside class="card" style="padding:16px">
-            <div class="three"><div class="yard-measurement-metric"><strong id="yard-measurement-gross">0</strong><span>Gross sq ft</span></div><div class="yard-measurement-metric"><strong id="yard-measurement-excluded">0</strong><span>Excluded sq ft</span></div><div class="yard-measurement-metric"><strong id="yard-measurement-net">0</strong><span>Net turf sq ft</span></div></div>
+            <div class="three"><div class="yard-measurement-metric"><strong id="yard-measurement-gross">0</strong><span>Gross sq ft</span></div><div class="yard-measurement-metric"><strong id="yard-measurement-excluded">0</strong><span>Excluded sq ft</span></div><div class="yard-measurement-metric"><strong id="yard-measurement-net">0</strong><span>Net turf sq ft · <span id="yard-measurement-acres">0.00 acres</span></span></div></div>
             <div class="yard-measurement-checks"><div class="yard-measurement-check"><span>Address match</span><strong id="yard-measurement-address-check">Needs confirmation</strong></div><div class="yard-measurement-check"><span>Imagery</span><strong id="yard-measurement-imagery-check">Satellite ready</strong></div><div class="yard-measurement-check"><span>Review state</span><strong id="yard-measurement-review-check">Draft</strong></div></div>
+            <div id="yard-measurement-shapes" class="yard-measurement-shapes" aria-live="polite"></div>
             <div class="yard-measurement-actions" style="margin-top:16px"><button id="yard-measurement-save" class="button" type="button" disabled>Save measurement</button><button id="yard-measurement-mowing" class="button ghost" type="button" disabled>Use in mowing quote</button><button id="yard-measurement-fertilizer" class="button ghost" type="button" disabled>Use in fertilizer plan</button></div>
-            <p class="muted" style="margin-top:12px;font-size:.82rem">Measurements save as a local draft until the property and shape pass review. The live database handoff can be added after the provider and schema are approved.</p>
+            <p class="muted" style="margin-top:12px;font-size:.82rem">Saved measurements stay attached to the property address and remain available across devices after the measurement database update is installed.</p>
           </aside>
         </div>
       </div>
@@ -5182,7 +5192,7 @@
     <section id="bids" class="panel owner-only" data-legacy-bidder="mowing" hidden>
       <div class="bidder-subnav" role="tablist" aria-label="Bidders">
         <button class="bidder-subnav-button active" data-bidder-section="bids" type="button" role="tab" aria-selected="true">Mowing Bidder</button>
-        <button class="bidder-subnav-button" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="false">Fertilizer Bidder</button>
+        <button class="bidder-subnav-button" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="false">Fertilizer Plans</button>
         <button class="bidder-subnav-button" data-bidder-section="project-bids" type="button" role="tab" aria-selected="false">Project Estimator</button>
       </div>
       <div class="bid-page-head">
@@ -5327,13 +5337,13 @@
     <section id="fert-bids" class="panel owner-only" data-legacy-bidder="fertilizer" hidden>
       <div class="bidder-subnav" role="tablist" aria-label="Bidders">
         <button class="bidder-subnav-button" data-bidder-section="bids" type="button" role="tab" aria-selected="false">Mowing Bidder</button>
-        <button class="bidder-subnav-button active" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="true">Fertilizer Bidder</button>
+        <button class="bidder-subnav-button active" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="true">Fertilizer Plans</button>
         <button class="bidder-subnav-button" data-bidder-section="project-bids" type="button" role="tab" aria-selected="false">Project Estimator</button>
       </div>
       <div class="bid-page-head">
         <div>
-          <h2>Fertilizer Bidder</h2>
-          <p class="muted">Set one price per 1,000 sq. ft.; product and labor costs stay visible as a profit check.</p>
+          <h2>Fertilizer Plans &amp; Pricing</h2>
+          <p class="muted">Build an annual fertilizer plan with four equal quarterly payments, a clear square-footage breakpoint, and the first-year sales commission included.</p>
         </div>
         <span id="fert-config-version" class="badge">Pricing v1</span>
       </div>
@@ -5356,6 +5366,7 @@
 
           <div id="fert-result" aria-live="polite"></div>
           <div id="fert-quote-summary" class="fert-quote-grid" aria-live="polite"></div>
+          <div id="fert-bag-economics" class="fert-quote-grid" aria-live="polite"></div>
           <p id="fert-visit-check" class="fert-checkline"></p>
 
           <div class="fert-table-block">
@@ -5393,22 +5404,44 @@
             <button id="fert-copy-job" class="button secondary" type="button">Copy Annual Quote To Job</button>
             <button id="fert-copy-invoice" class="button ghost" type="button">Copy Average Application To Invoice</button>
           </div>
+          <div class="fert-table-block">
+            <div class="job-head"><div><h3>Fertilizer customers</h3><p class="muted">Fertilizer accounts stay grouped away from mowing and project customers for faster follow-up.</p></div><button id="fert-customer-email-group" class="button small secondary" type="button">Draft Email To This Group</button></div>
+            <div class="two"><div><label for="fert-customer-search">Search fertilizer customers</label><input id="fert-customer-search" type="search" placeholder="Name, address, phone, or email" /></div><div><label for="fert-customer-group">Communication group</label><select id="fert-customer-group"><option value="active">Active plans</option><option value="interested">Interested</option><option value="past">Past fertilizer customers</option><option value="all">All fertilizer contacts</option></select></div></div>
+            <div id="fert-customer-list" class="status-box" aria-live="polite"></div>
+          </div>
           <p class="bid-disclaimer">Estimate only. Confirm product availability, label rates, site conditions and local application requirements before presenting a final quote.</p>
         </div>
 
         <details class="bid-settings fert-settings">
           <summary>Fertilizer Pricing Settings</summary>
           <form id="fert-pricing-form">
-            <p class="settings-help">The customer price uses the rate per 1,000 sq. ft. or the minimum, whichever is higher.</p>
+            <p class="settings-help">Set the annual minimum, the included lawn size, and the annual price for each additional square foot. The calculator splits the result into equal quarterly payments.</p>
 
             <fieldset class="bid-setting-group quick-price-settings">
-              <legend>Customer price</legend>
+              <legend>Annual plan price</legend>
               <div class="bid-setting-grid">
-                <div><label for="fert_price_1000">Price per 1,000 sq. ft.</label><input id="fert_price_1000" type="number" min="0" step="0.01" required /></div>
-                <div><label for="fert_min_charge">Minimum per application</label><input id="fert_min_charge" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_plan_small_minimum">Small-lawn annual minimum</label><input id="fert_plan_small_minimum" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_plan_small_sqft">Square footage included in minimum</label><input id="fert_plan_small_sqft" type="number" min="0" step="1" required /></div>
+                <div><label for="fert_plan_minimum">Annual price at standard breakpoint</label><input id="fert_plan_minimum" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_plan_included_sqft">Standard breakpoint square footage</label><input id="fert_plan_included_sqft" type="number" min="0" step="1" required /></div>
+                <div><label for="fert_plan_extra_rate">Annual price per additional sq. ft.</label><input id="fert_plan_extra_rate" type="number" min="0" step="0.001" required /></div>
+                <div><label for="fert_sales_commission">Sales commission — first year %</label><input id="fert_sales_commission" type="number" min="0" max="99" step="0.1" required /></div>
                 <div><label for="fert_visits">Applications per year</label><input id="fert_visits" type="number" min="1" step="1" required /></div>
                 <div><label for="fert_round_to">Round price to nearest</label><input id="fert_round_to" type="number" min="0.01" step="0.01" required /></div>
-                <div class="wide"><label for="fert_payments">Equal payments per year</label><input id="fert_payments" type="number" min="1" max="24" step="1" required /></div>
+                <div class="wide"><label for="fert_payments">Equal payments per year (4 = quarterly)</label><input id="fert_payments" type="number" min="1" max="24" step="1" required /></div>
+                <div class="wide"><label class="check"><input id="fert_protect_margin" type="checkbox" checked /> Automatically protect the target profit margin</label></div>
+              </div>
+            </fieldset>
+
+            <fieldset class="bid-setting-group">
+              <legend>Your bag pricing check</legend>
+              <p class="settings-help">Use your real bag and spread rates to see coverage and the lowest protected full-service price.</p>
+              <div class="bid-setting-grid">
+                <div><label for="fert_guide_bag_cost">Your bag cost</label><input id="fert_guide_bag_cost" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_guide_bag_size">Bag size (lb)</label><input id="fert_guide_bag_size" type="number" min="0.01" step="0.01" required /></div>
+                <div><label for="fert_guide_healthy_rate">Healthy lawn rate (lb / 1,000)</label><input id="fert_guide_healthy_rate" type="number" min="0.01" step="0.1" required /></div>
+                <div><label for="fert_guide_max_rate">Maximum rate (lb / 1,000)</label><input id="fert_guide_max_rate" type="number" min="0.01" step="0.1" required /></div>
+                <div class="wide"><label for="fert_guide_current_charge">Current charge per bag applied</label><input id="fert_guide_current_charge" type="number" min="0" step="0.01" required /></div>
               </div>
             </fieldset>
 
@@ -5417,6 +5450,8 @@
               <fieldset class="bid-setting-group">
               <legend>Operating costs</legend>
               <div class="bid-setting-grid">
+                <div><label for="fert_price_1000">Fallback price per 1,000 / application</label><input id="fert_price_1000" type="number" min="0" step="0.01" required /></div>
+                <div><label for="fert_min_charge">Fallback minimum / application</label><input id="fert_min_charge" type="number" min="0" step="0.01" required /></div>
                 <div><label for="fert_production">Production sq ft / hr</label><input id="fert_production" type="number" min="1" step="1" required /></div>
                 <div><label for="fert_setup_hours">Setup/load hours</label><input id="fert_setup_hours" type="number" min="0" step="0.01" required /></div>
                 <div><label for="fert_min_hours">Minimum billable hours</label><input id="fert_min_hours" type="number" min="0" step="0.01" required /></div>
@@ -5462,7 +5497,7 @@
             </fieldset>
 
             <fieldset class="bid-setting-group">
-              <legend>Five-application program</legend>
+              <legend>Four-application program</legend>
               <div id="fert-program-settings"></div>
             </fieldset>
             </details>
@@ -6223,6 +6258,7 @@
   <script src="/assets/green-grin-auto-bid-engine.js"></script>
   <script src="/assets/green-grin-contract.js"></script>
   <script src="/assets/green-grin-bookkeeping.js"></script>
+  <script src="/assets/lawn-measurement-engine.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const $ = (selector) => document.querySelector(selector);
@@ -6270,8 +6306,15 @@
     let yardMeasurementMap = null;
     let yardMeasurementLayer = null;
     let yardMeasurementPoints = [];
+    let yardMeasurementZones = [];
+    let yardMeasurementExclusions = [];
     let yardMeasurementMode = "zone";
+    let yardMeasurementDrawing = false;
+    let yardMeasurementEditingShape = null;
     let yardMeasurementAddress = null;
+    let yardMeasurementAddressDirty = false;
+    let yardMeasurementSavedId = "";
+    let yardMeasurementAddressMarker = null;
     let blowoutRouteSelectedIds = [];
     let blowoutRouteOrder = [];
     let customerMap = null;
@@ -7818,6 +7861,21 @@
       openTab("invoices");
     });
 
+    $("#fert-customer-search")?.addEventListener("input", renderFertilizerCustomerGroups);
+    $("#fert-customer-group")?.addEventListener("change", renderFertilizerCustomerGroups);
+    $("#fert-customer-list")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-fert-customer-action]");
+      const row = event.target.closest("[data-fert-customer-index]");
+      const customer = row ? invoiceCustomers[Number(row.dataset.fertCustomerIndex)] : null;
+      if (!button || !customer) return;
+      if (button.dataset.fertCustomerAction === "open") openCustomerFile(customer);
+      if (button.dataset.fertCustomerAction === "email") openFertilizerEmailDraft([customer], customer.name || "fertilizer customer");
+    });
+    $("#fert-customer-email-group")?.addEventListener("click", () => {
+      const group = $("#fert-customer-group")?.selectedOptions?.[0]?.textContent || "fertilizer customers";
+      openFertilizerEmailDraft(visibleFertilizerCustomers(), group);
+    });
+
     function notice(message, error = false) {
       return `<div class="notice ${error ? "error" : ""}">${message}</div>`;
     }
@@ -9082,6 +9140,20 @@
       setPricingField("#fert_round_to", settings.roundChargeTo);
       setPricingField("#fert_visits", settings.fertilizerVisitsPerSeason);
       setPricingField("#fert_payments", settings.paymentsPerYear || 12);
+      const planPricing = settings.planPricing || {};
+      setPricingField("#fert_plan_minimum", planPricing.annualMinimum ?? 395);
+      setPricingField("#fert_plan_included_sqft", planPricing.includedSqFt ?? 4000);
+      setPricingField("#fert_plan_small_minimum", planPricing.smallLawnAnnualMinimum ?? 299);
+      setPricingField("#fert_plan_small_sqft", planPricing.smallLawnIncludedSqFt ?? 2500);
+      setPricingField("#fert_plan_extra_rate", planPricing.annualAdditionalRatePerSqFt ?? 0.09);
+      setPricingField("#fert_sales_commission", Number(planPricing.firstYearSalesCommissionRate ?? 0.06) * 100);
+      $("#fert_protect_margin").checked = settings.protectTargetMargin !== false;
+      const guide = settings.pricingGuide || {};
+      setPricingField("#fert_guide_bag_cost", guide.bagCost ?? 44);
+      setPricingField("#fert_guide_bag_size", guide.bagSizeLb ?? 50);
+      setPricingField("#fert_guide_healthy_rate", guide.healthyRateLbPer1000 ?? 5);
+      setPricingField("#fert_guide_max_rate", guide.maximumRateLbPer1000 ?? 7);
+      setPricingField("#fert_guide_current_charge", guide.currentChargePerBag ?? 60);
 
       const productIds = ["nitrex", "turfGold", "umaxx"];
       productIds.forEach((productId) => {
@@ -9112,8 +9184,8 @@
               <select id="fert_app_${index + 1}_product" required>${productOptions}</select>
             </div>
             <div class="wide">
-              <label for="fert_app_${index + 1}_n_rate">N rate (lb / 1,000)</label>
-              <input id="fert_app_${index + 1}_n_rate" type="number" min="0.01" step="0.01" required />
+              <label for="fert_app_${index + 1}_product_rate">Product rate (lb / 1,000)</label>
+              <input id="fert_app_${index + 1}_product_rate" type="number" min="0.01" max="7" step="0.1" required />
             </div>
           </div>
         </div>
@@ -9122,7 +9194,12 @@
         setPricingField(`#fert_app_${index + 1}_stage`, application.stage);
         setPricingField(`#fert_app_${index + 1}_timing`, application.timing);
         setPricingField(`#fert_app_${index + 1}_product`, application.productId);
-        setPricingField(`#fert_app_${index + 1}_n_rate`, application.nitrogenRateLbPer1000);
+        const product = settings.products[application.productId];
+        const nitrogenPercent = Number(String(product.analysis || "").split("-")[0]) / 100;
+        const savedProductRate = Number(application.productRateLbPer1000) > 0
+          ? application.productRateLbPer1000
+          : Number(application.nitrogenRateLbPer1000) / nitrogenPercent;
+        setPricingField(`#fert_app_${index + 1}_product_rate`, savedProductRate);
       });
       $("#fert-config-version").textContent = `Pricing v${bidPricingConfig.version || 1}`;
     }
@@ -9138,12 +9215,15 @@
           bagCost: number(`#fert_product_${productId}_bag_cost`, `${productId} bag cost`, true)
         };
       });
-      const applications = [1, 2, 3, 4, 5].map((index) => ({
+      const applications = [...document.querySelectorAll("#fert-program-settings > .bid-setting-group")].map((_row, rowIndex) => {
+        const index = rowIndex + 1;
+        return {
         stage: $(`#fert_app_${index}_stage`).value.trim(),
         timing: $(`#fert_app_${index}_timing`).value.trim(),
         productId: $(`#fert_app_${index}_product`).value,
-        nitrogenRateLbPer1000: number(`#fert_app_${index}_n_rate`, `Application ${index} nitrogen rate`)
-      }));
+        productRateLbPer1000: number(`#fert_app_${index}_product_rate`, `Application ${index} product rate`)
+        };
+      });
       return {
         applicationProductionSqFtPerHour: number("#fert_production", "Fertilizer production rate"),
         fixedSetupHours: number("#fert_setup_hours", "Fertilizer setup time", true),
@@ -9153,11 +9233,28 @@
         adminOverheadPerVisit: number("#fert_admin_cost", "Admin overhead", true),
         costReservePerVisit: number("#fert_cost_reserve", "Cost reserve", true),
         targetGrossMargin: number("#fert_margin", "Target gross margin", true) / 100,
+        protectTargetMargin: $("#fert_protect_margin").checked,
         pricePer1000SqFtPerVisit: number("#fert_price_1000", "Price per 1,000 square feet", true),
         minimumApplicationCharge: number("#fert_min_charge", "Minimum application charge", true),
         roundChargeTo: number("#fert_round_to", "Charge rounding increment"),
         fertilizerVisitsPerSeason: Math.round(number("#fert_visits", "Fertilizer visits per season")),
         paymentsPerYear: Math.round(number("#fert_payments", "Equal payments per year")),
+        planPricing: {
+          enabled: true,
+          annualMinimum: number("#fert_plan_minimum", "Annual plan minimum", true),
+          includedSqFt: number("#fert_plan_included_sqft", "Included plan square footage", true),
+          smallLawnAnnualMinimum: number("#fert_plan_small_minimum", "Small-lawn annual minimum", true),
+          smallLawnIncludedSqFt: number("#fert_plan_small_sqft", "Small-lawn included square footage", true),
+          annualAdditionalRatePerSqFt: number("#fert_plan_extra_rate", "Annual additional square-foot rate", true),
+          firstYearSalesCommissionRate: number("#fert_sales_commission", "First-year sales commission", true) / 100
+        },
+        pricingGuide: {
+          bagCost: number("#fert_guide_bag_cost", "Bag cost", true),
+          bagSizeLb: number("#fert_guide_bag_size", "Bag size"),
+          healthyRateLbPer1000: number("#fert_guide_healthy_rate", "Healthy lawn product rate"),
+          maximumRateLbPer1000: number("#fert_guide_max_rate", "Maximum product rate"),
+          currentChargePerBag: number("#fert_guide_current_charge", "Current charge per bag", true)
+        },
         products,
         applications
       };
@@ -9186,15 +9283,44 @@
     }
 
     function renderFertBid(bid) {
+      const settings = fertilizerSettingsFromForm();
+      const firstApplication = bid.applications[0];
+      const bagEconomics = window.GreenGrinCalculator.calculateFertilizerBagEconomics(settings.pricingGuide, {
+        targetGrossMargin: settings.targetGrossMargin,
+        laborCost: firstApplication?.laborCost || 0,
+        visitOverhead: firstApplication?.visitOverhead || 0,
+        costReserve: settings.costReservePerVisit,
+        chargeIncrement: settings.roundChargeTo
+      });
+      const bagCards = [
+        ["Healthy-rate coverage", `${Math.round(bagEconomics.healthyCoverageSqFt).toLocaleString()} sq ft`],
+        ["Maximum-rate coverage", `${Math.round(bagEconomics.maximumCoverageSqFt).toLocaleString()} sq ft`],
+        ["Material / 1,000", `${fixedMoney(bagEconomics.healthyMaterialCostPer1000)}–${fixedMoney(bagEconomics.maximumMaterialCostPer1000)}`],
+        ["Your current $/bag", fixedMoney(bagEconomics.currentChargePerBag)],
+        ["Profit after full visit cost", fixedMoney(bagEconomics.currentFullServiceProfit)],
+        ["Protected $/bag price", fixedMoney(bagEconomics.recommendedChargePerBag), true]
+      ];
+      $("#fert-bag-economics").innerHTML = bagCards.map(([label, value, primary]) => `
+        <div class="fert-quote-card ${primary ? "primary" : ""}">
+          <span>${cleanText(label)}</span><strong>${cleanText(value)}</strong>
+        </div>
+      `).join("");
+
       const cards = [
         ["Recommended annual price", fixedMoney(bid.annualPrice), true],
-        ["Average application", fixedMoney(bid.averageApplicationCharge), true],
+        [bid.paymentsPerYear === 4 ? "Quarterly payment" : `Payment (${bid.paymentsPerYear}/year)`, fixedMoney(bid.paymentAmount), true],
+        ["Base plan formula", fixedMoney(bid.tieredAnnualPrice)],
+        ["Average application value", fixedMoney(bid.averageApplicationCharge)],
         ["Operating cost", fixedMoney(bid.operatingCost)],
-        ["Gross profit", fixedMoney(bid.grossProfit)],
-        ["Gross margin", fixedPercent(bid.grossMargin)],
+        ["Sales commission", fixedMoney(bid.salesCommission)],
+        ["First-year profit", fixedMoney(bid.grossProfit)],
+        ["Renewal-year profit", fixedMoney(bid.grossProfitBeforeCommission)],
+        ["First-year margin", fixedPercent(bid.grossMargin)],
+        ["Included square feet", Number(bid.includedSqFt || 0).toLocaleString()],
+        ["Postage-stamp minimum", `${fixedMoney(bid.smallLawnAnnualMinimum)} / year`],
+        ["Extra square feet", Number(bid.excessSqFt || 0).toLocaleString()],
         ["Cash product purchase", fixedMoney(bid.cashProductPurchase)],
-        ["First-job cash profit", fixedMoney(bid.firstJobCashProfit)],
-        ["Saved price / 1,000", fixedMoney(bid.configuredPricePer1000SqFtPerVisit)]
+        ["Commission rate", fixedPercent(bid.salesCommissionRate)]
       ];
       $("#fert-quote-summary").innerHTML = cards.map(([label, value, primary]) => `
         <div class="fert-quote-card ${primary ? "primary" : ""}">
@@ -9209,7 +9335,10 @@
       const marginCheck = bid.marginGoalMet
         ? `<span class="profit-check pass"><strong>Profit check: PASS.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin meets the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal.</span>`
         : `<span class="profit-check warn"><strong>Profit check: REVIEW.</strong> ${cleanText(fixedPercent(bid.grossMargin))} margin is below the ${cleanText(fixedPercent(bid.targetGrossMargin))} goal. Raise the minimum or price per 1,000.</span>`;
-      $("#fert-visit-check").innerHTML = `${programCheck}${marginCheck}`;
+      const priceProtection = bid.useAnnualPlanPricing && bid.annualPrice > bid.tieredAnnualPrice
+        ? `<span class="profit-check warn"><strong>Price protection applied.</strong> The ${cleanText(fixedMoney(bid.tieredAnnualPrice))} plan formula was raised to ${cleanText(fixedMoney(bid.annualPrice))} because the saved costs and 6% commission would miss your margin goal.</span>`
+        : `<span class="profit-check pass"><strong>Plan formula accepted.</strong> The minimum and square-foot pricing cover the saved costs and commission.</span>`;
+      $("#fert-visit-check").innerHTML = `${programCheck}${marginCheck}${priceProtection}`;
 
       $("#fert-application-rows").innerHTML = bid.applications.map((application) => `
         <tr>
@@ -9264,6 +9393,54 @@
       $("#fert-config-version").textContent = `Pricing v${bidPricingConfig.version || 1}`;
     }
 
+    function fertilizerCustomerGroup(customer) {
+      const fertilizerJobs = (customer.jobs || []).filter((job) => /fertiliz|fertiliser|\bfert\b/i.test(String(job.service_type || "")));
+      const closed = new Set(["Completed", "Paid", "Cancelled", "Archived"]);
+      const active = fertilizerJobs.some((job) => !closed.has(String(job.status || ""))) || /fertiliz|fertiliser|\bfert\b/i.test(String(customer.plan || ""));
+      const interested = !active && /fertiliz|fertiliser|\bfert\b/i.test(String(customer.requested_plan || ""));
+      if (active) return "active";
+      if (interested) return "interested";
+      if (fertilizerJobs.length) return "past";
+      return "";
+    }
+
+    function visibleFertilizerCustomers() {
+      const group = $("#fert-customer-group")?.value || "active";
+      const query = String($("#fert-customer-search")?.value || "").trim().toLowerCase();
+      return invoiceCustomers.filter((customer) => {
+        const customerGroup = fertilizerCustomerGroup(customer);
+        if (!customerGroup || (group !== "all" && customerGroup !== group)) return false;
+        return !query || adminSearchText(customer).includes(query);
+      });
+    }
+
+    function renderFertilizerCustomerGroups() {
+      const target = $("#fert-customer-list");
+      if (!target) return;
+      const customers = visibleFertilizerCustomers();
+      target.innerHTML = customers.length ? customers.map((customer) => {
+        const index = invoiceCustomers.indexOf(customer);
+        const group = fertilizerCustomerGroup(customer);
+        const address = customer.property?.address || "No address saved";
+        return `<div class="message" data-fert-customer-index="${index}"><div class="message-head"><strong>${cleanText(customer.name || "Customer")}</strong><span class="badge">${cleanText(group === "active" ? "Active plan" : group === "interested" ? "Interested" : "Past customer")}</span></div><p class="muted">${cleanText(address)}</p><p class="muted">${cleanText(customer.email || "No email")}${customer.phone ? ` | ${cleanText(customer.phone)}` : ""}</p><div class="admin-actions"><button class="button small secondary" data-fert-customer-action="open" type="button">Open Customer</button><button class="button small ghost" data-fert-customer-action="email" type="button"${customer.email ? "" : " disabled"}>Draft Email</button>${customer.phone ? `<a class="button small ghost" href="tel:${cleanText(customer.phone)}">Call</a>` : ""}</div></div>`;
+      }).join("") : notice(invoiceCustomers.length ? "No fertilizer contacts match this group." : "Load Customers to see fertilizer contacts here.");
+      const emailButton = $("#fert-customer-email-group");
+      if (emailButton) emailButton.disabled = !customers.some((customer) => customer.email);
+    }
+
+    function openFertilizerEmailDraft(customers, label) {
+      const recipients = customers.filter((customer) => customer.email).map((customer) => ({
+        email: customer.email,
+        name: customer.name || "there",
+        address: customer.property?.address || "your property"
+      }));
+      if (!recipients.length) return $("#fert-result").innerHTML = notice("No valid email addresses are saved in this fertilizer group.", true);
+      sessionStorage.setItem("gg-email-drafter-recipients", JSON.stringify(recipients));
+      sessionStorage.setItem("gg-email-drafter-day-meta", JSON.stringify({ mode: "fertilizer-group", label }));
+      loadDayEmailDraft();
+      document.querySelector('[data-tab="email-drafter"]')?.click();
+    }
+
     function fertilizerBidNotes(bid) {
       const stageLines = bid.applications.map((application) =>
         `${application.stage} (${application.timing}): ${application.productName}, ${fixedNumber(application.productNeededLb, 1)} lb, ${fixedMoney(application.quotedCharge)}`
@@ -9272,10 +9449,13 @@
         `Fertilization Program - Pricing v${bidPricingConfig.version || 1}`,
         `Turf: ${bid.lawnSqFt.toLocaleString()} sq ft`,
         `Yearly quote: ${fixedMoney(bid.annualPrice)}`,
-        `Monthly payment: ${fixedMoney(bid.monthlyPayment)}`,
+        `${bid.paymentsPerYear === 4 ? "Quarterly" : "Scheduled"} payment: ${fixedMoney(bid.paymentAmount)} (${bid.paymentsPerYear} per year)`,
         `Average application: ${fixedMoney(bid.averageApplicationCharge)}`,
-        `Saved rate: ${fixedMoney(bid.configuredPricePer1000SqFtPerVisit)} per 1,000 sq ft per application`,
-        `Gross margin: ${fixedPercent(bid.grossMargin)}`,
+        `Small-lawn minimum: ${fixedMoney(bid.smallLawnAnnualMinimum)} through ${Number(bid.smallLawnIncludedSqFt).toLocaleString()} sq ft`,
+        `Standard breakpoint: ${fixedMoney(bid.annualPlanMinimum)} at ${Number(bid.includedSqFt).toLocaleString()} sq ft`,
+        `Additional turf: ${fixedMoney(bid.annualAdditionalRatePerSqFt)} per sq ft annually`,
+        `First-year sales commission: ${fixedMoney(bid.salesCommission)} (${fixedPercent(bid.salesCommissionRate)})`,
+        `First-year margin after commission: ${fixedPercent(bid.grossMargin)}`,
         `Cash product purchase: ${fixedMoney(bid.cashProductPurchase)}`,
         ...stageLines,
         `The ${fixedMoney(bid.costReservePerVisit)} per-visit cost reserve is included in operating profit and excluded from first-job cash profit.`
@@ -10571,6 +10751,7 @@
         const data = await requestJson("portal-customers?admin=1", { headers: adminHeaders() });
         invoiceCustomers = data.customers || [];
         renderAdminCustomerList();
+        renderFertilizerCustomerGroups();
         renderInvoiceCustomerOptions();
         renderOwnerHome();
       } catch (error) {
@@ -11258,39 +11439,151 @@
       if (target) target.innerHTML = notice(message, error);
     }
 
-    function yardRingAreaSquareFeet(points) {
-      const ring = Array.isArray(points) ? points : [];
-      if (ring.length < 3) return 0;
-      const radius = 6371008.8;
-      let total = 0;
-      for (let index = 0; index < ring.length; index += 1) {
-        const current = ring[index];
-        const next = ring[(index + 1) % ring.length];
-        const lng1 = current.lng * Math.PI / 180;
-        const lng2 = next.lng * Math.PI / 180;
-        const lat1 = current.lat * Math.PI / 180;
-        const lat2 = next.lat * Math.PI / 180;
-        total += (lng2 - lng1) * (2 + Math.sin(lat1) + Math.sin(lat2));
-      }
-      return Math.round(Math.abs(total * radius ** 2 / 2) * 10.7639104167);
+    function yardMeasurementFeature(points) {
+      const coordinates = points.map((point) => [Number(point.lng), Number(point.lat)]);
+      if (coordinates.length) coordinates.push([...coordinates[0]]);
+      return { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [coordinates] } };
+    }
+
+    function yardMeasurementPointsFromFeature(feature) {
+      return (feature?.geometry?.coordinates?.[0] || []).slice(0, -1).map((point) => ({ lng: Number(point[0]), lat: Number(point[1]) }));
+    }
+
+    function yardMeasurementWorkingSets() {
+      const zones = [...yardMeasurementZones];
+      const exclusions = [...yardMeasurementExclusions];
+      if (yardMeasurementPoints.length >= 3) (yardMeasurementMode === "exclusion" ? exclusions : zones).push(yardMeasurementFeature(yardMeasurementPoints));
+      return { zones, exclusions };
+    }
+
+    function yardMeasurementTotals(includeDraft = true) {
+      const sets = includeDraft ? yardMeasurementWorkingSets() : { zones: yardMeasurementZones, exclusions: yardMeasurementExclusions };
+      return window.GreenGrinLawnMeasurement?.measurementTotals(sets.zones, sets.exclusions) || { grossSquareFeet: 0, excludedSquareFeet: 0, netSquareFeet: 0 };
+    }
+
+    function yardMeasurementValidation() {
+      return window.GreenGrinLawnMeasurement?.validateMeasurement({ zones: yardMeasurementZones, exclusions: yardMeasurementExclusions, geocodeConfidence: Number(yardMeasurementAddress?.confidence || 0) }) || { valid: false, errors: ["Measurement engine did not load."], warnings: [], totals: yardMeasurementTotals(false) };
+    }
+
+    function yardMeasurementAutosave() {
+      saveValue("yardMeasurementDraft", JSON.stringify({ id: yardMeasurementSavedId || null, address: yardMeasurementAddress, zones: yardMeasurementZones, exclusions: yardMeasurementExclusions, draftPoints: yardMeasurementPoints, editingShape: yardMeasurementEditingShape, mode: yardMeasurementMode, savedAt: new Date().toISOString() }));
+      if ($("#yard-measurement-sync") && yardMeasurementZones.length) $("#yard-measurement-sync").textContent = "Draft on this device";
     }
 
     function updateYardMeasurementTotals() {
-      const area = yardRingAreaSquareFeet(yardMeasurementPoints);
-      ["#yard-measurement-gross", "#yard-measurement-net"].forEach((selector) => { if ($(selector)) $(selector).textContent = area.toLocaleString(); });
-      if ($("#yard-measurement-excluded")) $("#yard-measurement-excluded").textContent = "0";
-      const ready = Boolean(yardMeasurementAddress && yardMeasurementPoints.length >= 3);
+      const totals = yardMeasurementTotals(true);
+      if ($("#yard-measurement-gross")) $("#yard-measurement-gross").textContent = totals.grossSquareFeet.toLocaleString();
+      if ($("#yard-measurement-excluded")) $("#yard-measurement-excluded").textContent = totals.excludedSquareFeet.toLocaleString();
+      if ($("#yard-measurement-net")) $("#yard-measurement-net").textContent = totals.netSquareFeet.toLocaleString();
+      if ($("#yard-measurement-acres")) $("#yard-measurement-acres").textContent = `${(totals.netSquareFeet / 43560).toFixed(2)} acres`;
+      const validation = yardMeasurementValidation();
+      const ready = Boolean(yardMeasurementAddress && !yardMeasurementAddressDirty && validation.valid && !yardMeasurementPoints.length);
       ["#yard-measurement-save", "#yard-measurement-mowing", "#yard-measurement-fertilizer"].forEach((selector) => { if ($(selector)) $(selector).disabled = !ready; });
-      if ($("#yard-measurement-review-check")) $("#yard-measurement-review-check").textContent = ready ? "Ready to review" : "Draft";
+      if ($("#yard-measurement-finish")) $("#yard-measurement-finish").disabled = yardMeasurementPoints.length < 3;
+      if ($("#yard-measurement-undo")) $("#yard-measurement-undo").disabled = !yardMeasurementPoints.length;
+      if ($("#yard-measurement-clear")) $("#yard-measurement-clear").disabled = !yardMeasurementPoints.length;
+      if ($("#yard-measurement-clear-all")) $("#yard-measurement-clear-all").disabled = !(yardMeasurementPoints.length || yardMeasurementZones.length || yardMeasurementExclusions.length);
+      if ($("#yard-measurement-review-check")) $("#yard-measurement-review-check").textContent = ready ? (validation.warnings.length ? "Review address" : "Ready to save") : "Draft";
+      renderYardMeasurementShapeList();
+    }
+
+    function renderYardMeasurementShapeList() {
+      const target = $("#yard-measurement-shapes");
+      if (!target) return;
+      const rows = [
+        ...yardMeasurementZones.map((feature, index) => ({ type: "zone", index, label: `Lawn zone ${index + 1}`, area: window.GreenGrinLawnMeasurement.featureAreaSquareFeet(feature) })),
+        ...yardMeasurementExclusions.map((feature, index) => ({ type: "exclusion", index, label: `Exclusion ${index + 1}`, area: window.GreenGrinLawnMeasurement.featureAreaSquareFeet(feature) }))
+      ];
+      target.innerHTML = rows.length ? rows.map((row) => `<div class="yard-measurement-shape"><div><strong>${row.label}</strong><small>${Math.round(row.area).toLocaleString()} sq ft</small></div><div class="yard-measurement-shape-actions"><button class="button small ghost" data-yard-edit="${row.type}" data-yard-index="${row.index}" type="button">Edit</button><button class="button small ghost" data-yard-remove="${row.type}" data-yard-index="${row.index}" type="button">Remove</button></div></div>`).join("") : `<p class="muted">No finished shapes yet.</p>`;
     }
 
     function renderYardMeasurementShape() {
       if (!yardMeasurementMap || !window.L) return;
       yardMeasurementLayer?.clearLayers();
       yardMeasurementLayer = window.L.layerGroup().addTo(yardMeasurementMap);
-      yardMeasurementPoints.forEach((point, index) => window.L.circleMarker([point.lat, point.lng], { radius: 6, color: yardMeasurementMode === "exclusion" ? "#d98731" : "#4d9f35", fillColor: yardMeasurementMode === "exclusion" ? "#ffd166" : "#78c653", fillOpacity: .9 }).bindTooltip(`Point ${index + 1}`).addTo(yardMeasurementLayer));
+      yardMeasurementZones.forEach((feature, index) => window.L.polygon(yardMeasurementPointsFromFeature(feature).map((point) => [point.lat, point.lng]), { color: "#3b842b", fillColor: "#78c653", fillOpacity: .28, weight: 3 }).bindTooltip(`Lawn zone ${index + 1}`).addTo(yardMeasurementLayer));
+      yardMeasurementExclusions.forEach((feature, index) => window.L.polygon(yardMeasurementPointsFromFeature(feature).map((point) => [point.lat, point.lng]), { color: "#c46b1b", fillColor: "#ffb347", fillOpacity: .35, weight: 3, dashArray: "6 5" }).bindTooltip(`Exclusion ${index + 1}`).addTo(yardMeasurementLayer));
+      yardMeasurementPoints.forEach((point, index) => {
+        const marker = window.L.marker([point.lat, point.lng], { draggable: true, icon: window.L.divIcon({ className: "yard-vertex-icon", iconSize: [16, 16] }) }).bindTooltip(`Corner ${index + 1}`).addTo(yardMeasurementLayer);
+        marker.on("drag", (event) => { const location = event.target.getLatLng(); yardMeasurementPoints[index] = { lat: location.lat, lng: location.lng }; updateYardMeasurementTotals(); });
+        marker.on("dragend", () => { yardMeasurementAutosave(); renderYardMeasurementShape(); });
+      });
+      if (yardMeasurementPoints.length === 2) window.L.polyline(yardMeasurementPoints.map((point) => [point.lat, point.lng]), { color: yardMeasurementMode === "exclusion" ? "#d98731" : "#4d9f35", weight: 3, dashArray: "6 5" }).addTo(yardMeasurementLayer);
       if (yardMeasurementPoints.length >= 3) window.L.polygon(yardMeasurementPoints.map((point) => [point.lat, point.lng]), { color: yardMeasurementMode === "exclusion" ? "#d98731" : "#4d9f35", fillColor: yardMeasurementMode === "exclusion" ? "#ffd166" : "#78c653", fillOpacity: .22, weight: 3 }).addTo(yardMeasurementLayer);
       updateYardMeasurementTotals();
+    }
+
+    function beginYardMeasurementShape(mode) {
+      if (!yardMeasurementAddress) return yardMeasurementNotice("Confirm the property before drawing.", true);
+      if (yardMeasurementPoints.length && !window.confirm("Discard the unfinished shape and start a new one?")) return;
+      restoreEditedYardMeasurementShape();
+      yardMeasurementMode = mode;
+      yardMeasurementDrawing = true;
+      yardMeasurementPoints = [];
+      $("#yard-measurement-draw")?.classList.toggle("yard-measurement-mode", mode === "zone");
+      $("#yard-measurement-exclusion")?.classList.toggle("yard-measurement-mode", mode === "exclusion");
+      renderYardMeasurementShape();
+      yardMeasurementNotice(mode === "exclusion" ? "Tap around a driveway, building, bed, or other non-turf area, then finish the shape." : "Tap each corner of this lawn area, then finish the shape.");
+    }
+
+    function finishYardMeasurementShape() {
+      if (yardMeasurementPoints.length < 3) return yardMeasurementNotice("Add at least three corners before finishing the shape.", true);
+      const feature = yardMeasurementFeature(yardMeasurementPoints);
+      if (window.GreenGrinLawnMeasurement.selfIntersects(feature.geometry.coordinates[0])) return yardMeasurementNotice("That outline crosses itself. Undo or clear points and redraw it.", true);
+      if (yardMeasurementMode === "exclusion") {
+        const isInside = feature.geometry.coordinates[0].slice(0, -1).every((point) => yardMeasurementZones.some((zone) => window.GreenGrinLawnMeasurement.pointInRing(point, zone.geometry.coordinates[0])));
+        if (!isInside) return yardMeasurementNotice("Keep the entire exclusion inside a finished lawn zone.", true);
+        yardMeasurementExclusions.push(feature);
+      } else yardMeasurementZones.push(feature);
+      yardMeasurementPoints = [];
+      yardMeasurementDrawing = false;
+      yardMeasurementEditingShape = null;
+      $("#yard-measurement-draw")?.classList.remove("yard-measurement-mode");
+      $("#yard-measurement-exclusion")?.classList.remove("yard-measurement-mode");
+      yardMeasurementAutosave();
+      renderYardMeasurementShape();
+      yardMeasurementNotice(`${yardMeasurementMode === "exclusion" ? "Exclusion" : "Lawn zone"} added. Add another shape or save the measurement.`);
+    }
+
+    function yardMeasurementShapeAction(event) {
+      const button = event.target.closest("[data-yard-edit], [data-yard-remove]");
+      if (!button) return;
+      const type = button.dataset.yardEdit || button.dataset.yardRemove;
+      const index = Number(button.dataset.yardIndex);
+      const collection = type === "exclusion" ? yardMeasurementExclusions : yardMeasurementZones;
+      const feature = collection[index];
+      if (!feature) return;
+      let removalIndex = index;
+      if (button.dataset.yardEdit) {
+        if (yardMeasurementPoints.length && !window.confirm("Discard the unfinished shape and edit this one?")) return;
+        restoreEditedYardMeasurementShape();
+        removalIndex = collection.indexOf(feature);
+        yardMeasurementMode = type;
+        yardMeasurementDrawing = true;
+        yardMeasurementEditingShape = { type, index, feature };
+        yardMeasurementPoints = yardMeasurementPointsFromFeature(feature);
+      }
+      if (removalIndex >= 0) collection.splice(removalIndex, 1);
+      yardMeasurementAutosave();
+      renderYardMeasurementShape();
+      yardMeasurementNotice(button.dataset.yardEdit ? "Shape opened for editing. Adjust it with Undo and map taps, then finish it again." : "Shape removed.");
+    }
+
+    function restoreEditedYardMeasurementShape() {
+      if (!yardMeasurementEditingShape?.feature) return;
+      const collection = yardMeasurementEditingShape.type === "exclusion" ? yardMeasurementExclusions : yardMeasurementZones;
+      collection.splice(Math.min(yardMeasurementEditingShape.index, collection.length), 0, yardMeasurementEditingShape.feature);
+      yardMeasurementEditingShape = null;
+    }
+
+    function cancelYardMeasurementShape() {
+      restoreEditedYardMeasurementShape();
+      yardMeasurementPoints = [];
+      yardMeasurementDrawing = false;
+      $("#yard-measurement-draw")?.classList.remove("yard-measurement-mode");
+      $("#yard-measurement-exclusion")?.classList.remove("yard-measurement-mode");
+      yardMeasurementAutosave();
+      renderYardMeasurementShape();
     }
 
     async function initYardMeasurement() {
@@ -11299,21 +11592,83 @@
       yardMeasurementMap = window.L.map("yard-measurement-map").setView([43.6629, -116.6874], 18);
       window.L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 20, attribution: "Tiles © Esri" }).addTo(yardMeasurementMap);
       yardMeasurementMap.on("click", (event) => {
+        if (!yardMeasurementDrawing) return;
         if (!yardMeasurementAddress) { yardMeasurementNotice("Confirm an address before drawing.", true); return; }
         yardMeasurementPoints.push({ lat: event.latlng.lat, lng: event.latlng.lng });
+        yardMeasurementAutosave();
         renderYardMeasurementShape();
       });
-      $("#yard-measurement-draw")?.addEventListener("click", () => { yardMeasurementMode = "zone"; yardMeasurementNotice("Tap three or more corners around the lawn. Tap the first corner again conceptually by using Close shape when ready."); });
-      $("#yard-measurement-exclusion")?.addEventListener("click", () => { yardMeasurementMode = "exclusion"; yardMeasurementNotice("Exclusion mode selected. Clear the shape before drawing a separate exclusion."); });
-      $("#yard-measurement-undo")?.addEventListener("click", () => { yardMeasurementPoints.pop(); renderYardMeasurementShape(); });
-      $("#yard-measurement-clear")?.addEventListener("click", () => { yardMeasurementPoints = []; renderYardMeasurementShape(); });
+      $("#yard-measurement-draw")?.addEventListener("click", () => beginYardMeasurementShape("zone"));
+      $("#yard-measurement-exclusion")?.addEventListener("click", () => beginYardMeasurementShape("exclusion"));
+      $("#yard-measurement-finish")?.addEventListener("click", finishYardMeasurementShape);
+      $("#yard-measurement-undo")?.addEventListener("click", () => { yardMeasurementPoints.pop(); yardMeasurementAutosave(); renderYardMeasurementShape(); });
+      $("#yard-measurement-clear")?.addEventListener("click", cancelYardMeasurementShape);
+      $("#yard-measurement-clear-all")?.addEventListener("click", () => { if (!window.confirm("Clear every lawn zone and exclusion for this measurement?")) return; yardMeasurementPoints = []; yardMeasurementZones = []; yardMeasurementExclusions = []; yardMeasurementEditingShape = null; yardMeasurementDrawing = false; yardMeasurementAutosave(); renderYardMeasurementShape(); yardMeasurementNotice("All shapes cleared."); });
+      $("#yard-measurement-shapes")?.addEventListener("click", yardMeasurementShapeAction);
       $("#yard-measurement-find")?.addEventListener("click", findYardMeasurementAddress);
+      $("#yard-measurement-address")?.addEventListener("input", () => { yardMeasurementAddressDirty = $("#yard-measurement-address").value.trim() !== String(yardMeasurementAddress?.address || "").trim(); if (yardMeasurementAddressDirty) $("#yard-measurement-address-check").textContent = "Search to confirm"; updateYardMeasurementTotals(); });
+      $("#yard-measurement-address")?.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); findYardMeasurementAddress(); } });
       $("#yard-measurement-locate")?.addEventListener("click", locateYardMeasurement);
       $("#yard-measurement-save")?.addEventListener("click", saveYardMeasurementDraft);
       $("#yard-measurement-mowing")?.addEventListener("click", () => yardMeasurementHandoff("mowing"));
       $("#yard-measurement-fertilizer")?.addEventListener("click", () => yardMeasurementHandoff("fertilizer"));
       const saved = readSavedValue("yardMeasurementDraft");
-      if (saved) { try { const draft = JSON.parse(saved); if (draft.address) { $("#yard-measurement-address").value = draft.address; yardMeasurementAddress = draft; $("#yard-measurement-address-check").textContent = "Confirmed locally"; } } catch (_error) {} }
+      if (saved) {
+        try {
+          const draft = JSON.parse(saved);
+          if (draft.address) {
+            yardMeasurementSavedId = draft.id || "";
+            yardMeasurementAddress = typeof draft.address === "object" ? draft.address : draft;
+            yardMeasurementAddressDirty = false;
+            yardMeasurementZones = Array.isArray(draft.zones) ? draft.zones : (Array.isArray(draft.points) ? [yardMeasurementFeature(draft.points)] : []);
+            yardMeasurementExclusions = Array.isArray(draft.exclusions) ? draft.exclusions : [];
+            yardMeasurementPoints = Array.isArray(draft.draftPoints) ? draft.draftPoints : [];
+            yardMeasurementEditingShape = draft.editingShape?.feature ? draft.editingShape : null;
+            yardMeasurementMode = draft.mode === "exclusion" ? "exclusion" : "zone";
+            yardMeasurementDrawing = yardMeasurementPoints.length > 0;
+            $("#yard-measurement-address").value = yardMeasurementAddress.address || "";
+            $("#yard-measurement-address-check").textContent = "Confirmed locally";
+            if (Number.isFinite(Number(yardMeasurementAddress.lat)) && Number.isFinite(Number(yardMeasurementAddress.lng))) yardMeasurementMap.setView([yardMeasurementAddress.lat, yardMeasurementAddress.lng], 19);
+            enableYardMeasurementDrawing();
+            yardMeasurementNotice("Your unfinished measurement was restored on this device.");
+          }
+        } catch (_error) {}
+      }
+      renderYardMeasurementShape();
+    }
+
+    function yardMeasurementHeaders() {
+      return activeAccount?.id === "employee" ? employeeTimeHeaders() : adminHeaders();
+    }
+
+    function enableYardMeasurementDrawing() {
+      ["#yard-measurement-draw", "#yard-measurement-exclusion"].forEach((selector) => { if ($(selector)) $(selector).disabled = false; });
+    }
+
+    function setYardMeasurementAddressMarker(label) {
+      if (!yardMeasurementMap || !yardMeasurementAddress) return;
+      if (yardMeasurementAddressMarker) yardMeasurementMap.removeLayer(yardMeasurementAddressMarker);
+      yardMeasurementAddressMarker = window.L.marker([yardMeasurementAddress.lat, yardMeasurementAddress.lng]).addTo(yardMeasurementMap).bindPopup(label || "Confirmed property").openPopup();
+    }
+
+    async function loadSavedYardMeasurement() {
+      try {
+        const data = await requestJson(`portal-lawn-measurements?address=${encodeURIComponent(yardMeasurementAddress.address)}`, { headers: yardMeasurementHeaders() });
+        const measurement = data.measurements?.[0];
+        if (!measurement) return false;
+        yardMeasurementSavedId = measurement.id || "";
+        yardMeasurementZones = Array.isArray(measurement.zones) ? measurement.zones : [];
+        yardMeasurementExclusions = Array.isArray(measurement.exclusions) ? measurement.exclusions : [];
+        yardMeasurementPoints = [];
+        yardMeasurementAutosave();
+        renderYardMeasurementShape();
+        $("#yard-measurement-sync").textContent = "Loaded from portal";
+        yardMeasurementNotice(`Loaded the saved ${Number(measurement.net_square_feet || 0).toLocaleString()} sq ft measurement for this property.`);
+        return true;
+      } catch (error) {
+        if (!/database update|not ready|schema/i.test(error.message || "")) yardMeasurementNotice(`Address found. Saved measurement lookup was unavailable: ${error.message}`, true);
+        return false;
+      }
     }
 
     async function findYardMeasurementAddress() {
@@ -11324,36 +11679,72 @@
         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(value)}`, { headers: { Accept: "application/json" } });
         const rows = await response.json();
         if (!rows[0]) throw new Error("No confident address match was found.");
-        yardMeasurementAddress = { address: rows[0].display_name, lat: Number(rows[0].lat), lng: Number(rows[0].lon), confidence: rows[0].importance || 0 };
+        const nextAddress = rows[0].display_name;
+        if ((yardMeasurementZones.length || yardMeasurementExclusions.length || yardMeasurementPoints.length) && yardMeasurementAddress?.address && yardMeasurementAddress.address !== nextAddress && !window.confirm("Replace the current property and clear its unfinished measurement?")) return;
+        if (yardMeasurementAddress?.address && yardMeasurementAddress.address !== nextAddress) { yardMeasurementZones = []; yardMeasurementExclusions = []; yardMeasurementPoints = []; yardMeasurementEditingShape = null; yardMeasurementDrawing = false; yardMeasurementSavedId = ""; }
+        const requestedNumber = value.match(/^\s*(\d+[a-z]?)/i)?.[1] || "";
+        const exactHouse = !requestedNumber || new RegExp(`\\b${requestedNumber.replace(/[a-z]/i, "[a-z]?")}\\b`, "i").test(nextAddress);
+        yardMeasurementAddress = { address: nextAddress, lat: Number(rows[0].lat), lng: Number(rows[0].lon), confidence: exactHouse ? .92 : .55 };
+        yardMeasurementAddressDirty = false;
         yardMeasurementMap.setView([yardMeasurementAddress.lat, yardMeasurementAddress.lng], 19);
-        window.L.marker([yardMeasurementAddress.lat, yardMeasurementAddress.lng]).addTo(yardMeasurementMap).bindPopup("Confirmed property").openPopup();
+        setYardMeasurementAddressMarker("Confirmed property");
         $("#yard-measurement-address").value = yardMeasurementAddress.address;
         $("#yard-measurement-address-check").textContent = yardMeasurementAddress.confidence >= .5 ? "Confirmed" : "Review pin";
-        ["#yard-measurement-draw", "#yard-measurement-exclusion", "#yard-measurement-undo", "#yard-measurement-clear"].forEach((selector) => { if ($(selector)) $(selector).disabled = false; });
-        yardMeasurementNotice("Address confirmed. Draw the lawn boundary on the satellite image.");
+        enableYardMeasurementDrawing();
+        const hasLocalShapes = yardMeasurementZones.length || yardMeasurementExclusions.length || yardMeasurementPoints.length;
+        const loaded = hasLocalShapes ? false : await loadSavedYardMeasurement();
+        if (!loaded) { renderYardMeasurementShape(); yardMeasurementNotice("Address confirmed. Draw the lawn boundary on the satellite image."); }
       } catch (error) { yardMeasurementAddress = null; yardMeasurementNotice(error.message || "Address could not be confirmed.", true); }
     }
 
     function locateYardMeasurement() {
       if (!navigator.geolocation) return yardMeasurementNotice("Location is not available on this device.", true);
+      if ((yardMeasurementZones.length || yardMeasurementExclusions.length || yardMeasurementPoints.length) && !window.confirm("Use your current location and clear the measurement now on screen?")) return;
+      yardMeasurementZones = [];
+      yardMeasurementExclusions = [];
+      yardMeasurementPoints = [];
+      yardMeasurementEditingShape = null;
+      yardMeasurementSavedId = "";
       yardMeasurementNotice("Requesting your current location…");
-      navigator.geolocation.getCurrentPosition((position) => { yardMeasurementAddress = { address: "Current location — confirm the property address", lat: position.coords.latitude, lng: position.coords.longitude, confidence: .5 }; yardMeasurementMap.setView([yardMeasurementAddress.lat, yardMeasurementAddress.lng], 19); window.L.marker([yardMeasurementAddress.lat, yardMeasurementAddress.lng]).addTo(yardMeasurementMap).bindPopup("Current location — confirm address").openPopup(); $("#yard-measurement-address").value = yardMeasurementAddress.address; $("#yard-measurement-address-check").textContent = "Review pin"; ["#yard-measurement-draw", "#yard-measurement-exclusion", "#yard-measurement-undo", "#yard-measurement-clear"].forEach((selector) => { if ($(selector)) $(selector).disabled = false; }); yardMeasurementNotice("Location loaded. Confirm this is the right property before saving."); }, () => yardMeasurementNotice("Location permission was not granted.", true), { enableHighAccuracy: true, timeout: 10000 });
+      navigator.geolocation.getCurrentPosition((position) => { yardMeasurementAddress = { address: "Current location — enter the property address", lat: position.coords.latitude, lng: position.coords.longitude, confidence: .5 }; yardMeasurementAddressDirty = true; yardMeasurementMap.setView([yardMeasurementAddress.lat, yardMeasurementAddress.lng], 19); setYardMeasurementAddressMarker("Current location — confirm address"); $("#yard-measurement-address").value = yardMeasurementAddress.address; $("#yard-measurement-address-check").textContent = "Enter address"; enableYardMeasurementDrawing(); yardMeasurementAutosave(); renderYardMeasurementShape(); yardMeasurementNotice("Location loaded. Enter the property address and tap Find property before saving."); }, () => yardMeasurementNotice("Location permission was not granted.", true), { enableHighAccuracy: true, timeout: 10000 });
     }
 
-    function saveYardMeasurementDraft() {
-      const area = yardRingAreaSquareFeet(yardMeasurementPoints);
-      if (!yardMeasurementAddress || yardMeasurementPoints.length < 3 || area <= 0) return yardMeasurementNotice("Confirm the property and draw at least three lawn corners.", true);
-      saveValue("yardMeasurementDraft", JSON.stringify({ ...yardMeasurementAddress, points: yardMeasurementPoints, netSquareFeet: area, savedAt: new Date().toISOString() }));
-      $("#yard-measurement-sync").textContent = "Saved locally";
-      $("#yard-measurement-review-check").textContent = "Saved draft";
-      yardMeasurementNotice(`Saved ${area.toLocaleString()} sq ft as a local draft. Review it before adding it to a quote.`);
+    async function saveYardMeasurementDraft() {
+      if (yardMeasurementPoints.length) return yardMeasurementNotice("Finish or clear the current shape before saving.", true);
+      const validation = yardMeasurementValidation();
+      if (!yardMeasurementAddress || yardMeasurementAddressDirty || !validation.valid) return yardMeasurementNotice(yardMeasurementAddressDirty ? "Tap Find property to confirm the address before saving." : (validation.errors?.[0] || "Confirm the property and add a valid lawn zone."), true);
+      const typedAddress = $("#yard-measurement-address")?.value.trim() || "";
+      if (!typedAddress || /^Current location/i.test(typedAddress)) return yardMeasurementNotice("Enter and confirm the property address before saving.", true);
+      yardMeasurementAddress.address = typedAddress;
+      yardMeasurementAutosave();
+      $("#yard-measurement-sync").textContent = "Saving…";
+      try {
+        const data = await requestJson("portal-lawn-measurements", { method: "POST", headers: yardMeasurementHeaders(), body: JSON.stringify({ id: yardMeasurementSavedId || null, address: yardMeasurementAddress.address, latitude: yardMeasurementAddress.lat, longitude: yardMeasurementAddress.lng, geocode_confidence: yardMeasurementAddress.confidence, zones: yardMeasurementZones, exclusions: yardMeasurementExclusions, status: "Reviewed" }) });
+        yardMeasurementSavedId = data.measurement?.id || yardMeasurementSavedId;
+        yardMeasurementAutosave();
+        $("#yard-measurement-sync").textContent = "Saved to portal";
+        $("#yard-measurement-review-check").textContent = "Reviewed";
+        yardMeasurementNotice(`Saved ${validation.totals.netSquareFeet.toLocaleString()} sq ft to the portal and this device.`);
+        return true;
+      } catch (error) {
+        $("#yard-measurement-sync").textContent = "Saved on this device";
+        yardMeasurementNotice(`Saved ${validation.totals.netSquareFeet.toLocaleString()} sq ft on this device. ${error.message}`, true);
+        return false;
+      }
     }
 
-    function yardMeasurementHandoff(service) {
-      const area = yardRingAreaSquareFeet(yardMeasurementPoints);
-      if (!area) return yardMeasurementNotice("Save a measured lawn first.", true);
-      saveYardMeasurementDraft();
-      yardMeasurementNotice(`${area.toLocaleString()} sq ft is ready for the ${service === "fertilizer" ? "fertilizer plan" : "mowing quote"}.`);
+    async function yardMeasurementHandoff(service) {
+      const validation = yardMeasurementValidation();
+      if (!validation.valid || yardMeasurementPoints.length) return yardMeasurementNotice(validation.errors?.[0] || "Finish a valid lawn measurement first.", true);
+      const area = validation.totals.netSquareFeet;
+      await saveYardMeasurementDraft();
+      const target = service === "fertilizer" ? $("#fert_lawn_sqft") : $("#bid_lawn_sqft");
+      if (target) { target.value = String(area); target.dispatchEvent(new Event("input", { bubbles: true })); target.dispatchEvent(new Event("change", { bubbles: true })); }
+      saveValue("yardMeasurementQuoteHandoff", JSON.stringify({ measurementId: yardMeasurementSavedId || null, address: yardMeasurementAddress.address, netSquareFeet: area, service, savedAt: new Date().toISOString() }));
+      openTab(service === "fertilizer" ? "fert-bids" : "bids");
+      const resultTarget = service === "fertilizer" ? $("#fert-result") : $("#bid-result");
+      if (resultTarget) resultTarget.innerHTML = notice(`${area.toLocaleString()} measured sq ft was added from ${yardMeasurementAddress.address}.`);
+      window.setTimeout(() => target?.scrollIntoView({ behavior: "smooth", block: "center" }), 80);
     }
 
     function ensureLeaflet() {
@@ -12765,6 +13156,15 @@
       try { meta = JSON.parse(sessionStorage.getItem("gg-email-drafter-day-meta") || "null"); } catch (_error) { meta = null; }
       const mode = $("#email-drafter-day-mode");
       if (!Array.isArray(recipients) || !recipients.length) { if (mode) mode.hidden = true; return false; }
+      if (meta?.mode === "fertilizer-group") {
+        mode.hidden = false;
+        const recipientNames = recipients.map((recipient) => recipient.name || recipient.email).join(", ");
+        mode.textContent = `Fertilizer group email: ${recipients.length} customer${recipients.length === 1 ? "" : "s"} in ${meta.label || "this group"}. Recipients: ${recipientNames}. Nothing sends until you press Send Email. Edit the wording below and use {{name}} or {{address}} for personalization.`;
+        $("#email-drafter-to").value = "";
+        $("#email-drafter-subject").value = "Your Green Grin fertilizer plan";
+        $("#email-drafter-message").value = `Hi {{name}},\n\nHere is an update about the fertilizer plan for {{address}}.\n\n\n\nThank you for choosing Green Grin Lawns.`;
+        return true;
+      }
       if (!/^\d{4}-\d{2}-\d{2}$/.test(String(meta?.scheduled_date || "")) || recipients.some((recipient) => !recipient.id)) {
         sessionStorage.removeItem("gg-email-drafter-recipients");
         sessionStorage.removeItem("gg-email-drafter-day-meta");
@@ -12799,10 +13199,12 @@
         const to = $("#email-drafter-to").value.trim();
         if (!recipients?.length && !to) throw new Error("Enter a recipient email.");
         if (recipients?.length) {
-          const dayLabel = new Date(`${dayMeta?.scheduled_date}T12:00:00`).toLocaleDateString();
-          if (!confirm(`Send ${recipients.length} separate email${recipients.length === 1 ? "" : "s"} to the customers currently scheduled for ${dayLabel}?`)) return;
+          const groupMode = dayMeta?.mode === "fertilizer-group";
+          const description = groupMode ? (dayMeta.label || "the selected fertilizer group") : `the customers currently scheduled for ${new Date(`${dayMeta?.scheduled_date}T12:00:00`).toLocaleDateString()}`;
+          if (!confirm(`Send ${recipients.length} separate email${recipients.length === 1 ? "" : "s"} to ${description}?`)) return;
         }
-        const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, recipients: recipients?.length ? undefined : recipients, scheduled_date: recipients?.length ? dayMeta?.scheduled_date : undefined, recipient_ids: recipients?.length ? recipients.map((recipient) => recipient.id) : undefined, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
+        const fertilizerGroupMode = recipients?.length && dayMeta?.mode === "fertilizer-group";
+        const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, recipients: fertilizerGroupMode ? recipients : undefined, scheduled_date: recipients?.length && !fertilizerGroupMode ? dayMeta?.scheduled_date : undefined, recipient_ids: recipients?.length && !fertilizerGroupMode ? recipients.map((recipient) => recipient.id) : undefined, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
         if (recipients?.length) {
           const failedRows = (data.results || []).filter((row) => !row.sent);
           const failedDetails = failedRows.length ? `<details style="margin-top:8px"><summary>Show failed recipients</summary><ul>${failedRows.map((row) => `<li>${cleanText(row.email || "Unknown email")}: ${cleanText(row.error || row.reason || "Provider did not accept the message.")}</li>`).join("")}</ul></details>` : "";

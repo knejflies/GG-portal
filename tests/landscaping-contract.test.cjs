@@ -5,10 +5,10 @@ assert.equal(BUSINESS_NAME, "Green Grin Lawns");
 assert.equal(CONTRACT_VERSION, "2026-08-19");
 assert.deepEqual(paymentSchedule(10001), {
   project_total: 10001,
-  initial_payment: 5000.5,
-  final_payment: 5000.5,
-  initial_percent: 50,
-  final_percent: 50
+  initial_payment: 0,
+  final_payment: 10001,
+  initial_percent: 0,
+  final_percent: 100
 });
 
 const contract = buildContract({
@@ -25,8 +25,8 @@ const contract = buildContract({
 
 assert.equal(contract.business.name, "Green Grin Lawns");
 assert.equal(contract.business.contractor_registration_number, "RCE-TEST");
-assert.equal(contract.pricing.initial_payment, 6000);
-assert.equal(contract.pricing.final_payment, 6000);
+assert.equal(contract.pricing.initial_payment, 0);
+assert.equal(contract.pricing.final_payment, 12000);
 assert.equal(contract.disclosure_required, true);
 assert.match(contract.consent_text, /Green Grin Lawns/);
 assert.match(contract.sections.map((section) => section.title).join(" | "), /Idaho Residential Contractor Disclosure Receipt/);

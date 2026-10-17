@@ -1,6 +1,6 @@
-# Sales yard measurement — local product draft
+# Sales yard measurement — implementation and product plan
 
-This is a local design and implementation draft. It is not linked into the live admin navigation and is not deployed.
+The manual satellite measurement workflow is implemented locally in Admin → Sales Yard Measure and is waiting for the planned final push. It supports multiple lawn zones, exclusions, draggable corners, local recovery, cross-device database saves, server-side validation, version history, and handoff to the mowing and fertilizer calculators. Automatic image segmentation and parcel overlays remain future provider-dependent additions.
 
 ## Goal
 

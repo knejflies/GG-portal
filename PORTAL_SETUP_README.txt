@@ -242,3 +242,13 @@ Cost Library saves reusable materials, labor, equipment, disposal, and service r
 Build Estimate stores the customer, scope, validity date, invoice due date, customer notes, line items, internal cost, customer total, and expected profit.
 Save & Print creates a customer-facing estimate without exposing owner costs. Create Invoice Draft makes a linked project invoice. Send Invoice saves the linked invoice, emails it, adds it to the customer Billing portal, and sends an app notification when a customer device is registered.
 The older mowing and fertilizer bidder sections remain in admin/index.html as hidden legacy modules and can be restored later.
+
+SALES YARD MEASUREMENT
+----------------------
+1. Run the latest portal-setup.sql once. The smaller lawn-measurements.sql file contains the same measurement-only database update if the rest of the portal schema is already current.
+2. Open Admin -> Sales Yard Measure, search and confirm the property address, then choose Draw lawn zone.
+3. Tap each lawn corner on the satellite map and choose Finish shape. Add more lawn zones as needed.
+4. Choose Add exclusion to subtract buildings, driveways, beds, pools, and other non-turf surfaces.
+5. Drag any corner to refine it. The portal displays gross area, exclusions, net turf square feet, and acres.
+6. Save measurement to keep it across devices. Use in mowing quote or Use in fertilizer plan copies the reviewed net area into that calculator.
+7. The phone keeps an unfinished local copy if service drops. The server recalculates and validates every saved measurement and keeps prior versions.

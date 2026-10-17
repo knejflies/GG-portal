@@ -239,11 +239,28 @@ function normalizePricing(input, nextVersion) {
     adminOverheadPerVisit: finiteNumber(fertilizer.adminOverheadPerVisit ?? fertilizerDefaults.adminOverheadPerVisit, "Fertilizer admin overhead", { minimum: 0, maximum: 100000 }),
     costReservePerVisit: finiteNumber(fertilizer.costReservePerVisit ?? fertilizerDefaults.costReservePerVisit, "Fertilizer cost reserve", { minimum: 0, maximum: 100000 }),
     targetGrossMargin: finiteNumber(fertilizer.targetGrossMargin ?? fertilizerDefaults.targetGrossMargin, "Fertilizer target gross margin", { minimum: 0, maximum: 0.99 }),
+    protectTargetMargin: fertilizer.protectTargetMargin !== false,
     pricePer1000SqFtPerVisit: finiteNumber(fertilizer.pricePer1000SqFtPerVisit ?? fertilizerDefaults.pricePer1000SqFtPerVisit, "Fertilizer price per 1,000 square feet", { minimum: 0, maximum: 100000 }),
     minimumApplicationCharge: finiteNumber(fertilizer.minimumApplicationCharge ?? fertilizerDefaults.minimumApplicationCharge, "Fertilizer minimum application charge", { minimum: 0, maximum: 1000000 }),
     roundChargeTo: finiteNumber(fertilizer.roundChargeTo ?? fertilizerDefaults.roundChargeTo, "Fertilizer rounding increment", { minimum: 0.01, maximum: 100000 }),
     fertilizerVisitsPerSeason: positiveInteger(fertilizer.fertilizerVisitsPerSeason ?? fertilizerDefaults.fertilizerVisitsPerSeason, "Fertilizer visits per season", 100),
     paymentsPerYear: positiveInteger(fertilizer.paymentsPerYear ?? fertilizerDefaults.paymentsPerYear, "Fertilizer payments per year", 24),
+    planPricing: {
+      enabled: fertilizer.planPricing?.enabled !== false,
+      annualMinimum: finiteNumber(fertilizer.planPricing?.annualMinimum ?? fertilizerDefaults.planPricing.annualMinimum, "Fertilizer annual plan minimum", { minimum: 0, maximum: 1000000 }),
+      includedSqFt: finiteNumber(fertilizer.planPricing?.includedSqFt ?? fertilizerDefaults.planPricing.includedSqFt, "Fertilizer included square footage", { minimum: 0, maximum: 10000000 }),
+      smallLawnAnnualMinimum: finiteNumber(fertilizer.planPricing?.smallLawnAnnualMinimum ?? fertilizerDefaults.planPricing.smallLawnAnnualMinimum, "Fertilizer small-lawn annual minimum", { minimum: 0, maximum: 1000000 }),
+      smallLawnIncludedSqFt: finiteNumber(fertilizer.planPricing?.smallLawnIncludedSqFt ?? fertilizerDefaults.planPricing.smallLawnIncludedSqFt, "Fertilizer small-lawn included square footage", { minimum: 0, maximum: 10000000 }),
+      annualAdditionalRatePerSqFt: finiteNumber(fertilizer.planPricing?.annualAdditionalRatePerSqFt ?? fertilizerDefaults.planPricing.annualAdditionalRatePerSqFt, "Fertilizer annual additional square-foot rate", { minimum: 0, maximum: 1000 }),
+      firstYearSalesCommissionRate: finiteNumber(fertilizer.planPricing?.firstYearSalesCommissionRate ?? fertilizerDefaults.planPricing.firstYearSalesCommissionRate, "Fertilizer first-year sales commission", { minimum: 0, maximum: 0.99 })
+    },
+    pricingGuide: {
+      bagSizeLb: finiteNumber(fertilizer.pricingGuide?.bagSizeLb ?? fertilizerDefaults.pricingGuide.bagSizeLb, "Pricing guide bag size", { minimum: 0.01, maximum: 100000 }),
+      bagCost: finiteNumber(fertilizer.pricingGuide?.bagCost ?? fertilizerDefaults.pricingGuide.bagCost, "Pricing guide bag cost", { minimum: 0, maximum: 1000000 }),
+      healthyRateLbPer1000: finiteNumber(fertilizer.pricingGuide?.healthyRateLbPer1000 ?? fertilizerDefaults.pricingGuide.healthyRateLbPer1000, "Pricing guide healthy rate", { minimum: 0.01, maximum: 100 }),
+      maximumRateLbPer1000: finiteNumber(fertilizer.pricingGuide?.maximumRateLbPer1000 ?? fertilizerDefaults.pricingGuide.maximumRateLbPer1000, "Pricing guide maximum rate", { minimum: 0.01, maximum: 100 }),
+      currentChargePerBag: finiteNumber(fertilizer.pricingGuide?.currentChargePerBag ?? fertilizerDefaults.pricingGuide.currentChargePerBag, "Pricing guide current charge", { minimum: 0, maximum: 1000000 })
+    },
     products: {},
     applications: []
   };
@@ -265,13 +282,31 @@ function normalizePricing(input, nextVersion) {
   fertilizerDefaults.applications.forEach((fallback, index) => {
     const application = fertilizerApplications[index] || fallback;
     const productId = productIds.includes(application.productId) ? application.productId : fallback.productId;
+    const analysis = normalized.fertilizerBid.products[productId].analysis;
+    const nitrogenFraction = Number(analysis.split("-")[0]) / 100;
+    const legacyProductRate = Number(application.nitrogenRateLbPer1000) > 0
+      ? Number(application.nitrogenRateLbPer1000) / nitrogenFraction
+      : undefined;
     normalized.fertilizerBid.applications.push({
       stage: cleanShortText(application.stage, fallback.stage, 80),
       timing: cleanShortText(application.timing, fallback.timing, 80),
       productId,
-      nitrogenRateLbPer1000: finiteNumber(application.nitrogenRateLbPer1000 ?? fallback.nitrogenRateLbPer1000, `${fallback.stage} nitrogen rate`, { minimum: 0.01, maximum: 100 })
+      productRateLbPer1000: finiteNumber(application.productRateLbPer1000 ?? legacyProductRate ?? fallback.productRateLbPer1000, `${fallback.stage} product rate`, { minimum: 0.01, maximum: normalized.fertilizerBid.pricingGuide.maximumRateLbPer1000 })
     });
   });
+
+  if (normalized.fertilizerBid.pricingGuide.maximumRateLbPer1000 < normalized.fertilizerBid.pricingGuide.healthyRateLbPer1000) {
+    throw new Error("Fertilizer maximum product rate must be at least the healthy lawn rate.");
+  }
+  if (normalized.fertilizerBid.targetGrossMargin + normalized.fertilizerBid.planPricing.firstYearSalesCommissionRate >= 1) {
+    throw new Error("Fertilizer target margin and sales commission must total less than 100%.");
+  }
+  if (normalized.fertilizerBid.planPricing.includedSqFt < normalized.fertilizerBid.planPricing.smallLawnIncludedSqFt) {
+    throw new Error("Fertilizer standard breakpoint must be at least the small-lawn square footage.");
+  }
+  if (normalized.fertilizerBid.planPricing.annualMinimum < normalized.fertilizerBid.planPricing.smallLawnAnnualMinimum) {
+    throw new Error("Fertilizer standard breakpoint price must be at least the small-lawn minimum.");
+  }
 
   return normalized;
 }

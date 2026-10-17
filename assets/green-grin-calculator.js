@@ -219,6 +219,45 @@
     return percent;
   };
 
+  function calculateFertilizerBagEconomics(input, serviceCosts = {}) {
+    const bagSizeLb = positiveNumber(input.bagSizeLb, "Bag size");
+    const bagCost = positiveNumber(input.bagCost, "Bag cost", true);
+    const healthyRateLbPer1000 = positiveNumber(input.healthyRateLbPer1000, "Healthy lawn product rate");
+    const maximumRateLbPer1000 = positiveNumber(input.maximumRateLbPer1000, "Maximum product rate");
+    const currentChargePerBag = positiveNumber(input.currentChargePerBag, "Current charge per bag", true);
+    const targetGrossMargin = positiveNumber(serviceCosts.targetGrossMargin ?? 0.5, "Target gross margin", true);
+    const laborCost = positiveNumber(serviceCosts.laborCost ?? 0, "Labor cost", true);
+    const visitOverhead = positiveNumber(serviceCosts.visitOverhead ?? 0, "Visit overhead", true);
+    const costReserve = positiveNumber(serviceCosts.costReserve ?? 0, "Cost reserve", true);
+    const chargeIncrement = positiveNumber(serviceCosts.chargeIncrement ?? 1, "Charge rounding increment");
+    if (maximumRateLbPer1000 < healthyRateLbPer1000) {
+      throw new Error("Maximum product rate must be at least the healthy lawn rate.");
+    }
+    if (targetGrossMargin >= 1) throw new Error("Target gross margin must be less than 100%.");
+
+    const fullServiceCost = bagCost + laborCost + visitOverhead + costReserve;
+    const recommendedChargePerBag = roundUpTo(fullServiceCost / (1 - targetGrossMargin), chargeIncrement);
+    const currentFullServiceProfit = currentChargePerBag - fullServiceCost;
+    return {
+      bagSizeLb,
+      bagCost,
+      healthyRateLbPer1000,
+      maximumRateLbPer1000,
+      currentChargePerBag,
+      healthyCoverageSqFt: bagSizeLb / healthyRateLbPer1000 * 1000,
+      maximumCoverageSqFt: bagSizeLb / maximumRateLbPer1000 * 1000,
+      healthyMaterialCostPer1000: bagCost / bagSizeLb * healthyRateLbPer1000,
+      maximumMaterialCostPer1000: bagCost / bagSizeLb * maximumRateLbPer1000,
+      productOnlyProfit: currentChargePerBag - bagCost,
+      productOnlyMargin: currentChargePerBag > 0 ? (currentChargePerBag - bagCost) / currentChargePerBag : 0,
+      fullServiceCost,
+      currentFullServiceProfit,
+      currentFullServiceMargin: currentChargePerBag > 0 ? currentFullServiceProfit / currentChargePerBag : 0,
+      recommendedChargePerBag,
+      targetGrossMargin
+    };
+  }
+
   function calculateFertilizerBid(input, settings) {
     const lawnSqFt = positiveNumber(input.lawnSqFt, "Turf square footage");
     const productionRate = positiveNumber(settings.applicationProductionSqFtPerHour, "Application production rate");
@@ -234,8 +273,20 @@
     const chargeIncrement = positiveNumber(settings.roundChargeTo, "Charge rounding increment");
     const fertilizerVisitsPerSeason = positiveNumber(settings.fertilizerVisitsPerSeason, "Fertilizer visits per season");
     const paymentsPerYear = positiveNumber(settings.paymentsPerYear ?? 12, "Payments per year");
+    const planPricing = settings.planPricing || {};
+    const useAnnualPlanPricing = planPricing.enabled === true;
+    const annualPlanMinimum = positiveNumber(planPricing.annualMinimum ?? 0, "Annual plan minimum", true);
+    const includedSqFt = positiveNumber(planPricing.includedSqFt ?? 0, "Included plan square footage", true);
+    const smallLawnAnnualMinimum = positiveNumber(planPricing.smallLawnAnnualMinimum ?? annualPlanMinimum, "Small-lawn annual minimum", true);
+    const smallLawnIncludedSqFt = positiveNumber(planPricing.smallLawnIncludedSqFt ?? includedSqFt, "Small-lawn included square footage", true);
+    const annualAdditionalRatePerSqFt = positiveNumber(planPricing.annualAdditionalRatePerSqFt ?? 0, "Annual additional square-foot rate", true);
+    const salesCommissionRate = positiveNumber(planPricing.firstYearSalesCommissionRate ?? 0, "First-year sales commission", true);
 
     if (targetGrossMargin >= 1) throw new Error("Target gross margin must be less than 100%.");
+    if (salesCommissionRate >= 1) throw new Error("First-year sales commission must be less than 100%.");
+    if (targetGrossMargin + salesCommissionRate >= 1) throw new Error("Target margin and sales commission must total less than 100%.");
+    if (useAnnualPlanPricing && includedSqFt < smallLawnIncludedSqFt) throw new Error("Standard plan square footage must be at least the small-lawn square footage.");
+    if (useAnnualPlanPricing && annualPlanMinimum < smallLawnAnnualMinimum) throw new Error("Standard plan price must be at least the small-lawn minimum.");
     if (!Array.isArray(settings.applications) || !settings.applications.length) {
       throw new Error("Add at least one fertilizer application.");
     }
@@ -259,14 +310,21 @@
       fixedSetupHours + lawnSqFt / productionRate
     );
 
-    const applications = settings.applications.map((application, index) => {
+    let applications = settings.applications.map((application, index) => {
       const product = products[application.productId];
       if (!product) throw new Error(`Application ${index + 1} needs a valid product.`);
-      const nitrogenRateLbPer1000 = positiveNumber(
-        application.nitrogenRateLbPer1000,
-        `${application.stage || `Application ${index + 1}`} nitrogen rate`
-      );
-      const productRateLbPer1000 = nitrogenRateLbPer1000 / product.nitrogenFraction;
+      const hasDirectProductRate = Number.isFinite(Number(application.productRateLbPer1000)) && Number(application.productRateLbPer1000) > 0;
+      const productRateLbPer1000 = hasDirectProductRate
+        ? positiveNumber(application.productRateLbPer1000, `${application.stage || `Application ${index + 1}`} product rate`)
+        : positiveNumber(
+          application.nitrogenRateLbPer1000,
+          `${application.stage || `Application ${index + 1}`} nitrogen rate`
+        ) / product.nitrogenFraction;
+      const nitrogenRateLbPer1000 = productRateLbPer1000 * product.nitrogenFraction;
+      const maximumProductRate = Number(settings.pricingGuide?.maximumRateLbPer1000);
+      if (Number.isFinite(maximumProductRate) && maximumProductRate > 0 && productRateLbPer1000 > maximumProductRate) {
+        throw new Error(`${application.stage || `Application ${index + 1}`} product rate exceeds the ${maximumProductRate} lb per 1,000 maximum.`);
+      }
       const productNeededLb = lawnSqFt / 1000 * productRateLbPer1000;
       const bagsUsed = productNeededLb / product.bagSizeLb;
       const materialCost = bagsUsed * product.bagCost;
@@ -274,9 +332,10 @@
       const visitOverhead = vehicleEquipment + adminOverhead;
       const totalCost = materialCost + laborCost + visitOverhead + costReserve;
       const marketRateCharge = lawnSqFt / 1000 * pricePer1000SqFtPerVisit;
-      const quotedCharge = roundToNearest(Math.max(minimumApplicationCharge, marketRateCharge), chargeIncrement);
+      const requiredChargeForTargetMargin = roundUpTo(totalCost / (1 - targetGrossMargin), chargeIncrement);
+      const priceFloor = settings.protectTargetMargin === false ? 0 : requiredChargeForTargetMargin;
+      const quotedCharge = roundUpTo(Math.max(minimumApplicationCharge, marketRateCharge, priceFloor), chargeIncrement);
       const grossProfit = quotedCharge - totalCost;
-      const requiredChargeForTargetMargin = roundToNearest(totalCost / (1 - targetGrossMargin), chargeIncrement);
 
       return {
         stage: String(application.stage || `Application ${index + 1}`),
@@ -303,6 +362,41 @@
       };
     });
 
+    const initialOperatingCost = applications.reduce((total, application) => total + application.totalCost, 0);
+    const excessSqFt = Math.max(0, lawnSqFt - includedSqFt);
+    const transitionSqFt = Math.max(0, includedSqFt - smallLawnIncludedSqFt);
+    const transitionRatePerSqFt = transitionSqFt > 0 ? (annualPlanMinimum - smallLawnAnnualMinimum) / transitionSqFt : 0;
+    const tieredAnnualPrice = lawnSqFt <= smallLawnIncludedSqFt
+      ? smallLawnAnnualMinimum
+      : lawnSqFt <= includedSqFt
+        ? smallLawnAnnualMinimum + (lawnSqFt - smallLawnIncludedSqFt) * transitionRatePerSqFt
+        : annualPlanMinimum + excessSqFt * annualAdditionalRatePerSqFt;
+    const annualMarginFloor = roundUpTo(initialOperatingCost / (1 - targetGrossMargin - salesCommissionRate), chargeIncrement);
+    const annualPlanPrice = roundUpTo(
+      Math.max(tieredAnnualPrice, settings.protectTargetMargin === false ? 0 : annualMarginFloor),
+      chargeIncrement
+    );
+
+    if (useAnnualPlanPricing) {
+      const allocatedBase = money(annualPlanPrice / applications.length);
+      applications = applications.map((application, index) => {
+        const quotedCharge = index === applications.length - 1
+          ? money(annualPlanPrice - allocatedBase * (applications.length - 1))
+          : allocatedBase;
+        const salesCommission = quotedCharge * salesCommissionRate;
+        const grossProfit = quotedCharge - application.totalCost - salesCommission;
+        return {
+          ...application,
+          quotedCharge,
+          salesCommission,
+          grossProfit,
+          margin: quotedCharge > 0 ? grossProfit / quotedCharge : 0,
+          requiredChargeForTargetMargin: roundUpTo(application.totalCost / (1 - targetGrossMargin - salesCommissionRate), chargeIncrement),
+          marginGoalMet: quotedCharge > 0 && grossProfit / quotedCharge >= targetGrossMargin
+        };
+      });
+    }
+
     const purchasePlan = Object.values(products).map((product) => {
       const annualProductNeededLb = applications
         .filter((application) => application.productId === product.id)
@@ -324,7 +418,9 @@
     const sum = (field) => applications.reduce((total, application) => total + application[field], 0);
     const annualPrice = sum("quotedCharge");
     const operatingCost = sum("totalCost");
-    const grossProfit = annualPrice - operatingCost;
+    const salesCommission = annualPrice * salesCommissionRate;
+    const grossProfitBeforeCommission = annualPrice - operatingCost;
+    const grossProfit = grossProfitBeforeCommission - salesCommission;
     const cashProductPurchase = purchasePlan.reduce((total, product) => total + product.cashPurchase, 0);
     const totalLaborCost = sum("laborCost");
     const totalVisitOverhead = sum("visitOverhead");
@@ -335,9 +431,23 @@
       applications,
       purchasePlan,
       annualPrice,
+      tieredAnnualPrice: useAnnualPlanPricing ? roundUpTo(tieredAnnualPrice, chargeIncrement) : annualPrice,
+      annualMarginFloor: useAnnualPlanPricing ? annualMarginFloor : 0,
+      annualPlanMinimum: useAnnualPlanPricing ? annualPlanMinimum : 0,
+      includedSqFt: useAnnualPlanPricing ? includedSqFt : 0,
+      smallLawnAnnualMinimum: useAnnualPlanPricing ? smallLawnAnnualMinimum : 0,
+      smallLawnIncludedSqFt: useAnnualPlanPricing ? smallLawnIncludedSqFt : 0,
+      transitionRatePerSqFt: useAnnualPlanPricing ? transitionRatePerSqFt : 0,
+      excessSqFt: useAnnualPlanPricing ? excessSqFt : 0,
+      annualAdditionalRatePerSqFt: useAnnualPlanPricing ? annualAdditionalRatePerSqFt : 0,
       averageApplicationCharge: annualPrice / fertilizerVisitsPerSeason,
       monthlyPayment: annualPrice / paymentsPerYear,
+      paymentAmount: annualPrice / paymentsPerYear,
+      paymentsPerYear,
       operatingCost,
+      grossProfitBeforeCommission,
+      salesCommission,
+      salesCommissionRate,
       grossProfit,
       grossMargin: annualPrice > 0 ? grossProfit / annualPrice : 0,
       totalProductAppliedLb: sum("productNeededLb"),
@@ -345,16 +455,17 @@
       totalLaborCost,
       totalVisitOverhead,
       cashProductPurchase,
-      firstJobCashProfit: annualPrice - cashProductPurchase - totalLaborCost - totalVisitOverhead,
+      firstJobCashProfit: annualPrice - cashProductPurchase - totalLaborCost - totalVisitOverhead - salesCommission,
       pricePer1000SqFtPerVisit: annualPrice / (lawnSqFt / 1000 * fertilizerVisitsPerSeason),
       configuredPricePer1000SqFtPerVisit: pricePer1000SqFtPerVisit,
       fertilizerVisitsPerSeason,
       visitCountAligned: applications.length === fertilizerVisitsPerSeason,
       costReservePerVisit: costReserve,
       targetGrossMargin,
-      marginGoalMet: annualPrice > 0 && grossProfit / annualPrice >= targetGrossMargin
+      marginGoalMet: annualPrice > 0 && grossProfit / annualPrice >= targetGrossMargin,
+      useAnnualPlanPricing
     };
   }
 
-  return { calculateGreenGrinEstimate, calculateAllGreenGrinPlans, calculateMowingBid, calculateWeeklyJobBilling, calculateFertilizerBid };
+  return { calculateGreenGrinEstimate, calculateAllGreenGrinPlans, calculateMowingBid, calculateWeeklyJobBilling, calculateFertilizerBagEconomics, calculateFertilizerBid };
 });

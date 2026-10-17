@@ -4,7 +4,8 @@ const estimates = require("../netlify/functions/portal-estimates.js");
 
 const mowing = contract.buildContract({ total: 900, contract_template: "mowing" });
 assert.equal(mowing.title, "Recurring Lawn Mowing Agreement");
-assert.ok(mowing.sections.some((section) => section.title === "Mowing Service Terms"));
+assert.ok(mowing.sections.some((section) => section.title === "1. Work to Be Performed"));
+assert.ok(mowing.sections.some((section) => section.title === "11. Nonpayment and Lien Rights"));
 
 const custom = contract.buildContract({ total: 1200, contract_template: "cleanup", contract_sections: [{ title: "My job rules", paragraphs: ["Customer supplies access code."], bullets: ["No hazardous waste."] }], contract_consent_text: "I agree to the custom cleanup terms." });
 assert.equal(custom.sections[0].title, "My job rules");
