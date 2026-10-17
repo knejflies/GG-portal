@@ -25,6 +25,7 @@ assert.match(payload.text, /View your invoice: https:\/\/portal\.greengrinlawns\
 assert.match(payload.html, /Ken &lt;Owner&gt;/);
 assert.match(payload.html, /123 Green Way/);
 assert.match(payload.html, /Install 3 tons of &lt;river rock&gt;/);
+assert.match(payload.html, /green-grin-logo\.png/, "Invoice email should include the Green Grin logo.");
 assert.match(payload.text, /Project scope:/);
 assert.doesNotMatch(payload.html, /Ken <Owner>/);
 

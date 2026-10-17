@@ -5,6 +5,7 @@ const REFERRAL_CREDIT_CENTS_PER_ZONE = 50;
 const PUBLIC_URL = process.env.GREEN_GRIN_PUBLIC_URL || "https://portal.greengrinlawns.com";
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
+const EMAIL_LOGO_URL = process.env.GREEN_GRIN_EMAIL_LOGO_URL || "https://portal.greengrinlawns.com/assets/green-grin-logo.png";
 
 const headers = {
   "Content-Type": "application/json",
@@ -57,6 +58,9 @@ function requestBaseUrl(event) {
 function escapeHtml(value) {
   return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
 }
+function emailLogoHtml() {
+  return `<div style="padding:18px 0;text-align:center"><img src="${escapeHtml(EMAIL_LOGO_URL)}" alt="Green Grin Lawn &amp; Landscape" width="360" style="display:block;width:100%;max-width:360px;height:auto;margin:0 auto" /></div>`;
+}
 
 function blowoutConfirmationPayload(lead) {
   const name = lead.full_name || "Customer";
@@ -68,7 +72,7 @@ function blowoutConfirmationPayload(lead) {
     to: [lead.email],
     subject: "Green Grin sprinkler blowout request received",
     text: ["Hi " + name + ",", "", "Your Green Grin sprinkler blowout request was received.", "Service address: " + (lead.service_address || "To be confirmed"), "Zones: " + (lead.zones || 0), "Spigots: " + (lead.spigots || 0), "Price: " + priceLabel + " ($55 for up to 6 zones, plus $5 for each additional zone)", code ? "Your referral code: " + code : "", "", "We will follow up to schedule your service.", "Green Grin Lawns"].join("\n"),
-    html: "<p>Hi " + escapeHtml(name) + ",</p><h1>Request received</h1><p>Your Green Grin sprinkler blowout request was received.</p><p><strong>Service address:</strong> " + escapeHtml(lead.service_address || "To be confirmed") + "<br><strong>Zones:</strong> " + escapeHtml(lead.zones || 0) + "<br><strong>Spigots:</strong> " + escapeHtml(lead.spigots || 0) + "<br><strong>Price:</strong> " + escapeHtml(priceLabel) + " ($55 for up to 6 zones, plus $5 for each additional zone)" + (code ? "<br><strong>Your referral code:</strong> " + escapeHtml(code) : "") + "</p><p>We will follow up to schedule your service.</p><p>Green Grin Lawns</p>"
+    html: emailLogoHtml() + "<p>Hi " + escapeHtml(name) + ",</p><h1>Request received</h1><p>Your Green Grin sprinkler blowout request was received.</p><p><strong>Service address:</strong> " + escapeHtml(lead.service_address || "To be confirmed") + "<br><strong>Zones:</strong> " + escapeHtml(lead.zones || 0) + "<br><strong>Spigots:</strong> " + escapeHtml(lead.spigots || 0) + "<br><strong>Price:</strong> " + escapeHtml(priceLabel) + " ($55 for up to 6 zones, plus $5 for each additional zone)" + (code ? "<br><strong>Your referral code:</strong> " + escapeHtml(code) : "") + "</p><p>We will follow up to schedule your service.</p><p>Green Grin Lawns</p>"
   };
 }
 
@@ -93,7 +97,7 @@ async function sendScheduledNotice(lead, scheduledDate) {
   if (!RESEND_API_KEY) return { sent: false, skipped: true, reason: "Email is not configured in Netlify." };
   const dateLabel = new Date(`${scheduledDate}T12:00:00`).toLocaleDateString();
   try {
-    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [lead.email], subject: `Green Grin is expected ${dateLabel}`, text: [`Hi ${lead.full_name || "there"},`, "", `Thanks for choosing Green Grin. We expect to be at ${lead.service_address || "your property"} on ${dateLabel} for your sprinkler blowout.`, "", "Weather or route changes may shift the timing. We will keep you updated.", "Green Grin Lawns"].join("\n"), html: `<p>Hi ${escapeHtml(lead.full_name || "there")},</p><p>Thanks for choosing Green Grin. We expect to be at <strong>${escapeHtml(lead.service_address || "your property")}</strong> on <strong>${escapeHtml(dateLabel)}</strong> for your sprinkler blowout.</p><p>Weather or route changes may shift the timing. We will keep you updated.</p><p>Green Grin Lawns</p>` }) });
+    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND_API_KEY, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [lead.email], subject: `Green Grin is expected ${dateLabel}`, text: [`Hi ${lead.full_name || "there"},`, "", `Thanks for choosing Green Grin. We expect to be at ${lead.service_address || "your property"} on ${dateLabel} for your sprinkler blowout.`, "", "Weather or route changes may shift the timing. We will keep you updated.", "Green Grin Lawns"].join("\n"), html: `${emailLogoHtml()}<p>Hi ${escapeHtml(lead.full_name || "there")},</p><p>Thanks for choosing Green Grin. We expect to be at <strong>${escapeHtml(lead.service_address || "your property")}</strong> on <strong>${escapeHtml(dateLabel)}</strong> for your sprinkler blowout.</p><p>Weather or route changes may shift the timing. We will keep you updated.</p><p>Green Grin Lawns</p>` }) });
     const data = await response.json().catch(() => ({}));
     return response.ok ? { sent: true, id: data.id || null } : { sent: false, error: data.message || "Email provider rejected the notice." };
   } catch (error) { return { sent: false, error: error.message || "Notice could not be sent." }; }

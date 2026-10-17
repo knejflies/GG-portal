@@ -12,6 +12,7 @@ assert.strictEqual(blowoutPriceForZones(10), 75, "Every zone after six should ad
 
 const email = blowoutConfirmationPayload({ full_name: "Test Customer", email: "test@example.com", zones: 8, spigots: 1, service_address: "123 Test St", share_code: "GG-TEST" });
 assert.ok(email.text.includes("Price: $65.00"), "Confirmation email should include the calculated price.");
+assert.ok(email.html.includes("green-grin-logo.png"), "Confirmation email should include the Green Grin logo.");
 assert.ok(html.includes("$55 includes up to 6 zones"), "Public signup should clearly state the base price.");
 assert.ok(html.includes("Each additional zone is $5"), "Public signup should clearly state the additional-zone price.");
 assert.ok(html.includes('id="blowout-price-preview"'), "Public signup should show a live price preview.");

@@ -26,6 +26,7 @@ const receipt = blowoutCompletionReceiptPayload({ full_name: "Test Customer", em
 assert.ok(receipt.subject.includes("payment receipt - $65.00"), "Payment receipt subject should include the final paid amount.");
 assert.ok(receipt.text.includes("Status: Paid"), "Receipt should confirm that payment was received.");
 assert.ok(receipt.text.includes("October 16, 2026"), "Completion receipt should include the service date.");
+assert.ok(receipt.html.includes("green-grin-logo.png"), "Payment receipt should include the Green Grin logo.");
 assert.ok(operationSource.includes('status: "Paid", service_line: "Sprinkler Blowout"'), "Completing a paid blowout should create a paid invoice for bookkeeping.");
 assert.ok(operationSource.includes('const completionUpdate = { status: "Paid"'), "Completing a blowout should close the signup as paid.");
 assert.ok(operationSource.includes('body.action === "send-receipt"'), "Older paid blowouts should support sending or resending a receipt.");
