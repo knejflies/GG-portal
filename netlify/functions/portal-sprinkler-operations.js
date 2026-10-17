@@ -115,6 +115,23 @@ async function sendBlowoutCompletionReceipt(lead, history) {
     return response.ok ? { enabled: true, sent: true, id: data.id || null } : { enabled: true, sent: false, error: data.message || "Email provider rejected the completion receipt." };
   } catch (error) { return { enabled: true, sent: false, error: error.message || "Completion receipt could not be sent." }; }
 }
+function paidBlowoutInvoiceLines(history) {
+  return [{ description: `Sprinkler blowout (${Number(history.zones) || 0} zones)`, category: "Sprinkler Blowout", quantity: 1, unit: "service", rate: Number(history.base_amount) || 0, amount: Number(history.base_amount) || 0 }, ...extraRows(history.extra_charges).map((row) => ({ ...row, category: "Approved Extra", amount: Math.round(row.quantity * row.rate * 100) / 100 }))];
+}
+async function ensurePaidBlowoutInvoice(lead, history, result, paymentMethod = "Customer payment") {
+  const invoiceKey = `blowout:${history.id}`;
+  const invoicePayload = { customer_user_id: result.customer_user_id, customer_name: lead.full_name, phone: lead.phone || "", email: lead.email, amount: Number(history.total_amount) || 0, subtotal: Number(history.total_amount) || 0, line_items: paidBlowoutInvoiceLines(history), due_date: history.service_date, status: "Paid", service_line: "Sprinkler Blowout", service_address: lead.service_address, notes: "Paid sprinkler blowout service.", payment_method: clean(paymentMethod, 80), property_id: result.property_id, source_estimate_number: invoiceKey, blowout_history_id: history.id, active: true };
+  const existing = await supabase(`green_grin_invoices?select=*&source_estimate_number=eq.${encodeURIComponent(invoiceKey)}&limit=1`);
+  if (existing?.[0]) {
+    const rows = await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(existing[0].id)}`, { method: "PATCH", body: JSON.stringify(invoicePayload) });
+    return rows?.[0] || { ...existing[0], ...invoicePayload };
+  }
+  const rows = await supabase("green_grin_invoices", { method: "POST", body: JSON.stringify(invoicePayload) });
+  return rows?.[0] || null;
+}
+async function logBlowoutReceipt(lead, email) {
+  await supabase("green_grin_message_log", { method: "POST", body: JSON.stringify({ job_id: null, phone: lead.email || lead.phone || "", template: email.sent ? "completed-email-sent" : "completed-email-failed", message: email.sent ? `Sprinkler blowout payment receipt sent to ${lead.full_name || "Customer"}.` : `Sprinkler blowout payment receipt failed for ${lead.full_name || "Customer"}: ${email.error || email.reason || "Unknown error."}`, actor_type: "Owner", actor_name: "Owner", twilio_sid: email.id || null }) }).catch(() => null);
+}
 function scheduledEmailRoster(leads, scheduledDate) {
   const rows = Array.isArray(leads) ? leads : [];
   const closedStatuses = new Set(["Completed", "Invoiced", "Paid", "Not Successful"]);
@@ -216,6 +233,36 @@ exports.handler = async (event) => {
       const rows = await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ status: "New", scheduled_date: null }) });
       return json(200, { lead: rows?.[0] || null });
     }
+    if (event.httpMethod === "POST" && body.action === "send-receipt") {
+      const result = await ensureCustomerProperty(lead);
+      const historyRows = await supabase(`green_grin_sprinkler_blowout_history?select=*&lead_id=eq.${encodeURIComponent(lead.id)}&order=service_date.desc&limit=1`);
+      let history = historyRows?.[0] || null;
+      const baseAmount = Math.max(0, Number(body.base_amount ?? lead.customer_price) || 0);
+      if (!history) {
+        const serviceDate = lead.completed_at?.slice(0, 10) || lead.scheduled_date || new Date().toISOString().slice(0, 10);
+        const rows = await supabase("green_grin_sprinkler_blowout_history", { method: "POST", body: JSON.stringify({ lead_id: lead.id, customer_user_id: result.customer_user_id, property_id: result.property_id, service_date: serviceDate, zones: Number(lead.zones) || 0, spigots: Number(lead.spigots) || 0, service_notes: clean(lead.completion_notes, 2000), extra_charges: [], base_amount: baseAmount, total_amount: baseAmount, status: "Paid", idempotency_key: blowoutIdempotencyKey(lead.id, serviceDate) }) });
+        history = rows?.[0] || null;
+      } else {
+        const extras = extraRows(history.extra_charges);
+        const totalAmount = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
+        const rows = await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ base_amount: baseAmount, total_amount: totalAmount, status: "Paid" }) });
+        history = rows?.[0] || { ...history, base_amount: baseAmount, total_amount: totalAmount, status: "Paid" };
+      }
+      if (!history) return json(500, { error: "The paid blowout history could not be recorded." });
+      const invoice = await ensurePaidBlowoutInvoice(lead, history, result, body.payment_method);
+      if (!invoice) return json(500, { error: "The paid blowout invoice could not be recorded." });
+      const paidUpdate = { status: "Paid", completed_at: lead.completed_at || new Date().toISOString(), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id, invoice_id: invoice.id, referral_active: false };
+      try {
+        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(paidUpdate) });
+      } catch (error) {
+        if (!/customer_price/i.test(error.message || "")) throw error;
+        const { customer_price: omittedPrice, ...compatibleUpdate } = paidUpdate;
+        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
+      }
+      const email = await sendBlowoutCompletionReceipt(lead, history);
+      await logBlowoutReceipt(lead, email);
+      return json(200, { history, invoice, email });
+    }
     if (event.httpMethod === "POST" && body.action === "complete") {
       const result = await ensureCustomerProperty(lead);
       const serviceDate = body.service_date || lead.scheduled_date || new Date().toISOString().slice(0, 10);
@@ -227,14 +274,7 @@ exports.handler = async (event) => {
       const total = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
       const rows = await supabase("green_grin_sprinkler_blowout_history", { method: "POST", body: JSON.stringify({ lead_id: lead.id, customer_user_id: result.customer_user_id, property_id: result.property_id, service_date: serviceDate, zones: Number(lead.zones) || 0, spigots: Number(lead.spigots) || 0, service_notes: clean(body.service_notes, 2000), extra_charges: extras, base_amount: baseAmount, total_amount: total, status: "Completed", idempotency_key: key }) });
       const history = rows?.[0] || { service_date: serviceDate, zones: Number(lead.zones) || 0, extra_charges: extras, base_amount: baseAmount, total_amount: total };
-      const lines = [{ description: `Sprinkler blowout (${Number(history.zones) || 0} zones)`, category: "Sprinkler Blowout", quantity: 1, unit: "service", rate: baseAmount, amount: baseAmount }, ...extras.map((row) => ({ ...row, category: "Approved Extra", amount: Math.round(row.quantity * row.rate * 100) / 100 }))];
-      const invoiceKey = `blowout:${history.id}`;
-      const existingInvoices = await supabase(`green_grin_invoices?select=*&source_estimate_number=eq.${encodeURIComponent(invoiceKey)}&limit=1`);
-      let invoice = existingInvoices?.[0] || null;
-      if (!invoice) {
-        const invoiceRows = await supabase("green_grin_invoices", { method: "POST", body: JSON.stringify({ customer_user_id: result.customer_user_id, customer_name: lead.full_name, phone: lead.phone || "", email: lead.email, amount: total, subtotal: total, line_items: lines, due_date: serviceDate, status: "Paid", service_line: "Sprinkler Blowout", service_address: lead.service_address, notes: "Paid sprinkler blowout service.", payment_method: clean(body.payment_method || "Customer payment", 80), property_id: result.property_id, source_estimate_number: invoiceKey, blowout_history_id: history.id, active: true }) });
-        invoice = invoiceRows?.[0] || null;
-      }
+      const invoice = await ensurePaidBlowoutInvoice(lead, history, result, body.payment_method);
       if (!invoice) throw new Error("The paid blowout invoice could not be recorded.");
       await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ invoice_id: invoice.id, status: "Paid" }) });
       const completionUpdate = { status: "Paid", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id, invoice_id: invoice.id, referral_active: false };
@@ -246,7 +286,7 @@ exports.handler = async (event) => {
         await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
       }
       const email = await sendBlowoutCompletionReceipt(lead, history);
-      await supabase("green_grin_message_log", { method: "POST", body: JSON.stringify({ job_id: null, phone: lead.email || lead.phone || "", template: email.sent ? "completed-email-sent" : "completed-email-failed", message: email.sent ? `Sprinkler blowout completion receipt sent to ${lead.full_name || "Customer"}.` : `Sprinkler blowout completion receipt failed for ${lead.full_name || "Customer"}: ${email.error || email.reason || "Unknown error."}`, actor_type: "Owner", actor_name: "Owner", twilio_sid: email.id || null }) }).catch(() => null);
+      await logBlowoutReceipt(lead, email);
       return json(200, { history: { ...history, invoice_id: invoice.id, status: "Paid" }, invoice, duplicate: false, email });
     }
     if (event.httpMethod === "POST" && body.action === "set-price") {
