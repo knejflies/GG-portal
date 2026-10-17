@@ -28,6 +28,7 @@ for (const file of files) {
   }
   assert.equal((html.match(/id="fert-bids"/g) || []).length, 1, `${file} should contain one Fert Bidder panel`);
   assert.equal((html.match(/data-tab="fert-bids"/g) || []).length, file === "admin/index.html" ? 1 : 0, `${file} should expose the intended Fertilizer navigation`);
+  if (file === "admin/index.html") assert.equal(/<section id="fert-bids"[^>]*\shidden(?:\s|>)/.test(html), false, "Admin Fertilizer Plans panel must not remain hidden after direct navigation");
   assert.equal((html.match(/data-tab="bids"/g) || []).length, 1, `${file} should contain one Bidders tab`);
   assert.equal(html.includes('id="owner_job_monthly_price"'), false, `${file} should price created jobs by service week`);
 }
