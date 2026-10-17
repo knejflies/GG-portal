@@ -1,5 +1,5 @@
 const assert = require("assert");
-const { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster } = require("../netlify/functions/portal-sprinkler-operations.js")._test;
+const { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster, blowoutCompletionReceiptPayload } = require("../netlify/functions/portal-sprinkler-operations.js")._test;
 
 assert.equal(normalizeAddress("123 Main St., Caldwell, ID"), normalizeAddress("123 main st caldwell id"));
 assert.equal(geocodeDecision({ lat: "43.6", lon: "-116.6", importance: 0.8, display_name: "123 Main St, Caldwell, Idaho" }, "123 Main St").status, "Located");
@@ -20,5 +20,9 @@ assert.equal(roster.active_total, 3);
 assert.equal(roster.recipients.length, 2, "Separate scheduled records sharing an email must both remain visible in the day count.");
 assert.equal(roster.missing_email[0].name, "Missing Email");
 assert.equal(roster.closed_total, 2);
+const receipt = blowoutCompletionReceiptPayload({ full_name: "Test Customer", email: "test@example.com", service_address: "123 Test St" }, { service_date: "2026-10-16", zones: 8, total_amount: 65, extra_charges: [] });
+assert.ok(receipt.subject.includes("$65.00"), "Completion receipt subject should include the final service amount.");
+assert.ok(receipt.text.includes("does not indicate that payment has been received"), "Completion receipt must not falsely claim payment was received.");
+assert.ok(receipt.text.includes("October 16, 2026"), "Completion receipt should include the service date.");
 
 console.log("Sprinkler operations tests passed.");

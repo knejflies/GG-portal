@@ -2,10 +2,13 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const VENMO_HANDLE = String(process.env.GREEN_GRIN_VENMO_HANDLE || "@greengrinlawns").replace(/^@/, "");
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, x-admin-pin", "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS" };
 const json = (statusCode, body) => ({ statusCode, headers, body: JSON.stringify(body) });
 const clean = (value, max = 500) => String(value || "").trim().slice(0, max);
 const validUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
+const escapeHtml = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
 
 async function supabase(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, { ...options, headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json", Prefer: "return=representation", ...(options.headers || {}) } });
@@ -87,6 +90,30 @@ function extraRows(value) {
 function blowoutIdempotencyKey(leadId, serviceDate) { return `blowout:${leadId}:${serviceDate}`; }
 function resolveBlowoutPrice(body, lead) {
   return Math.max(0, Number(Object.prototype.hasOwnProperty.call(body || {}, "base_amount") ? body.base_amount : lead?.customer_price) || 0);
+}
+function blowoutCompletionReceiptPayload(lead, history) {
+  const customer = lead.full_name || "Customer";
+  const amount = `$${Number(history.total_amount || 0).toFixed(2)}`;
+  const serviceDate = new Date(`${history.service_date}T12:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const extras = extraRows(history.extra_charges);
+  const extraText = extras.map((row) => `${row.description}: ${row.quantity} ${row.unit} × $${row.rate.toFixed(2)}`);
+  const extraHtml = extras.length ? `<h2 style="font-size:18px;color:#07351d">Additional work</h2><ul>${extras.map((row) => `<li>${escapeHtml(row.description)}: ${escapeHtml(row.quantity)} ${escapeHtml(row.unit)} × $${row.rate.toFixed(2)}</li>`).join("")}</ul>` : "";
+  return {
+    from: EMAIL_FROM,
+    to: [lead.email],
+    subject: `Green Grin sprinkler blowout completed - ${amount}`,
+    text: [`Hi ${customer},`, "", "Your sprinkler blowout service has been completed.", `Service date: ${serviceDate}`, `Service address: ${lead.service_address || ""}`, `Sprinkler zones: ${Number(history.zones) || 0}`, `Service amount: ${amount}`, ...extraText, "", "This service receipt confirms the work was completed. It does not indicate that payment has been received. Your invoice and payment receipt are handled separately.", "", "Thank you for choosing Green Grin Lawns."].filter(Boolean).join("\n"),
+    html: `<!doctype html><html><body style="margin:0;background:#eef4ec;color:#102419;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#07351d;color:#fff;padding:24px;border-radius:8px 8px 0 0"><strong style="font-size:22px">Green Grin Lawns</strong></div><div style="background:#fff;padding:28px;border:1px solid #d5e2d2;border-top:0;border-radius:0 0 8px 8px"><p>Hi ${escapeHtml(customer)},</p><h1 style="font-size:25px;color:#07351d">Sprinkler blowout completed</h1><p>Your sprinkler blowout service has been completed.</p><div style="background:#f2f8ef;border-left:4px solid #78c653;padding:16px;margin:22px 0"><p><strong>Service date:</strong> ${escapeHtml(serviceDate)}</p><p><strong>Service address:</strong> ${escapeHtml(lead.service_address || "")}</p><p><strong>Sprinkler zones:</strong> ${escapeHtml(Number(history.zones) || 0)}</p><p><strong>Service amount:</strong> ${escapeHtml(amount)}</p></div>${extraHtml}<p style="color:#526458;font-size:14px">This service receipt confirms the work was completed. It does not indicate that payment has been received. Your invoice and payment receipt are handled separately.</p><p>Thank you for choosing Green Grin Lawns.</p></div></div></body></html>`
+  };
+}
+async function sendBlowoutCompletionReceipt(lead, history) {
+  if (!lead?.email) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Customer has no email address." };
+  if (!RESEND_API_KEY) return { enabled: false, sent: false, skipped: true, reason: "Completion email is not configured in Netlify." };
+  try {
+    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify(blowoutCompletionReceiptPayload(lead, history)) });
+    const data = await response.json().catch(() => ({}));
+    return response.ok ? { enabled: true, sent: true, id: data.id || null } : { enabled: true, sent: false, error: data.message || "Email provider rejected the completion receipt." };
+  } catch (error) { return { enabled: true, sent: false, error: error.message || "Completion receipt could not be sent." }; }
 }
 function scheduledEmailRoster(leads, scheduledDate) {
   const rows = Array.isArray(leads) ? leads : [];
@@ -199,8 +226,18 @@ exports.handler = async (event) => {
       const baseAmount = resolveBlowoutPrice(body, lead);
       const total = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
       const rows = await supabase("green_grin_sprinkler_blowout_history", { method: "POST", body: JSON.stringify({ lead_id: lead.id, customer_user_id: result.customer_user_id, property_id: result.property_id, service_date: serviceDate, zones: Number(lead.zones) || 0, spigots: Number(lead.spigots) || 0, service_notes: clean(body.service_notes, 2000), extra_charges: extras, base_amount: baseAmount, total_amount: total, status: "Completed", idempotency_key: key }) });
-      await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify({ ...result.lead, status: "Completed", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id }) });
-      return json(200, { history: rows?.[0] || null, duplicate: false });
+      const history = rows?.[0] || { service_date: serviceDate, zones: Number(lead.zones) || 0, extra_charges: extras, base_amount: baseAmount, total_amount: total };
+      const completionUpdate = { status: "Completed", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id };
+      try {
+        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(completionUpdate) });
+      } catch (error) {
+        if (!/customer_price/i.test(error.message || "")) throw error;
+        const { customer_price: omittedPrice, ...compatibleUpdate } = completionUpdate;
+        await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
+      }
+      const email = await sendBlowoutCompletionReceipt(lead, history);
+      await supabase("green_grin_message_log", { method: "POST", body: JSON.stringify({ job_id: null, phone: lead.email || lead.phone || "", template: email.sent ? "completed-email-sent" : "completed-email-failed", message: email.sent ? `Sprinkler blowout completion receipt sent to ${lead.full_name || "Customer"}.` : `Sprinkler blowout completion receipt failed for ${lead.full_name || "Customer"}: ${email.error || email.reason || "Unknown error."}`, actor_type: "Owner", actor_name: "Owner", twilio_sid: email.id || null }) }).catch(() => null);
+      return json(200, { history, duplicate: false, email });
     }
     if (event.httpMethod === "POST" && body.action === "set-price") {
       const baseAmount = Math.max(0, Number(body.base_amount) || 0);
@@ -256,5 +293,5 @@ exports.handler = async (event) => {
 };
 
 exports.ensureCustomerProperty = ensureCustomerProperty;
-exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster };
+exports._test = { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster, blowoutCompletionReceiptPayload };
 

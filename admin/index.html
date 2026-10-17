@@ -13866,7 +13866,10 @@
           const date = window.prompt("Completion date (YYYY-MM-DD)", lead.scheduled_date || new Date().toISOString().slice(0, 10));
           if (!date) { button.disabled = false; return; }
           const amount = window.prompt("Base blowout price", String(lead.customer_price ?? card.querySelector(".blowout-price")?.value ?? "0"));
-          await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "complete", lead_id: card.dataset.blowoutId, service_date: date, base_amount: amount || 0 }) });
+          if (amount === null) { button.disabled = false; return; }
+          const data = await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "complete", lead_id: card.dataset.blowoutId, service_date: date, base_amount: amount || 0 }) });
+          const emailStatus = data.email?.sent ? " Completion receipt emailed." : ` Completion saved, but the receipt email was not sent: ${cleanText(data.email?.error || data.email?.reason || "Unknown email error.")}`;
+          $("#blowout-bulk-result").innerHTML = notice(`${cleanText(lead.full_name || "Customer")} marked complete.${emailStatus}`, data.email?.sent !== true);
         } else if (action === "invoice") {
           await requestJson("portal-sprinkler-operations", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "invoice", lead_id: card.dataset.blowoutId }) });
         } else {
