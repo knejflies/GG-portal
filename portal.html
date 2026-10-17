@@ -3765,7 +3765,26 @@
     <section id="billing" class="panel">
       <div class="card">
         <h2>Billing and monthly service</h2>
-        <p id="billing-summary">Your monthly bill is based on completed services and approved extras. The total can vary from month to month.</p><p class="muted">Venmo payments are customer-initiated. Automatic charging will be added through a supported autopay connection.</p>
+        <p id="billing-summary">Your monthly bill is based on completed services and approved extras. The total can vary from month to month.</p>
+
+        <div class="payment-card" id="autopay-card">
+          <div class="invoice-head"><h3>Secure AutoPay</h3><span id="autopay-status" class="badge">Checking</span></div>
+          <p id="autopay-method" class="muted">Connect a card through Helcim. Green Grin never receives or stores your full card number or security code.</p>
+          <form id="autopay-form">
+            <div class="two">
+              <div><label for="autopay-mode">Billing choice</label><select id="autopay-mode"><option value="Review first">Review each invoice first</option><option value="Automatic">Charge automatically</option></select></div>
+              <div><label for="autopay-cycle-limit">Maximum per billing cycle</label><input id="autopay-cycle-limit" type="number" min="0" step="0.01" placeholder="No limit" /></div>
+            </div>
+            <div class="two">
+              <div><label for="autopay-extra-limit">Maximum per added service</label><input id="autopay-extra-limit" type="number" min="0" step="0.01" placeholder="Extras require review" /></div>
+              <div><label for="autopay-notice-days">Advance notice</label><select id="autopay-notice-days"><option value="0">No advance notice</option><option value="1">1 day</option><option value="3" selected>3 days</option><option value="7">7 days</option></select></div>
+            </div>
+            <fieldset><legend>Services this authorization covers</legend><div class="checklist"><label class="check"><input class="autopay-service" type="checkbox" value="Mowing" checked /> Mowing</label><label class="check"><input class="autopay-service" type="checkbox" value="Fertilizer" /> Fertilizer</label><label class="check"><input class="autopay-service" type="checkbox" value="Spraying" /> Spraying</label><label class="check"><input class="autopay-service" type="checkbox" value="Irrigation" /> Irrigation</label><label class="check"><input class="autopay-service" type="checkbox" value="Cleanup" /> Cleanup</label><label class="check"><input class="autopay-service" type="checkbox" value="Landscaping" /> Landscaping</label></div></fieldset>
+            <label class="approval-consent"><input id="autopay-consent" type="checkbox" /><span>I authorize Green Grin Lawns to charge the saved payment method for the selected services under the limits shown. I may revoke authorization before a future charge.</span></label>
+            <div class="row-actions"><button id="autopay-connect" class="button" type="submit">Connect Card Securely</button><button id="autopay-revoke" class="button ghost" type="button" hidden>Turn Off AutoPay</button></div>
+          </form>
+          <div id="autopay-result" aria-live="polite"></div>
+        </div>
 
         <div id="customer-billing-plans" class="plans"></div>
 
@@ -4745,12 +4764,14 @@
   <script src="/assets/green-grin-session.js"></script>
   <script src="/assets/green-grin-bookkeeping.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://secure.helcim.app/helcim-pay/services/start.js"></script>
   <script>
     const $ = (selector) => document.querySelector(selector);
     const api = (path) => `/.netlify/functions/${path}`;
     let supabaseClient = null;
     let activeAccount = null;
     let accountData = null;
+    let helcimCheckoutToken = "";
     let invoiceDrafts = [];
     let invoiceCustomers = [];
     let adminChatCustomer = null;
@@ -6729,6 +6750,110 @@
         /^(zelle|venmo)-reported:/.test(String(invoice.payment_url || ""));
     }
 
+    function renderAutopayState(data = {}) {
+      const method = data.payment_method;
+      const authorization = data.authorization;
+      const status = $("#autopay-status");
+      const methodText = $("#autopay-method");
+      if (!status || !methodText) return;
+      if (method?.status === "Active" && authorization?.status === "Active") {
+        status.textContent = authorization.billing_mode || "Connected";
+        methodText.innerHTML = `<strong>${cleanText(method.brand || "Card")} ending in ${cleanText(method.last_four || "")}</strong><br>Verified ${cleanText(method.verified_at ? new Date(method.verified_at).toLocaleDateString() : "with Helcim")}. Green Grin stores only Helcim's secure payment reference and the last four digits.`;
+        $("#autopay-mode").value = authorization.billing_mode || "Review first";
+        $("#autopay-cycle-limit").value = authorization.max_cycle_charge ?? "";
+        $("#autopay-extra-limit").value = authorization.max_extra_price ?? "";
+        $("#autopay-notice-days").value = String(authorization.advance_notice_days ?? 3);
+        const allowed = new Set((authorization.authorized_services || []).map((value) => String(value).toLowerCase()));
+        document.querySelectorAll(".autopay-service").forEach((input) => { input.checked = allowed.has(input.value.toLowerCase()); });
+        $("#autopay-connect").textContent = "Replace Saved Card";
+        $("#autopay-revoke").hidden = false;
+      } else {
+        status.textContent = "Not connected";
+        methodText.textContent = "Connect a card through Helcim. Green Grin never receives or stores your full card number or security code.";
+        $("#autopay-connect").textContent = "Connect Card Securely";
+        $("#autopay-revoke").hidden = true;
+      }
+    }
+
+    async function loadAutopayState() {
+      if (!activeAccount || activeAccount.id === "owner" || activeAccount.id === "employee") return;
+      try {
+        renderAutopayState(await requestJson("portal-payments"));
+      } catch (error) {
+        $("#autopay-status").textContent = "Setup needed";
+        $("#autopay-result").innerHTML = notice(error.message, true);
+      }
+    }
+
+    $("#autopay-form")?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = $("#autopay-connect");
+      const result = $("#autopay-result");
+      try {
+        const services = Array.from(document.querySelectorAll(".autopay-service:checked")).map((input) => input.value);
+        if (!$("#autopay-consent").checked) throw new Error("Check the authorization box before connecting your card.");
+        if (!services.length) throw new Error("Choose at least one covered service.");
+        button.disabled = true;
+        button.textContent = "Opening secure card setup...";
+        const data = await requestJson("portal-payments", {
+          method: "POST",
+          body: JSON.stringify({ action: "initialize-autopay", billing_mode: $("#autopay-mode").value, max_cycle_charge: $("#autopay-cycle-limit").value, max_extra_price: $("#autopay-extra-limit").value, advance_notice_days: $("#autopay-notice-days").value, authorized_services: services, consent: true })
+        });
+        helcimCheckoutToken = data.checkout_token;
+        result.innerHTML = notice("Complete the secure Helcim card verification.");
+        if (typeof window.appendHelcimPayIframe !== "function") throw new Error("Secure checkout did not load. Refresh the page and try again.");
+        window.appendHelcimPayIframe(helcimCheckoutToken);
+      } catch (error) {
+        result.innerHTML = notice(error.message, true);
+        button.disabled = false;
+        button.textContent = "Connect Card Securely";
+      }
+    });
+
+    $("#autopay-revoke")?.addEventListener("click", async () => {
+      if (!confirm("Turn off AutoPay and revoke this saved-card authorization?")) return;
+      const button = $("#autopay-revoke");
+      button.disabled = true;
+      try {
+        const data = await requestJson("portal-payments", { method: "POST", body: JSON.stringify({ action: "revoke-autopay" }) });
+        renderAutopayState(data);
+        $("#autopay-result").innerHTML = notice("AutoPay authorization was revoked. Future invoices require another payment method.");
+      } catch (error) {
+        $("#autopay-result").innerHTML = notice(error.message, true);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    window.addEventListener("message", async (event) => {
+      if (!helcimCheckoutToken || event.origin !== "https://secure.helcim.app") return;
+      if (event.data?.eventName !== `helcim-pay-js-${helcimCheckoutToken}`) return;
+      const button = $("#autopay-connect");
+      const result = $("#autopay-result");
+      if (event.data.eventStatus === "ABORTED") {
+        result.innerHTML = notice("The card was not connected. Check the card details and try again.", true);
+        button.disabled = false;
+        button.textContent = "Connect Card Securely";
+      }
+      if (event.data.eventStatus === "HIDE") {
+        button.disabled = false;
+        if (!result.textContent.includes("connected")) button.textContent = "Connect Card Securely";
+      }
+      if (event.data.eventStatus !== "SUCCESS") return;
+      try {
+        result.innerHTML = notice("Verifying the secure payment response...");
+        const data = await requestJson("portal-payments", { method: "POST", body: JSON.stringify({ action: "confirm-autopay", checkout_token: helcimCheckoutToken, response: event.data.eventMessage }) });
+        renderAutopayState(data);
+        result.innerHTML = notice("Your card and billing authorization are connected.");
+        $("#autopay-consent").checked = false;
+      } catch (error) {
+        result.innerHTML = notice(error.message, true);
+      } finally {
+        helcimCheckoutToken = "";
+        button.disabled = false;
+      }
+    });
+
     function paymentOptionsMarkup(invoice) {
       if (isPaidInvoice(invoice)) {
         return `<div class="payment-pending"><strong>Payment confirmed.</strong> Green Grin has marked this invoice paid.</div>`;
@@ -7577,6 +7702,7 @@
         : "No service is scheduled to bill this month.";
       $("#customer-billing-plans").innerHTML = billingPlanCard(currentJob, customer);
       renderCustomerPlanOptions(customer);
+      loadAutopayState();
       $("#customer-invoice-list").innerHTML = invoices.length
         ? invoices.map((invoice) => invoiceCard(invoice)).join("")
         : notice("No invoices yet.");
@@ -8025,9 +8151,10 @@
     }
 
     function addMarketingBasemapControl(map, defaultStyle = "street") {
-      const streets = window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      const streets = window.L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+        subdomains: "abcd",
+        maxZoom: 20,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
       });
       const satellite = window.L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         maxZoom: 20,

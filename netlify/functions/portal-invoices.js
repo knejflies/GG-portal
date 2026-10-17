@@ -77,6 +77,7 @@ function invoicePayload(body) {
   const isPaid = status === "Paid";
   return {
     customer_user_id: body.customer_user_id || null,
+    property_id: body.property_id || null,
     customer_code: body.customer_code || "",
     customer_name: body.customer_name || "Customer",
     phone: body.phone || "",
@@ -89,6 +90,7 @@ function invoicePayload(body) {
     line_items: lineItems,
     due_date: body.due_date || null,
     status,
+    sent_at: status === "Sent" ? (body.sent_at || new Date().toISOString()) : (body.sent_at || null),
     service_line: body.service_line || "",
     service_address: String(body.service_address || "").trim().slice(0, 300),
     project_scope: String(body.project_scope || "").trim().slice(0, 8000),
@@ -109,6 +111,8 @@ function invoicePayload(body) {
 function legacyInvoicePayload(payload) {
   const legacy = { ...payload };
   delete legacy.payment_method;
+  delete legacy.property_id;
+  delete legacy.sent_at;
   delete legacy.payment_reference;
   delete legacy.payment_reported_at;
   delete legacy.payment_confirmed_at;
@@ -230,6 +234,16 @@ async function sendPaymentReceiptEmail(invoice) {
   }
 }
 
+async function recordReceiptDelivery(invoice, email) {
+  if (!invoice?.id || !email?.sent || invoice.receipt_sent_at) return invoice;
+  const deliveredAt = new Date().toISOString();
+  const rows = await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(invoice.id)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ receipt_sent_at: deliveredAt, receipt_email_id: email.id || null })
+  }).catch(() => []);
+  return rows?.[0] || { ...invoice, receipt_sent_at: deliveredAt, receipt_email_id: email.id || null };
+}
+
 async function saveInvoice(path, method, body) {
   const payload = invoicePayload(body);
   try {
@@ -330,22 +344,24 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "POST") {
       const rows = await saveInvoice("green_grin_invoices", "POST", body);
-      const invoice = firstInvoiceRow(rows);
+      let invoice = firstInvoiceRow(rows);
       if (!invoice) return json(500, { error: "The invoice could not be saved. Supabase returned no invoice record." });
       const fertilizerRecords = await recordFertilizerApplications(invoice);
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
       const email = body.notify_customer === true ? (invoice.status === "Paid" ? await sendPaymentReceiptEmail(invoice) : await sendInvoiceEmail(invoice)) : null;
+      if (invoice.status === "Paid") invoice = await recordReceiptDelivery(invoice, email);
       return json(200, { invoice, fertilizer_records: fertilizerRecords, push, email });
     }
 
     if (event.httpMethod === "PATCH") {
       if (!body.id) return json(400, { error: "Invoice id is required." });
       const rows = await saveInvoice(`green_grin_invoices?id=eq.${encodeURIComponent(body.id)}`, "PATCH", body);
-      const invoice = firstInvoiceRow(rows);
+      let invoice = firstInvoiceRow(rows);
       if (!invoice) return json(404, { error: "The invoice was not found or could not be updated." });
       const fertilizerRecords = await recordFertilizerApplications(invoice);
       const push = body.notify_customer === true ? await notifyInvoice(invoice) : null;
       const email = body.notify_customer === true ? (invoice.status === "Paid" ? await sendPaymentReceiptEmail(invoice) : await sendInvoiceEmail(invoice)) : null;
+      if (invoice.status === "Paid") invoice = await recordReceiptDelivery(invoice, email);
       return json(200, { invoice, fertilizer_records: fertilizerRecords, push, email });
     }
 
@@ -361,4 +377,4 @@ exports.handler = async (event) => {
   }
 };
 
-exports._test = { invoicePayload, normalizeLineItems, legacyInvoicePayload, firstInvoiceRow, isMissingPaymentColumn, escapeHtml, invoiceEmailPayload, sendInvoiceEmail, sendPaymentReceiptEmail };
+exports._test = { invoicePayload, normalizeLineItems, legacyInvoicePayload, firstInvoiceRow, isMissingPaymentColumn, escapeHtml, invoiceEmailPayload, sendInvoiceEmail, sendPaymentReceiptEmail, recordReceiptDelivery };

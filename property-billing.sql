@@ -152,3 +152,85 @@ begin
   return jsonb_build_object('created', true, 'invoice', to_jsonb(new_invoice));
 end;
 $$;
+
+
+-- Secure Helcim card vault, customer authorization, and duplicate-safe payment attempts.
+alter table public.green_grin_billing_authorizations
+  add column if not exists consent_snapshot jsonb not null default '{}'::jsonb;
+
+create table if not exists public.green_grin_payment_methods (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  customer_user_id uuid not null references auth.users(id) on delete cascade,
+  property_id uuid not null references public.green_grin_properties(id) on delete cascade,
+  provider text not null default 'Helcim',
+  provider_customer_ref text,
+  provider_method_ref text not null,
+  brand text,
+  last_four text,
+  expiry_month integer,
+  expiry_year integer,
+  status text not null default 'Active',
+  verified_at timestamptz,
+  check (status in ('Active','Replaced','Revoked')),
+  check (last_four is null or last_four ~ '^\\d{4}$')
+);
+create unique index if not exists green_grin_payment_methods_provider_ref_idx
+  on public.green_grin_payment_methods(provider, provider_method_ref);
+create index if not exists green_grin_payment_methods_customer_idx
+  on public.green_grin_payment_methods(customer_user_id, property_id, status);
+
+create table if not exists public.green_grin_payment_setup_sessions (
+  checkout_token text primary key,
+  created_at timestamptz not null default now(),
+  expires_at timestamptz not null,
+  completed_at timestamptz,
+  customer_user_id uuid not null references auth.users(id) on delete cascade,
+  property_id uuid not null references public.green_grin_properties(id) on delete cascade,
+  secret_token text not null,
+  consent jsonb not null default '{}'::jsonb
+);
+
+create table if not exists public.green_grin_payment_attempts (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  completed_at timestamptz,
+  invoice_id uuid not null references public.green_grin_invoices(id) on delete cascade,
+  property_id uuid references public.green_grin_properties(id) on delete set null,
+  authorization_id uuid references public.green_grin_billing_authorizations(id) on delete set null,
+  payment_method_id uuid references public.green_grin_payment_methods(id) on delete set null,
+  attempt_number integer not null default 1,
+  idempotency_key uuid not null,
+  amount numeric(10,2) not null,
+  state text not null default 'Processing',
+  provider_transaction_ref text,
+  provider_response jsonb not null default '{}'::jsonb,
+  error_message text,
+  check (state in ('Processing','Approved','Failed','Refunded')),
+  unique (invoice_id, attempt_number),
+  unique (idempotency_key)
+);
+create unique index if not exists green_grin_payment_attempts_live_invoice_idx
+  on public.green_grin_payment_attempts(invoice_id) where state in ('Processing','Approved');
+create index if not exists green_grin_payment_attempts_transaction_idx
+  on public.green_grin_payment_attempts(provider_transaction_ref) where provider_transaction_ref is not null;
+
+create table if not exists public.green_grin_payment_webhook_events (
+  webhook_id text primary key,
+  received_at timestamptz not null default now(),
+  processed_at timestamptz,
+  event_type text,
+  provider_transaction_ref text,
+  payload jsonb not null default '{}'::jsonb
+);
+
+alter table public.green_grin_invoices
+  add column if not exists sent_at timestamptz,
+  add column if not exists receipt_sent_at timestamptz,
+  add column if not exists receipt_email_id text;
+
+alter table public.green_grin_payment_methods enable row level security;
+alter table public.green_grin_payment_setup_sessions enable row level security;
+alter table public.green_grin_payment_attempts enable row level security;
+alter table public.green_grin_payment_webhook_events enable row level security;

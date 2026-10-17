@@ -27,7 +27,7 @@ for (const file of files) {
     assert.ok(html.includes(marker), `${file} is missing ${marker}`);
   }
   assert.equal((html.match(/id="fert-bids"/g) || []).length, 1, `${file} should contain one Fert Bidder panel`);
-  assert.equal((html.match(/data-tab="fert-bids"/g) || []).length, 0, `${file} should group Fertilizer under the Bidders tab`);
+  assert.equal((html.match(/data-tab="fert-bids"/g) || []).length, file === "admin/index.html" ? 1 : 0, `${file} should expose the intended Fertilizer navigation`);
   assert.equal((html.match(/data-tab="bids"/g) || []).length, 1, `${file} should contain one Bidders tab`);
   assert.equal(html.includes('id="owner_job_monthly_price"'), false, `${file} should price created jobs by service week`);
 }

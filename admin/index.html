@@ -4390,6 +4390,7 @@
       <button class="tab owner-only" data-tab="calendar" type="button">Calendar</button>
       <span class="tab-section-label owner-only">Quoting tools</span>
       <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
+      <button class="tab owner-only" data-tab="fert-bids" type="button">Fertilizer Plans</button>
       <button class="tab salesman-access" data-tab="yard-measurement" type="button">Sales Yard Measure</button>
       <button class="tab owner-only" data-tab="mowing-contract" type="button">Mowing Contract</button>
       <button class="tab owner-only" data-tab="sprinkler-blowouts" type="button">Sprinkler Blowouts</button>
@@ -6909,7 +6910,7 @@
     }
 
     function openTab(tabId) {
-      const mainTabId = ["bids", "fert-bids", "project-bids"].includes(tabId) ? "bids" : tabId;
+      const mainTabId = ["bids", "project-bids"].includes(tabId) ? "bids" : tabId;
       document.querySelectorAll(".tab").forEach((tab) => {
         tab.classList.toggle("active", tab.dataset.tab === mainTabId);
       });
@@ -9983,6 +9984,7 @@
               <button class="button small ghost" data-invoice-action="edit" type="button">Edit</button>
               <button class="button small ghost" data-invoice-action="print" type="button">Print</button>
               ${invoice.status === "Draft" ? `<button class="button small" data-invoice-action="send" type="button">Send</button>` : ""}
+              ${!isPaidInvoice(invoice) && invoice.status !== "Draft" ? `<button class="button small" data-invoice-action="charge" type="button">Charge Saved Card</button>` : ""}
               ${isPaidInvoice(invoice) ? `<button class="button small ghost" data-invoice-action="reopen" type="button">Move To Open</button>` : `<button class="button small secondary" data-invoice-action="paid" type="button">Mark Paid</button>`}
 
               <button class="button small ghost" data-invoice-action="delete" type="button">Delete</button>
@@ -12727,6 +12729,7 @@
       const payload = {
         id,
         customer_user_id: selectedCustomer.customer_user_id || selectedCustomer.id || null,
+        property_id: selectedCustomer.property?.id || existingInvoice.property_id || null,
         customer_code: selectedCustomer.customer_code || "",
         customer_name: selectedCustomer.name || "Customer",
         phone: selectedCustomer.phone || "",
@@ -12739,6 +12742,7 @@
         line_items: calculation.lines,
         due_date: $("#invoice_due").value || null,
         status: intent === "send" ? "Sent" : ($("#invoice_status").value === "Sent" ? "Draft" : ($("#invoice_status").value || "Draft")),
+        sent_at: existingInvoice.sent_at || null,
         service_line: $("#invoice_custom_service").value || "Green Grin service",
         service_address: invoiceServiceAddress(selectedCustomer),
         project_scope: $("#invoice_project_scope").value,
@@ -12856,6 +12860,27 @@
           $("#invoice-result").innerHTML = notice("Invoice deleted.");
         } catch (error) {
           $("#invoice-result").innerHTML = notice(error.message, true);
+        }
+        return;
+      }
+      if (button.dataset.invoiceAction === "charge") {
+        if (!confirm(`Charge the customer's authorized saved card ${money(invoice.amount)} for this invoice?`)) return;
+        button.disabled = true;
+        button.textContent = "Charging securely...";
+        try {
+          $("#invoice-result").innerHTML = notice("Checking the authorization and processing the saved card...");
+          const payment = await requestJson("portal-payments", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "charge-invoice", invoice_id: invoice.id }) });
+          if (!payment.approved && !payment.duplicate) throw new Error(payment.error || "The payment was not approved.");
+          if (payment.invoice?.status === "Paid") {
+            const receiptFailed = !payment.duplicate && payment.receipt && payment.receipt.sent !== true && !payment.receipt.duplicate;
+            const receiptText = payment.receipt?.sent ? " A payment receipt was emailed." : payment.receipt?.duplicate ? " The receipt had already been sent." : payment.receipt?.error ? ` Receipt email failed: ${payment.receipt.error}` : "";
+            $("#invoice-result").innerHTML = notice(payment.duplicate ? "This invoice was already paid. No second charge was made." : `Card payment approved and invoice closed.${receiptText}`, receiptFailed);
+          }
+          await loadInvoices();
+        } catch (error) {
+          $("#invoice-result").innerHTML = notice(error.message, true);
+          button.disabled = false;
+          button.textContent = "Charge Saved Card";
         }
         return;
       }
@@ -14477,13 +14502,3 @@
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-

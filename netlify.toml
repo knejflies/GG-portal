@@ -1,2 +1,5 @@
 [functions."morning-yard-reminders"]
   schedule = "*/15 * * * *"
+
+[functions."automatic-payments"]
+  schedule = "0 15 * * *"
