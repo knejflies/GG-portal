@@ -101,9 +101,9 @@ function blowoutCompletionReceiptPayload(lead, history) {
   return {
     from: EMAIL_FROM,
     to: [lead.email],
-    subject: `Green Grin sprinkler blowout completed - ${amount}`,
-    text: [`Hi ${customer},`, "", "Your sprinkler blowout service has been completed.", `Service date: ${serviceDate}`, `Service address: ${lead.service_address || ""}`, `Sprinkler zones: ${Number(history.zones) || 0}`, `Service amount: ${amount}`, ...extraText, "", "This service receipt confirms the work was completed. It does not indicate that payment has been received. Your invoice and payment receipt are handled separately.", "", "Thank you for choosing Green Grin Lawns."].filter(Boolean).join("\n"),
-    html: `<!doctype html><html><body style="margin:0;background:#eef4ec;color:#102419;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#07351d;color:#fff;padding:24px;border-radius:8px 8px 0 0"><strong style="font-size:22px">Green Grin Lawns</strong></div><div style="background:#fff;padding:28px;border:1px solid #d5e2d2;border-top:0;border-radius:0 0 8px 8px"><p>Hi ${escapeHtml(customer)},</p><h1 style="font-size:25px;color:#07351d">Sprinkler blowout completed</h1><p>Your sprinkler blowout service has been completed.</p><div style="background:#f2f8ef;border-left:4px solid #78c653;padding:16px;margin:22px 0"><p><strong>Service date:</strong> ${escapeHtml(serviceDate)}</p><p><strong>Service address:</strong> ${escapeHtml(lead.service_address || "")}</p><p><strong>Sprinkler zones:</strong> ${escapeHtml(Number(history.zones) || 0)}</p><p><strong>Service amount:</strong> ${escapeHtml(amount)}</p></div>${extraHtml}<p style="color:#526458;font-size:14px">This service receipt confirms the work was completed. It does not indicate that payment has been received. Your invoice and payment receipt are handled separately.</p><p>Thank you for choosing Green Grin Lawns.</p></div></div></body></html>`
+    subject: `Green Grin payment receipt - ${amount}`,
+    text: [`Hi ${customer},`, "", "Thank you. Your payment for the completed sprinkler blowout has been received.", `Service date: ${serviceDate}`, `Service address: ${lead.service_address || ""}`, `Sprinkler zones: ${Number(history.zones) || 0}`, `Amount paid: ${amount}`, ...extraText, "", "Status: Paid", "", "This email is your payment receipt.", "", "Thank you for choosing Green Grin Lawns."].filter(Boolean).join("\n"),
+    html: `<!doctype html><html><body style="margin:0;background:#eef4ec;color:#102419;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#07351d;color:#fff;padding:24px;border-radius:8px 8px 0 0"><strong style="font-size:22px">Green Grin Lawns</strong></div><div style="background:#fff;padding:28px;border:1px solid #d5e2d2;border-top:0;border-radius:0 0 8px 8px"><p>Hi ${escapeHtml(customer)},</p><h1 style="font-size:25px;color:#07351d">Payment received</h1><p>Thank you. Your payment for the completed sprinkler blowout has been received.</p><div style="background:#f2f8ef;border-left:4px solid #78c653;padding:16px;margin:22px 0"><p><strong>Service date:</strong> ${escapeHtml(serviceDate)}</p><p><strong>Service address:</strong> ${escapeHtml(lead.service_address || "")}</p><p><strong>Sprinkler zones:</strong> ${escapeHtml(Number(history.zones) || 0)}</p><p><strong>Amount paid:</strong> ${escapeHtml(amount)}</p><p><strong>Status:</strong> Paid</p></div>${extraHtml}<p style="color:#526458;font-size:14px">This email is your payment receipt.</p><p>Thank you for choosing Green Grin Lawns.</p></div></div></body></html>`
   };
 }
 async function sendBlowoutCompletionReceipt(lead, history) {
@@ -227,7 +227,17 @@ exports.handler = async (event) => {
       const total = Math.round((baseAmount + extras.reduce((sum, row) => sum + row.quantity * row.rate, 0)) * 100) / 100;
       const rows = await supabase("green_grin_sprinkler_blowout_history", { method: "POST", body: JSON.stringify({ lead_id: lead.id, customer_user_id: result.customer_user_id, property_id: result.property_id, service_date: serviceDate, zones: Number(lead.zones) || 0, spigots: Number(lead.spigots) || 0, service_notes: clean(body.service_notes, 2000), extra_charges: extras, base_amount: baseAmount, total_amount: total, status: "Completed", idempotency_key: key }) });
       const history = rows?.[0] || { service_date: serviceDate, zones: Number(lead.zones) || 0, extra_charges: extras, base_amount: baseAmount, total_amount: total };
-      const completionUpdate = { status: "Completed", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id };
+      const lines = [{ description: `Sprinkler blowout (${Number(history.zones) || 0} zones)`, category: "Sprinkler Blowout", quantity: 1, unit: "service", rate: baseAmount, amount: baseAmount }, ...extras.map((row) => ({ ...row, category: "Approved Extra", amount: Math.round(row.quantity * row.rate * 100) / 100 }))];
+      const invoiceKey = `blowout:${history.id}`;
+      const existingInvoices = await supabase(`green_grin_invoices?select=*&source_estimate_number=eq.${encodeURIComponent(invoiceKey)}&limit=1`);
+      let invoice = existingInvoices?.[0] || null;
+      if (!invoice) {
+        const invoiceRows = await supabase("green_grin_invoices", { method: "POST", body: JSON.stringify({ customer_user_id: result.customer_user_id, customer_name: lead.full_name, phone: lead.phone || "", email: lead.email, amount: total, subtotal: total, line_items: lines, due_date: serviceDate, status: "Paid", service_line: "Sprinkler Blowout", service_address: lead.service_address, notes: "Paid sprinkler blowout service.", payment_method: clean(body.payment_method || "Customer payment", 80), property_id: result.property_id, source_estimate_number: invoiceKey, blowout_history_id: history.id, active: true }) });
+        invoice = invoiceRows?.[0] || null;
+      }
+      if (!invoice) throw new Error("The paid blowout invoice could not be recorded.");
+      await supabase(`green_grin_sprinkler_blowout_history?id=eq.${encodeURIComponent(history.id)}`, { method: "PATCH", body: JSON.stringify({ invoice_id: invoice.id, status: "Paid" }) });
+      const completionUpdate = { status: "Paid", completed_at: new Date().toISOString(), completion_notes: clean(body.service_notes, 2000), customer_price: baseAmount, customer_user_id: result.customer_user_id, property_id: result.property_id, invoice_id: invoice.id, referral_active: false };
       try {
         await supabase(`green_grin_sprinkler_blowout_leads?id=eq.${encodeURIComponent(lead.id)}`, { method: "PATCH", body: JSON.stringify(completionUpdate) });
       } catch (error) {
@@ -237,7 +247,7 @@ exports.handler = async (event) => {
       }
       const email = await sendBlowoutCompletionReceipt(lead, history);
       await supabase("green_grin_message_log", { method: "POST", body: JSON.stringify({ job_id: null, phone: lead.email || lead.phone || "", template: email.sent ? "completed-email-sent" : "completed-email-failed", message: email.sent ? `Sprinkler blowout completion receipt sent to ${lead.full_name || "Customer"}.` : `Sprinkler blowout completion receipt failed for ${lead.full_name || "Customer"}: ${email.error || email.reason || "Unknown error."}`, actor_type: "Owner", actor_name: "Owner", twilio_sid: email.id || null }) }).catch(() => null);
-      return json(200, { history, duplicate: false, email });
+      return json(200, { history: { ...history, invoice_id: invoice.id, status: "Paid" }, invoice, duplicate: false, email });
     }
     if (event.httpMethod === "POST" && body.action === "set-price") {
       const baseAmount = Math.max(0, Number(body.base_amount) || 0);

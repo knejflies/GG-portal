@@ -1,5 +1,7 @@
 const assert = require("assert");
+const fs = require("fs");
 const { normalizeAddress, geocodeDecision, extraRows, blowoutIdempotencyKey, resolveBlowoutPrice, scheduledEmailRoster, blowoutCompletionReceiptPayload } = require("../netlify/functions/portal-sprinkler-operations.js")._test;
+const operationSource = fs.readFileSync("netlify/functions/portal-sprinkler-operations.js", "utf8");
 
 assert.equal(normalizeAddress("123 Main St., Caldwell, ID"), normalizeAddress("123 main st caldwell id"));
 assert.equal(geocodeDecision({ lat: "43.6", lon: "-116.6", importance: 0.8, display_name: "123 Main St, Caldwell, Idaho" }, "123 Main St").status, "Located");
@@ -21,8 +23,10 @@ assert.equal(roster.recipients.length, 2, "Separate scheduled records sharing an
 assert.equal(roster.missing_email[0].name, "Missing Email");
 assert.equal(roster.closed_total, 2);
 const receipt = blowoutCompletionReceiptPayload({ full_name: "Test Customer", email: "test@example.com", service_address: "123 Test St" }, { service_date: "2026-10-16", zones: 8, total_amount: 65, extra_charges: [] });
-assert.ok(receipt.subject.includes("$65.00"), "Completion receipt subject should include the final service amount.");
-assert.ok(receipt.text.includes("does not indicate that payment has been received"), "Completion receipt must not falsely claim payment was received.");
+assert.ok(receipt.subject.includes("payment receipt - $65.00"), "Payment receipt subject should include the final paid amount.");
+assert.ok(receipt.text.includes("Status: Paid"), "Receipt should confirm that payment was received.");
 assert.ok(receipt.text.includes("October 16, 2026"), "Completion receipt should include the service date.");
+assert.ok(operationSource.includes('status: "Paid", service_line: "Sprinkler Blowout"'), "Completing a paid blowout should create a paid invoice for bookkeeping.");
+assert.ok(operationSource.includes('const completionUpdate = { status: "Paid"'), "Completing a blowout should close the signup as paid.");
 
 console.log("Sprinkler operations tests passed.");
