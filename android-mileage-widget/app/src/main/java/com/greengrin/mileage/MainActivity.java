@@ -59,7 +59,26 @@ public class MainActivity extends Activity {
             connectionStatus.setText("Testing the live Green Grin portal...");
             testPortalConnection(ownerPin, save, connectionStatus);
         });
-        layout.addView(intro); layout.addView(pin); layout.addView(save); layout.addView(connectionStatus); layout.setGravity(Gravity.TOP);
+        layout.addView(intro); layout.addView(pin); layout.addView(save); layout.addView(connectionStatus);
+        float savedMiles = MileageStore.milesValue(this);
+        if (!MileageStore.running(this) && savedMiles > 0f) {
+            Button retryTrip = new Button(this);
+            retryTrip.setText("Sync Saved Trip (" + String.format(java.util.Locale.US, "%.1f mi", savedMiles) + ")");
+            retryTrip.setOnClickListener(v -> {
+                if (MileageStore.prefs(this).getString("admin_pin", "").isEmpty()) {
+                    connectionStatus.setText("Connect the portal first, then sync the saved trip.");
+                    return;
+                }
+                retryTrip.setEnabled(false);
+                retryTrip.setText("Syncing saved trip...");
+                Intent stop = new Intent(this, MileageTrackingService.class).setAction(MileageWidgetProvider.STOP)
+                    .putExtra("purpose", "Recovered Android GPS trip");
+                startService(stop);
+                connectionStatus.setText("Saved trip sent. Check the Green Grin mileage notification for the result.");
+            });
+            layout.addView(retryTrip);
+        }
+        layout.setGravity(Gravity.TOP);
         setContentView(layout);
         if (android.os.Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.POST_NOTIFICATIONS}, 10);
         else if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 11);

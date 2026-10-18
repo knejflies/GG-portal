@@ -32,10 +32,11 @@ const { handler } = require("../netlify/functions/portal-expenses.js");
   const build = fs.readFileSync("android-mileage-widget/app/build.gradle", "utf8");
   assert.match(activity, /Test & Save Portal Connection/);
   assert.match(activity, /"connection_test"/);
+  assert.match(activity, /Sync Saved Trip/);
   assert.match(activity, /setConnectTimeout\(15000\)/);
   assert.match(service, /setReadTimeout\(20000\)/);
   assert.match(service, /BigTextStyle/);
-  assert.match(build, /versionCode 3/);
+  assert.match(build, /versionCode 4/);
 
   console.log("Mileage widget portal connection checks passed.");
 })().catch((error) => {
