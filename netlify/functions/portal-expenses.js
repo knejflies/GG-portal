@@ -256,6 +256,10 @@ exports.handler = async (event) => {
 
     const body = JSON.parse(event.body || "{}");
 
+    if (event.httpMethod === "POST" && body.action === "connection_test") {
+      return json(200, { ok: true, message: "Mileage widget connected." });
+    }
+
     if (event.httpMethod === "POST" && body.action === "scan") {
       const expense = await scanReceipt(body);
       return json(200, { expense });

@@ -79,9 +79,12 @@ public class MileageTrackingService extends Service implements LocationListener 
                 body.put("purpose", purpose == null || purpose.trim().isEmpty() ? "GPS-tracked business trip" : purpose.trim());
                 body.put("route_points", routePoints);
                 HttpURLConnection connection = (HttpURLConnection) new URL("https://portal.greengrinlawns.com/.netlify/functions/portal-expenses").openConnection();
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(20000);
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setRequestProperty("x-admin-pin", pin);
+                connection.setRequestProperty("User-Agent", "GreenGrinMileage/2.1");
                 connection.setDoOutput(true);
                 try (OutputStream output = connection.getOutputStream()) { output.write(body.toString().getBytes(StandardCharsets.UTF_8)); }
                 int status = connection.getResponseCode();
@@ -97,13 +100,16 @@ public class MileageTrackingService extends Service implements LocationListener 
                 }
                 notifyResult(status >= 200 && status < 300 ? "Trip saved to Green Grin Mileage log." : "Trip stayed on phone. " + (serverMessage.isEmpty() ? "Portal rejected the sync." : serverMessage));
                 connection.disconnect();
-            } catch (Exception error) { notifyResult("Trip stayed on phone. Check the portal connection and try again."); }
+            } catch (Exception error) {
+                String detail = error.getMessage();
+                notifyResult("Trip stayed on phone. " + error.getClass().getSimpleName() + (detail == null || detail.trim().isEmpty() ? "." : ": " + detail));
+            }
             stopForeground(STOP_FOREGROUND_REMOVE);
             stopSelf();
             update();
         }).start();
     }
-    private void notifyResult(String message) { createChannel(); ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(43, new Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("Green Grin mileage").setContentText(message).setAutoCancel(true).build()); }
+    private void notifyResult(String message) { createChannel(); ((NotificationManager) getSystemService(NOTIFICATION_SERVICE)).notify(43, new Notification.Builder(this, CHANNEL).setSmallIcon(R.drawable.ic_launcher).setContentTitle("Green Grin mileage").setContentText(message).setStyle(new Notification.BigTextStyle().bigText(message)).setAutoCancel(true).build()); }
     @Override public void onLocationChanged(Location location) {
         if (last != null) { float delta = last.distanceTo(location) / 1609.344f; if (delta > 0f && delta < 2f) MileageStore.miles(this, MileageStore.milesValue(this) + delta); }
         last = location;
