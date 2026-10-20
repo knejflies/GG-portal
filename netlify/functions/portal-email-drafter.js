@@ -3,7 +3,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
-const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, x-admin-pin", "Access-Control-Allow-Methods": "POST, OPTIONS" };
+const { isAdminRequest } = require("./portal-auth");
+const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (statusCode, body) => ({ statusCode, headers, body: JSON.stringify(body) });
 const clean = (value, max = 20000) => String(value || "").trim().slice(0, max);
 const escapeHtml = (value) => clean(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -28,7 +29,7 @@ async function recordAttempt(recipient, message, result) {
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
   if (event.httpMethod !== "POST") return json(405, { error: "POST is required." });
-  if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
+  if (!isAdminRequest(event)) return json(401, { error: "Admin access required." });
   if (!RESEND_API_KEY) return json(500, { error: "Email is not configured in Netlify." });
   try {
     const body = JSON.parse(event.body || "{}");

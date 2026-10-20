@@ -51,6 +51,7 @@
     if (!token) return "";
     try {
       const data = await post(endpoint, { action: "restore", mode, token });
+      if (mode === "admin" && data.restored === true) return "__SIGNED_OWNER_SESSION__";
       return data.pin || "";
     } catch (_error) {
       clear(mode);
@@ -63,6 +64,10 @@
     restore,
     clear,
     clearAll,
-    has: (mode) => Boolean(read(mode))
+    has: (mode) => Boolean(read(mode)),
+    headers: (mode) => {
+      const token = read(mode);
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    }
   };
 })();

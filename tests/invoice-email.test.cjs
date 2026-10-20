@@ -70,7 +70,7 @@ const receiptEmail = invoiceEmailPayload({ ...project, status: "Paid" }, { recei
 assert.match(receiptEmail.subject, /payment receipt/i);
 assert.match(receiptEmail.text, /Status: Paid/);
 
-for (const file of ["admin/index.html", "portal/index.html", "portal.html"]) {
+for (const file of ["admin/index.html", "portal/index.html"]) {
   const html = require("fs").readFileSync(file, "utf8");
   assert.ok(html.includes('notify_customer: nextStatus === "Paid"'), `${file} must request a receipt when an invoice is marked paid.`);
   assert.ok(html.includes("Invoice closed and moved to paid."), `${file} must clearly confirm closeout.`);

@@ -77,6 +77,7 @@ public class MileageTrackingService extends Service implements LocationListener 
                 body.put("mileage_rate", 0.76);
                 body.put("route", route == null || route.trim().isEmpty() ? "Android GPS trip" : route.trim());
                 body.put("purpose", purpose == null || purpose.trim().isEmpty() ? "GPS-tracked business trip" : purpose.trim());
+                body.put("source_key", MileageStore.tripId(this));
                 body.put("route_points", routePoints);
                 HttpURLConnection connection = (HttpURLConnection) new URL("https://portal.greengrinlawns.com/.netlify/functions/portal-expenses").openConnection();
                 connection.setConnectTimeout(15000);
@@ -98,7 +99,9 @@ public class MileageTrackingService extends Service implements LocationListener 
                     }
                     try { serverMessage = new JSONObject(responseText.toString()).optString("error", ""); } catch (Exception ignored) { }
                 }
-                notifyResult(status >= 200 && status < 300 ? "Trip saved to Green Grin Mileage log." : "Trip stayed on phone. " + (serverMessage.isEmpty() ? "Portal rejected the sync." : serverMessage));
+                boolean saved = status >= 200 && status < 300;
+                if (saved) MileageStore.reset(this);
+                notifyResult(saved ? "Trip saved to Green Grin Mileage log." : "Trip stayed on phone. " + (serverMessage.isEmpty() ? "Portal rejected the sync." : serverMessage));
                 connection.disconnect();
             } catch (Exception error) {
                 String detail = error.getMessage();

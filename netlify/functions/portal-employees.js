@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { requireAdmin: requireOwner } = require("./portal-auth");
 const SUBCONTRACTOR_SERVICES = ["Aeration", "Shrubs", "Snow"];
 
 const headers = {
@@ -23,9 +24,7 @@ function requireSetup() {
 }
 
 function requireAdmin(event) {
-  if (!ADMIN_PIN) return "Admin PIN is not configured yet. Add GREEN_GRIN_ADMIN_PIN in Netlify.";
-  if (event.headers["x-admin-pin"] !== ADMIN_PIN) return "Wrong admin PIN.";
-  return null;
+  return requireOwner(event, "Wrong admin PIN.");
 }
 
 async function verifyUser(event) {
@@ -66,6 +65,15 @@ function employeeCodeNumber(code) {
 
 function normalizePhone(value) {
   return String(value || "").replace(/\D/g, "");
+}
+
+function publicEmployee(employee) {
+  return {
+    full_name: employee?.full_name || "",
+    email: employee?.email || "",
+    phone: employee?.phone || "",
+    status: employee?.status || "Pending"
+  };
 }
 
 async function nextEmployeeCode() {
@@ -123,18 +131,6 @@ async function employeeForUser(user) {
   return await ensureEmployeeCode(rows?.[0]);
 }
 
-async function deleteAuthUser(userId) {
-  if (!userId) return false;
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
-    method: "DELETE",
-    headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
-    }
-  });
-  return response.ok;
-}
-
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
   const setupError = requireSetup();
@@ -144,26 +140,38 @@ exports.handler = async (event) => {
     if (event.httpMethod === "POST") {
       const body = JSON.parse(event.body || "{}");
       const email = (body.email || "").toLowerCase();
+      const requestedPin = String(body.requested_pin || "").trim();
+      if (requestedPin && !/^\d{4,8}$/.test(requestedPin)) return json(400, { error: "Employee PINs must contain 4 to 8 numbers." });
       const existing = email
         ? await supabase(`green_grin_employees?select=*&email=eq.${encodeURIComponent(email)}&limit=1`)
         : [];
+      if (existing?.[0]) {
+        const employee = existing[0];
+        if (employee.status !== "Pending") return json(200, { employee: publicEmployee(employee), existing: true });
+        const update = {
+          full_name: body.full_name || employee.full_name || "",
+          phone: normalizePhone(body.phone) || employee.phone || ""
+        };
+        if (!employee.employee_pin && requestedPin) update.employee_pin = requestedPin;
+        const rows = await supabase(`green_grin_employees?id=eq.${encodeURIComponent(employee.id)}`, { method: "PATCH", body: JSON.stringify(update) });
+        return json(200, { employee: publicEmployee(rows?.[0] || { ...employee, ...update }), existing: true });
+      }
       const employee = {
-        employee_code: existing?.[0]?.employee_code || await nextEmployeeCode(),
+        employee_code: await nextEmployeeCode(),
         full_name: body.full_name || "",
         email,
         phone: normalizePhone(body.phone),
         status: "Pending"
       };
-      if (body.requested_pin) employee.employee_pin = body.requested_pin;
+      if (requestedPin) employee.employee_pin = requestedPin;
       if (!employee.full_name || !employee.email || employee.phone.length < 10) {
         return json(400, { error: "Employee name, email, and a valid phone number are required." });
       }
-      const rows = await supabase("green_grin_employees?on_conflict=email", {
+      const rows = await supabase("green_grin_employees", {
         method: "POST",
-        headers: { Prefer: "resolution=merge-duplicates,return=representation" },
         body: JSON.stringify(employee)
       });
-      return json(200, { employee: rows?.[0] });
+      return json(200, { employee: publicEmployee(rows?.[0] || employee), existing: false });
     }
 
     if (event.httpMethod === "GET") {
@@ -222,9 +230,8 @@ exports.handler = async (event) => {
       if (!body.id) return json(400, { error: "Employee id is required." });
       const rows = await supabase(`green_grin_employees?select=*&id=eq.${encodeURIComponent(body.id)}&limit=1`);
       const employee = rows?.[0] || null;
-      await supabase(`green_grin_employees?id=eq.${encodeURIComponent(body.id)}`, { method: "DELETE" });
-      const authDeleted = await deleteAuthUser(employee?.user_id);
-      return json(200, { ok: true, authDeleted });
+      const updated = await supabase(`green_grin_employees?id=eq.${encodeURIComponent(body.id)}`, { method: "PATCH", body: JSON.stringify({ status: "Inactive", employee_pin: null }) });
+      return json(200, { ok: true, deactivated: true, authDeleted: false, employee: updated?.[0] || employee });
     }
 
     return json(405, { error: "Method not allowed." });

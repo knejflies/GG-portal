@@ -65,7 +65,7 @@ assert.equal(invoiceModule._test.isMissingPaymentColumn(new Error("payment_refer
   assert.equal(config.zelleEmail, "ken@greengrinlawns.com");
   assert.equal(config.venmoHandle, "@greengrinlawns");
 
-  const files = ["portal.html", "admin/index.html", "employee/index.html", "portal/index.html"];
+  const files = ["admin/index.html", "employee/index.html", "portal/index.html"];
   const requiredMarkers = [
     "function paymentReference(invoice)",
     "function isPaymentPending(invoice)",

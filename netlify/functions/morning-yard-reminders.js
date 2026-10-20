@@ -93,6 +93,35 @@ function normalizePhone(value) {
   return String(value || "").replace(/\D/g, "");
 }
 
+function reminderDeliveryKey(jobId, serviceDate) {
+  return `yard-reminder:${jobId}:${serviceDate}`;
+}
+
+async function claimReminder(job, today, reminderTime, message) {
+  const deliveryKey = reminderDeliveryKey(job.id, today);
+  const existing = await supabase(`green_grin_message_log?select=id,template&twilio_sid=eq.${encodeURIComponent(deliveryKey)}&limit=1`).catch(() => []);
+  if (existing?.length) return null;
+  try {
+    const rows = await supabase("green_grin_message_log", {
+      method: "POST",
+      body: JSON.stringify({
+        job_id: job.id,
+        phone: job.phone,
+        template: "objects-pending",
+        message,
+        actor_type: "System",
+        actor_name: `Morning app reminder ${reminderTime}`,
+        twilio_sid: deliveryKey
+      })
+    });
+    return rows?.[0] || { id: null, twilio_sid: deliveryKey };
+  } catch (error) {
+    const raced = await supabase(`green_grin_message_log?select=id&twilio_sid=eq.${encodeURIComponent(deliveryKey)}&limit=1`).catch(() => []);
+    if (raced?.length) return null;
+    throw error;
+  }
+}
+
 async function customerPushTarget(job) {
   const target = {
     customer_user_id: job.customer_user_id || null,
@@ -133,7 +162,7 @@ exports.handler = async () => {
 
   const today = localDate();
   const nowTime = localTime();
-  const jobs = await supabase("green_grin_jobs?select=*&status=neq.Completed&limit=200");
+  const jobs = await supabase("green_grin_jobs?select=*&status=not.in.(Completed,Archived,Cancelled,Paid)&limit=200");
   const customers = await supabase("green_grin_customers?select=id,customer_code,email,phone,active,service_weekday,text_cleanup_reminders&limit=500").catch(() => []);
 
   let sent = 0;
@@ -170,6 +199,11 @@ exports.handler = async () => {
     }
 
     const message = cleanupMessage(job);
+    const claim = await claimReminder(job, today, reminderTime, message);
+    if (!claim) {
+      skipped += 1;
+      continue;
+    }
     const push = await sendPushToTarget(supabase, await customerPushTarget(job), {
       title: "Yard cleanup reminder",
       body: message,
@@ -188,20 +222,11 @@ exports.handler = async () => {
           last_cleanup_reminder_sent_at: sentAt
         })
       });
-    }
-
-    if (delivered) {
-      await supabase("green_grin_message_log", {
-        method: "POST",
-        body: JSON.stringify({
-          job_id: job.id,
-          phone: job.phone,
-          template: "objects",
-          message,
-          actor_type: "System",
-          actor_name: `Morning app reminder ${reminderTime}`,
-          twilio_sid: null
-        })
+      if (claim.id) await supabase(`green_grin_message_log?id=eq.${encodeURIComponent(claim.id)}`, { method: "PATCH", body: JSON.stringify({ template: "objects" }) });
+    } else if (claim.id) {
+      await supabase(`green_grin_message_log?id=eq.${encodeURIComponent(claim.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ template: "objects-failed", twilio_sid: null })
       });
     }
 
@@ -215,4 +240,4 @@ exports.handler = async () => {
   };
 };
 
-exports._test = { customerAllowsReminder, isServiceToday, localWeekday, reminderDelivered };
+exports._test = { customerAllowsReminder, isServiceToday, localWeekday, reminderDelivered, reminderDeliveryKey };

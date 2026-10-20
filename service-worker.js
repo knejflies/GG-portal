@@ -1,8 +1,9 @@
-const CACHE_NAME = "green-grin-app-v97";
+const CACHE_NAME = "green-grin-app-v98";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/portal/",
+  "/portal.html",
   "/employee/",
   "/admin/",
   "/manifest.webmanifest",
@@ -45,8 +46,10 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => null);
+        if (response.ok && new URL(event.request.url).origin === self.location.origin) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => null);
+        }
         return response;
       })
       .catch(() => caches.match(event.request))

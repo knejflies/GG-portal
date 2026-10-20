@@ -1,9 +1,9 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { header, isAdminRequest, safeEqual } = require("./portal-auth");
 
 async function bookkeeperFromRequest(event, supabase) {
-  const auth = event.headers.authorization || event.headers.Authorization || "";
+  const auth = header(event, "authorization");
   const token = auth.replace(/^Bearer\s+/i, "");
   if (token) {
     const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
@@ -16,7 +16,7 @@ async function bookkeeperFromRequest(event, supabase) {
     }
   }
 
-  const pin = event.headers["x-employee-pin"] || "";
+  const pin = header(event, "x-employee-pin");
   if (pin) {
     const rows = await supabase(`green_grin_employees?select=*&employee_pin=eq.${encodeURIComponent(pin)}&status=eq.Active&role=eq.Bookkeeper&limit=1`);
     if (rows?.[0]) return rows[0];
@@ -25,12 +25,12 @@ async function bookkeeperFromRequest(event, supabase) {
 }
 
 async function requireAccounting(event, supabase) {
-  const headers = event.headers || {};
-  const adminPin = headers["x-admin-pin"] || headers["X-Admin-Pin"] || headers["X-ADMIN-PIN"] || "";
-  if (ADMIN_PIN && adminPin === ADMIN_PIN) return { role: "Owner" };
+  if (isAdminRequest(event)) return { role: "Owner" };
   const employee = await bookkeeperFromRequest(event, supabase);
   if (employee) return { role: "Bookkeeper", employee };
-  throw new Error("Accounting access is required.");
+  const error = new Error("Accounting access is required.");
+  error.statusCode = 401;
+  throw error;
 }
 
-module.exports = { requireAccounting, bookkeeperFromRequest };
+module.exports = { requireAccounting, bookkeeperFromRequest, header, safeEqual };

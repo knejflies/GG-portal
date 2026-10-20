@@ -6,9 +6,11 @@ const DEFAULT_RECEIPT_MODEL = ["gpt", "4o", "mini"].join("-");
 const OPENAI_RECEIPT_MODEL = process.env.OPENAI_RECEIPT_MODEL || DEFAULT_RECEIPT_MODEL;
 const DEFAULT_MILEAGE_RATE = 0.76;
 const { requireAccounting } = require("./accounting-auth");
+const { requireAdmin: requireOwner } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
+  "Cache-Control": "no-store, max-age=0",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin, x-employee-pin",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS"
@@ -24,9 +26,7 @@ function requireSetup() {
 }
 
 function requireAdmin(event) {
-  if (!ADMIN_PIN) return "Admin PIN is not configured yet. Add GREEN_GRIN_ADMIN_PIN in Netlify.";
-  if (event.headers["x-admin-pin"] !== ADMIN_PIN) return "Wrong admin PIN.";
-  return null;
+  return requireOwner(event, "Wrong admin PIN.");
 }
 
 async function supabase(path, options = {}) {
@@ -95,6 +95,8 @@ function mileagePayload(body) {
   const routePoints = Array.isArray(body.route_points) ? body.route_points.slice(0, 500).map((point) => ({ lat: Number(point?.lat), lon: Number(point?.lon) })).filter((point) => Number.isFinite(point.lat) && Number.isFinite(point.lon)) : [];
   const routeNote = routePoints.length ? `GPS_ROUTE_POINTS:${JSON.stringify(routePoints)}` : "";
   const amount = Math.round(miles * rate * 100) / 100;
+  const sourceKey = String(body.source_key || "").trim();
+  if (sourceKey && !/^[a-zA-Z0-9-]{8,80}$/.test(sourceKey)) throw new Error("Mileage trip identifier is invalid.");
   return {
     expense_type: "mileage",
     expense_date: cleanDate(body.expense_date || body.date),
@@ -105,7 +107,7 @@ function mileagePayload(body) {
     tax: null,
     payment_method: "Mileage",
     notes: [purpose, routeNote].filter(Boolean).join(" | ").slice(0, 800),
-    receipt_filename: "",
+    receipt_filename: sourceKey ? `mileage-widget:${sourceKey}` : "",
     mileage_start: start,
     mileage_end: end,
     mileage_miles: miles,
@@ -114,6 +116,15 @@ function mileagePayload(body) {
     ai_raw: null,
     active: true
   };
+}
+
+async function existingMileageBySourceKey(sourceKey) {
+  const clean = String(sourceKey || "").trim();
+  if (!clean) return null;
+  if (!/^[a-zA-Z0-9-]{8,80}$/.test(clean)) throw new Error("Mileage trip identifier is invalid.");
+  const marker = `mileage-widget:${clean}`;
+  const rows = await supabase(`green_grin_expenses?select=*&receipt_filename=eq.${encodeURIComponent(marker)}&active=eq.true&limit=1`);
+  return rows?.[0] || null;
 }
 
 function fertilizerPayload(body) {
@@ -266,10 +277,23 @@ exports.handler = async (event) => {
     }
 
     if (event.httpMethod === "POST" && body.action === "mileage") {
-      const rows = await supabase("green_grin_expenses", {
-        method: "POST",
-        body: JSON.stringify(mileagePayload(body))
-      });
+      const existing = await existingMileageBySourceKey(body.source_key);
+      if (existing) {
+        const expenses = await activeExpenses();
+        return json(200, { expense: existing, expenses, totals: totalsFor(expenses), duplicate: true });
+      }
+      let rows;
+      try {
+        rows = await supabase("green_grin_expenses", {
+          method: "POST",
+          body: JSON.stringify(mileagePayload(body))
+        });
+      } catch (error) {
+        const raced = await existingMileageBySourceKey(body.source_key);
+        if (!raced) throw error;
+        const expenses = await activeExpenses();
+        return json(200, { expense: raced, expenses, totals: totalsFor(expenses), duplicate: true });
+      }
       const expenses = await activeExpenses();
       return json(200, { expense: rows?.[0] || null, expenses, totals: totalsFor(expenses) });
     }
@@ -300,13 +324,15 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "DELETE") {
       if (!body.id) return json(400, { error: "Expense id is required." });
-      await supabase(`green_grin_expenses?id=eq.${encodeURIComponent(body.id)}`, { method: "DELETE" });
+      await supabase(`green_grin_expenses?id=eq.${encodeURIComponent(body.id)}`, { method: "PATCH", body: JSON.stringify({ active: false }) });
       const expenses = await activeExpenses();
-      return json(200, { ok: true, expenses, totals: totalsFor(expenses) });
+      return json(200, { ok: true, archived: true, expenses, totals: totalsFor(expenses) });
     }
 
     return json(405, { error: "Method not allowed." });
   } catch (error) {
-    return json(500, { error: error.message });
+    return json(error.statusCode || 500, { error: error.message });
   }
 };
+
+exports._test = { moneyNumber, cleanDate, expensePayload, mileagePayload, fertilizerPayload, totalsFor };

@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const { requireAccounting } = require("./accounting-auth");
+const { requireAdmin } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
@@ -15,9 +16,7 @@ function setupError() {
   return !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY ? "Supabase is not configured yet." : null;
 }
 function adminError(event) {
-  if (!ADMIN_PIN) return "Admin PIN is not configured yet. Add GREEN_GRIN_ADMIN_PIN in Netlify.";
-  if (event.headers["x-admin-pin"] !== ADMIN_PIN) return "Wrong admin PIN.";
-  return null;
+  return requireAdmin(event, "Wrong admin PIN.");
 }
 async function supabase(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {

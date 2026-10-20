@@ -1,11 +1,12 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { isAdminRequest } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-admin-pin",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin",
   "Access-Control-Allow-Methods": "GET, OPTIONS"
 };
 
@@ -37,7 +38,7 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "GET") return json(405, { error: "Method not allowed." });
   const error = setupError();
   if (error) return json(500, { error });
-  if (event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Wrong admin PIN." });
+  if (!isAdminRequest(event)) return json(401, { error: "Wrong admin PIN." });
 
   try {
     const [jobs, invoices, completions] = await Promise.all([

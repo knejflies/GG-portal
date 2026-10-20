@@ -3,6 +3,7 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const { pushReady, sendPushToAllCustomers, sendPushToSubscription, sendPushToTarget } = require("./push-helper");
+const { adminSession, header, isAdminRequest } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
@@ -67,9 +68,8 @@ async function employeeByPin(event) {
 }
 
 async function ownerContext(event) {
-  if (event.headers["x-admin-pin"]) {
-    if (!ADMIN_PIN) throw new Error("Admin PIN is not configured yet.");
-    if (event.headers["x-admin-pin"] !== ADMIN_PIN) throw new Error("Wrong admin PIN.");
+  if (header(event, "x-admin-pin") || adminSession(event)) {
+    if (!isAdminRequest(event)) throw new Error("Wrong admin PIN.");
     return {
       owner_type: "admin",
       owner_email: "owner",

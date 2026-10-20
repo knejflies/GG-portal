@@ -25,7 +25,14 @@ async function call(body) {
 
   const restored = await call({ action: "restore", mode: "admin", token: created.body.token });
   assert.equal(restored.statusCode, 200);
-  assert.equal(restored.body.pin, "246810");
+  assert.equal(restored.body.restored, true);
+  assert.equal(restored.body.mode, "admin");
+  assert.equal(restored.body.pin, undefined, "Restoring a signed owner session must never return the admin PIN to the browser.");
+
+  const portalAuth = require(path.join(root, "netlify/functions/portal-auth.js"));
+  assert.equal(portalAuth.isAdminRequest({ headers: { Authorization: `Bearer ${created.body.token}` } }), true);
+  assert.equal(portalAuth.isAdminRequest({ headers: { authorization: "Bearer invalid.token" } }), false);
+  assert.equal(portalAuth.isAdminRequest({ headers: { "X-Admin-Pin": "246810" } }), true);
 
   const tampered = `${created.body.token.slice(0, -1)}x`;
   const rejected = await call({ action: "restore", mode: "admin", token: tampered });
@@ -34,12 +41,17 @@ async function call(body) {
   const sessionAsset = fs.readFileSync(path.join(root, "assets/green-grin-session.js"), "utf8");
   assert.match(sessionAsset, /greenGrinPersistentSessionV1/);
   assert.match(sessionAsset, /localStorage\.setItem\(storageKey\(mode\), token\)/);
+  assert.match(sessionAsset, /Authorization: `Bearer \$\{token\}`/);
+  assert.match(sessionAsset, /__SIGNED_OWNER_SESSION__/);
 
-  for (const relative of ["admin/index.html", "employee/index.html", "portal/index.html", "portal.html"]) {
+  for (const relative of ["admin/index.html", "employee/index.html", "portal/index.html"]) {
     const html = fs.readFileSync(path.join(root, relative), "utf8");
     assert.match(html, /green-grin-session\.js/, `${relative} must load persistent sessions.`);
     assert.match(html, /restorePersistentPortalPin/, `${relative} must restore a saved device session.`);
+    assert.match(html, /GreenGrinSession\?\.headers\?\.\("admin"\)/, `${relative} must use the signed owner session for API requests.`);
+    assert.match(html, /pin === "__SIGNED_OWNER_SESSION__"/, `${relative} must restore owner access without replaying the PIN.`);
   }
+  assert.match(fs.readFileSync(path.join(root, "portal.html"), "utf8"), /location\.replace\(`\/portal\//, "Legacy portal URL must redirect to the canonical customer portal.");
 
   const employeeHtml = fs.readFileSync(path.join(root, "employee/index.html"), "utf8");
   assert.match(employeeHtml, /requestedView !== "timeclock"/);

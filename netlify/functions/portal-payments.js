@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const { requireAccounting } = require("./accounting-auth");
+const { isAdminRequest } = require("./portal-auth");
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
@@ -297,7 +298,7 @@ async function revokeAutopay(user) {
 async function chargeInvoice(event, body, options = {}) {
   if (!options.system) {
     await requireAccounting(event, supabase);
-    if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) throw new Error("Wrong admin PIN.");
+    if (!isAdminRequest(event)) throw new Error("Wrong admin PIN.");
   }
   const invoiceRows = await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(body.invoice_id || "")}&active=eq.true&limit=1`);
   const invoice = invoiceRows?.[0];

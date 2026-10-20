@@ -6,11 +6,12 @@ const PUBLIC_URL = process.env.GREEN_GRIN_PUBLIC_URL || "https://portal.greengri
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const EMAIL_LOGO_URL = process.env.GREEN_GRIN_EMAIL_LOGO_URL || "https://portal.greengrinlawns.com/assets/green-grin-logo.png";
+const { isAdminRequest } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-admin-pin",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS"
 };
 
@@ -109,13 +110,13 @@ exports.handler = async (event) => {
 
   try {
     if (event.httpMethod === "GET") {
-      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
+      if (!isAdminRequest(event)) return json(401, { error: "Admin access required." });
       const leads = await supabase("green_grin_sprinkler_blowout_leads?select=*&order=created_at.desc&limit=1000");
       return json(200, { leads });
     }
 
     if (event.httpMethod === "PATCH") {
-      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
+      if (!isAdminRequest(event)) return json(401, { error: "Admin access required." });
       const body = JSON.parse(event.body || "{}");
       const id = clean(body.id, 80);
       if (id && body.manual_pin === true) {
@@ -164,7 +165,7 @@ exports.handler = async (event) => {
       return json(400, { error: "Bulk confirmation sending is disabled. New sign-ups are emailed automatically; use the individual Send Confirmation button for a specific customer." });
     }
     if (body.action === "send-confirmation") {
-      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
+      if (!isAdminRequest(event)) return json(401, { error: "Admin access required." });
       const leads = await supabase("green_grin_sprinkler_blowout_leads?select=*&id=eq." + encodeURIComponent(clean(body.id, 80)) + "&limit=1");
       if (!leads?.[0]) return json(404, { error: "Sprinkler blowout sign-up was not found." });
       const results = [];
@@ -172,7 +173,7 @@ exports.handler = async (event) => {
       return json(200, { total: results.length, sent: results.filter((row) => row.confirmation.sent).length, skipped: results.filter((row) => row.confirmation.skipped).length, failed: results.filter((row) => row.confirmation.error).length, results, confirmation: results[0]?.confirmation || null });
     }
     if (body.action === "send-scheduled-notices") {
-      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Admin access required." });
+      if (!isAdminRequest(event)) return json(401, { error: "Admin access required." });
       const scheduledDate = clean(body.scheduled_date, 20);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) return json(400, { error: "Choose a valid service date." });
       const leads = await supabase(`green_grin_sprinkler_blowout_leads?select=*&scheduled_date=eq.${encodeURIComponent(scheduledDate)}&status=eq.Scheduled&order=created_at.asc&limit=1000`);

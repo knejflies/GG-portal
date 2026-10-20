@@ -9,7 +9,7 @@ global.fetch = async () => {
   throw new Error("A connection test must not read or write customer accounting data.");
 };
 
-const { handler } = require("../netlify/functions/portal-expenses.js");
+const { handler, _test } = require("../netlify/functions/portal-expenses.js");
 
 (async () => {
   const connected = await handler({
@@ -36,7 +36,13 @@ const { handler } = require("../netlify/functions/portal-expenses.js");
   assert.match(activity, /setConnectTimeout\(15000\)/);
   assert.match(service, /setReadTimeout\(20000\)/);
   assert.match(service, /BigTextStyle/);
-  assert.match(build, /versionCode 4/);
+  assert.match(service, /body\.put\("source_key", MileageStore\.tripId\(this\)\)/);
+  assert.match(service, /if \(saved\) MileageStore\.reset\(this\)/);
+  assert.match(build, /versionCode 5/);
+
+  const keyedTrip = _test.mileagePayload({ mileage_miles: 12.4, source_key: "123e4567-e89b-12d3-a456-426614174000" });
+  assert.equal(keyedTrip.receipt_filename, "mileage-widget:123e4567-e89b-12d3-a456-426614174000");
+  assert.throws(() => _test.mileagePayload({ mileage_miles: 1, source_key: "bad key" }), /identifier is invalid/i);
 
   console.log("Mileage widget portal connection checks passed.");
 })().catch((error) => {

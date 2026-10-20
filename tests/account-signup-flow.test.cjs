@@ -5,7 +5,7 @@ const portal = fs.readFileSync("portal/index.html", "utf8");
 const portalFallback = fs.readFileSync("portal.html", "utf8");
 const sql = fs.readFileSync("portal-setup.sql", "utf8");
 
-for (const html of [portal, portalFallback]) {
+for (const html of [portal]) {
   assert.ok(html.includes('authForm.dataset.busy = "true"'), "signup must block duplicate submissions");
   assert.ok(html.includes("result.data.user.identities.length === 0"), "signup must identify an existing email response");
   assert.ok(html.includes("Check your email to confirm it"), "signup must explain email confirmation");
@@ -14,6 +14,8 @@ for (const html of [portal, portalFallback]) {
   assert.ok(html.includes('$("#auth-gate-code").value.trim()'), "signup must read the gate-code input safely");
   assert.equal((html.match(/id="auth-gate"/g) || []).length, 1, "auth-gate section id must be unique");
 }
+
+assert.match(portalFallback, /location\.replace\(`\/portal\/\$\{location\.search\}\$\{location\.hash\}`\)/, "legacy portal entry must preserve query strings and anchors when redirecting");
 
 assert.ok(sql.includes("green_grin_create_customer_on_signup"), "database must create customer profiles on signup");
 assert.ok(sql.includes("after insert on auth.users"), "customer trigger must run immediately after signup");

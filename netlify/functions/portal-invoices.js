@@ -8,6 +8,7 @@ const VENMO_HANDLE = String(process.env.GREEN_GRIN_VENMO_HANDLE || "@greengrinla
 const EMAIL_LOGO_URL = process.env.GREEN_GRIN_EMAIL_LOGO_URL || "https://portal.greengrinlawns.com/assets/green-grin-logo.png";
 const { sendPushToTarget } = require("./push-helper");
 const { requireAccounting } = require("./accounting-auth");
+const { requireAdmin: requireOwner } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
@@ -26,9 +27,7 @@ function requireSetup() {
 }
 
 function requireAdmin(event) {
-  if (!ADMIN_PIN) return "Admin PIN is not configured yet. Add GREEN_GRIN_ADMIN_PIN in Netlify.";
-  if (event.headers["x-admin-pin"] !== ADMIN_PIN) return "Wrong admin PIN.";
-  return null;
+  return requireOwner(event, "Wrong admin PIN.");
 }
 
 async function supabase(path, options = {}) {
@@ -367,8 +366,8 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "DELETE") {
       if (!body.id) return json(400, { error: "Invoice id is required." });
-      await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(body.id)}`, { method: "DELETE" });
-      return json(200, { ok: true });
+      const rows = await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(body.id)}`, { method: "PATCH", body: JSON.stringify({ active: false, status: "Void" }) });
+      return json(200, { ok: true, voided: true, invoice: rows?.[0] || null });
     }
 
     return json(405, { error: "Method not allowed." });

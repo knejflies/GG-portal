@@ -3,8 +3,7 @@ const fs = require("fs");
 const files = {
   "admin/index.html": "/manifest-admin.webmanifest",
   "employee/index.html": "/manifest-employee.webmanifest",
-  "portal/index.html": "/manifest-customer.webmanifest",
-  "portal.html": "/manifest-customer.webmanifest"
+  "portal/index.html": "/manifest-customer.webmanifest"
 };
 
 for (const [file, expectedManifest] of Object.entries(files)) {
@@ -46,6 +45,12 @@ for (const [file, expectedManifest] of Object.entries(files)) {
   for (const code of inlineScripts) new Function(code);
   console.log(`${file}: ${inlineScripts.length} inline script(s) passed syntax validation.`);
 }
+
+const legacyPortal = fs.readFileSync("portal.html", "utf8");
+if (!legacyPortal.includes('<link rel="manifest" href="/manifest-customer.webmanifest"')) throw new Error("portal.html: customer manifest is missing");
+if (!legacyPortal.includes('location.replace(`/portal/${location.search}${location.hash}`)')) throw new Error("portal.html: canonical redirect is missing");
+for (const code of [...legacyPortal.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map((match) => match[1]).filter((code) => code.trim())) new Function(code);
+console.log("portal.html: compatibility redirect passed syntax validation.");
 
 const proposalHtml = fs.readFileSync("proposal/index.html", "utf8");
 for (const requiredMarkup of ["Project price", "Email My Signature Code", "Sign Landscaping Contract", "Contract terms", "signature-pad"]) {

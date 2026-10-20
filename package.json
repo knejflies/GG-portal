@@ -1,11 +1,13 @@
 {
   "name": "green-grin-netlify-site",
-  "version": "1.95.0",
+  "version": "1.96.0",
   "private": true,
   "description": "Green Grin Lawns site and portals for Netlify.",
   "scripts": {
-    "test": "npm run test:account-signup && npm run test:lawn-bidder && npm run test:mowing-simple && npm run test:weekly-jobs && npm run test:morning-reminders && npm run test:fert-bidder && npm run test:fert-portal && npm run test:portal-pricing && npm run test:zelle && npm run test:invoice-email && npm run test:customer-plans && npm run test:route-optimizer && npm run test:auto-bid && npm run test:project-estimates && npm run test:project-assemblies && npm run test:project-bid-scenarios && npm run test:project-final-bid && npm run test:project-proposals && npm run test:landscaping-contract && npm run test:project-time && npm run test:project-estimator-integration && npm run test:persistent-sessions && npm run test:mileage-widget && npm run test:admin-calendar && npm run test:property-billing && npm run test:helcim-payments && npm run test:payment-webhook && npm run test:sprinkler-signup-pricing && npm run test:sprinkler-operations && npm run test:blowout-admin && npm run test:property-map-schema && npm run test:bookkeeping && npm run test:email-drafter-safety && npm run test:lawn-measurement && npm run test:portal-html",
+    "test": "npm run test:account-signup && npm run test:account-authorization && npm run test:database-grants && npm run test:customer-archive && npm run test:record-archive && npm run test:employee-security && npm run test:lawn-bidder && npm run test:mowing-simple && npm run test:weekly-jobs && npm run test:morning-reminders && npm run test:fert-bidder && npm run test:fert-portal && npm run test:portal-pricing && npm run test:zelle && npm run test:invoice-email && npm run test:customer-plans && npm run test:route-optimizer && npm run test:auto-bid && npm run test:project-estimates && npm run test:estimate-job-conversion && npm run test:project-assemblies && npm run test:project-bid-scenarios && npm run test:project-final-bid && npm run test:project-proposals && npm run test:landscaping-contract && npm run test:project-time && npm run test:project-estimator-integration && npm run test:persistent-sessions && npm run test:mileage-widget && npm run test:admin-calendar && npm run test:property-billing && npm run test:helcim-payments && npm run test:payment-webhook && npm run test:sprinkler-signup-pricing && npm run test:sprinkler-operations && npm run test:blowout-admin && npm run test:property-map-schema && npm run test:bookkeeping && npm run test:email-drafter-safety && npm run test:lawn-measurement && npm run test:portal-html",
     "test:account-signup": "node tests/account-signup-flow.test.cjs",
+    "test:account-authorization": "node tests/account-authorization.test.cjs",
+    "test:database-grants": "node tests/database-grants.test.cjs",
     "test:lawn-bidder": "node tests/lawn-bidder.test.cjs",
     "test:mowing-simple": "node tests/mowing-bidder-simple.test.cjs",
     "test:weekly-jobs": "node tests/weekly-job-billing.test.cjs",
@@ -20,6 +22,7 @@
     "test:route-optimizer": "node tests/route-optimizer.test.cjs",
     "test:auto-bid": "node tests/auto-bid-engine.test.cjs",
     "test:project-estimates": "node tests/project-estimates.test.cjs",
+    "test:estimate-job-conversion": "node tests/estimate-job-conversion.test.cjs",
     "test:project-assemblies": "node tests/project-assembly-calculator.test.cjs",
     "test:project-bid-scenarios": "node tests/project-bid-scenarios.test.cjs",
     "test:project-final-bid": "node tests/project-final-bid.test.cjs",
@@ -40,7 +43,10 @@
     "test:property-map-schema": "node tests/property-map-schema-compatibility.test.cjs",
     "test:bookkeeping": "node tests/bookkeeping-summary.test.cjs",
     "test:email-drafter-safety": "node tests/email-drafter-safety.test.cjs",
-    "test:lawn-measurement": "node tests/lawn-measurement.test.cjs && node tests/lawn-measurement-api.test.cjs && node tests/lawn-measurement-integration.test.cjs"
+    "test:lawn-measurement": "node tests/lawn-measurement.test.cjs && node tests/lawn-measurement-api.test.cjs && node tests/lawn-measurement-integration.test.cjs",
+    "test:customer-archive": "node tests/customer-archive-safety.test.cjs",
+    "test:employee-security": "node tests/employee-access-security.test.cjs",
+    "test:record-archive": "node tests/record-archive-safety.test.cjs"
   },
   "dependencies": {
     "web-push": "^3.6.7"

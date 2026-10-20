@@ -1,12 +1,13 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { requireAdmin: requireOwner } = require("./portal-auth");
 const DEFAULT_PRICING = require("../../assets/green-grin-pricing-config.json");
 
 const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-admin-pin",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin",
   "Access-Control-Allow-Methods": "GET, PATCH, OPTIONS"
 };
 
@@ -15,9 +16,7 @@ function json(statusCode, body) {
 }
 
 function requireAdmin(event) {
-  if (!ADMIN_PIN) return "Admin PIN is not configured yet. Add GREEN_GRIN_ADMIN_PIN in Netlify.";
-  if (event.headers["x-admin-pin"] !== ADMIN_PIN) return "Wrong admin PIN.";
-  return null;
+  return requireOwner(event, "Wrong admin PIN.");
 }
 
 function configError() {

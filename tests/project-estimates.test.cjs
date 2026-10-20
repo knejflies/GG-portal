@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { normalizeEstimateLines, estimatePayload } = require("../netlify/functions/portal-estimates.js")._test;
+const { normalizeEstimateLines, estimatePayload, jobPayloadFromEstimate } = require("../netlify/functions/portal-estimates.js")._test;
 
 const lines = normalizeEstimateLines([{
   catalog_id: "weed-fabric",
@@ -70,5 +70,30 @@ const linked = estimatePayload({
 }, estimate);
 assert.equal(linked.invoice_number, "INV-1234");
 assert.equal(linked.status, "Draft");
+
+const job = jobPayloadFromEstimate({
+  id: "estimate-1",
+  estimate_number: "EST-1042",
+  customer_user_id: "customer-1",
+  customer_code: "GG-1042",
+  customer_name: "Test Customer",
+  phone: "2085550100",
+  email: "CUSTOMER@EXAMPLE.COM",
+  service_address: "100 Main Street",
+  project_title: "Rock bed refresh",
+  project_scope: "Remove weeds and install fabric and rock.",
+  contract_template: "landscaping",
+  total: 296.8,
+  internal_cost: 180,
+  line_items: [{ description: "Commercial weed fabric", quantity: 1000, unit: "sq ft", cost_total: 180 }]
+});
+assert.equal(job.source_estimate_id, "estimate-1");
+assert.equal(job.service_category, "Landscaping");
+assert.equal(job.schedule_frequency, "One-time");
+assert.equal(job.annual_price, 296.8);
+assert.equal(job.status, "New");
+assert.match(job.notes, /EST-1042/);
+assert.doesNotMatch(job.notes, /180/);
+assert.equal(Object.hasOwn(job, "internal_cost"), false);
 
 console.log("Project estimator tests passed.");

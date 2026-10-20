@@ -658,6 +658,7 @@ alter table public.green_grin_estimates add column if not exists approved_by tex
 alter table public.green_grin_estimates add column if not exists approval_document_hash text;
 alter table public.green_grin_estimates add column if not exists project_job_id uuid;
 alter table public.green_grin_estimates add column if not exists deposit_invoice_id uuid;
+alter table public.green_grin_jobs add column if not exists source_estimate_id uuid references public.green_grin_estimates(id) on delete set null;
 
 create table if not exists public.green_grin_estimate_signatures (
   id uuid primary key default gen_random_uuid(),
@@ -903,6 +904,7 @@ create index if not exists green_grin_estimates_updated_idx on public.green_grin
 create index if not exists green_grin_estimates_customer_idx on public.green_grin_estimates(customer_user_id);
 create index if not exists green_grin_estimates_invoice_idx on public.green_grin_estimates(invoice_id);
 create index if not exists green_grin_estimates_proposal_token_idx on public.green_grin_estimates(proposal_token_hash);
+create unique index if not exists green_grin_jobs_source_estimate_idx on public.green_grin_jobs(source_estimate_id) where source_estimate_id is not null;
 create table if not exists public.green_grin_lawn_measurements (
   id uuid primary key default gen_random_uuid(),
   created_at timestamptz not null default now(),
@@ -1273,3 +1275,40 @@ alter table public.green_grin_payment_methods enable row level security;
 alter table public.green_grin_payment_setup_sessions enable row level security;
 alter table public.green_grin_payment_attempts enable row level security;
 alter table public.green_grin_payment_webhook_events enable row level security;
+
+-- PostgREST still requires PostgreSQL table privileges when a service-role JWT
+-- is used. Keep these explicit so new projects, previews, and local resets work.
+grant usage on schema public to service_role;
+grant all privileges on table public.green_grin_counters to service_role;
+grant all privileges on table public.green_grin_jobs to service_role;
+grant all privileges on table public.green_grin_customers to service_role;
+grant all privileges on table public.green_grin_customer_chat to service_role;
+grant all privileges on table public.green_grin_properties to service_role;
+grant all privileges on table public.green_grin_employees to service_role;
+grant all privileges on table public.green_grin_daily_route_assignments to service_role;
+grant all privileges on table public.green_grin_marketing_routes to service_role;
+grant all privileges on table public.green_grin_marketing_leads to service_role;
+grant all privileges on table public.green_grin_time_entries to service_role;
+grant all privileges on table public.green_grin_work_sessions to service_role;
+grant all privileges on table public.green_grin_sprinkler_blowout_leads to service_role;
+grant all privileges on table public.green_grin_message_log to service_role;
+grant all privileges on table public.green_grin_invoices to service_role;
+grant all privileges on table public.green_grin_estimates to service_role;
+grant all privileges on table public.green_grin_estimate_signatures to service_role;
+grant all privileges on table public.green_grin_expenses to service_role;
+grant all privileges on table public.green_grin_pricing_config to service_role;
+grant all privileges on table public.green_grin_push_subscriptions to service_role;
+grant all privileges on table public.green_grin_lawn_measurements to service_role;
+grant all privileges on table public.green_grin_service_entries to service_role;
+grant all privileges on table public.green_grin_billing_authorizations to service_role;
+grant all privileges on table public.green_grin_billing_audit_log to service_role;
+grant all privileges on table public.green_grin_service_visibility_settings to service_role;
+grant all privileges on table public.green_grin_sprinkler_blowout_history to service_role;
+grant all privileges on table public.green_grin_spring_followups to service_role;
+grant all privileges on table public.green_grin_payment_methods to service_role;
+grant all privileges on table public.green_grin_payment_setup_sessions to service_role;
+grant all privileges on table public.green_grin_payment_attempts to service_role;
+grant all privileges on table public.green_grin_payment_webhook_events to service_role;
+grant execute on function public.green_grin_generate_property_invoice(uuid, text) to service_role;
+
+notify pgrst, 'reload schema';

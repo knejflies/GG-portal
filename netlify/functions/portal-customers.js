@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const { requireAccounting } = require("./accounting-auth");
+const { requireAdmin: requireOwner } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
@@ -20,9 +21,7 @@ function requireSetup() {
 }
 
 function requireAdmin(event) {
-  if (!ADMIN_PIN) return "Admin PIN is not configured yet. Add GREEN_GRIN_ADMIN_PIN in Netlify.";
-  if (event.headers["x-admin-pin"] !== ADMIN_PIN) return "Wrong admin PIN.";
-  return null;
+  return requireOwner(event, "Wrong admin PIN.");
 }
 
 function clean(value, max = 300) { return String(value || "").trim().slice(0, max); }
@@ -69,18 +68,6 @@ async function supabase(path, options = {}) {
   return data;
 }
 
-async function deleteAuthUser(userId) {
-  if (!userId) return false;
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
-    method: "DELETE",
-    headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
-    }
-  });
-  return response.ok;
-}
-
 async function archiveForCustomer({ customerUserId, phone, email }) {
   const archive = {
     archived_at: new Date().toISOString(),
@@ -118,6 +105,30 @@ async function archiveForCustomer({ customerUserId, phone, email }) {
   archive.phone = archive.customer?.phone || phone || archive.jobs[0]?.phone || "";
   archive.email = archive.customer?.email || email || archive.jobs[0]?.email || "";
   return archive;
+}
+
+async function archiveCustomerRecords({ customerUserId, phone, email }) {
+  if (customerUserId) {
+    await supabase(`green_grin_customers?id=eq.${encodeURIComponent(customerUserId)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ active: false, billing_status: "Archived" })
+    });
+    await supabase(`green_grin_properties?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, {
+      method: "PATCH",
+      body: JSON.stringify({ active: false })
+    }).catch(() => null);
+    await supabase(`green_grin_jobs?customer_user_id=eq.${encodeURIComponent(customerUserId)}&status=neq.Completed`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "Archived" })
+    }).catch(() => null);
+    return;
+  }
+  if (phone) {
+    await supabase(`green_grin_jobs?phone=eq.${encodeURIComponent(phone)}&status=neq.Completed`, { method: "PATCH", body: JSON.stringify({ status: "Archived" }) });
+  }
+  if (email) {
+    await supabase(`green_grin_jobs?email=eq.${encodeURIComponent(email)}&status=neq.Completed`, { method: "PATCH", body: JSON.stringify({ status: "Archived" }) });
+  }
 }
 
 exports.handler = async (event) => {
@@ -217,8 +228,8 @@ exports.handler = async (event) => {
     if (event.httpMethod === "PATCH") {
       if (!customerUserId) return json(400, { error: "Only account customers can be updated." });
       if (body.archive === true) {
-        const rows = await supabase(`green_grin_customers?id=eq.${encodeURIComponent(customerUserId)}`, { method: "PATCH", body: JSON.stringify({ active: false, billing_status: "Archived" }) });
-        return json(200, { customer: rows?.[0] || null });
+        await archiveCustomerRecords({ customerUserId, phone, email });
+        return json(200, { ok: true, archived: true });
       }
       const editableFields = {};
       if (Object.prototype.hasOwnProperty.call(body, "billing_plan")) editableFields.billing_plan = String(body.billing_plan || "").trim().slice(0, 160) || null;
@@ -249,34 +260,8 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "DELETE") {
       const archive = await archiveForCustomer({ customerUserId, phone, email });
-      const jobIds = archive.jobs.map((job) => job.id).filter(Boolean);
-      if (jobIds.length) {
-        await supabase(`green_grin_message_log?job_id=in.(${jobIds.join(",")})`, { method: "DELETE" });
-      }
-
-      if (customerUserId) {
-        await supabase(`green_grin_customer_chat?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" }).catch(() => null);
-        await supabase(`green_grin_properties?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" });
-        await supabase(`green_grin_jobs?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" });
-        await supabase(`green_grin_invoices?customer_user_id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" });
-        if (phone) await supabase(`green_grin_jobs?phone=eq.${encodeURIComponent(phone)}`, { method: "DELETE" });
-        if (email) await supabase(`green_grin_jobs?email=eq.${encodeURIComponent(email)}`, { method: "DELETE" });
-        if (phone) await supabase(`green_grin_invoices?phone=eq.${encodeURIComponent(phone)}`, { method: "DELETE" });
-        if (email) await supabase(`green_grin_invoices?email=eq.${encodeURIComponent(email)}`, { method: "DELETE" });
-        await supabase(`green_grin_customers?id=eq.${encodeURIComponent(customerUserId)}`, { method: "DELETE" });
-        const authDeleted = await deleteAuthUser(customerUserId);
-        return json(200, { ok: true, authDeleted, archive });
-      }
-
-      if (phone) {
-        await supabase(`green_grin_jobs?phone=eq.${encodeURIComponent(phone)}`, { method: "DELETE" });
-        await supabase(`green_grin_invoices?phone=eq.${encodeURIComponent(phone)}`, { method: "DELETE" });
-      }
-      if (email) {
-        await supabase(`green_grin_jobs?email=eq.${encodeURIComponent(email)}`, { method: "DELETE" });
-        await supabase(`green_grin_invoices?email=eq.${encodeURIComponent(email)}`, { method: "DELETE" });
-      }
-      return json(200, { ok: true, authDeleted: false, archive });
+      await archiveCustomerRecords({ customerUserId, phone, email });
+      return json(200, { ok: true, archived: true, authDeleted: false, archive });
     }
 
     return json(405, { error: "Method not allowed." });

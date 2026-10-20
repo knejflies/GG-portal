@@ -1,11 +1,12 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { isAdminRequest } = require("./portal-auth");
 
 const responseHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-admin-pin",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin",
   "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 
@@ -133,7 +134,7 @@ async function roadMatrix(points) {
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
   if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed." });
-  if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Owner sign-in is required." });
+  if (!isAdminRequest(event)) return json(401, { error: "Owner sign-in is required." });
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return json(500, { error: "Supabase is not configured." });
 
   try {

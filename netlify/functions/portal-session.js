@@ -114,7 +114,7 @@ async function restoreSession(mode, token) {
   if (mode === "admin") {
     if (!ADMIN_PIN) throw new Error("Admin PIN is not configured.");
     const payload = verifyToken(token, "admin", ADMIN_PIN);
-    return { pin: ADMIN_PIN, expiresAt: payload.exp };
+    return { restored: true, mode: "admin", expiresAt: payload.exp };
   }
   if (mode === "employee") {
     const untrusted = tokenPayload(token);

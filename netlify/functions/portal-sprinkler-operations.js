@@ -1,11 +1,12 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { requireAdmin: requireOwner } = require("./portal-auth");
 const VENMO_HANDLE = String(process.env.GREEN_GRIN_VENMO_HANDLE || "@greengrinlawns").replace(/^@/, "");
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const EMAIL_LOGO_URL = process.env.GREEN_GRIN_EMAIL_LOGO_URL || "https://portal.greengrinlawns.com/assets/green-grin-logo.png";
-const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, x-admin-pin", "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS" };
+const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin", "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS" };
 const json = (statusCode, body) => ({ statusCode, headers, body: JSON.stringify(body) });
 const clean = (value, max = 500) => String(value || "").trim().slice(0, max);
 const validUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ""));
@@ -50,8 +51,7 @@ async function authAdmin(path, options = {}) {
   return data;
 }
 function requireAdmin(event) {
-  if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return "Admin access required.";
-  return null;
+  return requireOwner(event, "Admin access required.");
 }
 function normalizeAddress(value) { return clean(value, 300).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
 function geocodeDecision(result, requestedAddress) {

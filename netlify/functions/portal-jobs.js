@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
+const { adminSession, header, requireAdmin: requireOwner } = require("./portal-auth");
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const JOB_EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const PUBLIC_SITE_URL = process.env.URL || process.env.DEPLOY_PRIME_URL || "https://portal.greengrinlawns.com";
@@ -26,9 +27,7 @@ function requireSetup() {
 }
 
 function requireAdmin(event) {
-  if (!ADMIN_PIN) return "Admin PIN is not configured yet. Add GREEN_GRIN_ADMIN_PIN in Netlify.";
-  if (event.headers["x-admin-pin"] !== ADMIN_PIN) return "Wrong admin PIN.";
-  return null;
+  return requireOwner(event, "Wrong admin PIN.");
 }
 
 async function supabase(path, options = {}) {
@@ -243,9 +242,10 @@ exports.handler = async (event) => {
   try {
     if (event.httpMethod === "POST") {
       const body = JSON.parse(event.body || "{}");
-      const adminCreate = Boolean(event.headers["x-admin-pin"]);
-      const adminError = adminCreate ? requireAdmin(event) : null;
+      const adminAttempt = Boolean(header(event, "x-admin-pin") || adminSession(event));
+      const adminError = adminAttempt ? requireAdmin(event) : null;
       if (adminError) return json(401, { error: adminError });
+      const adminCreate = adminAttempt;
       if (body.action === "send-confirmations") {
         if (!adminCreate) return json(401, { error: "Admin access is required." });
         const jobs = await supabase("green_grin_jobs?select=*&order=created_at.asc&limit=1000");
@@ -325,7 +325,7 @@ exports.handler = async (event) => {
       if (params.get("employee") === "1") {
         const employee = await activeEmployee(event) || await activeEmployeeByPin(event);
         if (!employee) return json(401, { error: "Employee access was not found. Sign in or use the PIN the owner set for you." });
-        const jobs = await supabase(`green_grin_jobs?select=id,customer_code,customer_name,address,service_type,scheduled_date,recurring_weekly,schedule_start_date,schedule_end_date,status,notes,last_message_template,last_message_sent_at,assigned_employee_id,assigned_employee_name&assigned_employee_id=eq.${encodeURIComponent(employee.id)}&status=neq.Completed&order=scheduled_date.asc.nullslast&limit=200`);
+        const jobs = await supabase(`green_grin_jobs?select=id,customer_code,customer_name,address,service_type,scheduled_date,recurring_weekly,schedule_start_date,schedule_end_date,status,notes,last_message_template,last_message_sent_at,assigned_employee_id,assigned_employee_name&assigned_employee_id=eq.${encodeURIComponent(employee.id)}&status=not.in.(Completed,Archived,Cancelled,Paid)&order=scheduled_date.asc.nullslast&limit=200`);
         const today = new Date().toISOString().slice(0, 10);
         const dailyRoutes = await supabase(`green_grin_daily_route_assignments?select=id,route_date,job_id,stop_order,assigned_employee_id,assigned_employee_name,green_grin_jobs(id,customer_code,customer_name,address,service_type,scheduled_date,recurring_weekly,schedule_start_date,schedule_end_date,status,notes,last_message_template,last_message_sent_at)&assigned_employee_id=eq.${encodeURIComponent(employee.id)}&route_date=gte.${today}&order=route_date.asc,stop_order.asc&limit=200`).catch(() => []);
         return json(200, { employee, jobs, daily_routes: dailyRoutes });
@@ -407,9 +407,8 @@ exports.handler = async (event) => {
       const body = JSON.parse(event.body || "{}");
       if (!body.id) return json(400, { error: "Job id is required." });
       const id = encodeURIComponent(body.id);
-      await supabase(`green_grin_message_log?job_id=eq.${id}`, { method: "DELETE" });
-      await supabase(`green_grin_jobs?id=eq.${id}`, { method: "DELETE" });
-      return json(200, { ok: true });
+      const rows = await supabase(`green_grin_jobs?id=eq.${id}`, { method: "PATCH", body: JSON.stringify({ status: "Archived" }) });
+      return json(200, { ok: true, archived: true, job: rows?.[0] || null });
     }
 
     return json(405, { error: "Method not allowed." });

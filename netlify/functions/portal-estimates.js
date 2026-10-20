@@ -3,11 +3,12 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const { groupedTotals, normalizeCategory } = require("../../assets/green-grin-project-estimator.js");
 const { normalizeContractSections } = require("../../assets/green-grin-contract.js");
+const { isAdminRequest } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-admin-pin",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS"
 };
 
@@ -130,10 +131,45 @@ function estimatePayload(body, current = {}) {
   };
 }
 
+function jobPayloadFromEstimate(estimate) {
+  const categoryByTemplate = {
+    mowing: "Mowing",
+    cleanup: "Cleanup",
+    aeration: "Cleanup",
+    landscaping: "Landscaping",
+    custom: "Landscaping"
+  };
+  const itemSummary = (Array.isArray(estimate?.line_items) ? estimate.line_items : [])
+    .map((item) => `${clean(item?.description || "Project item", 180)} (${moneyNumber(item?.quantity)} ${clean(item?.unit || "each", 24)})`)
+    .join("; ");
+  const notes = [
+    `Created from approved estimate ${clean(estimate?.estimate_number, 40)}.`,
+    clean(estimate?.project_scope, 3000),
+    itemSummary ? `Work items: ${itemSummary}` : ""
+  ].filter(Boolean).join("\n\n");
+  return {
+    source_estimate_id: estimate?.id || null,
+    customer_user_id: estimate?.customer_user_id || null,
+    customer_code: clean(estimate?.customer_code, 40),
+    customer_name: clean(estimate?.customer_name || "Customer", 140),
+    phone: clean(estimate?.phone, 40),
+    email: clean(estimate?.email, 180).toLowerCase(),
+    address: clean(estimate?.service_address, 300),
+    service_type: clean(estimate?.project_title || "Approved project", 180),
+    service_category: categoryByTemplate[estimate?.contract_template] || "Landscaping",
+    schedule_frequency: "One-time",
+    recurring_weekly: false,
+    annual_price: moneyNumber(estimate?.total) || null,
+    monthly_price: null,
+    notes: clean(notes, 4000),
+    status: "New"
+  };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return json(200, {});
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return json(500, { error: "Supabase is not configured." });
-  if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Owner sign-in is required." });
+  if (!isAdminRequest(event)) return json(401, { error: "Owner sign-in is required." });
 
   try {
     if (event.httpMethod === "GET") {
@@ -153,6 +189,39 @@ exports.handler = async (event) => {
       if (!body.id) return json(400, { error: "Estimate id is required." });
       const existing = await supabase(`green_grin_estimates?select=*&id=eq.${encodeURIComponent(body.id)}&limit=1`);
       if (!existing?.[0]) return json(404, { error: "Estimate not found." });
+      if (body.action === "convert-to-job") {
+        const estimate = existing[0];
+        if (!estimate.approved_at && !["Approved", "Converted"].includes(estimate.status)) {
+          return json(409, { error: "The customer must approve this estimate before it becomes a job." });
+        }
+        if (estimate.project_job_id) {
+          const linked = await supabase(`green_grin_jobs?select=*&id=eq.${encodeURIComponent(estimate.project_job_id)}&limit=1`);
+          return json(200, { estimate, job: linked?.[0] || { id: estimate.project_job_id }, duplicate: true });
+        }
+        const linked = await supabase(`green_grin_jobs?select=*&source_estimate_id=eq.${encodeURIComponent(estimate.id)}&limit=1`).catch(() => []);
+        if (linked?.[0]) {
+          const repaired = await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, {
+            method: "PATCH",
+            body: JSON.stringify({ project_job_id: linked[0].id, status: "Converted", updated_at: new Date().toISOString() })
+          });
+          return json(200, { estimate: repaired?.[0] || estimate, job: linked[0], duplicate: true });
+        }
+        const jobPayload = jobPayloadFromEstimate(estimate);
+        let created;
+        try {
+          created = await supabase("green_grin_jobs", { method: "POST", body: JSON.stringify(jobPayload) });
+        } catch (error) {
+          if (!/duplicate key|unique constraint/i.test(error.message || "")) throw error;
+          created = await supabase(`green_grin_jobs?select=*&source_estimate_id=eq.${encodeURIComponent(estimate.id)}&limit=1`);
+        }
+        const job = created?.[0];
+        if (!job?.id) throw new Error("The approved job could not be created.");
+        const updated = await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(estimate.id)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ project_job_id: job.id, status: "Converted", updated_at: new Date().toISOString() })
+        });
+        return json(200, { estimate: updated?.[0] || estimate, job, duplicate: false });
+      }
       const payload = estimatePayload(body, existing[0]);
       if (!payload.line_items.length) return json(400, { error: "Add at least one priced estimate item." });
       const rows = await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(body.id)}`, { method: "PATCH", body: JSON.stringify(payload) });
@@ -161,18 +230,18 @@ exports.handler = async (event) => {
 
     if (event.httpMethod === "DELETE") {
       if (!body.id) return json(400, { error: "Estimate id is required." });
-      await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(body.id)}`, { method: "DELETE" });
-      return json(200, { ok: true });
+      const rows = await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(body.id)}`, { method: "PATCH", body: JSON.stringify({ status: "Declined", updated_at: new Date().toISOString() }) });
+      return json(200, { ok: true, archived: true, estimate: rows?.[0] || null });
     }
 
     return json(405, { error: "Method not allowed." });
   } catch (error) {
-    if (/green_grin_estimates|schema cache/i.test(error.message || "")) {
+    if (/source_estimate_id|green_grin_estimates|schema cache/i.test(error.message || "")) {
       return json(500, { error: "Project estimates are not ready in Supabase. Run the latest portal-setup.sql, wait 30 seconds, and try again." });
     }
     return json(500, { error: error.message });
   }
 };
 
-exports._test = { normalizeEstimateLines, estimatePayload };
+exports._test = { normalizeEstimateLines, estimatePayload, jobPayloadFromEstimate };
 

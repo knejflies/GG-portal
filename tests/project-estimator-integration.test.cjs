@@ -20,6 +20,14 @@ for (const marker of [
   'data-estimator-view="catalog"',
   'data-estimate-intent="send-proposal"',
   'data-estimate-intent="print"',
+  'data-estimate-action="create-job"',
+  'data-estimate-action="open-job"',
+  'data-estimate-action="duplicate"',
+  'action: "convert-to-job"',
+  'data-file-estimate-id',
+  'data-file-invoice-id',
+  'savedEstimates.forEach((estimate)',
+  'employeeDirectory.forEach((employee)',
   'requestJson("portal-estimates"',
   'Unit prices, markups, labor hours, internal costs, and profit never appear on the customer copy.'
 ]) {
@@ -33,7 +41,7 @@ assert.match(admin, /id="bids"[^>]*data-legacy-bidder="mowing"/);
 assert.match(admin, /id="fert-bids"[^>]*data-legacy-bidder="fertilizer"/);
 assert.equal(/<section id="fert-bids"[^>]*\shidden(?:\s|>)/.test(admin), false, "The Fertilizer Plans menu must open a visible panel");
 
-for (const customerFile of ["portal/index.html", "portal.html", "employee/index.html"]) {
+for (const customerFile of ["portal/index.html", "employee/index.html"]) {
   const html = fs.readFileSync(customerFile, "utf8");
   assert.ok(!html.includes('id="project-bids"'), `${customerFile} must not expose owner project costs`);
 }

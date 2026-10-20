@@ -4654,7 +4654,7 @@
 
       <div class="admin-search-shell">
         <label for="admin-global-search">Find anything</label>
-        <input id="admin-global-search" type="search" autocomplete="off" placeholder="Customer, GG number, phone, address, job, or invoice" />
+        <input id="admin-global-search" type="search" autocomplete="off" placeholder="Customer, property, job, estimate, invoice, or employee" />
         <div id="admin-global-results" class="admin-search-results" aria-live="polite"></div>
       </div>
 
@@ -6712,8 +6712,10 @@
     }
 
     async function setOwnerSignedIn(pin, remember = true) {
-      adminSessionPin = pin;
-      const jobsData = await requestJson("portal-jobs?admin=1", { headers: { "x-admin-pin": pin } });
+      const signedSession = pin === "__SIGNED_OWNER_SESSION__";
+      adminSessionPin = signedSession ? "" : pin;
+      const ownerHeaders = signedSession ? (window.GreenGrinSession?.headers?.("admin") || {}) : { "x-admin-pin": pin };
+      const jobsData = await requestJson("portal-jobs?admin=1", { headers: ownerHeaders });
       if (remember) {
         saveValue(sessionKeys.adminPin, pin);
         await savePersistentPortalSession("admin", pin);
@@ -6726,7 +6728,7 @@
       await loadEmployees();
       renderAdminJobList();
       renderDailyRouteBuilder();
-      await Promise.allSettled([loadCustomers(), loadInvoiceCustomers(), loadInvoices()]);
+      await Promise.allSettled([loadCustomers(), loadInvoiceCustomers(), loadInvoices(), loadEstimates()]);
       renderOwnerHome();
     }
 
@@ -6782,7 +6784,7 @@
         let savedPin = readSavedValue(sessionKeys.adminPin);
         if (!savedPin) {
           savedPin = await restorePersistentPortalPin("admin");
-          if (savedPin) saveValue(sessionKeys.adminPin, savedPin);
+          if (savedPin && savedPin !== "__SIGNED_OWNER_SESSION__") saveValue(sessionKeys.adminPin, savedPin);
         }
         if (!savedPin) return false;
         $("#owner-login-result").innerHTML = notice("Restoring owner session...");
@@ -6792,6 +6794,7 @@
           return true;
         } catch (_error) {
           saveValue(sessionKeys.adminPin, "");
+          window.GreenGrinSession?.clear?.("admin");
           $("#owner-login-result").innerHTML = notice("Saved owner session expired. Sign in again.", true);
           setSignedOut({ clearSaved: false });
           return false;
@@ -7019,13 +7022,19 @@
       const button = event.target.closest("[data-search-type]");
       if (!button) return;
       const type = button.dataset.searchType;
-      const tabId = type === "customer" ? "customers" : type === "job" ? "owner" : "invoices";
+      if (type === "estimate") {
+        const estimate = savedEstimates.find((entry) => entry.id === button.dataset.searchId);
+        if (estimate) fillEstimateForm(estimate);
+        return;
+      }
+      const tabId = type === "customer" ? "customers" : type === "job" ? "owner" : type === "employee" ? "employee-admin" : "invoices";
       openTab(tabId);
       window.setTimeout(() => {
         let card = null;
         if (type === "customer") card = document.querySelector(`[data-customer-index="${button.dataset.searchIndex}"]`);
         if (type === "job") card = document.querySelector(`.admin-job[data-id="${CSS.escape(button.dataset.searchId || "")}"]`);
         if (type === "invoice") card = document.querySelector(`.invoice[data-id="${CSS.escape(button.dataset.searchId || "")}"]`);
+        if (type === "employee") card = document.querySelector(`#employee-admin-result .job[data-id="${CSS.escape(button.dataset.searchId || "")}"]`);
         const toggle = card?.querySelector(".job-toggle");
         if (toggle && toggle.getAttribute("aria-expanded") !== "true") toggle.click();
         card?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -7675,6 +7684,52 @@
       const estimate = savedEstimates.find((entry) => entry.id === card.dataset.estimateId);
       const action = event.target.closest("[data-estimate-action]")?.dataset.estimateAction;
       if (!estimate || !action) return;
+      if (action === "create-job") {
+        const button = event.target.closest("[data-estimate-action]");
+        button.disabled = true;
+        showEstimateNotice("Creating the approved job...");
+        try {
+          const data = await requestJson("portal-estimates", {
+            method: "PATCH",
+            headers: adminHeaders(),
+            body: JSON.stringify({ id: estimate.id, action: "convert-to-job" })
+          });
+          await Promise.all([loadEstimates(), loadAdminJobs()]);
+          showEstimateNotice(data.duplicate ? "This estimate was already linked to its job." : "Approved estimate added to Jobs.");
+        } catch (error) {
+          showEstimateNotice(error.message, true);
+        } finally {
+          button.disabled = false;
+        }
+        return;
+      }
+      if (action === "open-job") {
+        openTab("owner");
+        if (!adminJobRows.some((job) => job.id === estimate.project_job_id)) await loadAdminJobs();
+        window.requestAnimationFrame(() => {
+          const jobCard = [...document.querySelectorAll("#admin-result [data-id]")].find((entry) => entry.dataset.id === estimate.project_job_id);
+          jobCard?.scrollIntoView({ behavior: "smooth", block: "center" });
+          jobCard?.classList.add("highlight");
+        });
+        return;
+      }
+      if (action === "duplicate") {
+        fillEstimateForm({
+          ...estimate,
+          id: "",
+          estimate_number: "",
+          status: "Draft",
+          project_title: `${estimate.project_title || "Landscape project"} (Copy)`,
+          invoice_id: null,
+          invoice_number: "",
+          invoiced_at: null,
+          project_job_id: null,
+          approved_at: null,
+          approved_by: ""
+        });
+        $("#estimate-result").innerHTML = notice("Copy ready. Review it and save to create a new estimate.");
+        return;
+      }
       if (action === "edit") return fillEstimateForm(estimate);
       if (action === "print") return printEstimate(estimate);
       if (action === "signed-copy") {
@@ -7689,7 +7744,7 @@
       }
       if (action === "delete") {
         const linkedWarning = estimate.invoice_id ? " The linked invoice will remain in Invoice Center." : "";
-        if (!confirm(`Delete estimate ${estimate.estimate_number} forever?${linkedWarning}`)) return;
+        if (!confirm(`Archive estimate ${estimate.estimate_number}?${linkedWarning}`)) return;
         try {
           await requestJson("portal-estimates", { method: "DELETE", headers: adminHeaders(), body: JSON.stringify({ id: estimate.id }) });
           if ($("#estimate-id").value === estimate.id) clearEstimateForm();
@@ -7867,11 +7922,12 @@
 
     function adminHeaders() {
       if (activeAccount?.id === "bookkeeper") return employeeTimeHeaders();
-      return { "x-admin-pin": adminPin() };
+      const sessionHeaders = window.GreenGrinSession?.headers?.("admin") || {};
+      return Object.keys(sessionHeaders).length ? sessionHeaders : { "x-admin-pin": adminPin() };
     }
 
     function hasAccountingAccess() {
-      return Boolean(adminPin() || activeAccount?.id === "bookkeeper");
+      return Boolean(adminPin() || window.GreenGrinSession?.has?.("admin") || activeAccount?.id === "bookkeeper");
     }
 
     function cleanText(value) {
@@ -8782,9 +8838,15 @@
           <div class="estimate-card-status"><span class="badge">Customer ${cleanText(money(estimate.total))}</span><span class="badge">Cost ${cleanText(money(estimate.internal_cost))}</span><span class="badge">Margin ${cleanText(`${(Number(estimate.gross_margin || 0) * 100).toFixed(1)}%`)}</span>${estimate.invoice_number ? `<span class="badge">Invoice ${cleanText(estimate.invoice_number)}</span>` : ""}</div>
           <div class="row-actions">
             ${estimate.approved_at ? `<span class="badge">Signed by ${cleanText(estimate.approved_by || "customer")}</span><button class="button small" data-estimate-action="signed-copy" type="button">Signed Contract</button>` : `<button class="button small" data-estimate-action="send-proposal" type="button">Send Contract</button>`}
+            ${estimate.project_job_id
+              ? `<button class="button small" data-estimate-action="open-job" type="button">Open Job</button>`
+              : (estimate.approved_at || estimate.status === "Approved"
+                ? `<button class="button small" data-estimate-action="create-job" type="button">Create Job</button>`
+                : "")}
             <button class="button small ghost" data-estimate-action="edit" type="button">Edit</button>
+            <button class="button small ghost" data-estimate-action="duplicate" type="button">Duplicate</button>
             <button class="button small ghost" data-estimate-action="print" data-estimate-intent="print" type="button">Customer Preview</button>
-            <button class="button small ghost" data-estimate-action="delete" type="button">Delete</button>
+            <button class="button small ghost" data-estimate-action="delete" type="button">Archive</button>
           </div>
         </div>`).join("") : notice(query ? "No estimates match that search." : "No saved estimates yet.");
     }
@@ -9968,7 +10030,7 @@
               ${!isPaidInvoice(invoice) && invoice.status !== "Draft" ? `<button class="button small" data-invoice-action="charge" type="button">Charge Saved Card</button>` : ""}
               ${isPaidInvoice(invoice) ? `<button class="button small ghost" data-invoice-action="reopen" type="button">Move To Open</button>` : `<button class="button small secondary" data-invoice-action="paid" type="button">Mark Paid</button>`}
 
-              <button class="button small ghost" data-invoice-action="delete" type="button">Delete</button>
+              <button class="button small ghost" data-invoice-action="delete" type="button">Void</button>
             </div>
           </div>
         `;
@@ -10306,7 +10368,7 @@
           ${expense.notes ? `<p>${cleanText(expense.notes)}</p>` : ""}
           <div class="row-actions">
             <button class="button small ghost" data-mileage-action="edit" type="button">Edit</button>
-            <button class="button small ghost" data-mileage-action="delete" type="button">Delete</button>
+            <button class="button small ghost" data-mileage-action="delete" type="button">Archive</button>
           </div>
         </div>
       `;
@@ -10361,7 +10423,7 @@
           ${confidenceLine ? `<p class="muted">${cleanText(confidenceLine)}</p>` : ""}
           <div class="row-actions">
             <button class="button small ghost" data-expense-action="edit" type="button">Edit</button>
-            <button class="button small ghost" data-expense-action="delete" type="button">Delete</button>
+            <button class="button small ghost" data-expense-action="delete" type="button">Archive</button>
           </div>
         </div>
       `;
@@ -10542,7 +10604,6 @@
               <button class="button small" data-customer-list-action="monthly-invoice" type="button">Send Monthly Bill</button>
               <button class="button small secondary" data-customer-list-action="test-notification" type="button">Test Notification</button>
               <button class="button small ghost" data-customer-list-action="archive" type="button">Archive Customer</button>
-              <button class="button small ghost" data-customer-list-action="delete" type="button">Delete Customer</button>
             </div>
           </div>
         </div>
@@ -10552,6 +10613,16 @@
     function openCustomerFile(customer) {
       const property = customer.property || {};
       const jobs = customer.jobs || [];
+      const customerId = customer.customer_user_id || customer.id || "";
+      const customerEmail = String(customer.email || "").trim().toLowerCase();
+      const customerPhone = String(customer.phone || "").replace(/\D/g, "");
+      const belongsToCustomer = (record) =>
+        (customerId && record.customer_user_id === customerId) ||
+        (customer.customer_code && record.customer_code === customer.customer_code) ||
+        (customerEmail && String(record.email || "").trim().toLowerCase() === customerEmail) ||
+        (customerPhone && String(record.phone || "").replace(/\D/g, "") === customerPhone);
+      const estimates = savedEstimates.filter(belongsToCustomer).slice(0, 8);
+      const invoices = invoiceDrafts.filter(belongsToCustomer).slice(0, 8);
       const modal = $("#customer-file-modal");
       if (!modal) return;
       $("#customer-file-title").textContent = customer.name || "Customer";
@@ -10565,6 +10636,10 @@
         ${property.id ? `<div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Property service entries</strong><span class="badge">Monthly billing</span></div><form id="property-service-entry-form" class="customer-file-grid" style="margin-top:10px"><input id="property-service-property-id" type="hidden" value="${cleanText(property.id)}" /><input id="property-service-customer-id" type="hidden" value="${cleanText(customer.customer_user_id || customer.id || "")}" /><div><label for="property-service-date">Service date</label><input id="property-service-date" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></div><div><label for="property-service-category">Category</label><select id="property-service-category"><option>Mowing</option><option>Fertilizer</option><option>Spraying</option><option>Irrigation</option><option>Cleanup</option><option>Landscaping</option><option>Other</option></select></div><div><label for="property-service-description">Description</label><input id="property-service-description" value="Lawn mowing visit" required /></div><div><label for="property-service-quantity">Quantity</label><input id="property-service-quantity" type="number" min="0.01" step="0.01" value="1" required /></div><div><label for="property-service-price">Customer price</label><input id="property-service-price" type="number" min="0" step="0.01" value="0" required /></div><div><label for="property-service-material-cost">Internal material cost</label><input id="property-service-material-cost" type="number" min="0" step="0.01" value="0" /></div><div style="grid-column:1/-1"><label for="property-service-notes">Internal notes (never shown to customer unless selected)</label><textarea id="property-service-notes" rows="2" placeholder="Product, amount used, area treated, or crew notes"></textarea></div><div class="admin-actions" style="grid-column:1/-1"><button class="button small" type="submit">Add Completed Entry</button><label class="check"><input id="property-service-include-notes" type="checkbox" /> Include notes on invoice</label></div></form><div class="two" style="margin-top:12px"><div><label for="property-billing-cycle">Billing month</label><input id="property-billing-cycle" type="month" value="${new Date().toISOString().slice(0, 7)}" /></div><button id="property-generate-invoice" class="button small secondary" type="button">Build Monthly Draft</button></div><div id="property-service-result" aria-live="polite" style="margin-top:10px"></div><div id="property-service-entry-list" class="status-box" style="margin-top:10px">Loading service entries...</div></div>` : ""}
         <div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Contact history</strong><span class="badge">In-app messages</span></div><div id="customer-file-contact-history" class="status-box">Loading contact history...</div></div>
         <div class="customer-file-block" style="margin-top:12px"><strong>Jobs</strong>${jobs.length ? jobs.map((job) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(job.service_type || "Service")}</strong><p class="muted">${cleanText(jobCategory(job))} | ${cleanText(jobFrequency(job))} | ${cleanText(scheduleLine(job))}</p><p class="muted">${cleanText(job.address || property.address || "No address")}</p></div><span class="badge">${cleanText(job.status || "New")}</span></div>`).join("") : `<p class="muted">No jobs created for this customer yet.</p>`}</div>
+        <div class="customer-file-grid" style="margin-top:12px">
+          <div class="customer-file-block"><strong>Estimates</strong>${estimates.length ? estimates.map((estimate) => `<button class="search-result-button" data-file-estimate-id="${cleanText(estimate.id)}" type="button"><span><strong>${cleanText(estimate.estimate_number || "Estimate")}</strong><br>${cleanText(estimate.project_title || "Project")} · ${cleanText(money(estimate.total))}</span><span class="badge">${cleanText(estimate.status || "Draft")}</span></button>`).join("") : `<p class="muted">No estimates saved for this customer.</p>`}</div>
+          <div class="customer-file-block"><strong>Invoices and payments</strong>${invoices.length ? invoices.map((invoice) => `<button class="search-result-button" data-file-invoice-id="${cleanText(invoice.id)}" type="button"><span><strong>${cleanText(invoiceNumber(invoice))}</strong><br>${cleanText(money(invoice.amount))}</span><span class="badge">${cleanText(invoice.status || "Draft")}</span></button>`).join("") : `<p class="muted">No invoices saved for this customer.</p>`}</div>
+        </div>
         <div class="admin-actions" style="margin-top:14px"><button class="button small secondary" data-file-action="fill-job" type="button">Create Booking</button><button class="button small secondary" data-file-action="details" type="button">Open Details</button><button class="button small ghost" data-file-action="chat" type="button">Open Chat</button></div>
       `;
       modal.hidden = false;
@@ -10912,11 +10987,12 @@
     }
 
     function fieldJobsForDate(routeDate) {
+      const closedStatuses = new Set(["completed", "archived", "cancelled", "paid"]);
       const routedIds = new Set(adminDailyRouteRows
         .filter((row) => jobDateKey(row.route_date) === routeDate)
         .map((row) => row.job_id));
       return adminJobRows.filter((job) => {
-        if (String(job.status || "").toLowerCase() === "completed") return false;
+        if (closedStatuses.has(String(job.status || "").toLowerCase())) return false;
         return routedIds.has(job.id) || jobRunsOnDate(job, routeDate);
       });
     }
@@ -10989,9 +11065,15 @@
       invoiceDrafts.forEach((invoice) => {
         if (invoiceSearchText(invoice).includes(query)) matches.push({ type: "invoice", id: invoice.id, title: `${invoiceNumber(invoice)} - ${invoice.customer_name || "Customer"}`, meta: `${money(invoice.amount)} | ${invoice.status || "Draft"}` });
       });
+      savedEstimates.forEach((estimate) => {
+        if (adminSearchText(estimate).includes(query)) matches.push({ type: "estimate", id: estimate.id, title: `${estimate.estimate_number || "Estimate"} - ${estimate.customer_name || "Customer"}`, meta: [estimate.project_title, estimate.service_address, money(estimate.total), estimate.status].filter(Boolean).join(" | ") });
+      });
+      employeeDirectory.forEach((employee) => {
+        if (adminSearchText(employee).includes(query)) matches.push({ type: "employee", id: employee.id, title: employee.full_name || employee.email || "Employee", meta: [employee.employee_code, employee.role, employee.status].filter(Boolean).join(" | ") });
+      });
       target.innerHTML = matches.length
         ? matches.slice(0, 10).map((item) => `<button class="search-result-button" data-search-type="${item.type}" data-search-id="${cleanText(item.id || "")}" data-search-index="${Number.isInteger(item.index) ? item.index : ""}" type="button"><span><strong>${cleanText(item.title)}</strong><br>${cleanText(item.meta)}</span><small>Open</small></button>`).join("")
-        : notice("No customers, jobs, or invoices match that search.");
+        : notice("No customers, properties, jobs, estimates, invoices, or employees match that search.");
     }
 
     function renderOwnerHome() {
@@ -11011,7 +11093,8 @@
       const queue = $("#operations-queue");
       if (queue) {
         const openInvoices = invoiceDrafts.filter((invoice) => !isPaidInvoice(invoice) && invoice.status !== "Draft").length;
-        const unassignedJobs = adminJobRows.filter((job) => !job.assigned_employee_id && String(job.status || "").toLowerCase() !== "completed").length;
+        const closedStatuses = new Set(["completed", "archived", "cancelled", "paid"]);
+        const unassignedJobs = adminJobRows.filter((job) => !job.assigned_employee_id && !closedStatuses.has(String(job.status || "").toLowerCase())).length;
         const completedJobs = adminJobRows.filter((job) => String(job.status || "").toLowerCase() === "completed").length;
         const followUps = invoiceCustomers.filter((customer) => customer.follow_up_needed || customer.status === "Past due").length;
         queue.innerHTML = [
@@ -11044,7 +11127,7 @@
       const savedOrder = new Map(employeeAssignments.map((row, index) => [row.job_id, Number(row.stop_order || index + 1)]));
       const optimizedOrder = new Map(optimizedDailyRouteOrder.map((id, index) => [id, index + 1]));
       const candidates = adminJobRows
-        .filter((job) => job.status !== "Completed" && (jobRunsOnDate(job, routeDate) || visibleJobIds.has(job.id)))
+        .filter((job) => !["Completed", "Archived", "Cancelled", "Paid"].includes(job.status) && (jobRunsOnDate(job, routeDate) || visibleJobIds.has(job.id)))
         .sort((left, right) => {
           const leftOrder = optimizedOrder.get(left.id) || savedOrder.get(left.id) || 9999;
           const rightOrder = optimizedOrder.get(right.id) || savedOrder.get(right.id) || 9999;
@@ -11169,9 +11252,8 @@
               <button class="button small secondary" data-action="arrived" type="button">Notify: Arrived</button>
               <button class="button small secondary" data-action="completed" type="button">Notify: Done</button>
               <button class="button small ghost" data-action="send-confirmation" type="button">Send Confirmation</button>
-              <button class="button small ghost" data-action="delete-job" type="button">Delete Job</button>
+              <button class="button small ghost" data-action="delete-job" type="button">Archive Job</button>
               <button class="button small ghost" data-customer-action="deactivate" type="button">Archive Customer</button>
-              <button class="button small ghost" data-customer-action="delete" type="button">Delete Customer</button>
             </div>
           ` : ""}
         </div>
@@ -11235,7 +11317,7 @@
             <button class="button small ${employee.is_marketer ? "ghost" : "secondary"}" data-employee-marketer="${employee.is_marketer ? "false" : "true"}" type="button">${employee.is_marketer ? "Remove Marketer" : "Make Marketer"}</button>
             <button class="button small ${employee.is_subcontractor ? "ghost" : "secondary"}" data-employee-subcontractor="${employee.is_subcontractor ? "false" : "true"}" type="button">${employee.is_subcontractor ? "Remove Subcontractor" : "Make Subcontractor"}</button>
             <button class="button small ${employee.role === "Bookkeeper" ? "ghost" : "secondary"}" data-employee-bookkeeper="${employee.role === "Bookkeeper" ? "false" : "true"}" type="button">${employee.role === "Bookkeeper" ? "Remove Bookkeeper" : "Make Bookkeeper"}</button>
-            <button class="button small ghost" data-employee-delete="1" type="button">Delete Employee</button>
+            <button class="button small ghost" data-employee-delete="1" type="button">Deactivate Employee</button>
           </div>
         </div>
       `;
@@ -12830,7 +12912,7 @@
         return;
       }
       if (button.dataset.invoiceAction === "delete") {
-        if (!confirm("Delete this invoice forever?")) return;
+        if (!confirm("Void this invoice? Its history will be preserved.")) return;
         try {
           await requestJson("portal-invoices", {
             method: "DELETE",
@@ -12838,7 +12920,7 @@
             body: JSON.stringify({ id })
           });
           await loadInvoices();
-          $("#invoice-result").innerHTML = notice("Invoice deleted.");
+          $("#invoice-result").innerHTML = notice("Invoice voided and preserved in history.");
         } catch (error) {
           $("#invoice-result").innerHTML = notice(error.message, true);
         }
@@ -13000,7 +13082,7 @@
         $("#mileage-form").scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
-      if (!confirm("Delete this mileage expense forever?")) return;
+      if (!confirm("Archive this mileage entry?")) return;
       try {
         button.disabled = true;
         const data = await requestJson("portal-expenses", {
@@ -13009,7 +13091,7 @@
           body: JSON.stringify({ id })
         });
         renderExpenses(data);
-        $("#mileage-result").innerHTML = notice("Mileage deleted.");
+        $("#mileage-result").innerHTML = notice("Mileage archived.");
       } catch (error) {
         $("#mileage-result").innerHTML = notice(error.message, true);
       } finally {
@@ -13105,7 +13187,7 @@
         $("#expense-form").scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
-      if (!confirm("Delete this expense forever?")) return;
+      if (!confirm("Archive this expense?")) return;
       try {
         button.disabled = true;
         const data = await requestJson("portal-expenses", {
@@ -13114,7 +13196,7 @@
           body: JSON.stringify({ id })
         });
         renderExpenses(data);
-        $("#expense-result").innerHTML = notice("Expense deleted.");
+        $("#expense-result").innerHTML = notice("Expense archived.");
       } catch (error) {
         $("#expense-result").innerHTML = notice(error.message, true);
       } finally {
@@ -13250,6 +13332,20 @@
     $("#customer-file-close")?.addEventListener("click", closeCustomerFile);
     $("#customer-file-modal")?.addEventListener("click", (event) => {
       if (event.target.id === "customer-file-modal") return closeCustomerFile();
+      const estimateButton = event.target.closest("[data-file-estimate-id]");
+      if (estimateButton) {
+        const estimate = savedEstimates.find((entry) => entry.id === estimateButton.dataset.fileEstimateId);
+        closeCustomerFile();
+        if (estimate) fillEstimateForm(estimate);
+        return;
+      }
+      const invoiceButton = event.target.closest("[data-file-invoice-id]");
+      if (invoiceButton) {
+        closeCustomerFile();
+        openTab("invoices");
+        window.requestAnimationFrame(() => document.querySelector(`.invoice[data-id="${CSS.escape(invoiceButton.dataset.fileInvoiceId || "")}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
+        return;
+      }
       const actionButton = event.target.closest("[data-file-action]");
       if (!actionButton) return;
       const index = Number(event.currentTarget.dataset.customerIndex);
@@ -13536,7 +13632,7 @@
     }
 
     function renderEmployeeJobs(data) {
-      const routeRows = (data.daily_routes || []).filter((row) => row.green_grin_jobs && row.green_grin_jobs.status !== "Completed");
+      const routeRows = (data.daily_routes || []).filter((row) => row.green_grin_jobs && !["Completed", "Archived", "Cancelled", "Paid"].includes(row.green_grin_jobs.status));
       const groups = new Map();
       routeRows.forEach((row) => {
         const routeDate = jobDateKey(row.route_date);
@@ -13937,7 +14033,7 @@
           });
           if (customerAction === "delete") downloadArchive(result.archive);
         } else if (action === "delete-job") {
-          if (!confirm("Delete this job forever? This cannot be undone.")) return;
+          if (!confirm("Archive this job? Its service and message history will be preserved.")) return;
           await requestJson("portal-jobs", {
             method: "DELETE",
             headers: adminHeaders(),
@@ -14021,7 +14117,7 @@
       button.disabled = true;
       try {
         if (button.dataset.employeeDelete) {
-          if (!confirm("Delete this employee access record? This cannot be undone.")) return;
+          if (!confirm("Deactivate this employee? Their time and job history will be preserved.")) return;
           await requestJson("portal-employees", {
             method: "DELETE",
             headers: adminHeaders(),

@@ -10,11 +10,12 @@ const PROPOSAL_URL = process.env.GREEN_GRIN_PROPOSAL_URL || "https://portal.gree
 const CONTRACTOR_REGISTRATION_NUMBER = process.env.GREEN_GRIN_CONTRACTOR_REGISTRATION_NUMBER || "";
 const { groupedTotals } = require("../../assets/green-grin-project-estimator.js");
 const { BUSINESS_NAME, buildContract } = require("../../assets/green-grin-contract.js");
+const { isAdminRequest } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, x-admin-pin",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
 };
 
@@ -295,7 +296,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
 
     if (body.action === "test-email") {
-      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Owner sign-in is required." });
+      if (!isAdminRequest(event)) return json(401, { error: "Owner sign-in is required." });
       const delivery = await sendEmail(
         OWNER_EMAIL,
         `${BUSINESS_NAME} email test`,
@@ -305,7 +306,7 @@ exports.handler = async (event) => {
     }
 
     if (body.action === "send") {
-      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Owner sign-in is required." });
+      if (!isAdminRequest(event)) return json(401, { error: "Owner sign-in is required." });
       const rows = await supabase(`green_grin_estimates?select=*&id=eq.${encodeURIComponent(body.estimate_id || "")}&limit=1`);
       const estimate = rows?.[0];
       if (!estimate) return json(404, { error: "Estimate not found." });
@@ -324,7 +325,7 @@ exports.handler = async (event) => {
     }
 
     if (body.action === "signed-copy") {
-      if (!ADMIN_PIN || event.headers["x-admin-pin"] !== ADMIN_PIN) return json(401, { error: "Owner sign-in is required." });
+      if (!isAdminRequest(event)) return json(401, { error: "Owner sign-in is required." });
       const estimates = await supabase(`green_grin_estimates?select=*&id=eq.${encodeURIComponent(body.estimate_id || "")}&limit=1`);
       const estimate = estimates?.[0];
       if (!estimate) return json(404, { error: "Estimate not found." });

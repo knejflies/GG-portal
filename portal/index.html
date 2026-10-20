@@ -5191,8 +5191,10 @@
     }
 
     async function setOwnerSignedIn(pin, remember = true) {
-      adminSessionPin = pin;
-      const jobsData = await requestJson("portal-jobs?admin=1", { headers: { "x-admin-pin": pin } });
+      const signedSession = pin === "__SIGNED_OWNER_SESSION__";
+      adminSessionPin = signedSession ? "" : pin;
+      const ownerHeaders = signedSession ? (window.GreenGrinSession?.headers?.("admin") || {}) : { "x-admin-pin": pin };
+      const jobsData = await requestJson("portal-jobs?admin=1", { headers: ownerHeaders });
       if (remember) {
         saveValue(sessionKeys.adminPin, pin);
         await savePersistentPortalSession("admin", pin);
@@ -5267,7 +5269,7 @@
         let savedPin = readSavedValue(sessionKeys.adminPin);
         if (!savedPin) {
           savedPin = await restorePersistentPortalPin("admin");
-          if (savedPin) saveValue(sessionKeys.adminPin, savedPin);
+          if (savedPin && savedPin !== "__SIGNED_OWNER_SESSION__") saveValue(sessionKeys.adminPin, savedPin);
         }
         if (!savedPin) return false;
         $("#owner-login-result").innerHTML = notice("Restoring owner session...");
@@ -5277,6 +5279,7 @@
           return true;
         } catch (_error) {
           saveValue(sessionKeys.adminPin, "");
+          window.GreenGrinSession?.clear?.("admin");
           $("#owner-login-result").innerHTML = notice("Saved owner session expired. Sign in again.", true);
           setSignedOut({ clearSaved: false });
           return false;
@@ -5868,11 +5871,12 @@
 
     function adminHeaders() {
       if (activeAccount?.id === "bookkeeper") return employeeTimeHeaders();
-      return { "x-admin-pin": adminPin() };
+      const sessionHeaders = window.GreenGrinSession?.headers?.("admin") || {};
+      return Object.keys(sessionHeaders).length ? sessionHeaders : { "x-admin-pin": adminPin() };
     }
 
     function hasAccountingAccess() {
-      return Boolean(adminPin() || activeAccount?.id === "bookkeeper");
+      return Boolean(adminPin() || window.GreenGrinSession?.has?.("admin") || activeAccount?.id === "bookkeeper");
     }
 
     function cleanText(value) {
@@ -7593,7 +7597,6 @@
               <button class="button small" data-customer-list-action="invoice" type="button">Create Invoice</button>
               <button class="button small" data-customer-list-action="monthly-invoice" type="button">Send Monthly Bill</button>
               <button class="button small secondary" data-customer-list-action="test-notification" type="button">Test Notification</button>
-              <button class="button small ghost" data-customer-list-action="delete" type="button">Delete Customer</button>
             </div>
           </div>
         </div>
@@ -7864,7 +7867,6 @@
               <button class="button small secondary" data-action="completed" type="button">Notify: Done</button>
               <button class="button small ghost" data-action="delete-job" type="button">Delete Job</button>
               <button class="button small ghost" data-customer-action="deactivate" type="button">Deactivate Customer</button>
-              <button class="button small ghost" data-customer-action="delete" type="button">Delete Customer</button>
             </div>
           ` : ""}
         </div>

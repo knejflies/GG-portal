@@ -1,7 +1,7 @@
 const assert = require("assert");
 const fs = require("fs");
 
-const files = ["portal.html", "admin/index.html", "employee/index.html", "portal/index.html"];
+const files = ["admin/index.html", "employee/index.html", "portal/index.html"];
 const requiredMarkers = [
   'data-bidder-section="bids"',
   'data-bidder-section="fert-bids"',

@@ -2,6 +2,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const { pushReady, sendPushToTarget } = require("./push-helper");
+const { isAdminRequest } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
@@ -34,7 +35,7 @@ exports.handler = async (event) => {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return json(500, { error: "Supabase is not configured yet." });
   try {
     const params = event.queryStringParameters || {};
-    const admin = event.headers["x-admin-pin"] && event.headers["x-admin-pin"] === ADMIN_PIN;
+    const admin = isAdminRequest(event);
     const user = admin ? null : await signedInUser(event);
     const customerUserId = admin ? params.customer_user_id || JSON.parse(event.body || "{}").customer_user_id : user?.id;
     if (!customerUserId) return json(401, { error: "Please sign in first." });

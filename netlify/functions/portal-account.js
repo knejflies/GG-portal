@@ -25,7 +25,11 @@ function requireSetup() {
 async function verifyUser(event) {
   const auth = event.headers.authorization || event.headers.Authorization || "";
   const token = auth.replace(/^Bearer\s+/i, "");
-  if (!token) throw new Error("Please sign in again.");
+  if (!token) {
+    const error = new Error("Please sign in again.");
+    error.statusCode = 401;
+    throw error;
+  }
 
   const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
     headers: {
@@ -34,7 +38,11 @@ async function verifyUser(event) {
     }
   });
   const user = await response.json().catch(() => null);
-  if (!response.ok || !user?.id) throw new Error("Your sign-in expired. Please sign in again.");
+  if (!response.ok || !user?.id) {
+    const error = new Error("Your sign-in expired. Please sign in again.");
+    error.statusCode = 401;
+    throw error;
+  }
   return user;
 }
 
@@ -470,7 +478,7 @@ exports.handler = async (event) => {
 
     return json(405, { error: "Method not allowed." });
   } catch (error) {
-    return json(500, { error: error.message });
+    return json(error.statusCode || 500, { error: error.message });
   }
 };
 

@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { customerAllowsReminder, isServiceToday, localWeekday, reminderDelivered } = require("../netlify/functions/morning-yard-reminders.js")._test;
+const { customerAllowsReminder, isServiceToday, localWeekday, reminderDelivered, reminderDeliveryKey } = require("../netlify/functions/morning-yard-reminders.js")._test;
 
 const tomorrow = "2026-08-12";
 assert.equal(localWeekday(tomorrow), 3, "August 12, 2026 must be treated as Wednesday.");
@@ -19,6 +19,7 @@ assert.equal(isServiceToday({ recurring_weekly: false, scheduled_date: "2026-08-
 assert.equal(reminderDelivered({ sent: 1, total: 1 }), true);
 assert.equal(reminderDelivered({ sent: 0, total: 0 }), false, "No registered device is not a successful reminder.");
 assert.equal(reminderDelivered({ sent: 0, failed: 1, total: 1 }), false, "A rejected push must remain eligible for retry.");
+assert.equal(reminderDeliveryKey("job-7", "2026-10-18"), "yard-reminder:job-7:2026-10-18");
 assert.equal(customerAllowsReminder({ active: true, text_cleanup_reminders: true }), true);
 assert.equal(customerAllowsReminder({ active: false, text_cleanup_reminders: true }), false, "Inactive customers must never receive reminders.");
 assert.equal(customerAllowsReminder({ active: true, text_cleanup_reminders: false }), false, "Customers who disabled reminders must not receive them.");

@@ -3,6 +3,7 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const { validateMeasurement } = require("../../assets/lawn-measurement-engine");
+const { isAdminRequest } = require("./portal-auth");
 
 const headers = {
   "Content-Type": "application/json",
@@ -48,7 +49,7 @@ async function userFromRequest(event) {
 }
 
 async function measurementActor(event) {
-  if (ADMIN_PIN && event.headers["x-admin-pin"] === ADMIN_PIN) return { type: "Owner", id: null, name: "Owner" };
+  if (isAdminRequest(event)) return { type: "Owner", id: null, name: "Owner" };
   const user = await userFromRequest(event);
   let employees = [];
   if (user) employees = await supabase(`green_grin_employees?select=id,full_name,status&user_id=eq.${encodeURIComponent(user.id)}&status=eq.Active&limit=1`);
