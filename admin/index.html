@@ -10792,8 +10792,8 @@
         addMarketingBasemapControl(customerMap, "street");
         customerMarkerLayer = window.L.layerGroup().addTo(customerMap);
       }
-      const located = invoiceCustomers.filter((customer) => customer.property?.geocode_status === "Located" && Number.isFinite(Number(customer.property?.latitude)) && Number.isFinite(Number(customer.property?.longitude)));
-      const needsCorrection = invoiceCustomers.filter((customer) => customer.property && customer.property.geocode_status !== "Located");
+      const located = invoiceCustomers.filter((customer) => Number.isFinite(Number(customer.property?.latitude)) && Number.isFinite(Number(customer.property?.longitude)));
+      const needsCorrection = invoiceCustomers.filter((customer) => Boolean(customer.property) && (!Number.isFinite(Number(customer.property?.latitude)) || !Number.isFinite(Number(customer.property?.longitude))));
       $("#customer-map-summary").innerHTML = "<span><strong>" + located.length + "</strong>On map</span><span><strong>" + needsCorrection.length + "</strong>Needs correction</span><span><strong>" + invoiceCustomers.length + "</strong>Total customers</span>";
       customerMarkerLayer.clearLayers();
       const bounds = [];

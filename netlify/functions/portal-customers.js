@@ -46,9 +46,53 @@ async function savePropertyGeocode(propertyId, geocode) {
   try {
     return await supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(update) });
   } catch (error) {
-    if (!/geocode_display_name/i.test(error.message || "")) throw error;
-    const { geocode_display_name: omittedDisplayName, ...compatibleUpdate } = update;
-    return supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
+    const message = error.message || "";
+    if (/geocode_display_name/i.test(message)) {
+      const { geocode_display_name: omittedDisplayName, ...compatibleUpdate } = update;
+      try {
+        return await supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
+      } catch (statusError) {
+        if (!/geocode_status/i.test(statusError.message || "")) throw statusError;
+        const { geocode_status: omittedStatus, ...coordinateUpdate } = compatibleUpdate;
+        return supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(coordinateUpdate) });
+      }
+    }
+    if (/geocode_status/i.test(message)) {
+      const { geocode_status: omittedStatus, ...compatibleUpdate } = update;
+      try {
+        return await supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(compatibleUpdate) });
+      } catch (displayError) {
+        if (!/geocode_display_name/i.test(displayError.message || "")) throw displayError;
+        const { geocode_display_name: omittedDisplayName, ...coordinateUpdate } = compatibleUpdate;
+        return supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(coordinateUpdate) });
+      }
+    }
+    throw error;
+  }
+}
+
+async function insertPropertyCompatible(payload) {
+  try {
+    return await supabase("green_grin_properties", { method: "POST", body: JSON.stringify(payload) });
+  } catch (error) {
+    const message = error.message || "";
+    if (/geocode_display_name/i.test(message)) {
+      const { geocode_display_name: omittedDisplayName, ...compatiblePayload } = payload;
+      try { return await supabase("green_grin_properties", { method: "POST", body: JSON.stringify(compatiblePayload) }); } catch (statusError) {
+        if (!/geocode_status/i.test(statusError.message || "")) throw statusError;
+        const { geocode_status: omittedStatus, ...coordinatePayload } = compatiblePayload;
+        return supabase("green_grin_properties", { method: "POST", body: JSON.stringify(coordinatePayload) });
+      }
+    }
+    if (/geocode_status/i.test(message)) {
+      const { geocode_status: omittedStatus, ...compatiblePayload } = payload;
+      try { return await supabase("green_grin_properties", { method: "POST", body: JSON.stringify(compatiblePayload) }); } catch (displayError) {
+        if (!/geocode_display_name/i.test(displayError.message || "")) throw displayError;
+        const { geocode_display_name: omittedDisplayName, ...coordinatePayload } = compatiblePayload;
+        return supabase("green_grin_properties", { method: "POST", body: JSON.stringify(coordinatePayload) });
+      }
+    }
+    throw error;
   }
 }
 
@@ -240,13 +284,7 @@ exports.handler = async (event) => {
         if (knownProperties.has(key)) continue;
         knownProperties.add(key);
         const geocode = await geocodeAddress(address);
-        await supabase("green_grin_properties", {
-          method: "POST",
-          body: JSON.stringify({ customer_user_id: job.customer_user_id, address, active: true, latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status, geocode_display_name: geocode.display_name })
-        }).catch(async (error) => {
-          if (!/geocode_display_name/i.test(error.message || "")) throw error;
-          await supabase("green_grin_properties", { method: "POST", body: JSON.stringify({ customer_user_id: job.customer_user_id, address, active: true, latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status }) });
-        });
+        await insertPropertyCompatible({ customer_user_id: job.customer_user_id, address, active: true, latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status, geocode_display_name: geocode.display_name });
         if (geocode.status === "Located") located += 1; else needsCorrection += 1;
       }
       return json(200, { located, needs_correction: needsCorrection, skipped });
