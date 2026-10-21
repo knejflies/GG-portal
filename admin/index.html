@@ -4284,7 +4284,22 @@
   </style>
 </head>
 <body>
-  <script>if (/\/admin(?:\/|$)/i.test(window.location.pathname)) document.documentElement.classList.add("admin-route");</script>
+  <script>
+    if (/\/admin(?:\/|$)/i.test(window.location.pathname)) {
+      document.documentElement.classList.add("admin-route");
+      document.addEventListener("DOMContentLoaded", () => {
+        document.body.classList.add("admin-site");
+        const title = document.querySelector("#portal-title");
+        const subtitle = document.querySelector("#portal-subtitle");
+        const customerCard = document.querySelector(".customer-login-card");
+        const teamAccess = document.querySelector("#team-access");
+        if (title) title.textContent = "Admin Portal";
+        if (subtitle) subtitle.textContent = "Owner tools for jobs, scheduling, employee access, and activity logs.";
+        if (customerCard) customerCard.hidden = true;
+        if (teamAccess) teamAccess.hidden = false;
+      }, { once: true });
+    }
+  </script>
   <header>
     <div class="wrap nav">
       <a class="brand" href="/">
