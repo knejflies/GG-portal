@@ -7017,6 +7017,7 @@
       menu?.classList.remove("mobile-menu-open");
       moreButton?.setAttribute("aria-expanded", "false");
       if (tabId === "admin-home" || tabId === "field-mode") renderOwnerHome();
+      if (tabId === "sprinkler-blowouts") loadBlowoutLeads();
     }
 
     function revealAdminEditor(tabId, editorSelector, resultSelector, message) {
@@ -7080,7 +7081,6 @@
         if (button.dataset.tab === "activity") loadActivity();
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
-        if (button.dataset.tab === "sprinkler-blowouts") loadBlowoutLeads();
         if (button.dataset.tab === "yard-measurement") {
           initYardMeasurement().catch((error) => {
             const status = $("#yard-measurement-status");
