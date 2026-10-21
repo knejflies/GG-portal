@@ -4432,9 +4432,8 @@
       <button class="tab owner-only" data-tab="customers" type="button">Properties &amp; Customers</button>
       <button class="tab owner-only" data-tab="owner" type="button">Schedule &amp; Jobs</button>
       <button class="tab owner-only" data-tab="calendar" type="button">Calendar</button>
-      <span class="tab-section-label owner-only">Quoting tools</span>
-      <button class="tab owner-only" data-tab="bids" type="button">Landscape Estimates</button>
-      <button class="tab owner-only" data-tab="fert-bids" type="button">Fertilizer Plans</button>
+      <span class="tab-section-label owner-only">Quotes</span>
+      <button class="tab owner-only" data-tab="bids" type="button">Quotes</button>
       <button class="tab salesman-access" data-tab="yard-measurement" type="button">Sales Yard Measure</button>
       <button class="tab owner-only" data-tab="mowing-contract" type="button">Mowing Contract</button>
       <button class="tab owner-only" data-tab="sprinkler-blowouts" type="button">Sprinkler Blowouts</button>
@@ -5236,14 +5235,14 @@
 
     <section id="bids" class="panel owner-only" data-legacy-bidder="mowing">
       <div class="bidder-subnav" role="tablist" aria-label="Bidders">
-        <button class="bidder-subnav-button active" data-bidder-section="bids" type="button" role="tab" aria-selected="true">Mowing Bidder</button>
-        <button class="bidder-subnav-button" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="false">Fertilizer Plans</button>
-        <button class="bidder-subnav-button" data-bidder-section="project-bids" type="button" role="tab" aria-selected="false">Project Estimator</button>
+        <button class="bidder-subnav-button active" data-bidder-section="bids" type="button" role="tab" aria-selected="true">Mowing Quote</button>
+        <button class="bidder-subnav-button" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="false">Fertilizer Quote</button>
+        <button class="bidder-subnav-button" data-bidder-section="project-bids" type="button" role="tab" aria-selected="false">Landscape Project Quote</button>
       </div>
       <div class="bid-page-head">
         <div>
-          <h2>Mowing Bidder</h2>
-          <p class="muted">One straightforward mowing quote - no plan selection.</p>
+          <h2>Mowing Quote</h2>
+          <p class="muted">Choose a service quote above. After approval, copy it to a job; send charges from Invoices &amp; Payments.</p>
         </div>
         <span id="bid-config-version" class="badge">Pricing v1</span>
       </div>
@@ -5381,14 +5380,14 @@
 
     <section id="fert-bids" class="panel owner-only" data-legacy-bidder="fertilizer">
       <div class="bidder-subnav" role="tablist" aria-label="Bidders">
-        <button class="bidder-subnav-button" data-bidder-section="bids" type="button" role="tab" aria-selected="false">Mowing Bidder</button>
-        <button class="bidder-subnav-button active" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="true">Fertilizer Plans</button>
-        <button class="bidder-subnav-button" data-bidder-section="project-bids" type="button" role="tab" aria-selected="false">Project Estimator</button>
+        <button class="bidder-subnav-button" data-bidder-section="bids" type="button" role="tab" aria-selected="false">Mowing Quote</button>
+        <button class="bidder-subnav-button active" data-bidder-section="fert-bids" type="button" role="tab" aria-selected="true">Fertilizer Quote</button>
+        <button class="bidder-subnav-button" data-bidder-section="project-bids" type="button" role="tab" aria-selected="false">Landscape Project Quote</button>
       </div>
       <div class="bid-page-head">
         <div>
-          <h2>Fertilizer Plans &amp; Pricing</h2>
-          <p class="muted">Build an annual fertilizer plan with four equal quarterly payments, a clear square-footage breakpoint, and the first-year sales commission included.</p>
+          <h2>Fertilizer Quote</h2>
+          <p class="muted">Build an annual fertilizer quote with quarterly payments, then copy the approved price into the customer job.</p>
         </div>
         <span id="fert-config-version" class="badge">Pricing v1</span>
       </div>
@@ -5558,7 +5557,7 @@
           </div>
           <div><label for="mowing-contract-property-type">Property type</label><select id="mowing-contract-property-type"><option value="Residential">Residential</option><option value="Commercial">Commercial</option><option value="HOA / Commercial">HOA / Commercial</option></select></div>
           <div><label for="mowing-contract-valid-until">Valid until</label><input id="mowing-contract-valid-until" type="date" /></div>
-          <p class="muted">The secure link lets the customer enter their name, phone, service and billing addresses, service frequency, billing choice, and signature. This form is separate from Landscape Estimates.</p>
+          <p class="muted">The secure link lets the customer enter their name, phone, service and billing addresses, service frequency, billing choice, and signature. This contract is separate from Quotes.</p>
           <div id="mowing-contract-result" aria-live="polite"></div>
           <div class="row-actions"><button class="button" type="submit">Send Mowing Contract</button><button id="mowing-contract-preview" class="button secondary" type="button">Preview Contract</button><button id="mowing-contract-clear" class="button ghost" type="button">Clear</button></div>
         </form>
@@ -5569,7 +5568,7 @@
       <div class="bid-page-head">
         <div>
           <p class="eyebrow">Landscape sales</p>
-          <h2>Landscape Estimates</h2>
+          <h2>Landscape Project Quote</h2>
           <p class="muted">Price the work, protect your margin, and turn the approved scope into a real customer invoice.</p>
         </div>
         <span class="badge">Owner only</span>
@@ -5583,15 +5582,6 @@
 
       <div class="estimate-flow-hint" aria-label="Estimate workflow">
         <span><strong>1</strong> Choose customer</span><span><strong>2</strong> Add services and prices</span><span><strong>3</strong> Preview, save, or send</span>
-      </div>
-
-      <div class="card mowing-contract-launcher">
-        <div>
-          <span class="admin-eyebrow">Recurring service</span>
-          <h3>Mowing Contract</h3>
-          <p class="muted">Send the separate Green Grin mowing agreement. Customers fill in their service details and sign it digitally.</p>
-        </div>
-        <button id="mowing-contract-launch" class="button" type="button">Open Mowing Contract</button>
       </div>
 
       <div class="estimator-workspace-panel active" data-estimator-panel="builder">
@@ -6998,8 +6988,8 @@
           return;
         }
         document.body.classList.remove("mowing-contract-mode");
-        $("#project-bids .bid-page-head h2").textContent = "Landscape Estimates";
-        $("#project-bids .bid-page-head .muted").textContent = "Price the work, protect your margin, and turn the approved scope into a real customer invoice.";
+        $("#project-bids .bid-page-head h2").textContent = "Landscape Project Quote";
+        $("#project-bids .bid-page-head .muted").textContent = "Build the scope and price, then send the approved project through Jobs and Invoices & Payments.";
         const destinationTab = requestedTab === "bids" ? "project-bids" : requestedTab;
         openTab(destinationTab);
         if (button.dataset.tab === "invoices") {

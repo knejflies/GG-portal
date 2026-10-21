@@ -39,7 +39,8 @@ assert.ok(!admin.includes('data-estimate-intent="draft-invoice"'), "Project esti
 
 assert.match(admin, /id="bids"[^>]*data-legacy-bidder="mowing"/);
 assert.match(admin, /id="fert-bids"[^>]*data-legacy-bidder="fertilizer"/);
-assert.equal(/<section id="fert-bids"[^>]*\shidden(?:\s|>)/.test(admin), false, "The Fertilizer Plans menu must open a visible panel");
+assert.equal(/<section id="fert-bids"[^>]*\shidden(?:\s|>)/.test(admin), false, "The Fertilizer Quote panel must remain available inside Quotes");
+assert.ok(admin.includes("Fertilizer Quote"), "The consolidated Quotes workspace should label fertilizer clearly.");
 
 for (const customerFile of ["portal/index.html", "employee/index.html"]) {
   const html = fs.readFileSync(customerFile, "utf8");
