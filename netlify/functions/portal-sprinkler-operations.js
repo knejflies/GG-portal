@@ -54,21 +54,34 @@ function requireAdmin(event) {
   return requireOwner(event, "Admin access required.");
 }
 function normalizeAddress(value) { return clean(value, 300).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+const DEFAULT_GEOCODER_REGION = String(process.env.GREEN_GRIN_GEOCODER_DEFAULT_REGION || "Caldwell, Idaho").trim();
 function geocodeDecision(result, requestedAddress) {
   if (!result) return { status: "Needs Correction", latitude: null, longitude: null, display_name: null };
   const display = String(result.display_name || "");
   const requestedNumber = String(requestedAddress || "").match(/^\s*(\d+[a-z]?)/i)?.[1];
-  const hasHouseNumber = !requestedNumber || new RegExp(`\\b${requestedNumber.replace(/[a-z]/i, "[a-z]?")}\\b`, "i").test(display);
+  const resultHouseNumber = String(result.address?.house_number || "");
+  const hasHouseNumber = !requestedNumber || (resultHouseNumber && new RegExp(`^${requestedNumber}$`, "i").test(resultHouseNumber)) || new RegExp(`\\b${requestedNumber.replace(/[a-z]/i, "[a-z]?")}\\b`, "i").test(display);
+  const vagueRoadResult = ["road", "street", "path", "highway"].includes(String(result.type || "").toLowerCase()) && !resultHouseNumber;
   const latitude = Number(result.lat);
   const longitude = Number(result.lon);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !hasHouseNumber) return { status: "Needs Correction", latitude: null, longitude: null, display_name: display || null };
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || !hasHouseNumber || vagueRoadResult) return { status: "Needs Correction", latitude: null, longitude: null, display_name: display || null };
   return { status: "Located", latitude, longitude, display_name: display };
 }
 async function geocodeAddress(address) {
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=3&addressdetails=1&q=${encodeURIComponent(address)}`, { headers: { "User-Agent": "Green-Grin-Portal/1.0 contact@greengrinlawns.com" } });
+  const raw = clean(address, 300);
+  const hasRegion = /\b(idaho|id|oregon|or|washington|wa|utah|ut|montana|mt)\b/i.test(raw);
+  const query = hasRegion ? raw : `${raw}, ${DEFAULT_GEOCODER_REGION}`;
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=8&addressdetails=1&countrycodes=us&q=${encodeURIComponent(query)}`, { headers: { "User-Agent": "Green-Grin-Portal/1.0 contact@greengrinlawns.com" } });
   if (!response.ok) return geocodeDecision(null, address);
   const rows = await response.json().catch(() => []);
-  return geocodeDecision(rows?.[0], address);
+  const requestedNumber = raw.match(/^\s*(\d+[a-z]?)/i)?.[1];
+  const candidates = (rows || []).filter((row) => {
+    const display = String(row.display_name || "");
+    const house = String(row.address?.house_number || "");
+    return !requestedNumber || house.toLowerCase() === requestedNumber.toLowerCase() || new RegExp(`\\b${requestedNumber.replace(/[a-z]/i, "[a-z]?")}\\b`, "i").test(display);
+  });
+  candidates.sort((a, b) => ((Number(b.importance) || 0) + (String(b.type).toLowerCase() === "house" ? .5 : 0)) - ((Number(a.importance) || 0) + (String(a.type).toLowerCase() === "house" ? .5 : 0)));
+  return geocodeDecision(candidates[0], address);
 }
 async function getLead(id) {
   const rows = await supabase(`green_grin_sprinkler_blowout_leads?select=*&id=eq.${encodeURIComponent(id)}&limit=1`);
