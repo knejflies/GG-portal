@@ -7052,10 +7052,13 @@
       button.disabled = true;
       $("#field-mode-result").innerHTML = notice(button.dataset.fieldAction === "completed" ? "Marking this stop done..." : "Sending arrival notification...");
       try {
+        const fieldJob = adminJobRows.find((entry) => entry.id === id);
+        const customerPrice = button.dataset.fieldAction === "completed" ? prompt("Customer price for this visit (optional; leave blank to record completion only)", "") : "";
+        if (button.dataset.fieldAction === "completed" && customerPrice === null) return;
         const data = await requestJson("portal-message", {
           method: "POST",
           headers: adminHeaders(),
-          body: JSON.stringify({ id, template: button.dataset.fieldAction })
+          body: JSON.stringify({ id, template: button.dataset.fieldAction, customer_price: customerPrice || "", service_date: fieldJob?.scheduled_date || "" })
         });
         const fallback = button.dataset.fieldAction === "completed" ? "Job marked done." : "Arrival notification saved.";
         $("#field-mode-result").innerHTML = notice(pushDeliveryText(data.push, fallback));
@@ -14062,10 +14065,12 @@
           const applicationAmount = fertilizer ? prompt("How much fertilizer did you apply? (Example: 22 lb, 3 bags, or 1.5 gal)") : "";
           if (fertilizer && applicationAmount === null) return;
           const applicationProduct = fertilizer ? prompt("Which fertilizer product? (Optional)") : "";
+          const customerPrice = action === "completed" ? prompt("Customer price for this visit (optional; leave blank to record completion only)", "") : "";
+          if (action === "completed" && customerPrice === null) return;
           const data = await requestJson("portal-message", {
             method: "POST",
             headers: adminHeaders(),
-            body: JSON.stringify({ id, template: action, application_amount: applicationAmount || "", application_product: applicationProduct || "" })
+            body: JSON.stringify({ id, template: action, customer_price: customerPrice || "", application_amount: applicationAmount || "", application_product: applicationProduct || "" })
           });
           const label = action === "completed"
             ? "Done message saved."
