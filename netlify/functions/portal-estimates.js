@@ -142,8 +142,10 @@ function jobPayloadFromEstimate(estimate) {
   const itemSummary = (Array.isArray(estimate?.line_items) ? estimate.line_items : [])
     .map((item) => `${clean(item?.description || "Project item", 180)} (${moneyNumber(item?.quantity)} ${clean(item?.unit || "each", 24)})`)
     .join("; ");
+  const quoteType = ({ residential: "Residential", commercial: "Commercial", hoa: "HOA / Multi-property" })[estimate?.calculation_inputs?.property_type] || "Residential";
   const notes = [
     `Created from approved estimate ${clean(estimate?.estimate_number, 40)}.`,
+    `Quote type: ${quoteType}.`,
     clean(estimate?.project_scope, 3000),
     itemSummary ? `Work items: ${itemSummary}` : ""
   ].filter(Boolean).join("\n\n");

@@ -33,6 +33,7 @@ for (const marker of [
 ]) {
   assert.ok(admin.includes(marker), `Admin Project Estimator is missing ${marker}`);
 }
+assert.ok(admin.includes('id="estimate-property-type"'), "Project quotes should identify residential, commercial, or HOA work.");
 
 assert.ok(!admin.includes('data-estimate-intent="send-invoice"'), "Project estimates must not expose a duplicate Send Invoice action");
 assert.ok(!admin.includes('data-estimate-intent="draft-invoice"'), "Project estimates must not expose a duplicate invoice draft action");

@@ -5609,6 +5609,7 @@
             </div>
             <div class="three">
               <div><label for="estimate-customer">Customer</label><select id="estimate-customer"><option value="manual">One-time customer</option></select></div>
+              <div><label for="estimate-property-type">Quote type</label><select id="estimate-property-type"><option value="residential">Residential</option><option value="commercial">Commercial</option><option value="hoa">HOA / Multi-property</option></select></div>
               <div><label for="estimate-status">Estimate status</label><select id="estimate-status"><option>Draft</option><option>Quoted</option><option>Approved</option><option>Declined</option><option>Converted</option></select></div>
               <div><label for="estimate-valid-until">Estimate valid until</label><input id="estimate-valid-until" type="date" /></div>
             </div>
@@ -8820,7 +8821,7 @@
         calculation_inputs: (() => {
           let inputs = {};
           try { inputs = JSON.parse($("#estimate-form").dataset.calculationInputs || "{}"); } catch { inputs = {}; }
-          return { ...inputs, proposal_price_display: $("#estimate-price-display").value || "grouped" };
+          return { ...inputs, property_type: $("#estimate-property-type").value || "residential", proposal_price_display: $("#estimate-price-display").value || "grouped" };
         })(),
         invoice_id: $("#estimate-form").dataset.invoiceId || null,
         invoice_number: $("#estimate-form").dataset.invoiceNumber || "",
@@ -8857,6 +8858,7 @@
       $("#estimate-initial-payment-percent").value = "0";
       $("#estimate-price-display").value = "total_only";
       $("#estimate-contract-template").value = "landscaping";
+      $("#estimate-property-type").value = "residential";
       $("#payment-schedule-editor").hidden = true;
       resetContractEditorToStandard();
       renderEstimateLines();
@@ -8935,6 +8937,7 @@
       $("#estimate-invoice-due").value = estimate.invoice_due_date || "";
       $("#estimate-customer-notes").value = estimate.customer_notes || "";
       $("#estimate-contract-template").value = estimate.contract_template || "landscaping";
+      $("#estimate-property-type").value = estimate.calculation_inputs?.property_type || "residential";
       $("#payment-schedule-editor").hidden = true;
       renderContractEditor(Array.isArray(estimate.contract_sections) && estimate.contract_sections.length ? estimate.contract_sections : standardContractDraft($("#estimate-contract-template").value).sections);
       const savedContract = window.GreenGrinContract?.buildContract(estimate, { contractTemplate: $("#estimate-contract-template").value }) || {};
