@@ -1447,6 +1447,10 @@
 
     .tabs {
       top: 86px;
+      max-height: calc(100vh - 112px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
       padding: 14px;
       border-radius: 18px;
       background:
@@ -1462,6 +1466,46 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       padding: 0 8px 4px;
+    }
+
+    .tabs::-webkit-scrollbar { width: 7px; }
+    .tabs::-webkit-scrollbar-thumb { background: rgba(141, 236, 85, 0.42); border-radius: 999px; }
+
+    /* Fertilizer bids are used mostly from a phone: keep the quote headline
+       visible and turn the wide cost table into a compact decision table. */
+    @media (max-width: 700px) {
+      #fert-bids .bid-workspace { padding: 14px; }
+      #fert-bids .bidder-subnav { display: flex; overflow-x: auto; gap: 8px; padding: 7px; }
+      #fert-bids .bidder-subnav-button { flex: 1 0 138px; min-height: 44px; }
+      #fert-bids .fert-quote-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+      #fert-bids .fert-quote-card { min-height: 78px; padding: 10px; }
+      #fert-bids .fert-quote-card strong { font-size: 1.1rem; }
+      #fert-bids .fert-table-wrap { border-radius: 10px; }
+      #fert-bids .fert-table:not(.purchase) { width: 100%; min-width: 0; font-size: .72rem; }
+      #fert-bids .fert-table:not(.purchase) th,
+      #fert-bids .fert-table:not(.purchase) td { padding: 7px 5px; white-space: normal; }
+      #fert-bids .fert-table:not(.purchase) th:nth-child(4),
+      #fert-bids .fert-table:not(.purchase) td:nth-child(4),
+      #fert-bids .fert-table:not(.purchase) th:nth-child(5),
+      #fert-bids .fert-table:not(.purchase) td:nth-child(5),
+      #fert-bids .fert-table:not(.purchase) th:nth-child(6),
+      #fert-bids .fert-table:not(.purchase) td:nth-child(6),
+      #fert-bids .fert-table:not(.purchase) th:nth-child(9),
+      #fert-bids .fert-table:not(.purchase) td:nth-child(9),
+      #fert-bids .fert-table:not(.purchase) th:nth-child(10),
+      #fert-bids .fert-table:not(.purchase) td:nth-child(10),
+      #fert-bids .fert-table:not(.purchase) th:nth-child(11),
+      #fert-bids .fert-table:not(.purchase) td:nth-child(11),
+      #fert-bids .fert-table:not(.purchase) th:nth-child(12),
+      #fert-bids .fert-table:not(.purchase) td:nth-child(12),
+      #fert-bids .fert-table:not(.purchase) th:nth-child(16),
+      #fert-bids .fert-table:not(.purchase) td:nth-child(16) { display: none; }
+      #fert-bids .fert-table.purchase { min-width: 0; font-size: .76rem; }
+      #fert-bids .fert-table.purchase th,
+      #fert-bids .fert-table.purchase td { padding: 7px 5px; }
+      #fert-bids .fert-settings > summary { min-height: 50px; }
+      #fert-bids .fert-settings form { padding: 14px; }
+      #fert-bids .row-actions { grid-template-columns: 1fr; }
     }
 
     .tab {
@@ -4398,8 +4442,8 @@
       <button class="tab owner-only" data-tab="employee-admin" type="button">Employees</button>
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
       <span class="tab-section-label owner-only">Money</span>
-      <button class="tab owner-only" data-tab="invoices" type="button">Billing</button>
-      <button class="tab owner-only" data-tab="expenses" type="button">Records &amp; Expenses</button>
+      <button class="tab owner-only" data-tab="invoices" type="button">Invoices &amp; Payments</button>
+      <button class="tab owner-only" data-tab="expenses" type="button">Records &amp; Costs</button>
       <span class="tab-section-label owner-only">Records</span>
       <button class="tab owner-only" data-tab="email-drafter" type="button">Email Drafter</button>
       <button class="tab owner-only" data-tab="activity" type="button">Activity</button>
