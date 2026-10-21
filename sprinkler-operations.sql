@@ -73,3 +73,14 @@ create table if not exists public.green_grin_service_visibility_settings (
 insert into public.green_grin_service_visibility_settings(service_key, enabled)
 values ('sprinkler_blowout', true)
 on conflict (service_key) do nothing;
+
+-- Netlify functions use the Supabase service role through PostgREST.
+-- Keep this migration self-contained so the blowout menu does not fail with
+-- permission denied when this file is run on an older project.
+grant usage on schema public to service_role;
+grant all privileges on table public.green_grin_sprinkler_blowout_leads to service_role;
+grant all privileges on table public.green_grin_sprinkler_blowout_history to service_role;
+grant all privileges on table public.green_grin_spring_followups to service_role;
+grant all privileges on table public.green_grin_service_visibility_settings to service_role;
+grant all privileges on table public.green_grin_invoices to service_role;
+notify pgrst, 'reload schema';
