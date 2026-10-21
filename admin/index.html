@@ -247,6 +247,10 @@
       justify-content: center;
     }
 
+    /* Apply the admin gate before the main app script finishes loading. */
+    html.admin-route .customer-login-card { display: none !important; }
+    html.admin-route .team-access { display: grid !important; grid-template-columns: minmax(0, 520px); justify-content: center; }
+
     .account-preview {
       display: grid;
       gap: 12px;
@@ -4280,6 +4284,7 @@
   </style>
 </head>
 <body>
+  <script>if (/\/admin(?:\/|$)/i.test(window.location.pathname)) document.documentElement.classList.add("admin-route");</script>
   <header>
     <div class="wrap nav">
       <a class="brand" href="/">
