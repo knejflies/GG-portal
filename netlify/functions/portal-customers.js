@@ -154,7 +154,6 @@ exports.handler = async (event) => {
       for (const customer of customers || []) {
         const key = customer.customer_code || customer.id || customer.email || customer.phone;
         const customerProperties = propertyByUser.get(customer.id) || [];
-        const property = customerProperties[0] || {};
         const customerJobs = (jobs || []).filter((job) =>
           (customer.id && job.customer_user_id === customer.id) ||
           (customer.customer_code && job.customer_code === customer.customer_code) ||
@@ -163,6 +162,20 @@ exports.handler = async (event) => {
         );
         const blowoutOnly = !customerJobs.length && customerProperties.length > 0 && customerProperties.every((row) => String(row.property_name || "").trim().toLowerCase() === "sprinkler blowout property");
         if (blowoutOnly) continue;
+        const newestJob = customerJobs[0] || {};
+        // Legacy customers may have jobs but no property row yet. Keep those
+        // customers visible on the map using the job's saved address/coords;
+        // this is a read-only fallback until the canonical property is located.
+        const jobCoordinates = Number.isFinite(Number(newestJob.latitude)) && Number.isFinite(Number(newestJob.longitude))
+          ? { latitude: Number(newestJob.latitude), longitude: Number(newestJob.longitude), geocode_status: "Located" }
+          : { latitude: null, longitude: null, geocode_status: "Pending" };
+        const property = customerProperties[0] || (newestJob.address ? {
+          id: null,
+          customer_user_id: customer.id,
+          address: newestJob.address,
+          ...jobCoordinates,
+          property_source: "job_fallback"
+        } : {});
         const customerDevices = (devices || []).filter((device) =>
           (customer.id && device.customer_user_id === customer.id) ||
           (customer.customer_code && device.customer_code === customer.customer_code) ||
@@ -173,7 +186,6 @@ exports.handler = async (event) => {
           .filter(Boolean)
           .sort()
           .pop() || null;
-        const newestJob = customerJobs[0] || {};
         byKey.set(key, {
           id: customer.id || "",
           customer_user_id: customer.id || "",
@@ -208,11 +220,33 @@ exports.handler = async (event) => {
     if (adminError) return json(401, { error: adminError });
     if (event.httpMethod === "POST" && body.action === "locate-properties") {
       const properties = await supabase("green_grin_properties?select=*&active=eq.true&address=not.is.null&order=created_at.desc&limit=1000");
+      const jobs = await supabase("green_grin_jobs?select=customer_user_id,address,created_at&customer_user_id=not.is.null&address=not.is.null&order=created_at.desc&limit=1000");
+      const normalizeAddress = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const knownProperties = new Set((properties || []).map((property) => `${property.customer_user_id}:${normalizeAddress(property.address)}`));
       let located = 0; let needsCorrection = 0; let skipped = 0;
       for (const property of properties || []) {
         if (property.geocode_status === "Located" && Number.isFinite(Number(property.latitude)) && Number.isFinite(Number(property.longitude))) { skipped += 1; continue; }
         const geocode = await geocodeAddress(property.address);
         await savePropertyGeocode(property.id, geocode);
+        if (geocode.status === "Located") located += 1; else needsCorrection += 1;
+      }
+      // Backfill the canonical property record for older customers whose
+      // history only contains a job address. This is idempotent by customer
+      // and normalized address, so repeated Locate clicks stay safe.
+      for (const job of jobs || []) {
+        const address = clean(job.address, 300);
+        if (!job.customer_user_id || !address) continue;
+        const key = `${job.customer_user_id}:${normalizeAddress(address)}`;
+        if (knownProperties.has(key)) continue;
+        knownProperties.add(key);
+        const geocode = await geocodeAddress(address);
+        await supabase("green_grin_properties", {
+          method: "POST",
+          body: JSON.stringify({ customer_user_id: job.customer_user_id, address, active: true, latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status, geocode_display_name: geocode.display_name })
+        }).catch(async (error) => {
+          if (!/geocode_display_name/i.test(error.message || "")) throw error;
+          await supabase("green_grin_properties", { method: "POST", body: JSON.stringify({ customer_user_id: job.customer_user_id, address, active: true, latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status }) });
+        });
         if (geocode.status === "Located") located += 1; else needsCorrection += 1;
       }
       return json(200, { located, needs_correction: needsCorrection, skipped });

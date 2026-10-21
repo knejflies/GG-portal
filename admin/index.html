@@ -10777,7 +10777,10 @@
       $("#customers-result").innerHTML = visible.length
         ? visible.map((customer) => adminCustomerCard(customer, invoiceCustomers.indexOf(customer))).join("")
         : notice(query ? "No customers match that search." : "No customer accounts yet.");
-      renderCustomerMap();
+      renderCustomerMap().catch((error) => {
+        const summary = $("#customer-map-summary");
+        if (summary) summary.innerHTML = notice(`Map unavailable: ${error.message || "Map library could not load."}`, true);
+      });
     }
 
     async function renderCustomerMap() {
