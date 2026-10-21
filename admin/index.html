@@ -6728,6 +6728,9 @@
     }
 
     function setSignedIn(account = {}) {
+      if (portalMode() === "admin" && !["owner", "employee", "bookkeeper"].includes(account.id)) {
+        return;
+      }
       activeAccount = account || {};
       document.body.classList.toggle("employee-mode", activeAccount.id === "employee");
       document.body.classList.toggle("bookkeeper-mode", activeAccount.id === "bookkeeper");
@@ -6932,6 +6935,7 @@
         if (data.session?.user && portalMode() !== "admin") {
           await handleAuthSession(data.session);
         } else {
+          if (data.session?.user && portalMode() === "admin") await supabaseClient.auth.signOut({ scope: "local" }).catch(() => null);
           await restoreSavedPortalSession();
         }
         supabaseClient.auth.onAuthStateChange((eventName, session) => {
@@ -7190,6 +7194,10 @@
 
     $("#auth-form").addEventListener("submit", async (event) => {
       event.preventDefault();
+      if (portalMode() === "admin") {
+        $("#auth-result").innerHTML = notice("Use Owner login or Employee sign in below. Customer accounts cannot sign in on the admin portal.", true);
+        return;
+      }
       saveValue(sessionKeys.employeeLogin, "");
       const email = $("#auth-email").value.trim();
       const password = $("#auth-password").value;
