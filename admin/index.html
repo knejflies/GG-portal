@@ -10827,7 +10827,7 @@
       const button = $("#locate-customer-properties"); const result = $("#customer-map-result");
       button.disabled = true; result.innerHTML = notice("Locating customer properties...");
       try {
-        const data = await requestJson("portal-customers", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "locate-properties" }) });
+        const data = await requestJson("portal-customers", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "locate-properties", refresh: true }) });
         result.innerHTML = data.schema_update_required
           ? notice("Map storage is not set up yet. Run migrations/2026-10-20-property-map-columns.sql in Supabase, then click Locate addresses again.", true)
           : notice((data.located || 0) + " located. " + (data.needs_correction || 0) + " need address correction. " + (data.skipped || 0) + " skipped or already located.");

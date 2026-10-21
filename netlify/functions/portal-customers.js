@@ -278,13 +278,14 @@ exports.handler = async (event) => {
     const adminError = requireAdmin(event);
     if (adminError) return json(401, { error: adminError });
     if (event.httpMethod === "POST" && body.action === "locate-properties") {
+      const refreshCoordinates = body.refresh !== false;
       const properties = await supabase("green_grin_properties?select=*&active=eq.true&address=not.is.null&order=created_at.desc&limit=1000");
       const jobs = await supabase("green_grin_jobs?select=customer_user_id,address,created_at&customer_user_id=not.is.null&address=not.is.null&order=created_at.desc&limit=1000");
       const normalizeAddress = (value) => String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
       const knownProperties = new Set((properties || []).map((property) => `${property.customer_user_id}:${normalizeAddress(property.address)}`));
       let located = 0; let needsCorrection = 0; let skipped = 0;
       for (const property of properties || []) {
-        if (property.geocode_status === "Located" && Number.isFinite(Number(property.latitude)) && Number.isFinite(Number(property.longitude))) { skipped += 1; continue; }
+        if (!refreshCoordinates && property.geocode_status === "Located" && Number.isFinite(Number(property.latitude)) && Number.isFinite(Number(property.longitude))) { skipped += 1; continue; }
         const geocode = await geocodeAddress(property.address);
         const saved = await savePropertyGeocode(property.id, geocode);
         if (saved?.unsupported) { skipped += 1; continue; }
