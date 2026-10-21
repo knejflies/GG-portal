@@ -59,6 +59,8 @@ The setup and repair SQL files contain additive statements but are not treated a
 - Added linked estimates and invoice/payment status directly to the customer file with one-click record navigation.
 - Added explicit `service_role` grants for every public application table and the monthly invoice RPC in both the setup SQL and a focused migration.
 - Corrected customer-account authentication failures to return HTTP 401 instead of a misleading server error.
+- Connected completed jobs to reviewable property service entries when the job has an exact active property match and a safe per-visit price. Entries use deterministic source keys, stay customer-facing only through their description and price, and remain excluded from invoices until the owner reviews/generates the monthly invoice.
+- Prevented recurring monthly or annual totals from being silently reused as a per-visit charge; recurring completions require an explicit `customer_price` in the completion request.
 
 ## Active risk register
 
@@ -74,7 +76,7 @@ The setup and repair SQL files contain additive statements but are not treated a
 
 1. Complete the Netlify function authorization/object-access matrix and migrate employee PIN sessions to signed server-verified sessions.
 2. Establish one shared request/error utility and extract verified common portal modules.
-3. Connect job completion to reviewable property service entries and monthly invoicing without assuming a price.
+3. Continue the reviewable service-entry flow with a compact admin review queue and monthly invoicing without assuming a price.
 4. Add assignment conflict checks and direct calendar-to-job navigation.
 5. Add deterministic job-cost reporting only where actual data exists; visibly flag missing costs.
 6. Improve static asset delivery, mobile behavior, accessibility, and authenticated route smoke coverage.
@@ -82,6 +84,6 @@ The setup and repair SQL files contain additive statements but are not treated a
 ## Verification log
 
 - Pre-change: complete test suite passed.
-- Post-change: all 45 test files passed, including portal syntax, owner sessions without PIN replay, authorization failures, database grants, customer and core-record archive safety, employee request protection, handler-level duplicate-safe estimate conversion, payment, messaging, billing, pricing, route, measurement, and mileage checks.
+- Post-change: all 46 test files passed, including completed-job service-entry safety, portal syntax, owner sessions without PIN replay, authorization failures, database grants, customer and core-record archive safety, employee request protection, handler-level duplicate-safe estimate conversion, payment, messaging, billing, pricing, route, measurement, and mileage checks.
 - Every Netlify Function script passed `node --check`.
 - Android source is queued for the existing GitHub Actions Gradle build after push; local Android SDK compilation is unavailable in this workspace.

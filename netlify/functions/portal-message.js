@@ -141,6 +141,88 @@ function fertilizerRecord(body, job) {
   };
 }
 
+function normalizeAddress(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function completedServiceDate(body, job) {
+  const value = String(body.service_date || body.route_date || job.scheduled_date || "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : new Date().toISOString().slice(0, 10);
+}
+
+function completedServicePrice(body, job) {
+  const requested = Number(body.customer_price);
+  if (Number.isFinite(requested) && requested > 0) return Number(requested.toFixed(2));
+  // A one-time job's approved price is safe to carry forward. A recurring
+  // job's annual/monthly total is not a per-visit price, so it must be
+  // supplied explicitly at completion to prevent accidental overbilling.
+  if (!job.recurring_weekly) {
+    const oneTime = Number(job.customer_price ?? job.annual_price ?? job.total);
+    if (Number.isFinite(oneTime) && oneTime > 0) return Number(oneTime.toFixed(2));
+  }
+  return null;
+}
+
+function serviceCategoryForJob(job) {
+  const type = String(job?.service_type || "").toLowerCase();
+  if (/fertil|spray|chemical/.test(type)) return "Fertilizer";
+  if (/aerat|cleanup|clean-up|blowout|irrigation/.test(type)) return "Cleanup";
+  if (/landscap|hardscap|project/.test(type)) return "Landscaping";
+  return "Mowing";
+}
+
+function completionSourceKey(job, serviceDate) {
+  return `job-completed:${job.id}:${serviceDate}`;
+}
+
+async function propertyForCompletedJob(job) {
+  if (!job?.customer_user_id) return { property: null, reason: "Job has no linked customer property." };
+  const rows = await supabase(`green_grin_properties?select=id,customer_user_id,address,active&customer_user_id=eq.${encodeURIComponent(job.customer_user_id)}&active=eq.true&limit=50`);
+  const target = normalizeAddress(job.address || job.service_address);
+  const exact = rows.filter((row) => target && normalizeAddress(row.address) === target);
+  if (exact.length === 1) return { property: exact[0], reason: null };
+  if (!target && rows.length === 1) return { property: rows[0], reason: null };
+  return { property: null, reason: exact.length > 1 ? "Multiple properties match this job address." : "No active property matches this job address." };
+}
+
+async function completedServiceEntry(job, body) {
+  if (!job?.id || !job.customer_user_id) return { entry: null, reason: "Job is not linked to a customer." };
+  const serviceDate = completedServiceDate(body, job);
+  const sourceKey = completionSourceKey(job, serviceDate);
+  const existing = await supabase(`green_grin_service_entries?select=*&source_key=eq.${encodeURIComponent(sourceKey)}&limit=1`).catch(() => []);
+  if (existing?.[0]) return { entry: existing[0], duplicate: true, reason: null };
+  const price = completedServicePrice(body, job);
+  if (price === null) return { entry: null, reason: "Set customer_price for this visit before billing a recurring job." };
+  const match = await propertyForCompletedJob(job);
+  if (!match.property) return { entry: null, reason: match.reason };
+  const payload = {
+    property_id: match.property.id,
+    customer_user_id: job.customer_user_id,
+    job_id: job.id,
+    service_date: serviceDate,
+    service_category: serviceCategoryForJob(job),
+    description: `${job.service_type || "Yard service"} visit`,
+    quantity: 1,
+    unit: "visit",
+    customer_price: price,
+    status: "Completed",
+    internal_notes: { source: "job_completion", job_id: job.id },
+    material_cost: 0,
+    include_internal_notes: false,
+    source_key: sourceKey
+  };
+  try {
+    const inserted = await supabase("green_grin_service_entries", { method: "POST", body: JSON.stringify(payload) });
+    return { entry: inserted?.[0] || payload, duplicate: false, reason: null };
+  } catch (error) {
+    // A retry can race the unique source_key index. Read back the winner and
+    // keep completion successful rather than creating a second billable item.
+    const retry = await supabase(`green_grin_service_entries?select=*&source_key=eq.${encodeURIComponent(sourceKey)}&limit=1`).catch(() => []);
+    if (retry?.[0]) return { entry: retry[0], duplicate: true, reason: null };
+    return { entry: null, reason: error.message || "Service entry could not be recorded." };
+  }
+}
+
 function pushTitle(template) {
   if (template === "objects") return "Yard cleanup reminder";
   if (template === "completed") return "Service completed";
@@ -275,15 +357,25 @@ exports.handler = async (event) => {
     if (completionEmail) {
       await supabase("green_grin_message_log", { method: "POST", body: JSON.stringify({ job_id: job.id, phone: job.email || "", template: completionEmail.sent ? "completed-email-sent" : "completed-email-failed", message: completionEmail.sent ? message : `${message} Failure: ${completionEmail.error || completionEmail.reason || "Unknown error."}`, actor_type: employeeActor ? "Employee" : "Owner", actor_name: employeeActor ? employeeActor.full_name || employeeActor.email : "Owner", actor_employee_id: employeeActor?.id || null, twilio_sid: completionEmail.id || null }) }).catch(() => null);
     }
+    const serviceEntry = body.template === "completed" ? await completedServiceEntry(job, body) : null;
     const applicationRecord = body.template === "completed" ? fertilizerRecord(body, job) : null;
     if (applicationRecord) await supabase("green_grin_expenses", { method: "POST", body: JSON.stringify(applicationRecord) });
 
     return json(200, {
       ok: true,
       push: ownerPush ? { customer: customerPush, owner: ownerPush } : customerPush,
-      email: completionEmail
+      email: completionEmail,
+      service_entry: serviceEntry
     });
   } catch (error) {
     return json(500, { error: error.message });
   }
+};
+
+exports._test = {
+  normalizeAddress,
+  completedServiceDate,
+  completedServicePrice,
+  serviceCategoryForJob,
+  completionSourceKey
 };
