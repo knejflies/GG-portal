@@ -7081,7 +7081,12 @@
         if (button.dataset.tab === "marketing") loadMarketingWorkspace();
         if (button.dataset.tab === "marketing-admin") loadMarketingAdmin();
         if (button.dataset.tab === "sprinkler-blowouts") loadBlowoutLeads();
-        if (button.dataset.tab === "yard-measurement") initYardMeasurement();
+        if (button.dataset.tab === "yard-measurement") {
+          initYardMeasurement().catch((error) => {
+            const status = $("#yard-measurement-status");
+            if (status) status.innerHTML = notice(error?.message || "The yard map could not load. Check your connection and try again.", true);
+          });
+        }
       });
     });
 
@@ -11971,29 +11976,31 @@
       if (window.L) return Promise.resolve(window.L);
       if (leafletPromise) return leafletPromise;
       leafletPromise = new Promise((resolve, reject) => {
-        if (!document.querySelector('link[data-green-grin-leaflet]')) {
+        const sources = [
+          { js: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js", css: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css", jsIntegrity: "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=", cssIntegrity: "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" },
+          { js: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js", css: "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css", jsIntegrity: "", cssIntegrity: "" }
+        ];
+        const loadSource = (index) => {
+          const source = sources[index];
+          if (!source) { leafletPromise = null; reject(new Error("The route map could not load. Check your connection and try again.")); return; }
+          document.querySelectorAll("[data-green-grin-leaflet]").forEach((node) => node.remove());
           const stylesheet = document.createElement("link");
           stylesheet.rel = "stylesheet";
-          stylesheet.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-          stylesheet.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
-          stylesheet.crossOrigin = "";
+          stylesheet.href = source.css;
+          if (source.cssIntegrity) stylesheet.integrity = source.cssIntegrity;
+          stylesheet.crossOrigin = "anonymous";
           stylesheet.dataset.greenGrinLeaflet = "1";
           document.head.appendChild(stylesheet);
-        }
-        const existing = document.querySelector("script[data-green-grin-leaflet]");
-        if (existing) {
-          existing.addEventListener("load", () => resolve(window.L), { once: true });
-          existing.addEventListener("error", () => reject(new Error("The route map could not load.")), { once: true });
-          return;
-        }
-        const script = document.createElement("script");
-        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-        script.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
-        script.crossOrigin = "";
-        script.dataset.greenGrinLeaflet = "1";
-        script.addEventListener("load", () => resolve(window.L), { once: true });
-        script.addEventListener("error", () => reject(new Error("The route map could not load.")), { once: true });
-        document.head.appendChild(script);
+          const script = document.createElement("script");
+          script.src = source.js;
+          if (source.jsIntegrity) script.integrity = source.jsIntegrity;
+          script.crossOrigin = "anonymous";
+          script.dataset.greenGrinLeaflet = "1";
+          script.addEventListener("load", () => window.L ? resolve(window.L) : loadSource(index + 1), { once: true });
+          script.addEventListener("error", () => loadSource(index + 1), { once: true });
+          document.head.appendChild(script);
+        };
+        loadSource(0);
       });
       return leafletPromise;
     }
@@ -14660,7 +14667,7 @@
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/service-worker.js?v=99").catch(() => null);
+      navigator.serviceWorker.register("/service-worker.js?v=100").catch(() => null);
       });
     }
 
