@@ -278,7 +278,7 @@ exports.handler = async (event) => {
       if (params.get("admin") !== "1") return json(400, { error: "Admin log view is required." });
       const adminError = requireAdmin(event);
       if (adminError) return json(401, { error: adminError });
-      const logs = await supabase("green_grin_message_log?select=*,green_grin_jobs(customer_name,address,service_type)&order=created_at.desc&limit=80");
+      const logs = await supabase("green_grin_message_log?select=*,green_grin_jobs(customer_name,address,service_type)&order=created_at.desc&limit=1000");
       return json(200, { logs });
     }
 

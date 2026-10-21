@@ -4442,6 +4442,7 @@
       <button class="tab owner-only" data-tab="marketing-admin" type="button">Marketing</button>
       <span class="tab-section-label owner-only">Money</span>
       <button class="tab owner-only" data-tab="invoices" type="button">Invoices &amp; Payments</button>
+      <button class="tab owner-only" data-tab="customer-records" type="button">Customer Records</button>
       <button class="tab owner-only" data-tab="expenses" type="button">Records &amp; Costs</button>
       <span class="tab-section-label owner-only">Records</span>
       <button class="tab owner-only" data-tab="email-drafter" type="button">Email Drafter</button>
@@ -6068,6 +6069,21 @@
       </div>
     </section>
 
+    <section id="customer-records" class="panel owner-only">
+      <div class="card">
+        <div class="job-head">
+          <div><span class="admin-eyebrow">Customer records</span><h2>Invoices and sent emails</h2><p class="muted">A single place to find every invoice and outbound message without opening each customer.</p></div>
+          <button id="record-hub-refresh" class="button small secondary" type="button">Refresh records</button>
+        </div>
+        <label for="record-hub-search">Search records</label>
+        <input id="record-hub-search" placeholder="Search customer, email, invoice, message, or amount" autocomplete="off" />
+      </div>
+      <div class="grid" style="margin-top:16px">
+        <div class="card"><div class="message-head"><h2>All invoices</h2><span id="record-hub-invoice-count" class="badge">0</span></div><div id="record-hub-invoices" class="status-box">Click Refresh records to load invoices.</div></div>
+        <div class="card"><div class="message-head"><h2>Sent emails &amp; messages</h2><span id="record-hub-message-count" class="badge">0</span></div><div id="record-hub-messages" class="status-box">Click Refresh records to load sent messages.</div></div>
+      </div>
+    </section>
+
     <section id="expenses" class="panel">
       <div class="card owner-only" style="margin-bottom:16px">
         <span class="admin-eyebrow">Operations records</span>
@@ -6905,12 +6921,16 @@
         const savedEmail = readSavedValue(sessionKeys.lastEmail);
         if (savedEmail && $("#auth-email") && !$("#auth-email").value) $("#auth-email").value = savedEmail;
         const { data } = await supabaseClient.auth.getSession();
-        if (data.session?.user) {
+        // The admin route uses the signed owner session / owner PIN. A customer
+        // Supabase session in this browser must never turn the admin page into
+        // the customer portal or hide the owner sign-in gate.
+        if (data.session?.user && portalMode() !== "admin") {
           await handleAuthSession(data.session);
         } else {
           await restoreSavedPortalSession();
         }
         supabaseClient.auth.onAuthStateChange((eventName, session) => {
+          if (portalMode() === "admin" && eventName !== "PASSWORD_RECOVERY") return;
           if (eventName === "PASSWORD_RECOVERY") {
             $("#auth-gate").classList.add("active");
             $("#portal-app").classList.remove("active");
@@ -7002,6 +7022,7 @@
           loadInvoices();
           if (!expenseRowsLoaded) loadExpenses();
         }
+        if (button.dataset.tab === "customer-records") loadRecordHub();
         if (button.dataset.tab === "expenses") loadExpenses();
         if (requestedTab === "bids") {
           openEstimatorView("builder");
@@ -10680,6 +10701,7 @@
         <div class="customer-file-block" style="margin-top:12px"><strong>Service and billing</strong><p>${cleanText(customer.plan || "No plan set")}</p><p class="muted">${cleanText(preferenceLine(customer))}</p><p class="muted">${cleanText(notificationLine(customer))}</p></div>
         ${property.id ? `<div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Recurring billing</strong><span id="property-billing-status" class="badge">Loading</span></div><p class="muted">Choose whether you review each monthly invoice or let an authorized Helcim payment method charge automatically. Venmo stays customer initiated.</p><form id="property-authorization-form" class="customer-file-grid" style="margin-top:10px"><div><label for="property-billing-mode">Billing mode</label><select id="property-billing-mode"><option>Review first</option><option>Automatic</option></select></div><div><label for="property-billing-provider">Payment provider</label><select id="property-billing-provider"><option value="helcim">Helcim</option><option value="manual">Manual / Venmo</option></select></div><div><label for="property-max-cycle">Maximum monthly charge</label><input id="property-max-cycle" type="number" min="0" step="0.01" placeholder="No limit" /></div><div><label for="property-notice-days">Notice days</label><input id="property-notice-days" type="number" min="0" max="30" value="3" /></div><div style="grid-column:1/-1"><strong>Authorized services</strong><div class="checklist" style="margin-top:6px"><label class="check"><input class="property-authorized-service" type="checkbox" value="Mowing" checked /> Mowing</label><label class="check"><input class="property-authorized-service" type="checkbox" value="Fertilizer" /> Fertilizer</label><label class="check"><input class="property-authorized-service" type="checkbox" value="Spraying" /> Spraying</label><label class="check"><input class="property-authorized-service" type="checkbox" value="Cleanup" /> Cleanup</label><label class="check"><input class="property-authorized-service" type="checkbox" value="Landscaping" /> Landscaping</label></div></div><div class="admin-actions" style="grid-column:1/-1"><button class="button small" type="submit">Save recurring billing</button><button class="button small ghost" id="property-revoke-authorization" type="button">Revoke automatic billing</button></div></form><div id="property-authorization-result" aria-live="polite" style="margin-top:10px"></div></div>` : ""}
         ${property.id ? `<div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Property service entries</strong><span class="badge">Monthly billing</span></div><form id="property-service-entry-form" class="customer-file-grid" style="margin-top:10px"><input id="property-service-property-id" type="hidden" value="${cleanText(property.id)}" /><input id="property-service-customer-id" type="hidden" value="${cleanText(customer.customer_user_id || customer.id || "")}" /><div><label for="property-service-date">Service date</label><input id="property-service-date" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></div><div><label for="property-service-category">Category</label><select id="property-service-category"><option>Mowing</option><option>Fertilizer</option><option>Spraying</option><option>Irrigation</option><option>Cleanup</option><option>Landscaping</option><option>Other</option></select></div><div><label for="property-service-description">Description</label><input id="property-service-description" value="Lawn mowing visit" required /></div><div><label for="property-service-quantity">Quantity</label><input id="property-service-quantity" type="number" min="0.01" step="0.01" value="1" required /></div><div><label for="property-service-price">Customer price</label><input id="property-service-price" type="number" min="0" step="0.01" value="0" required /></div><div><label for="property-service-material-cost">Internal material cost</label><input id="property-service-material-cost" type="number" min="0" step="0.01" value="0" /></div><div style="grid-column:1/-1"><label for="property-service-notes">Internal notes (never shown to customer unless selected)</label><textarea id="property-service-notes" rows="2" placeholder="Product, amount used, area treated, or crew notes"></textarea></div><div class="admin-actions" style="grid-column:1/-1"><button class="button small" type="submit">Add Completed Entry</button><label class="check"><input id="property-service-include-notes" type="checkbox" /> Include notes on invoice</label></div></form><div class="two" style="margin-top:12px"><div><label for="property-billing-cycle">Billing month</label><input id="property-billing-cycle" type="month" value="${new Date().toISOString().slice(0, 7)}" /></div><button id="property-generate-invoice" class="button small secondary" type="button">Build Monthly Draft</button></div><div id="property-service-result" aria-live="polite" style="margin-top:10px"></div><div id="property-service-entry-list" class="status-box" style="margin-top:10px">Loading service entries...</div></div>` : ""}
+        <div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>CRM notes &amp; contact history</strong><span class="badge">Owner only</span></div><p class="muted">Log a call, email, text, or site visit on the date it happened. These notes stay internal.</p><form id="customer-crm-note-form" class="customer-file-grid" style="margin-top:10px"><div><label for="customer-crm-note-date">Date</label><input id="customer-crm-note-date" type="date" value="${new Date().toISOString().slice(0, 10)}" required /></div><div><label for="customer-crm-note-type">Type</label><select id="customer-crm-note-type"><option>Call</option><option>Email</option><option>Text</option><option>Site visit</option><option>Internal note</option></select></div><div style="grid-column:1/-1"><label for="customer-crm-note-subject">Subject</label><input id="customer-crm-note-subject" maxlength="180" placeholder="What was this about?" /></div><div style="grid-column:1/-1"><label for="customer-crm-note-body">Notes</label><textarea id="customer-crm-note-body" rows="3" maxlength="5000" required placeholder="What did the customer ask for, and what needs to happen next?"></textarea></div><div class="admin-actions" style="grid-column:1/-1"><button class="button small" type="submit">Save CRM Note</button><button class="button small ghost" data-file-action="records" type="button">Open All Records</button></div></form><div id="customer-crm-note-result" aria-live="polite"></div><div id="customer-crm-notes" class="status-box" style="margin-top:10px">Loading notes...</div></div>
         <div class="customer-file-block" style="margin-top:12px"><div class="message-head"><strong>Contact history</strong><span class="badge">In-app messages</span></div><div id="customer-file-contact-history" class="status-box">Loading contact history...</div></div>
         <div class="customer-file-block" style="margin-top:12px"><strong>Jobs</strong>${jobs.length ? jobs.map((job) => `<div class="step"><span class="dot"></span><div><strong>${cleanText(job.service_type || "Service")}</strong><p class="muted">${cleanText(jobCategory(job))} | ${cleanText(jobFrequency(job))} | ${cleanText(scheduleLine(job))}</p><p class="muted">${cleanText(job.address || property.address || "No address")}</p></div><span class="badge">${cleanText(job.status || "New")}</span></div>`).join("") : `<p class="muted">No jobs created for this customer yet.</p>`}</div>
         <div class="customer-file-grid" style="margin-top:12px">
@@ -10692,6 +10714,7 @@
       modal.dataset.customerIndex = String(invoiceCustomers.indexOf(customer));
       wirePropertyBilling(customer);
       loadCustomerContactHistory(customer);
+      loadCustomerCrm(customer);
     }
 
     async function wirePropertyBilling(customer) {
@@ -10785,6 +10808,40 @@
       } catch (error) {
         target.innerHTML = notice(`Contact history unavailable: ${error.message}`, true);
       }
+    }
+
+    function crmNoteCard(note) {
+      const date = note.note_date ? calendarDateLabel(note.note_date, { weekday: false }) : formatDateTime(note.created_at);
+      return `<div class="message"><div class="message-head"><strong>${cleanText(note.subject || note.note_type || "Customer note")}</strong><span class="badge">${cleanText(note.note_type || "Internal note")}</span></div><p>${cleanText(note.body || "")}</p><p class="muted">${cleanText(date)} · ${cleanText(note.actor_name || "Owner")}</p></div>`;
+    }
+
+    async function loadCustomerCrm(customer) {
+      const notesTarget = $("#customer-crm-notes");
+      const form = $("#customer-crm-note-form");
+      if (!notesTarget || !form) return;
+      const customerUserId = customer.customer_user_id || customer.id;
+      const render = (notes) => { notesTarget.innerHTML = notes.length ? notes.map(crmNoteCard).join("") : notice("No CRM notes yet. Add the first call or follow-up above."); };
+      try {
+        const data = await requestJson(`portal-crm?customer_user_id=${encodeURIComponent(customerUserId)}`, { headers: adminHeaders() });
+        render(Array.isArray(data.notes) ? data.notes : []);
+      } catch (error) {
+        notesTarget.innerHTML = notice(`CRM notes unavailable: ${error.message}`, true);
+      }
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const result = $("#customer-crm-note-result");
+        const submit = form.querySelector("button[type=submit]");
+        submit.disabled = true;
+        try {
+          const data = await requestJson("portal-crm", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ customer_user_id: customerUserId, note_date: $("#customer-crm-note-date").value, note_type: $("#customer-crm-note-type").value, subject: $("#customer-crm-note-subject").value, body: $("#customer-crm-note-body").value }) });
+          result.innerHTML = notice("CRM note saved.");
+          $("#customer-crm-note-subject").value = "";
+          $("#customer-crm-note-body").value = "";
+          const dataAfter = await requestJson(`portal-crm?customer_user_id=${encodeURIComponent(customerUserId)}`, { headers: adminHeaders() });
+          render(Array.isArray(dataAfter.notes) ? dataAfter.notes : (data.note ? [data.note] : []));
+        } catch (error) { result.innerHTML = notice(error.message, true); }
+        submit.disabled = false;
+      }, { once: true });
     }
 
     function closeCustomerFile() {
@@ -13403,6 +13460,11 @@
       const card = document.querySelector(`.customer-card[data-customer-index="${index}"]`);
       const action = actionButton.dataset.fileAction;
       const customer = invoiceCustomers[index] || null;
+      if (action === "records") {
+        closeCustomerFile();
+        openTab("customer-records");
+        return;
+      }
       if (action === "details" && customer) {
         openCustomerEditFile(customer);
         return;
@@ -13413,6 +13475,7 @@
     $("#load-employee").addEventListener("click", loadEmployeeJobs);
     $("#load-employees").addEventListener("click", loadEmployees);
     $("#load-activity").addEventListener("click", loadActivity);
+    $("#record-hub-refresh")?.addEventListener("click", loadRecordHub);
     $("#calendar-refresh").addEventListener("click", loadCalendar);
     $("#calendar-previous").addEventListener("click", () => shiftCalendarMonth(-1));
     $("#calendar-today").addEventListener("click", () => {
@@ -13812,6 +13875,42 @@
           : notice("No activity yet.");
       } catch (error) {
         $("#activity-result").innerHTML = notice(error.message, true);
+      }
+    }
+
+    function recordHubMatches(record, query) {
+      if (!query) return true;
+      return JSON.stringify(record || {}).toLowerCase().includes(query);
+    }
+
+    async function loadRecordHub() {
+      const invoicesTarget = $("#record-hub-invoices");
+      const messagesTarget = $("#record-hub-messages");
+      if (!invoicesTarget || !messagesTarget) return;
+      invoicesTarget.innerHTML = notice("Loading invoices...");
+      messagesTarget.innerHTML = notice("Loading sent messages...");
+      try {
+        const [invoiceData, messageData] = await Promise.all([
+          requestJson("portal-invoices?admin=1", { headers: adminHeaders() }),
+          requestJson("portal-message?admin=1", { headers: adminHeaders() })
+        ]);
+        const invoices = invoiceData.invoices || [];
+        const messages = messageData.logs || [];
+        const render = () => {
+          const query = String($("#record-hub-search")?.value || "").trim().toLowerCase();
+          const filteredInvoices = invoices.filter((invoice) => recordHubMatches(invoice, query));
+          const filteredMessages = messages.filter((message) => recordHubMatches(message, query));
+          $("#record-hub-invoice-count").textContent = String(filteredInvoices.length);
+          $("#record-hub-message-count").textContent = String(filteredMessages.length);
+          invoicesTarget.innerHTML = filteredInvoices.length ? filteredInvoices.map(invoiceCard).join("") : notice(query ? "No invoices match that search." : "No invoices found.");
+          messagesTarget.innerHTML = filteredMessages.length ? filteredMessages.map(activityCard).join("") : notice(query ? "No sent messages match that search." : "No sent messages found.");
+        };
+        render();
+        const search = $("#record-hub-search");
+        if (search) search.oninput = render;
+      } catch (error) {
+        invoicesTarget.innerHTML = notice(error.message, true);
+        messagesTarget.innerHTML = notice(error.message, true);
       }
     }
 
