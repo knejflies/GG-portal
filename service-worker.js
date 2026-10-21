@@ -1,4 +1,4 @@
-const CACHE_NAME = "green-grin-app-v98";
+const CACHE_NAME = "green-grin-app-v99";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -43,6 +43,17 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   if (new URL(event.request.url).pathname.startsWith("/.netlify/functions/")) return;
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(new Request(event.request, { cache: "no-store" }))
+        .then((response) => {
+          if (response.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone())).catch(() => null);
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
   event.respondWith(
     fetch(event.request)
       .then((response) => {
