@@ -6894,6 +6894,10 @@
 
     async function handleAuthSession(session) {
       if (!session?.user) return false;
+      // Customer Supabase sessions are valid only on the customer portal. The
+      // admin route must never adopt one through a refresh, push action, or
+      // auth-state callback.
+      if (portalMode() === "admin") return false;
       const employee = await loadCurrentEmployee();
       if (employee) {
         await setEmployeeSignedIn(employee);
