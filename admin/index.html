@@ -7617,7 +7617,7 @@
       if (!$("#estimate-project-scope").value.trim()) $("#estimate-project-scope").value = "Scheduled lawn mowing and routine service visits for the property described in this contract.";
       $("#estimate-result").innerHTML = notice("Mowing contract wording loaded. Finish the customer, price, and schedule, then use Send Contract.");
     });
-    $("#mowing-contract-launch").addEventListener("click", () => {
+    $("#mowing-contract-launch")?.addEventListener("click", () => {
       document.querySelector('[data-tab="mowing-contract"]')?.click();
     });
     $("#mowing-contract-clear").addEventListener("click", () => {
