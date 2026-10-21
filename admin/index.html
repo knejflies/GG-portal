@@ -5404,6 +5404,10 @@
                 <label for="fert_lawn_sqft">Turf square footage</label>
                 <input id="fert_lawn_sqft" type="number" min="1" step="1" value="10876" required />
               </div>
+              <div>
+                <label for="fert_property_type">Quote type</label>
+                <select id="fert_property_type"><option value="residential">Residential</option><option value="commercial">Commercial</option><option value="hoa">HOA / Multi-property</option></select>
+              </div>
             </div>
             <button class="button" type="submit">Calculate Fert Bid</button>
           </form>
@@ -9362,6 +9366,7 @@
         customer: $("#fert_customer_name").value.trim(),
         lawnSqFt: requiredBidNumber("#fert_lawn_sqft", "Turf square footage")
       }, fertilizerSettingsFromForm());
+      latestFertBid.quoteType = $("#fert_property_type").value || "residential";
       renderFertBid(latestFertBid);
       return latestFertBid;
     }
@@ -9531,6 +9536,7 @@
       );
       return [
         `Fertilization Program - Pricing v${bidPricingConfig.version || 1}`,
+        `Quote type: ${{ residential: "Residential", commercial: "Commercial", hoa: "HOA / Multi-property" }[bid.quoteType] || "Residential"}`,
         `Turf: ${bid.lawnSqFt.toLocaleString()} sq ft`,
         `Yearly quote: ${fixedMoney(bid.annualPrice)}`,
         `${bid.paymentsPerYear === 4 ? "Quarterly" : "Scheduled"} payment: ${fixedMoney(bid.paymentAmount)} (${bid.paymentsPerYear} per year)`,
