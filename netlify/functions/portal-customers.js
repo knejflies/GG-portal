@@ -47,6 +47,7 @@ async function savePropertyGeocode(propertyId, geocode) {
     return await supabase(`green_grin_properties?id=eq.${encodeURIComponent(propertyId)}`, { method: "PATCH", body: JSON.stringify(update) });
   } catch (error) {
     const message = error.message || "";
+    if (/latitude|longitude/i.test(message)) return { unsupported: true, reason: "The property table needs latitude and longitude columns before map pins can be saved." };
     if (/geocode_display_name/i.test(message)) {
       const { geocode_display_name: omittedDisplayName, ...compatibleUpdate } = update;
       try {
@@ -76,6 +77,7 @@ async function insertPropertyCompatible(payload) {
     return await supabase("green_grin_properties", { method: "POST", body: JSON.stringify(payload) });
   } catch (error) {
     const message = error.message || "";
+    if (/latitude|longitude/i.test(message)) return { unsupported: true, reason: "The property table needs latitude and longitude columns before map pins can be saved." };
     if (/geocode_display_name/i.test(message)) {
       const { geocode_display_name: omittedDisplayName, ...compatiblePayload } = payload;
       try { return await supabase("green_grin_properties", { method: "POST", body: JSON.stringify(compatiblePayload) }); } catch (statusError) {
@@ -271,7 +273,8 @@ exports.handler = async (event) => {
       for (const property of properties || []) {
         if (property.geocode_status === "Located" && Number.isFinite(Number(property.latitude)) && Number.isFinite(Number(property.longitude))) { skipped += 1; continue; }
         const geocode = await geocodeAddress(property.address);
-        await savePropertyGeocode(property.id, geocode);
+        const saved = await savePropertyGeocode(property.id, geocode);
+        if (saved?.unsupported) { skipped += 1; continue; }
         if (geocode.status === "Located") located += 1; else needsCorrection += 1;
       }
       // Backfill the canonical property record for older customers whose
@@ -284,10 +287,11 @@ exports.handler = async (event) => {
         if (knownProperties.has(key)) continue;
         knownProperties.add(key);
         const geocode = await geocodeAddress(address);
-        await insertPropertyCompatible({ customer_user_id: job.customer_user_id, address, active: true, latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status, geocode_display_name: geocode.display_name });
+        const inserted = await insertPropertyCompatible({ customer_user_id: job.customer_user_id, address, active: true, latitude: geocode.latitude, longitude: geocode.longitude, geocode_status: geocode.status, geocode_display_name: geocode.display_name });
+        if (inserted?.unsupported) { skipped += 1; continue; }
         if (geocode.status === "Located") located += 1; else needsCorrection += 1;
       }
-      return json(200, { located, needs_correction: needsCorrection, skipped });
+      return json(200, { located, needs_correction: needsCorrection, skipped, schema_update_required: skipped > 0 && located === 0 && needsCorrection === 0 });
     }
     const customerUserId = body.customer_user_id || null;
     const phone = body.phone || "";
