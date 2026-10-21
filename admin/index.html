@@ -8329,7 +8329,7 @@
     }
 
     async function loadEstimatorHistory() {
-      if (!adminPin()) return;
+      if (!hasAccountingAccess()) return;
       try {
         const data = await requestJson("portal-timeclock?admin=1&count=24&unit=months", { headers: adminHeaders() });
         estimatorHistory = (data.work_summary?.projects || []).map((project) => project.production).filter(Boolean);
@@ -10961,7 +10961,7 @@
     }
 
     async function loadCustomers() {
-      if (!adminPin()) return;
+      if (!hasAccountingAccess()) return;
       $("#customers-result").innerHTML = notice("Loading customers...");
       try {
         const data = await requestJson("portal-customers?admin=1", { headers: adminHeaders() });
@@ -12445,7 +12445,7 @@
     }
 
     async function loadMarketingAdmin() {
-      if (!adminPin()) return;
+      if (!hasAccountingAccess()) return;
       $("#marketing-admin-list").innerHTML = notice("Loading routes...");
       try {
         if (!employeeDirectory.length) await loadEmployees();
@@ -12672,7 +12672,7 @@
     }
 
     async function loadBlowoutLeads() {
-      if (!adminPin()) return;
+      if (!hasAccountingAccess()) return;
       const target = $("#blowout-leads-list");
       if (!target) return;
       target.innerHTML = notice("Loading sprinkler leads...");
@@ -12681,9 +12681,14 @@
         blowoutLeads = data.leads || [];
         reconcileBlowoutRoute();
         renderBlowoutLeads(filteredBlowoutLeads());
+      } catch (error) { target.innerHTML = notice(error.message, true); }
+      try {
         await ensureLeaflet();
         renderBlowoutMap(filteredBlowoutLeads());
-      } catch (error) { target.innerHTML = notice(error.message, true); }
+      } catch (error) {
+        const summary = $("#blowout-map-summary");
+        if (summary) summary.innerHTML = notice(error?.message || "The map is unavailable on this connection. The blowout list is still ready to use.", true);
+      }
     }
     async function loadBlowoutVisibilitySettings() {
       const result = $("#blowout-visibility-result");
@@ -13876,7 +13881,7 @@
     }
 
     async function loadTimeClockReport() {
-      if (!adminPin()) return;
+      if (!hasAccountingAccess()) return;
       $("#time-report-result").innerHTML = notice("Loading time totals...");
       try {
         if (!employeeDirectory.length) {
