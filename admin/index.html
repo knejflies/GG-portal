@@ -8945,7 +8945,7 @@
 
     function renderSavedEstimates() {
       const query = $("#estimate-search")?.value.trim().toLowerCase() || "";
-      const rows = savedEstimates.filter((estimate) => !query || [estimate.estimate_number, estimate.customer_code, estimate.customer_name, estimate.project_title, estimate.service_address].join(" ").toLowerCase().includes(query));
+      const rows = savedEstimates.filter((estimate) => !["Declined", "Archived"].includes(String(estimate.status || "")) && (!query || [estimate.estimate_number, estimate.customer_code, estimate.customer_name, estimate.project_title, estimate.service_address].join(" ").toLowerCase().includes(query)));
       $("#estimate-list").innerHTML = rows.length ? rows.map((estimate) => `
         <div class="estimate-card" data-estimate-id="${cleanText(estimate.id)}" data-invoiced="${estimate.invoice_id ? "true" : "false"}">
           <div class="estimate-card-head"><strong>${cleanText(estimate.estimate_number)}</strong><span class="badge">${cleanText(estimate.status)}</span></div>
