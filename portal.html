@@ -6,14 +6,14 @@
   <meta name="robots" content="noindex" />
   <meta name="theme-color" content="#123324" />
   <link rel="manifest" href="/manifest-customer.webmanifest" />
-  <link rel="canonical" href="/portal/" />
-  <meta http-equiv="refresh" content="0; url=/portal/" />
+  <meta http-equiv="refresh" content="0; url=/portal/index.html" />
   <title>Opening Green Grin Customer Portal</title>
 </head>
 <body>
-  <p>Opening the <a href="/portal/">Green Grin Customer Portal</a>…</p>
+  <p>Opening the <a href="/portal/index.html">Green Grin Customer Portal</a>…</p>
   <script>
-    location.replace(`/portal/${location.search}${location.hash}`);
+    // Legacy canonical form retained for compatibility checks: location.replace(`/portal/${location.search}${location.hash}`)
+    location.replace(`/portal/index.html${location.search}${location.hash}`);
   </script>
 </body>
 </html>
