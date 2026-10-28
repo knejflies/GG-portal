@@ -11412,6 +11412,7 @@
               <button class="button small secondary" data-action="arrived" type="button">Notify: Arrived</button>
               <button class="button small secondary" data-action="completed" type="button">Notify: Done</button>
               <button class="button small ghost" data-action="send-confirmation" type="button">Send Confirmation</button>
+              <button class="button small ghost" data-action="send-agreement" type="button">Send Work Agreement</button>
               <button class="button small ghost" data-action="delete-job" type="button">Archive Job</button>
               <button class="button small ghost" data-customer-action="deactivate" type="button">Archive Customer</button>
             </div>
@@ -14265,6 +14266,16 @@
           actionFeedback = data.confirmation?.sent
             ? "Booking confirmation email sent."
             : (data.confirmation?.reason || data.confirmation?.error || "Booking confirmation was not sent.");
+        } else if (action === "send-agreement") {
+          const selectedJob = adminJobRows.find((entry) => entry.id === id) || {};
+          const scope = prompt("What work must the employee complete?", [selectedJob.service_type, selectedJob.notes, selectedJob.address].filter(Boolean).join("\n"));
+          if (scope === null) return;
+          const pay = prompt("Optional employee or subcontractor pay amount", "");
+          if (pay === null) return;
+          const due = prompt("Due date (YYYY-MM-DD)", String(selectedJob.scheduled_date || "").slice(0, 10));
+          if (due === null) return;
+          const data = await requestJson("employee-agreements", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "send", job_id: id, scope, pay_amount: pay, due_date: due }) });
+          actionFeedback = data.email?.sent ? "Work agreement emailed to the assigned employee." : (data.email?.reason || data.email?.error || "Agreement saved. Email was not sent.");
         } else {
           const selectedJob = adminJobRows.find((entry) => entry.id === id);
           const fertilizer = action === "completed" && /fertiliz|fertiliser|\bfert\b/i.test(String(selectedJob?.service_type || ""));
