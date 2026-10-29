@@ -98,6 +98,9 @@ function invoicePayload(body) {
     payment_method: body.payment_method || "",
     payment_reference: body.payment_reference || "",
     payment_reported_at: body.payment_reported_at || null,
+    billing_cycle: body.billing_cycle || null,
+    idempotency_key: body.idempotency_key || null,
+    source_entry_ids: Array.isArray(body.source_entry_ids) ? body.source_entry_ids : [],
     payment_confirmed_at: isPaid
       ? (body.payment_confirmed_at || new Date().toISOString())
       : null,
@@ -342,6 +345,10 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
 
     if (event.httpMethod === "POST") {
+      if (body.idempotency_key) {
+        const existing = await supabase(`green_grin_invoices?select=*&idempotency_key=eq.${encodeURIComponent(String(body.idempotency_key))}&limit=1`).catch(() => []);
+        if (existing?.[0]) return json(200, { invoice: existing[0], duplicate: true, email: { sent: false, skipped: true, duplicate: true, reason: "This invoice already exists." } });
+      }
       const rows = await saveInvoice("green_grin_invoices", "POST", body);
       let invoice = firstInvoiceRow(rows);
       if (!invoice) return json(500, { error: "The invoice could not be saved. Supabase returned no invoice record." });

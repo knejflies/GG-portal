@@ -13702,6 +13702,8 @@
           const due = new Date();
           due.setDate(due.getDate() + 7);
           const dueDate = due.toISOString().slice(0, 10);
+          const billingCycle = new Date().toISOString().slice(0, 7);
+          const billingKey = `monthly:${customer.property?.id || customer.customer_user_id || customer.id}:${billingCycle}`;
           const data = await requestJson("portal-invoices", {
             method: "POST",
             headers: adminHeaders(),
@@ -13718,6 +13720,8 @@
               tax_amount: 0,
               line_items: [{ description: customerPlan || "Monthly service", category: "Service", quantity: recurringQuantity, unit: recurringUnit, rate: recurringRate }],
               due_date: dueDate,
+              billing_cycle: billingCycle,
+              idempotency_key: billingKey,
               status: "Sent",
               service_line: customerPlan,
               service_address: customer.property?.address || newestCustomerJob?.address || "",
@@ -13729,7 +13733,9 @@
             })
           });
           await loadInvoices();
-          $("#customer-detail-result").innerHTML = notice(invoiceDeliveryText(data, `Monthly invoice sent for ${money(customerMonthlyPrice)}.`));
+          $("#customer-detail-result").innerHTML = notice(data.duplicate
+            ? `The ${billingCycle} monthly invoice already exists. No duplicate invoice was created.`
+            : invoiceDeliveryText(data, `Monthly invoice sent for ${money(customerMonthlyPrice)}.`));
         } catch (error) {
           $("#customer-detail-result").innerHTML = notice(error.message, true);
         } finally {
