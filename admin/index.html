@@ -6017,10 +6017,11 @@
                 <input id="invoice_amount" type="number" min="0" step="0.01" readonly value="0.00" />
               </div>
             </div>
+            <div><label for="invoice_additional_emails">Also send invoice and receipts to</label><input id="invoice_additional_emails" type="text" autocomplete="email" placeholder="spouse@example.com, bookkeeper@example.com" /><p class="muted">Separate multiple addresses with commas.</p></div>
             <div id="invoice-manual-customer" class="manual-invoice-customer" hidden>
               <div class="two">
                 <div><label for="invoice_manual_name">Customer name</label><input id="invoice_manual_name" autocomplete="name" placeholder="Customer or business name" /></div>
-                <div><label for="invoice_manual_email">Email</label><input id="invoice_manual_email" type="email" autocomplete="email" placeholder="customer@example.com" /></div>
+                <div><label for="invoice_manual_email">Primary email</label><input id="invoice_manual_email" type="email" autocomplete="email" placeholder="customer@example.com" /></div>
               </div>
               <div class="two">
                 <div><label for="invoice_manual_phone">Phone</label><input id="invoice_manual_phone" type="tel" autocomplete="tel" placeholder="(208) 555-0199" /></div>
@@ -10219,6 +10220,7 @@
           customer_code: "",
           name: $("#invoice_manual_name")?.value.trim() || "",
           email: $("#invoice_manual_email")?.value.trim() || "",
+          additional_emails: $("#invoice_additional_emails")?.value || "",
           phone: $("#invoice_manual_phone")?.value.trim() || "",
           property: { address: $("#invoice_service_address")?.value.trim() || "" },
           jobs: []
@@ -12965,6 +12967,7 @@
         customer_name: selectedCustomer.name || "Customer",
         phone: selectedCustomer.phone || "",
         email: selectedCustomer.email || "",
+        additional_emails: String($("#invoice_additional_emails")?.value || selectedCustomer.secondary_email || existingInvoice.additional_emails || "").split(/[,;\s]+/).filter(Boolean),
         amount: calculation.total,
         subtotal: calculation.subtotal,
         discount: calculation.discount,
@@ -13046,6 +13049,7 @@
       $("#invoice_customer").value = index >= 0 ? String(index) : "manual";
       $("#invoice_manual_name").value = index >= 0 ? "" : (invoice.customer_name || "");
       $("#invoice_manual_email").value = index >= 0 ? "" : (invoice.email || "");
+      $("#invoice_additional_emails").value = (invoice.additional_emails || []).join(", ");
       $("#invoice_manual_phone").value = index >= 0 ? "" : (invoice.phone || "");
       $("#invoice_service_address").value = index >= 0 ? "" : (invoice.service_address || "");
       $("#invoice_saved_address").value = index >= 0 ? (invoice.service_address || invoiceCustomers[index]?.property?.address || "") : "";
@@ -13713,6 +13717,7 @@
               customer_name: customer.name || "Customer",
               phone: customer.phone || "",
               email: customer.email || "",
+              additional_emails: customer.secondary_email ? [customer.secondary_email] : [],
               amount: Number(customerMonthlyPrice).toFixed(2),
               subtotal: Number(customerMonthlyPrice).toFixed(2),
               discount: 0,

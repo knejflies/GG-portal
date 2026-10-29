@@ -81,6 +81,7 @@ function invoicePayload(body) {
     customer_name: body.customer_name || "Customer",
     phone: body.phone || "",
     email: body.email || "",
+    additional_emails: [...new Set((Array.isArray(body.additional_emails) ? body.additional_emails : String(body.additional_emails || "").split(/[,;\s]+/)).map((value) => String(value || "").trim().toLowerCase()).filter((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)))].slice(0, 4),
     amount,
     subtotal,
     discount,
@@ -171,6 +172,7 @@ function invoiceEmailPayload(invoice, options = {}) {
     : `<tr style="background:#edf6e9"><th style="padding:9px;text-align:left">Description</th><th style="padding:9px;text-align:right">Quantity</th><th style="padding:9px;text-align:right">Rate</th><th style="padding:9px;text-align:right">Amount</th></tr>`;
   const subject = receipt ? `Green Grin payment receipt - ${amount}` : `Green Grin invoice - ${amount}`;
   const venmoUrl = `https://venmo.com/u/${encodeURIComponent(VENMO_HANDLE)}`;
+  const recipients = [...new Set([invoice.email, ...(Array.isArray(invoice.additional_emails) ? invoice.additional_emails : [])].map((value) => String(value || "").trim().toLowerCase()).filter((value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)))];
   const text = [
     `Hi ${customer},`,
     "",
@@ -189,7 +191,7 @@ function invoiceEmailPayload(invoice, options = {}) {
   ].filter(Boolean).join("\n");
   return {
     from: INVOICE_FROM,
-    to: [invoice.email],
+    to: recipients,
     subject,
     text,
     html: `<!doctype html><html><body style="margin:0;background:#eef4ec;color:#102419;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:28px 16px"><div style="background:#fff;padding:20px;border-radius:8px 8px 0 0;text-align:center"><img src="${escapeHtml(EMAIL_LOGO_URL)}" alt="Green Grin Lawn &amp; Landscape" width="420" style="display:block;width:100%;max-width:420px;height:auto;margin:0 auto" /></div><div style="background:#fff;padding:28px;border:1px solid #d5e2d2;border-top:4px solid #78c653;border-radius:0 0 8px 8px"><p style="margin-top:0">Hi ${escapeHtml(customer)},</p><h1 style="font-size:25px;color:#07351d">${receipt ? "Payment received" : "Your invoice is ready"}</h1><div style="background:#f2f8ef;border-left:4px solid #78c653;padding:16px;margin:22px 0"><p style="margin:0 0 8px"><strong>Service:</strong> ${escapeHtml(service)}</p>${address ? `<p style="margin:0 0 8px"><strong>Project address:</strong> ${escapeHtml(address)}</p>` : ""}<p style="margin:0 0 8px"><strong>Amount:</strong> ${escapeHtml(amount)}</p><p style="margin:0"><strong>${receipt ? "Status" : "Due"}:</strong> ${escapeHtml(receipt ? "Paid" : due)}</p></div>${scope ? `<div style="margin:22px 0"><h2 style="font-size:18px;color:#07351d">Project scope</h2><p style="white-space:pre-wrap;line-height:1.55">${escapeHtml(scope)}</p></div>` : ""}${items.length ? `<table style="width:100%;border-collapse:collapse;margin:20px 0"><thead>${itemHead}</thead><tbody>${itemRows}</tbody></table>` : ""}${invoice.notes ? `<p><strong>Notes:</strong> ${escapeHtml(invoice.notes)}</p>` : ""}${receipt ? `<p style="margin:26px 0;padding:14px;background:#edf6e9;border-radius:6px"><strong>Receipt:</strong> This email confirms that your payment was recorded by Green Grin Lawns.</p>` : `<p style="margin:26px 0"><a href="${escapeHtml(PORTAL_URL)}" style="display:inline-block;background:#78c653;color:#092114;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px;margin-right:8px">Review${scope ? " &amp; Approve" : " Invoice"}</a><a href="${escapeHtml(venmoUrl)}" style="display:inline-block;background:#008cff;color:#fff;text-decoration:none;font-weight:bold;padding:13px 20px;border-radius:6px">Pay with Venmo</a></p><p style="color:#526458;font-size:13px">Confirm the Venmo profile is @${escapeHtml(VENMO_HANDLE)} and include the invoice number in the payment note.</p>`}<p style="color:#526458;font-size:14px">Green Grin Lawns</p></div></div></body></html>`
@@ -198,7 +200,7 @@ function invoiceEmailPayload(invoice, options = {}) {
 
 async function sendInvoiceEmail(invoice) {
   if (!invoice || invoice.status !== "Sent") return null;
-  if (!invoice.email) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Customer has no email address." };
+  if (!invoice.email && !(invoice.additional_emails || []).length) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Customer has no email address." };
   if (!RESEND_API_KEY) return { enabled: false, sent: false, skipped: true, reason: "Invoice email is not configured in Netlify." };
   try {
     const response = await fetch("https://api.resend.com/emails", {
@@ -220,7 +222,7 @@ async function sendInvoiceEmail(invoice) {
 
 async function sendPaymentReceiptEmail(invoice) {
   if (!invoice || invoice.status !== "Paid") return null;
-  if (!invoice.email) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Customer has no email address." };
+  if (!invoice.email && !(invoice.additional_emails || []).length) return { enabled: Boolean(RESEND_API_KEY), sent: false, skipped: true, reason: "Customer has no email address." };
   if (!RESEND_API_KEY) return { enabled: false, sent: false, skipped: true, reason: "Receipt email is not configured in Netlify." };
   try {
     const response = await fetch("https://api.resend.com/emails", {
