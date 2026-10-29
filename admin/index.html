@@ -6061,6 +6061,7 @@
                 <div><strong>Invoice items</strong><p class="muted">Services, spray, fertilizer, materials, or other charges.</p></div>
                 <div class="row-actions">
                   <button class="button small ghost" data-add-invoice-line="Service" type="button">Add Service</button>
+                  <button class="button small secondary" data-add-invoice-line="Fertilizer" type="button">Add Fertilizer</button>
                   <button class="button small secondary" data-add-invoice-line="Spray" type="button">Add Spray Used</button>
                 </div>
               </div>
@@ -10722,6 +10723,7 @@
               <button class="button small secondary" data-customer-list-action="chat" type="button">Open Chat</button>
               <button class="button small" data-customer-list-action="fill-job" type="button">Create Booking</button>
               <button class="button small" data-customer-list-action="invoice" type="button">Create Invoice</button>
+              <button class="button small secondary" data-customer-list-action="invoice-fertilizer" type="button">Add Fertilizer</button>
               <button class="button small" data-customer-list-action="monthly-invoice" type="button">Send Monthly Bill</button>
               <button class="button small secondary" data-customer-list-action="test-notification" type="button">Test Notification</button>
               <button class="button small ghost" data-customer-list-action="archive" type="button">Archive Customer</button>
@@ -12881,12 +12883,14 @@
       const addButton = event.target.closest("button[data-add-invoice-line]");
       if (addButton) {
         const category = addButton.dataset.addInvoiceLine || "Service";
+        const fertilizerRate = category === "Fertilizer" ? prompt("Customer price for this fertilizer application", "60") : "";
+        if (category === "Fertilizer" && fertilizerRate === null) return;
         $("#invoice-line-items").insertAdjacentHTML("beforeend", invoiceLineRow({
-          description: category === "Spray" ? "Weed spray application" : "",
+          description: category === "Spray" ? "Weed spray application" : category === "Fertilizer" ? "Fertilizer application" : "",
           category,
           quantity: 1,
-          unit: category === "Spray" ? "oz" : "each",
-          rate: 0
+          unit: category === "Spray" ? "oz" : category === "Fertilizer" ? "application" : "each",
+          rate: Number(fertilizerRate) || 0
         }));
         calculateInvoiceForm();
         return;
@@ -13691,6 +13695,30 @@
         $("#invoice_notes").value = customerPlan || "Monthly service";
         renderInvoiceLines([{ description: customerPlan || "Monthly service", category: "Service", quantity: recurringQuantity, unit: recurringUnit, rate: recurringRate }]);
         $("#invoice-submit").textContent = "Save Draft";
+        openTab("invoices");
+        return;
+      }
+
+      if (action === "invoice-fertilizer") {
+        const fertilizerPrice = prompt("Customer price for the fertilizer application", "60");
+        if (fertilizerPrice === null) return;
+        const index = invoiceCustomers.findIndex((item) => item === customer);
+        const property = customer.property || {};
+        $("#invoice_id").value = "";
+        $("#invoice_customer").value = index >= 0 ? String(index) : "";
+        $("#invoice_saved_address").value = property.address || newestCustomerJob?.address || "";
+        $("#invoice_project_scope").value = "";
+        $("#invoice_amount").value = "";
+        $("#invoice_due").value = "";
+        $("#invoice_status").value = "Draft";
+        $("#invoice_custom_service").value = "Mowing and fertilizer application";
+        $("#invoice_notes").value = "Monthly mowing with fertilizer application";
+        $("#invoice_additional_emails").value = customer.secondary_email || "";
+        renderInvoiceLines([
+          { description: customerPlan || "Monthly service", category: "Service", quantity: recurringQuantity, unit: recurringUnit, rate: recurringRate },
+          { description: "Fertilizer application", category: "Fertilizer", quantity: 1, unit: "application", rate: Number(fertilizerPrice) || 0 }
+        ]);
+        toggleManualInvoiceCustomer();
         openTab("invoices");
         return;
       }
