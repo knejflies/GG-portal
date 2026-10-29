@@ -5486,6 +5486,7 @@
 
           <div class="row-actions">
             <button id="fert-copy-job" class="button secondary" type="button">Copy Annual Quote To Job</button>
+            <button id="fert-add-customer" class="button" type="button">Add Plan To Customer</button>
             <button id="fert-copy-invoice" class="button ghost" type="button">Copy Average Application To Invoice</button>
           </div>
           <div class="fert-table-block">
@@ -7999,6 +8000,38 @@
       refreshOwnerJobWeeklySummary();
       $("#fert-result").innerHTML = notice("Fertilizer bid copied to the job form.");
       openTab("owner");
+    });
+
+    $("#fert-add-customer").addEventListener("click", async () => {
+      try {
+        const bid = calculateFertBid();
+        const typedName = bid.customer || "";
+        const match = invoiceCustomers.find((customer) => String(customer.name || "").trim().toLowerCase() === typedName.trim().toLowerCase())
+          || invoiceCustomers.find((customer) => String(customer.name || "").toLowerCase().includes(typedName.trim().toLowerCase()));
+        const requestedName = match ? "" : prompt("Customer name to attach this fertilizer plan to", typedName);
+        const customer = match || invoiceCustomers.find((entry) => String(entry.name || "").trim().toLowerCase() === String(requestedName || "").trim().toLowerCase());
+        if (!customer) throw new Error("Choose an existing customer name in the bid first, or create the customer before attaching the plan.");
+        const existing = (customer.jobs || []).find((job) => /fertiliz|fertiliser|\bfert\b/i.test(String(job.service_type || "")) && !["Archived", "Cancelled"].includes(String(job.status || "")));
+        const payload = {
+          customer_name: customer.name,
+          phone: customer.phone || "",
+          email: customer.email || "",
+          address: customer.property?.address || customer.jobs?.[0]?.address || "",
+          service_type: "Fertilizer Plan",
+          service_category: "Fertilizer",
+          schedule_frequency: bid.paymentsPerYear === 4 ? "Quarterly" : `${bid.paymentsPerYear} payments per year`,
+          annual_price: bid.annualPrice.toFixed(2),
+          monthly_price: bid.paymentAmount.toFixed(2),
+          notes: fertilizerBidNotes(bid),
+          status: "Scheduled"
+        };
+        const data = existing
+          ? await requestJson("portal-jobs", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ id: existing.id, ...payload }) })
+          : await requestJson("portal-jobs", { method: "POST", headers: adminHeaders(), body: JSON.stringify(payload) });
+        $("#fert-result").innerHTML = notice(`${existing ? "Updated" : "Added"} fertilizer plan for ${cleanText(customer.name)} at ${fixedMoney(bid.paymentAmount)} per payment.`);
+        await Promise.allSettled([loadCustomers(), loadInvoiceCustomers(), loadAdminJobs()]);
+        return data;
+      } catch (error) { $("#fert-result").innerHTML = notice(error.message, true); }
     });
 
     $("#fert-copy-invoice").addEventListener("click", () => {
