@@ -7821,6 +7821,54 @@
         }
         return;
       }
+      if (action === "create-invoice") {
+        const button = event.target.closest("[data-estimate-action]");
+        button.disabled = true;
+        showEstimateNotice("Creating the linked invoice draft...");
+        try {
+          const lines = Array.isArray(estimate.line_items) && estimate.line_items.length
+            ? estimate.line_items.map((item) => ({ description: item.description || "Project service", category: item.category || "Service", quantity: Number(item.quantity || 1), unit: item.unit || "each", rate: Number(item.rate || item.amount || 0) }))
+            : [{ description: estimate.project_title || "Landscape project", category: "Service", quantity: 1, unit: "project", rate: Number(estimate.total || estimate.subtotal || 0) }];
+          const invoiceData = await requestJson("portal-invoices", {
+            method: "POST",
+            headers: adminHeaders(),
+            body: JSON.stringify({
+              customer_user_id: estimate.customer_user_id || null,
+              customer_code: estimate.customer_code || "",
+              customer_name: estimate.customer_name || "Customer",
+              phone: estimate.phone || "",
+              email: estimate.email || "",
+              amount: Number(estimate.total || estimate.subtotal || 0),
+              line_items: lines,
+              due_date: estimate.invoice_due_date || null,
+              status: "Draft",
+              service_line: estimate.project_title || "Landscape project",
+              service_address: estimate.service_address || "",
+              project_scope: estimate.project_scope || "",
+              notes: `Draft invoice created from signed contract ${estimate.estimate_number}. Review and send when ready.`,
+              source_estimate_id: estimate.id,
+              source_estimate_number: estimate.estimate_number,
+              idempotency_key: `estimate:${estimate.id}:project`,
+              notify_customer: false
+            })
+          });
+          const invoice = invoiceData.invoice;
+          if (!invoice?.id) throw new Error("The invoice was not returned by the billing system.");
+          await requestJson("portal-estimates", { method: "PATCH", headers: adminHeaders(), body: JSON.stringify({ id: estimate.id, invoice_id: invoice.id, invoice_number: invoice.invoice_number || "", invoiced_at: new Date().toISOString() }) });
+          await Promise.all([loadEstimates(), loadInvoices()]);
+          fillInvoiceForm(invoice);
+          showEstimateNotice("Invoice draft created from the signed quote. Review it before sending.");
+        } catch (error) { showEstimateNotice(error.message, true); }
+        finally { button.disabled = false; }
+        return;
+      }
+      if (action === "open-invoice") {
+        let invoice = invoiceDrafts.find((entry) => entry.id === estimate.invoice_id || entry.source_estimate_id === estimate.id);
+        if (!invoice) { await loadInvoices(); invoice = invoiceDrafts.find((entry) => entry.id === estimate.invoice_id || entry.source_estimate_id === estimate.id); }
+        if (invoice) fillInvoiceForm(invoice);
+        else showEstimateNotice("The linked invoice could not be found. Use Create Invoice to rebuild it.", true);
+        return;
+      }
       if (action === "open-job") {
         openTab("owner");
         if (!adminJobRows.some((job) => job.id === estimate.project_job_id)) await loadAdminJobs();
@@ -8988,7 +9036,7 @@
           <p class="muted">${cleanText(estimate.service_address || "No project address")}</p>
           <div class="estimate-card-status"><span class="badge">Customer ${cleanText(money(estimate.total))}</span><span class="badge">Cost ${cleanText(money(estimate.internal_cost))}</span><span class="badge">Margin ${cleanText(`${(Number(estimate.gross_margin || 0) * 100).toFixed(1)}%`)}</span>${estimate.invoice_number ? `<span class="badge">Invoice ${cleanText(estimate.invoice_number)}</span>` : ""}</div>
           <div class="row-actions">
-            ${estimate.approved_at ? `<span class="badge">Signed by ${cleanText(estimate.approved_by || "customer")}</span><button class="button small" data-estimate-action="signed-copy" type="button">Signed Contract</button>` : `<button class="button small" data-estimate-action="send-proposal" type="button">Send Contract</button>`}
+            ${estimate.approved_at ? `<span class="badge">Signed by ${cleanText(estimate.approved_by || "customer")}</span><button class="button small" data-estimate-action="signed-copy" type="button">Signed Contract</button>${estimate.invoice_id ? `<button class="button small secondary" data-estimate-action="open-invoice" type="button">Open Invoice</button>` : `<button class="button small secondary" data-estimate-action="create-invoice" type="button">Create Invoice</button>`}` : `<button class="button small" data-estimate-action="send-proposal" type="button">Send Contract</button>`}
             ${estimate.project_job_id
               ? `<button class="button small" data-estimate-action="open-job" type="button">Open Job</button>`
               : (estimate.approved_at || estimate.status === "Approved"
