@@ -242,14 +242,30 @@ async function createProjectAndDeposit(estimate) {
         email: estimate.email || "",
         address: estimate.service_address || "",
         service_type: estimate.project_title || "Landscape project",
-        status: "Awaiting Deposit",
+        status: isMowingContract(estimate, contract) ? "Scheduled" : Number(contract.pricing.initial_payment || 0) > 0 ? "Awaiting Deposit" : "Approved",
         notes: `Approved proposal ${estimate.estimate_number}. ${estimate.project_scope || ""}`.slice(0, 8000)
       })
     });
     jobId = jobs?.[0]?.id || null;
   }
-  if (!invoiceId && !isMowingContract(estimate, contract) && contract.pricing.initial_payment > 0) {
-    const amount = contract.pricing.initial_payment;
+  if (!invoiceId && !isMowingContract(estimate, contract)) {
+    const existingInvoices = await supabase(`green_grin_invoices?select=id,status&source_estimate_id=eq.${encodeURIComponent(estimate.id)}&active=eq.true&order=created_at.asc&limit=1`).catch(() => []);
+    invoiceId = existingInvoices?.[0]?.id || null;
+  }
+  if (!invoiceId && !isMowingContract(estimate, contract)) {
+    const hasDeposit = Number(contract.pricing.initial_payment || 0) > 0;
+    const amount = hasDeposit ? contract.pricing.initial_payment : Number(contract.pricing.project_total || estimate.total || estimate.subtotal || 0);
+    const lineItems = Array.isArray(estimate.line_items) && estimate.line_items.length
+      ? estimate.line_items.map((item) => ({
+          description: String(item.description || "Project service").slice(0, 180),
+          category: String(item.category || "Service").slice(0, 40),
+          quantity: Number(item.quantity || 1),
+          unit: String(item.unit || "each").slice(0, 24),
+          rate: Number(item.rate || item.amount || 0),
+          amount: Number(item.amount ?? (Number(item.quantity || 1) * Number(item.rate || 0)))
+        }))
+      : [{ description: estimate.project_title || "Landscape project", category: "Service", quantity: 1, unit: "project", rate: amount, amount }];
+    const invoiceDescription = hasDeposit ? `${estimate.project_title} - ${contract.pricing.initial_percent}% initial payment` : `${estimate.project_title} - approved project total`;
     const invoices = await supabase("green_grin_invoices", {
       method: "POST",
       body: JSON.stringify({
@@ -263,13 +279,17 @@ async function createProjectAndDeposit(estimate) {
         discount: 0,
         tax_rate: 0,
         tax_amount: 0,
-        line_items: [{ description: `${estimate.project_title} - ${contract.pricing.initial_percent}% initial payment`, category: "Service", quantity: 1, unit: "initial payment", rate: amount, amount }],
+        line_items: hasDeposit ? [{ description: invoiceDescription, category: "Service", quantity: 1, unit: "initial payment", rate: amount, amount }] : lineItems,
         due_date: dateOffset(7),
-        status: "Sent",
-        service_line: `${estimate.project_title} - 50% initial payment`,
+        status: hasDeposit ? "Sent" : "Draft",
+        billing_cycle: null,
+        idempotency_key: `estimate:${estimate.id}:${hasDeposit ? "deposit" : "project"}`,
+        service_line: invoiceDescription,
         service_address: estimate.service_address || "",
         project_scope: estimate.project_scope || "",
-        notes: `${contract.pricing.initial_percent}% initial payment created from signed contract ${estimate.estimate_number}. Work is scheduled after the initial payment is received.`,
+        notes: hasDeposit
+          ? `${contract.pricing.initial_percent}% initial payment created from signed contract ${estimate.estimate_number}. Work is scheduled after the initial payment is received.`
+          : `Draft invoice created from signed contract ${estimate.estimate_number}. Review and send when ready.`,
         source_estimate_id: estimate.id,
         source_estimate_number: estimate.estimate_number,
         active: true
