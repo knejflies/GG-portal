@@ -4752,6 +4752,8 @@
     let activeAccount = null;
     let accountData = null;
     let helcimCheckoutToken = "";
+    let invoiceCheckoutToken = "";
+    let invoiceCheckoutId = "";
     let invoiceDrafts = [];
     let invoiceCustomers = [];
     let adminChatCustomer = null;
@@ -6811,8 +6813,29 @@
     });
 
     window.addEventListener("message", async (event) => {
-      if (!helcimCheckoutToken || event.origin !== "https://secure.helcim.app") return;
-      if (event.data?.eventName !== `helcim-pay-js-${helcimCheckoutToken}`) return;
+      if ((!helcimCheckoutToken && !invoiceCheckoutToken) || event.origin !== "https://secure.helcim.app") return;
+      const isInvoiceCheckout = Boolean(invoiceCheckoutToken && event.data?.eventName === `helcim-pay-js-${invoiceCheckoutToken}`);
+      if (!isInvoiceCheckout && (!helcimCheckoutToken || event.data?.eventName !== `helcim-pay-js-${helcimCheckoutToken}`)) return;
+      if (isInvoiceCheckout) {
+        const result = $("#billing-result");
+        const cardButton = document.querySelector(`button[data-card-pay="${CSS.escape(invoiceCheckoutId)}"]`);
+        if (event.data.eventStatus === "ABORTED") {
+          result.innerHTML = notice("The card payment was cancelled or declined. The invoice remains open.", true);
+          if (cardButton) { cardButton.disabled = false; cardButton.textContent = "Pay with Card"; }
+          invoiceCheckoutToken = ""; invoiceCheckoutId = "";
+          return;
+        }
+        if (event.data.eventStatus === "HIDE") return;
+        if (event.data.eventStatus !== "SUCCESS") return;
+        try {
+          result.innerHTML = notice("Confirming your card payment...");
+          const data = await requestJson("portal-payments", { method: "POST", body: JSON.stringify({ action: "confirm-invoice-checkout", checkout_token: invoiceCheckoutToken, response: event.data.eventMessage }) });
+          await loadAccountData();
+          result.innerHTML = notice(data.receipt?.sent ? "Payment approved. Your invoice is paid and a receipt was emailed." : "Payment approved. Your invoice is paid.");
+        } catch (error) { result.innerHTML = notice(error.message, true); }
+        finally { invoiceCheckoutToken = ""; invoiceCheckoutId = ""; if (cardButton) { cardButton.disabled = false; cardButton.textContent = "Pay with Card"; } }
+        return;
+      }
       const button = $("#autopay-connect");
       const result = $("#autopay-result");
       if (event.data.eventStatus === "ABORTED") {
@@ -6858,6 +6881,12 @@
       const venmo = portalConfig.venmoHandle || "@greengrinlawns";
       return `
         <div class="payment-options">
+          <div class="payment-card">
+            <h3>Pay with card</h3>
+            <p>Pay this invoice securely through Helcim. Green Grin does not store your card number.</p>
+            <button class="button" type="button" data-card-pay="${cleanText(invoice.id)}">Pay ${cleanText(money(invoice.amount))} with Card</button>
+            <div id="card-checkout-${cleanText(invoice.id)}" aria-live="polite"></div>
+          </div>
           <div class="payment-card">
             <h3>Pay with Zelle</h3>
             <p>Open Zelle in your bank app and send exactly <strong>${cleanText(money(invoice.amount) || "$0.00")}</strong>. Use either the phone or email below, not both.</p>
@@ -6945,6 +6974,30 @@
           } catch (error) {
             approveButton.disabled = false;
             approveButton.textContent = "Approve Project";
+            $("#billing-result").innerHTML = notice(error.message, true);
+          }
+          return;
+        }
+
+        const cardButton = event.target.closest("button[data-card-pay]");
+        if (cardButton) {
+          if (invoiceCheckoutToken) {
+            $("#billing-result").innerHTML = notice("Finish the open card checkout first.", true);
+            return;
+          }
+          cardButton.disabled = true;
+          cardButton.textContent = "Opening secure checkout...";
+          try {
+            const data = await requestJson("portal-payments", { method: "POST", body: JSON.stringify({ action: "initialize-invoice-checkout", invoice_id: cardButton.dataset.cardPay }) });
+            if (data.alreadyPaid) { await loadAccountData(); return; }
+            invoiceCheckoutToken = data.checkout_token;
+            invoiceCheckoutId = cardButton.dataset.cardPay;
+            if (typeof window.appendHelcimPayIframe !== "function") throw new Error("Secure card checkout did not load. Refresh the page and try again.");
+            window.appendHelcimPayIframe(invoiceCheckoutToken);
+            cardButton.textContent = "Secure checkout opened";
+          } catch (error) {
+            cardButton.disabled = false;
+            cardButton.textContent = `Pay ${cardButton.closest(".payment-card")?.querySelector("strong")?.textContent || "Invoice"} with Card`;
             $("#billing-result").innerHTML = notice(error.message, true);
           }
           return;

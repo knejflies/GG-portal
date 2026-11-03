@@ -295,6 +295,47 @@ async function revokeAutopay(user) {
   return customerPaymentState(user);
 }
 
+async function initializeInvoiceCheckout(user, body) {
+  const invoiceRows = await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(body.invoice_id || "")}&customer_user_id=eq.${encodeURIComponent(user.id)}&active=eq.true&limit=1`);
+  const invoice = invoiceRows?.[0];
+  if (!invoice) throw new Error("Invoice was not found.");
+  if (String(invoice.status).toLowerCase() === "paid") return { alreadyPaid: true, invoice };
+  const amount = Number(invoice.amount || 0);
+  if (!(amount > 0)) throw new Error("This invoice does not have a payable balance.");
+  const checkout = await helcim("/helcim-pay/initialize", { method: "POST", body: JSON.stringify({ paymentType: "purchase", amount, currency: "USD", paymentMethod: "cc", language: "en", displayContactFields: 1 }) });
+  if (!checkout.checkoutToken || !checkout.secretToken) throw new Error("Helcim did not return a checkout session.");
+  await supabase("green_grin_invoice_checkout_sessions", { method: "POST", body: JSON.stringify({ checkout_token: checkout.checkoutToken, secret_token: checkout.secretToken, invoice_id: invoice.id, customer_user_id: user.id, amount, expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() }) });
+  return { checkout_token: checkout.checkoutToken, expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() };
+}
+
+async function confirmInvoiceCheckout(user, body) {
+  const checkoutToken = String(body.checkout_token || "");
+  const sessions = await supabase(`green_grin_invoice_checkout_sessions?select=*&checkout_token=eq.${encodeURIComponent(checkoutToken)}&customer_user_id=eq.${encodeURIComponent(user.id)}&limit=1`);
+  const session = sessions?.[0];
+  if (!session) throw new Error("Card checkout session was not found.");
+  if (session.completed_at) {
+    const existing = await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(session.invoice_id)}&limit=1`);
+    return { duplicate: true, invoice: existing?.[0] || null };
+  }
+  if (new Date(session.expires_at).getTime() < Date.now()) throw new Error("Card checkout expired. Start it again.");
+  const message = typeof body.response === "string" ? JSON.parse(body.response) : body.response;
+  const rawData = message?.rawDataResponse ?? message?.data;
+  if (!validateCheckoutResponse(rawData, message?.hash, session.secret_token)) throw new Error("Helcim response validation failed.");
+  const transaction = typeof rawData === "string" ? JSON.parse(rawData) : rawData;
+  const approved = /^approved$/i.test(String(transaction?.status || transaction?.statusAuth || ""));
+  if (!approved) throw new Error(String(transaction?.errors || "Card payment was declined."));
+  const updated = await supabase(`green_grin_invoices?id=eq.${encodeURIComponent(session.invoice_id)}&status=neq.Paid`, { method: "PATCH", body: JSON.stringify({ status: "Paid", charge_status: "Paid", provider: "Helcim", provider_payment_ref: String(transaction.transactionId || ""), payment_method: "Helcim card", payment_reference: String(transaction.transactionId || ""), payment_confirmed_at: new Date().toISOString() }) });
+  await supabase(`green_grin_invoice_checkout_sessions?checkout_token=eq.${encodeURIComponent(checkoutToken)}&completed_at=is.null`, { method: "PATCH", body: JSON.stringify({ completed_at: new Date().toISOString() }) });
+  const invoice = updated?.[0];
+  if (!invoice) {
+    const paid = await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(session.invoice_id)}&limit=1`);
+    return { duplicate: true, invoice: paid?.[0] || null };
+  }
+  await supabase("green_grin_billing_audit_log", { method: "POST", body: JSON.stringify({ customer_user_id: invoice.customer_user_id, property_id: invoice.property_id, invoice_id: invoice.id, actor_type: "Customer", action: "payment.approved", details: { provider: "Helcim", transaction_id: transaction.transactionId || null, amount: invoice.amount } }) }).catch(() => null);
+  const receipt = await sendReceiptOnce(invoice).catch((error) => ({ sent: false, error: error.message || "Receipt email failed." }));
+  return { duplicate: false, approved: true, invoice, transaction_id: transaction.transactionId || null, receipt };
+}
+
 async function chargeInvoice(event, body, options = {}) {
   if (!options.system) {
     await requireAccounting(event, supabase);
@@ -389,7 +430,9 @@ exports.handler = async (event) => {
     const user = await verifyUser(event);
     if (event.httpMethod === "GET") return json(200, await customerPaymentState(user));
     if (event.httpMethod === "POST" && body.action === "initialize-autopay") return json(200, await initializeAutopay(user, body));
+    if (event.httpMethod === "POST" && body.action === "initialize-invoice-checkout") return json(200, await initializeInvoiceCheckout(user, body));
     if (event.httpMethod === "POST" && body.action === "confirm-autopay") return json(200, await confirmAutopay(user, body));
+    if (event.httpMethod === "POST" && body.action === "confirm-invoice-checkout") return json(200, await confirmInvoiceCheckout(user, body));
     if (event.httpMethod === "POST" && body.action === "revoke-autopay") return json(200, await revokeAutopay(user));
     return json(405, { error: "Method not allowed." });
   } catch (error) {
