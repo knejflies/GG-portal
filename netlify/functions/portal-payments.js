@@ -296,7 +296,10 @@ async function revokeAutopay(user) {
 }
 
 async function initializeInvoiceCheckout(user, body) {
-  const invoiceRows = await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(body.invoice_id || "")}&customer_user_id=eq.${encodeURIComponent(user.id)}&active=eq.true&limit=1`);
+  const guestToken = String(body.guest_token || "");
+  const invoiceRows = guestToken
+    ? await supabase(`green_grin_invoices?select=*&guest_payment_token_hash=eq.${encodeURIComponent(crypto.createHash("sha256").update(guestToken).digest("hex"))}&guest_payment_token_expires_at=gt.${encodeURIComponent(new Date().toISOString())}&active=eq.true&limit=1`)
+    : await supabase(`green_grin_invoices?select=*&id=eq.${encodeURIComponent(body.invoice_id || "")}&customer_user_id=eq.${encodeURIComponent(user?.id || "")}&active=eq.true&limit=1`);
   const invoice = invoiceRows?.[0];
   if (!invoice) throw new Error("Invoice was not found.");
   if (String(invoice.status).toLowerCase() === "paid") return { alreadyPaid: true, invoice };
@@ -304,13 +307,13 @@ async function initializeInvoiceCheckout(user, body) {
   if (!(amount > 0)) throw new Error("This invoice does not have a payable balance.");
   const checkout = await helcim("/helcim-pay/initialize", { method: "POST", body: JSON.stringify({ paymentType: "purchase", amount, currency: "USD", paymentMethod: "cc", language: "en", displayContactFields: 1 }) });
   if (!checkout.checkoutToken || !checkout.secretToken) throw new Error("Helcim did not return a checkout session.");
-  await supabase("green_grin_invoice_checkout_sessions", { method: "POST", body: JSON.stringify({ checkout_token: checkout.checkoutToken, secret_token: checkout.secretToken, invoice_id: invoice.id, customer_user_id: user.id, amount, expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() }) });
+  await supabase("green_grin_invoice_checkout_sessions", { method: "POST", body: JSON.stringify({ checkout_token: checkout.checkoutToken, secret_token: checkout.secretToken, invoice_id: invoice.id, customer_user_id: user?.id || null, amount, expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() }) });
   return { checkout_token: checkout.checkoutToken, expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString() };
 }
 
 async function confirmInvoiceCheckout(user, body) {
   const checkoutToken = String(body.checkout_token || "");
-  const sessions = await supabase(`green_grin_invoice_checkout_sessions?select=*&checkout_token=eq.${encodeURIComponent(checkoutToken)}&customer_user_id=eq.${encodeURIComponent(user.id)}&limit=1`);
+  const sessions = await supabase(`green_grin_invoice_checkout_sessions?select=*&checkout_token=eq.${encodeURIComponent(checkoutToken)}${user?.id ? `&customer_user_id=eq.${encodeURIComponent(user.id)}` : ""}&limit=1`);
   const session = sessions?.[0];
   if (!session) throw new Error("Card checkout session was not found.");
   if (session.completed_at) {
@@ -427,6 +430,15 @@ exports.handler = async (event) => {
   try {
     const body = event.httpMethod === "POST" ? JSON.parse(event.body || "{}") : {};
     if (body.action === "charge-invoice") return json(200, await chargeInvoice(event, body));
+    const params = new URLSearchParams(event.rawQuery || "");
+    if (event.httpMethod === "GET" && params.get("guest_token")) {
+      const guestHash = crypto.createHash("sha256").update(params.get("guest_token")).digest("hex");
+      const rows = await supabase(`green_grin_invoices?select=id,customer_name,service_line,service_address,amount,due_date,status,line_items,notes,guest_payment_token_expires_at&guest_payment_token_hash=eq.${encodeURIComponent(guestHash)}&guest_payment_token_expires_at=gt.${encodeURIComponent(new Date().toISOString())}&active=eq.true&limit=1`);
+      if (!rows?.[0]) return json(404, { error: "This payment link is invalid or expired." });
+      return json(200, { invoice: rows[0] });
+    }
+    if (event.httpMethod === "POST" && body.action === "initialize-invoice-checkout" && body.guest_token) return json(200, await initializeInvoiceCheckout(null, body));
+    if (event.httpMethod === "POST" && body.action === "confirm-invoice-checkout" && body.guest_token) return json(200, await confirmInvoiceCheckout(null, body));
     const user = await verifyUser(event);
     if (event.httpMethod === "GET") return json(200, await customerPaymentState(user));
     if (event.httpMethod === "POST" && body.action === "initialize-autopay") return json(200, await initializeAutopay(user, body));
