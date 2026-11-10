@@ -4869,11 +4869,12 @@
     <section id="customers" class="panel">
       <div class="grid">
         <div class="card owner-only">
-          <h2>Customers</h2>
+          <div class="job-head"><div><h2>Customers</h2><p class="muted">When someone calls, save the person and property here in one quick entry.</p></div><button id="quick-add-customer" class="button" type="button">+ Add customer</button></div>
           <label for="customer-list-search">Search customers</label>
           <input id="customer-list-search" type="search" autocomplete="off" placeholder="Name, GG number, phone, or address" />
           <div class="admin-bar">
             <button id="load-customers" class="button secondary" type="button">Load Customers</button>
+            <span class="muted">Use Add customer for a new caller.</span>
           </div>
           <div id="customers-result" class="status-box" aria-live="polite"></div>
         </div>
@@ -13585,6 +13586,11 @@
     $("#job-category-filter")?.addEventListener("change", renderAdminJobList);
     $("#job-frequency-filter")?.addEventListener("change", renderAdminJobList);
     $("#load-customers").addEventListener("click", loadCustomers);
+    $("#quick-add-customer")?.addEventListener("click", () => {
+      revealAdminEditor("owner", "#owner_job_customer_name", "#owner-create-result", "Enter the caller's name, phone, email, property address, and service details below. Saving creates the customer/job record and keeps it available across the portal.");
+      const heading = document.querySelector("#owner h3");
+      if (heading) heading.textContent = "Add customer / property";
+    });
     $("#customer-list-search")?.addEventListener("input", renderAdminCustomerList);
     $("#customer-file-close")?.addEventListener("click", closeCustomerFile);
     $("#customer-file-modal")?.addEventListener("click", (event) => {
