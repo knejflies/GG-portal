@@ -4941,7 +4941,13 @@
                   <option>Sharp Grin Weekly - Mow, Edge, Blow & Weed Spraying</option>
                   <option>Full Grin Season - Mow, Edge, Blow, Weed Spraying, Spring & Fall Cleanup</option>
                   <option>Fertilization Program</option>
+                  <option value="Spring / Fall Cleanup">Spring / Fall Cleanup</option>
+                  <option value="Core Aeration">Core Aeration</option>
+                  <option value="Sprinkler Blowout">Sprinkler Blowout</option>
+                  <option value="Landscape Project">Landscape Project</option>
+                  <option value="Custom Service">Custom service</option>
                 </select>
+                <div id="owner-job-custom-service-wrap" hidden style="margin-top:8px"><label for="owner_job_custom_service">Custom service name</label><input id="owner_job_custom_service" placeholder="Type the service you are selling" /></div>
               </div>
               <div>
                 <label for="owner_job_category">Job category</label>
@@ -9305,6 +9311,14 @@
       });
     }
 
+    function toggleCustomCustomerService() {
+      const select = $("#owner_job_service_type");
+      const wrap = $("#owner-job-custom-service-wrap");
+      const custom = select?.value === "Custom Service";
+      if (wrap) wrap.hidden = !custom;
+      if (custom) $("#owner_job_custom_service")?.focus();
+    }
+
     function selectJobPlan(planId) {
       const index = ["fresh", "sharp", "full"].indexOf(planId);
       const select = $("#owner_job_service_type");
@@ -12809,6 +12823,13 @@
       const scheduledDate = $("#owner_job_scheduled_date").value;
       const scheduleEndDate = $("#owner_job_end_date").value;
       const assignedEmployee = $("#owner_job_employee").selectedOptions[0];
+      const selectedService = $("#owner_job_service_type").value;
+      const customService = $("#owner_job_custom_service")?.value.trim() || "";
+      if (selectedService === "Custom Service" && !customService) {
+        $("#owner-create-result").innerHTML = notice("Type the custom service name before saving.", true);
+        $("#owner_job_custom_service")?.focus();
+        return;
+      }
       $("#owner-create-result").innerHTML = notice("Creating job...");
       try {
         const pricing = ownerJobPricingPayload();
@@ -12820,7 +12841,7 @@
             phone: $("#owner_job_phone").value,
             email: $("#owner_job_email").value,
             address: $("#owner_job_address").value,
-            service_type: $("#owner_job_service_type").value,
+            service_type: selectedService === "Custom Service" ? customService : selectedService,
             service_category: $("#owner_job_category").value,
             schedule_frequency: $("#owner_job_frequency").value,
             scheduled_date: scheduledDate || null,
@@ -12836,6 +12857,7 @@
           })
         });
         form.reset();
+        toggleCustomCustomerService();
         refreshOwnerJobWeeklySummary();
         $("#owner-create-result").innerHTML = notice("Job created. It is now in the job list below.");
         await loadAdminJobs();
@@ -12843,6 +12865,8 @@
         $("#owner-create-result").innerHTML = notice(error.message, true);
       }
     });
+
+    $("#owner_job_service_type")?.addEventListener("change", toggleCustomCustomerService);
 
     $("#lookup-form").addEventListener("submit", async (event) => {
       event.preventDefault();
