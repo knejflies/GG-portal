@@ -4947,7 +4947,7 @@
                   <option value="Landscape Project">Landscape Project</option>
                   <option value="Custom Service">Custom service</option>
                 </select>
-                <div id="owner-job-custom-service-wrap" hidden style="margin-top:8px"><label for="owner_job_custom_service">Custom service name</label><input id="owner_job_custom_service" placeholder="Type the service you are selling" /></div>
+                <div id="owner-job-custom-service-wrap" style="margin-top:8px"><label for="owner_job_custom_service">Or type a service name</label><input id="owner_job_custom_service" placeholder="Cleanup, aeration, sprinkler blowout, or anything custom" /></div>
               </div>
               <div>
                 <label for="owner_job_category">Job category</label>
@@ -9315,7 +9315,7 @@
       const select = $("#owner_job_service_type");
       const wrap = $("#owner-job-custom-service-wrap");
       const custom = select?.value === "Custom Service";
-      if (wrap) wrap.hidden = !custom;
+      if (wrap) wrap.hidden = false;
       if (custom) $("#owner_job_custom_service")?.focus();
     }
 
@@ -12841,7 +12841,7 @@
             phone: $("#owner_job_phone").value,
             email: $("#owner_job_email").value,
             address: $("#owner_job_address").value,
-            service_type: selectedService === "Custom Service" ? customService : selectedService,
+            service_type: customService || (selectedService === "Custom Service" ? "Custom Service" : selectedService),
             service_category: $("#owner_job_category").value,
             schedule_frequency: $("#owner_job_frequency").value,
             scheduled_date: scheduledDate || null,
