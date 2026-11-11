@@ -6,6 +6,7 @@ const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const BUCKET = "green-grin-giveaway-photos";
 const BASE_URL = process.env.URL || "https://portal.greengrinlawns.com";
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+const GIVEAWAY_END_AT = process.env.GIVEAWAY_END_AT || "2026-12-05T18:00:00-07:00";
 
 const json = (statusCode, body, extra = {}) => ({
   statusCode,
@@ -85,6 +86,7 @@ async function signedPhotoUrl(path) {
 }
 
 async function createEntry(event) {
+  if (Date.now() >= new Date(GIVEAWAY_END_AT).getTime()) throw new Error("This giveaway closed December 5 at 6:00 PM Mountain Time.");
   let body;
   try { body = JSON.parse(event.body || "{}"); } catch (_error) { throw new Error("Invalid form submission."); }
   if (body.website) throw new Error("Unable to accept this submission.");
