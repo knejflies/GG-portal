@@ -4,6 +4,7 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
 const ADMIN_PIN = process.env.GREEN_GRIN_ADMIN_PIN;
 const { isAdminRequest } = require("./portal-auth");
+const { unsubscribeFooter } = require("../lib/email-unsubscribe");
 const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "Content-Type, Authorization, x-admin-pin", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const json = (statusCode, body) => ({ statusCode, headers, body: JSON.stringify(body) });
 const clean = (value, max = 20000) => String(value || "").trim().slice(0, max);
@@ -54,7 +55,8 @@ exports.handler = async (event) => {
     for (const recipient of targets) {
       const personalizedSubject = replaceTokens(subject, recipient);
       const personalizedMessage = replaceTokens(message, recipient);
-      const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [recipient.email], subject: personalizedSubject, text: personalizedMessage, html: `<div style="font-family:Arial,sans-serif;line-height:1.55;white-space:pre-wrap">${escapeHtml(personalizedMessage)}</div>` }) });
+      const footer = unsubscribeFooter(recipient.email);
+      const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [recipient.email], subject: personalizedSubject, text: personalizedMessage + footer.text, html: `<div style="font-family:Arial,sans-serif;line-height:1.55;white-space:pre-wrap">${escapeHtml(personalizedMessage)}</div>${footer.html}`, headers: footer.headers }) });
       const data = await response.json().catch(() => ({}));
       const result = { email: recipient.email, sent: response.ok, id: data.id || null, error: response.ok ? null : (data?.message || "Email provider rejected the message.") };
       results.push(result);
