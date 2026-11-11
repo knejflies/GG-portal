@@ -95,6 +95,7 @@ async function createEntry(event) {
   if (!fullName || !email || !address) throw new Error("Name, email, and address are required.");
   if (!/^\S+@\S+\.\S+$/.test(email)) throw new Error("Enter a valid email address.");
   if (body.terms_agreed !== true) throw new Error("Please accept the entry terms before submitting.");
+  if (body.email_marketing_allowed !== true) throw new Error("Please agree to join the Green Grin email list before submitting.");
   const photo = decodePhoto(body.photo);
   const id = crypto.randomUUID();
   const path = `seasonal-giveaway/${id}.${photo.ext}`;
