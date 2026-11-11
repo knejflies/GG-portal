@@ -15,6 +15,10 @@ create table if not exists public.green_grin_giveaway_entries (
   consent_at timestamptz,
   status text not null default 'pending' check (status in ('pending','finalist','winner','not_selected','archived')),
   reviewer_notes text,
+  offer_code text,
+  offer_redeemed_at timestamptz,
+  confirmation_sent_at timestamptz,
+  confirmation_email_id text,
   reviewed_at timestamptz,
   share_clicked_at timestamptz,
   created_at timestamptz not null default now()

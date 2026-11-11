@@ -7,6 +7,9 @@ const BUCKET = "green-grin-giveaway-photos";
 const BASE_URL = process.env.URL || "https://portal.greengrinlawns.com";
 const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
 const GIVEAWAY_END_AT = process.env.GIVEAWAY_END_AT || "2026-12-05T18:00:00-07:00";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const EMAIL_FROM = process.env.GREEN_GRIN_INVOICE_FROM || "Green Grin Lawns <ken@greengrinlawns.com>";
+const EMAIL_LOGO_URL = process.env.GREEN_GRIN_EMAIL_LOGO_URL || `${BASE_URL}/assets/green-grin-giveaway-logo.png`;
 
 const json = (statusCode, body, extra = {}) => ({
   statusCode,
@@ -42,6 +45,7 @@ async function supabase(path, options = {}) {
 }
 
 function clean(value, max = 500) { return String(value || "").trim().slice(0, max); }
+function escapeHtml(value) { return clean(value, 20000).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char])); }
 function extension(type, name) {
   const byType = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic" };
   return byType[type] || String(name || "jpg").split(".").pop().toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
@@ -85,6 +89,19 @@ async function signedPhotoUrl(path) {
   return signed ? `${SUPABASE_URL}/storage/v1${signed}` : "";
 }
 
+async function sendEntryConfirmation(entry, offerCode) {
+  if (!RESEND_API_KEY || !entry?.email) return { sent: false, skipped: true, reason: "Email is not configured." };
+  const customer = escapeHtml(entry.full_name || "there");
+  const subject = "Thanks for entering the Cherry Hill Farms giveaway";
+  const text = `Hi ${entry.full_name || "there"},\n\nThanks for entering the Cherry Hill Farms giveaway with Green Grin Lawns. Three winners will each receive one free spring fertilizer application.\n\nYour exclusive one-time offer: 10% off one fall cleanup. Use code ${offerCode} when you book. This offer is for the recipient only, may not be combined with another offer, and is subject to scheduling.\n\nOur services include lawn mowing, fertilizer programs, sprinkler blowouts, spring and fall cleanups, aeration, landscape maintenance, and irrigation work.\n\nThanks again,\nGreen Grin Lawns`;
+  const html = `<!doctype html><html><body style="margin:0;background:#edf4e9;color:#17351f;font-family:Arial,sans-serif"><div style="max-width:680px;margin:0 auto;padding:22px 14px"><div style="background:#fff;padding:18px;text-align:center;border-radius:18px 18px 0 0"><img src="${escapeHtml(EMAIL_LOGO_URL)}" alt="Green Grin Lawns" style="max-width:330px;width:100%;height:auto;max-height:150px;object-fit:contain" /></div><div style="background:#fff;padding:28px;border:1px solid #d4e2d1;border-top:4px solid #80c747;border-radius:0 0 18px 18px"><p style="margin-top:0">Hi ${customer},</p><h1 style="color:#245c2e;font-size:26px;margin-bottom:10px">Thanks for entering!</h1><p>We received your Cherry Hill Farms giveaway submission. Three winners will each receive one free spring fertilizer application from Green Grin Lawns.</p><div style="margin:24px 0;padding:20px;border-radius:14px;background:#edf8e5;border:2px solid #91d453"><p style="margin:0 0 8px;color:#3a7130;font-weight:700">Your exclusive one-time offer</p><p style="font-size:22px;margin:0 0 8px"><strong>10% off one fall cleanup</strong></p><p style="margin:0 0 12px">Use this code when you book:</p><p style="font-size:24px;letter-spacing:.1em;margin:0;color:#245c2e"><strong>${escapeHtml(offerCode)}</strong></p></div><p style="font-size:13px;color:#5b6f5e">This offer is for the recipient only, may not be combined with another offer, and is subject to scheduling.</p><h2 style="font-size:18px;color:#245c2e">Our services</h2><p>Lawn mowing · Fertilizer programs · Sprinkler blowouts · Spring and fall cleanups · Aeration · Landscape maintenance · Irrigation work</p><p>Thanks again for choosing Green Grin Lawns.</p><p style="color:#5b6f5e;font-size:13px;margin-bottom:0">Green Grin Lawn &amp; Landscape</p></div></div></body></html>`;
+  try {
+    const response = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json", "User-Agent": "Green-Grin-Portal/1.0" }, body: JSON.stringify({ from: EMAIL_FROM, to: [entry.email], subject, text, html }) });
+    const data = await response.json().catch(() => ({}));
+    return response.ok ? { sent: true, id: data.id || null } : { sent: false, error: data?.message || "Email provider rejected the confirmation." };
+  } catch (error) { return { sent: false, error: error.message || "Confirmation email failed." }; }
+}
+
 async function createEntry(event) {
   if (Date.now() >= new Date(GIVEAWAY_END_AT).getTime()) throw new Error("This giveaway closed December 5 at 6:00 PM Mountain Time.");
   let body;
@@ -100,6 +117,7 @@ async function createEntry(event) {
   if (body.email_marketing_allowed !== true) throw new Error("Please agree to join the Green Grin email list before submitting.");
   const photo = decodePhoto(body.photo);
   const id = crypto.randomUUID();
+  const offerCode = `CHERRY10-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
   const path = `seasonal-giveaway/${id}.${photo.ext}`;
   await uploadPhoto(path, photo);
   try {
@@ -115,6 +133,7 @@ async function createEntry(event) {
         service_address: address,
         entry_notes: clean(body.notes, 1000) || null,
         photo_path: path,
+        offer_code: offerCode,
         email_marketing_allowed: body.email_marketing_allowed === true,
         sms_marketing_allowed: body.sms_marketing_allowed === true,
         terms_agreed: true,
@@ -122,7 +141,9 @@ async function createEntry(event) {
       })
     });
     const entry = Array.isArray(row) ? row[0] : row;
-    return { id: entry.id, share_url: `${BASE_URL}/giveaway.html?entry=${encodeURIComponent(entry.id)}` };
+    const confirmation = await sendEntryConfirmation(entry, offerCode);
+    if (confirmation.sent) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(entry.id)}`, { method: "PATCH", body: JSON.stringify({ confirmation_sent_at: new Date().toISOString(), confirmation_email_id: confirmation.id }) }).catch(() => null);
+    return { id: entry.id, share_url: `${BASE_URL}/giveaway.html?entry=${encodeURIComponent(entry.id)}`, offer_code: offerCode, confirmation_sent: confirmation.sent };
   } catch (error) {
     await removePhoto(path);
     if (String(error.message).toLowerCase().includes("unique")) throw new Error("That email has already entered this giveaway.");
