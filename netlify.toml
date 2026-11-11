@@ -3,3 +3,13 @@
 
 [functions."automatic-payments"]
   schedule = "0 15 * * *"
+
+[[redirects]]
+  from = "/giveaway"
+  to = "/giveaway.html"
+  status = 301
+
+[[redirects]]
+  from = "/giveaway-review"
+  to = "/giveaway-admin.html"
+  status = 301
