@@ -1,5 +1,7 @@
 -- Connect giveaway applicant codes to estimates and prevent reuse.
 alter table public.green_grin_giveaway_entries
+  add column if not exists offer_code text,
+  add column if not exists offer_redeemed_at timestamptz,
   add column if not exists offer_discount_amount numeric(12, 2) not null default 50,
   add column if not exists offer_redeemed_estimate_id uuid;
 
