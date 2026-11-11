@@ -37,11 +37,12 @@ async function audienceRecipients(audience) {
     return dedupeRecipients(rows);
   }
   if (audience === "all") {
-    const [blowouts, giveaways] = await Promise.all([
+    const [customers, blowouts, giveaways] = await Promise.all([
+      supabase("green_grin_customers?select=full_name,email,email_marketing_allowed&email_marketing_allowed=eq.true&order=created_at.asc&limit=2000"),
       supabase("green_grin_sprinkler_blowout_leads?select=full_name,email,service_address,email_marketing_allowed&email_marketing_allowed=eq.true&order=created_at.asc&limit=1000"),
       supabase("green_grin_giveaway_entries?select=full_name,email,service_address,email_marketing_allowed&email_marketing_allowed=eq.true&order=created_at.asc&limit=1000")
     ]);
-    return dedupeRecipients([...(blowouts || []), ...(giveaways || [])]);
+    return dedupeRecipients([...(customers || []), ...(blowouts || []), ...(giveaways || [])]);
   }
   throw new Error("Choose a valid email audience.");
 }

@@ -20,6 +20,7 @@ exports.handler = async (event) => {
   const email = encodeURIComponent(verified.email);
   try {
     const updates = await Promise.allSettled([
+      patch(`green_grin_customers?email=eq.${email}`, { email_marketing_allowed: false, email_unsubscribed_at: new Date().toISOString() }),
       patch(`green_grin_sprinkler_blowout_leads?email=eq.${email}`, { email_marketing_allowed: false, followup_status: "Opted out" }),
       patch(`green_grin_giveaway_entries?email=eq.${email}`, { email_marketing_allowed: false })
     ]);
