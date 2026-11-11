@@ -3507,6 +3507,8 @@
       gap: 8px;
       margin-top: 16px;
     }
+    .inline-field { display:flex; align-items:center; gap:8px; }
+    .inline-field input { flex:1; min-width:0; }
     .estimate-flow-hint { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 16px; padding:10px 12px; border:1px solid rgba(142,210,62,.22); border-radius:10px; background:rgba(142,210,62,.06); color:var(--muted); font-size:.82rem; font-weight:800; }
     .estimate-flow-hint span { display:inline-flex; align-items:center; gap:6px; }
     .estimate-flow-hint strong { display:inline-grid; place-items:center; width:20px; height:20px; border-radius:50%; background:var(--role-accent); color:#082313; font-size:.72rem; }
@@ -5751,6 +5753,7 @@
             </div>
             <div class="three">
               <div><label for="estimate-discount">Customer discount</label><input id="estimate-discount" type="number" min="0" step="0.01" value="0" /></div>
+              <div><label for="estimate-discount-code">Giveaway / offer code</label><div class="inline-field"><input id="estimate-discount-code" type="text" placeholder="Cherry26-001" autocomplete="off" /><button id="estimate-apply-discount-code" class="button small secondary" type="button">Apply</button></div><small id="estimate-discount-code-status" class="muted">Enter a valid applicant code to apply its saved discount.</small></div>
               <div><label for="estimate-tax-rate">Tax rate %</label><input id="estimate-tax-rate" type="number" min="0" max="100" step="0.01" value="0" /></div>
               <div><label for="estimate-invoice-due">Payment due date</label><input id="estimate-invoice-due" type="date" /></div>
             </div>
@@ -7633,6 +7636,19 @@
     });
 
     ["#estimate-discount", "#estimate-tax-rate"].forEach((selector) => $(selector).addEventListener("input", calculateEstimateForm));
+    $("#estimate-apply-discount-code")?.addEventListener("click", async () => {
+      const code = $("#estimate-discount-code")?.value.trim();
+      const status = $("#estimate-discount-code-status");
+      if (!code) { status.textContent = "Enter an applicant code first."; return; }
+      status.textContent = "Checking code...";
+      try {
+        const data = await requestJson("portal-estimates", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "validate-discount-code", discount_code: code, estimate_id: $("#estimate-id")?.value || "" }) });
+        $("#estimate-discount-code").value = data.code;
+        $("#estimate-discount").value = Number(data.amount || 0).toFixed(2);
+        calculateEstimateForm();
+        status.textContent = `Applied ${data.code}: ${money(data.amount)} off. Save the estimate to record it.`;
+      } catch (error) { status.textContent = error.message || "That code could not be applied."; }
+    });
     $("#estimate-clear").addEventListener("click", clearEstimateForm);
     $("#estimate-search").addEventListener("input", renderSavedEstimates);
     $("#estimate-contract-template").addEventListener("change", () => {
@@ -8980,6 +8996,7 @@
         status: $("#estimate-status").value,
         line_items: calculation.lines,
         discount: calculation.discount,
+        discount_code: $("#estimate-discount-code")?.value.trim() || "",
         tax_rate: calculation.taxRate,
         grouped_totals: calculation.groupedTotals,
         deposit_amount: calculation.depositAmount,
@@ -9022,6 +9039,8 @@
       $("#estimate-valid-until").value = estimateDateOffset(30);
       $("#estimate-invoice-due").value = estimateDateOffset(7);
       $("#estimate-discount").value = "0";
+      $("#estimate-discount-code").value = "";
+      $("#estimate-discount-code-status").textContent = "Enter a valid applicant code to apply its saved discount.";
       $("#estimate-tax-rate").value = "0";
       $("#estimate-initial-payment-percent").value = "0";
       $("#estimate-price-display").value = "total_only";
@@ -9112,6 +9131,8 @@
       $("#estimate-contract-consent").value = estimate.contract_consent_text || savedContract.consent_text || "";
       $("#estimate-status").value = estimate.status || "Draft";
       $("#estimate-discount").value = Number(estimate.discount || 0);
+      $("#estimate-discount-code").value = estimate.discount_code || "";
+      $("#estimate-discount-code-status").textContent = estimate.discount_code ? `Applied ${estimate.discount_code}: ${money(estimate.discount || estimate.discount_amount || 0)} off` : "Enter a valid applicant code to apply its saved discount.";
       $("#estimate-tax-rate").value = Number(estimate.tax_rate || 0);
       $("#estimate-initial-payment-percent").value = 0;
       $("#estimate-price-display").value = "grouped";

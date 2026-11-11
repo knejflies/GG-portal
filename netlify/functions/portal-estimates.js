@@ -44,6 +44,21 @@ function clean(value, maximum = 180) {
   return String(value || "").trim().slice(0, maximum);
 }
 
+async function resolveDiscountCode(code, estimateId = "") {
+  const normalized = clean(code, 80).toLowerCase();
+  if (!normalized) return null;
+  const rows = await supabase(`green_grin_giveaway_entries?select=id,offer_code,offer_discount_amount,offer_redeemed_estimate_id,offer_redeemed_at,status&offer_code=eq.${encodeURIComponent(clean(code, 80))}&limit=1`);
+  const entry = rows?.[0];
+  if (!entry) throw new Error("That applicant code was not found.");
+  if (["archived", "not_selected"].includes(String(entry.status || "").toLowerCase())) throw new Error("That applicant code is no longer active.");
+  if (entry.offer_redeemed_at && entry.offer_redeemed_estimate_id !== estimateId) throw new Error("That applicant code has already been used.");
+  return {
+    code: entry.offer_code,
+    amount: moneyNumber(entry.offer_discount_amount || 50),
+    entryId: entry.id
+  };
+}
+
 const CONTRACT_TEMPLATE_TYPES = new Set(["landscaping", "mowing", "cleanup", "aeration", "custom"]);
 
 function normalizeEstimateLines(value) {
@@ -120,6 +135,9 @@ function estimatePayload(body, current = {}) {
     contingency_percent: Math.min(100, moneyNumber(body.contingency_percent)),
     calculation_inputs: body.calculation_inputs && typeof body.calculation_inputs === "object" ? body.calculation_inputs : (current.calculation_inputs || {}),
     discount,
+    discount_code: clean(body.discount_code !== undefined ? body.discount_code : current.discount_code, 80),
+    discount_source_entry_id: body.discount_source_entry_id !== undefined ? (body.discount_source_entry_id || null) : (current.discount_source_entry_id || null),
+    discount_amount: discount,
     tax_rate: taxRate,
     tax_amount: taxAmount,
     total,
@@ -180,11 +198,18 @@ exports.handler = async (event) => {
     }
 
     const body = JSON.parse(event.body || "{}");
+    if (body.action === "validate-discount-code") {
+      const discount = await resolveDiscountCode(body.discount_code, body.estimate_id || "");
+      return json(200, { valid: true, code: discount.code, amount: discount.amount, entry_id: discount.entryId });
+    }
     if (event.httpMethod === "POST") {
-      const payload = estimatePayload(body);
+      const discount = body.discount_code ? await resolveDiscountCode(body.discount_code, body.id || "") : null;
+      const payload = estimatePayload(discount ? { ...body, discount: discount.amount, discount_source_entry_id: discount.entryId, discount_code: discount.code } : body);
       if (!payload.line_items.length) return json(400, { error: "Add at least one priced estimate item." });
       const rows = await supabase("green_grin_estimates", { method: "POST", body: JSON.stringify(payload) });
-      return json(200, { estimate: rows?.[0] || payload });
+      const estimate = rows?.[0] || payload;
+      if (discount?.entryId && estimate.id) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: new Date().toISOString(), offer_redeemed_estimate_id: estimate.id }) });
+      return json(200, { estimate });
     }
 
     if (event.httpMethod === "PATCH") {
@@ -224,10 +249,13 @@ exports.handler = async (event) => {
         });
         return json(200, { estimate: updated?.[0] || estimate, job, duplicate: false });
       }
-      const payload = estimatePayload(body, existing[0]);
+      const discount = body.discount_code ? await resolveDiscountCode(body.discount_code, body.id) : null;
+      const payload = estimatePayload(discount ? { ...body, discount: discount.amount, discount_source_entry_id: discount.entryId, discount_code: discount.code } : body, existing[0]);
       if (!payload.line_items.length) return json(400, { error: "Add at least one priced estimate item." });
       const rows = await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(body.id)}`, { method: "PATCH", body: JSON.stringify(payload) });
-      return json(200, { estimate: rows?.[0] || payload });
+      const estimate = rows?.[0] || payload;
+      if (discount?.entryId && estimate.id) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: new Date().toISOString(), offer_redeemed_estimate_id: estimate.id }) });
+      return json(200, { estimate });
     }
 
     if (event.httpMethod === "DELETE") {

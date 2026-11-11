@@ -142,6 +142,7 @@ async function createEntry(event) {
         entry_notes: clean(body.notes, 1000) || null,
         photo_path: path,
         offer_code: offerCode,
+        offer_discount_amount: 50,
         email_marketing_allowed: body.email_marketing_allowed === true,
         sms_marketing_allowed: body.sms_marketing_allowed === true,
         terms_agreed: true,
