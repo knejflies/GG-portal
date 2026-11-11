@@ -22,6 +22,29 @@ function scheduledRecipients(rows, scheduledDate, requestedIds) {
   const dateLabel = new Date(`${scheduledDate}T12:00:00`).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   return (Array.isArray(rows) ? rows : []).filter((row) => ids.has(String(row.id)) && !closedStatuses.has(String(row.status || ""))).map((row) => ({ id: String(row.id), email: clean(row.email, 320).toLowerCase(), name: clean(row.full_name, 160), address: clean(row.service_address, 300), date: dateLabel })).filter((recipient) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.email));
 }
+function dedupeRecipients(rows) {
+  const seen = new Set();
+  return (Array.isArray(rows) ? rows : []).map((row) => ({ email: clean(row.email, 320).toLowerCase(), name: clean(row.full_name || row.name, 160), address: clean(row.service_address || row.address, 300), date: "" })).filter((row) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email) && !seen.has(row.email) && seen.add(row.email)).slice(0, 500);
+}
+async function audienceRecipients(audience) {
+  if (!audience || audience === "single") return [];
+  if (audience === "blowout") {
+    const rows = await supabase("green_grin_sprinkler_blowout_leads?select=full_name,email,service_address,email_marketing_allowed&email_marketing_allowed=eq.true&order=created_at.asc&limit=1000");
+    return dedupeRecipients(rows);
+  }
+  if (audience === "giveaway") {
+    const rows = await supabase("green_grin_giveaway_entries?select=full_name,email,service_address,email_marketing_allowed&email_marketing_allowed=eq.true&order=created_at.asc&limit=1000");
+    return dedupeRecipients(rows);
+  }
+  if (audience === "all") {
+    const [blowouts, giveaways] = await Promise.all([
+      supabase("green_grin_sprinkler_blowout_leads?select=full_name,email,service_address,email_marketing_allowed&email_marketing_allowed=eq.true&order=created_at.asc&limit=1000"),
+      supabase("green_grin_giveaway_entries?select=full_name,email,service_address,email_marketing_allowed&email_marketing_allowed=eq.true&order=created_at.asc&limit=1000")
+    ]);
+    return dedupeRecipients([...(blowouts || []), ...(giveaways || [])]);
+  }
+  throw new Error("Choose a valid email audience.");
+}
 async function recordAttempt(recipient, message, result) {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return;
   await fetch(`${SUPABASE_URL}/rest/v1/green_grin_message_log`, { method: "POST", headers: { apikey: SUPABASE_SERVICE_ROLE_KEY, Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "application/json", Prefer: "return=minimal" }, body: JSON.stringify({ phone: recipient.email, template: result.sent ? "email-drafter-sent" : "email-drafter-failed", message: result.sent ? message : `${message}\n\nFailure: ${result.error || "Email was not accepted."}`, actor_type: "Owner", actor_name: "Owner", twilio_sid: result.id || null }) }).catch(() => null);
@@ -34,10 +57,12 @@ exports.handler = async (event) => {
   if (!RESEND_API_KEY) return json(500, { error: "Email is not configured in Netlify." });
   try {
     const body = JSON.parse(event.body || "{}");
+    const audience = clean(body.audience, 40) || "single";
     const to = clean(body.to, 320).toLowerCase();
     const subject = clean(body.subject, 180);
     const message = clean(body.message, 20000);
     let recipients = Array.isArray(body.recipients) ? body.recipients.map((recipient) => ({ email: clean(recipient?.email, 320).toLowerCase(), name: clean(recipient?.name, 160), address: clean(recipient?.address, 300), date: clean(recipient?.date, 80) })).filter((recipient) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient.email)).slice(0, 100) : [];
+    if (!recipients.length && audience !== "single") recipients = await audienceRecipients(audience);
     const scheduledDate = clean(body.scheduled_date, 20);
     const requestedIds = Array.isArray(body.recipient_ids) ? [...new Set(body.recipient_ids.map((value) => clean(value, 80)).filter(Boolean))].slice(0, 100) : [];
     if (scheduledDate || requestedIds.length) {
@@ -47,7 +72,7 @@ exports.handler = async (event) => {
       recipients = scheduledRecipients(rows, scheduledDate, requestedIds);
       if (recipients.length !== requestedIds.length) return json(409, { error: "The schedule or an email address changed. No emails were sent. Reopen Email this day and review the updated list." });
     }
-    if (!recipients.length && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return json(400, { error: "Enter a valid recipient email." });
+    if (!recipients.length && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return json(400, { error: audience === "single" ? "Enter a valid recipient email." : "No opted-in email addresses were found for that audience." });
     if (!subject) return json(400, { error: "Enter an email subject." });
     if (!message) return json(400, { error: "Write the email message first." });
     const targets = recipients.length ? recipients : [{ email: to, name: "there", address: "your property", date: "" }];
@@ -63,7 +88,7 @@ exports.handler = async (event) => {
       await recordAttempt(recipient, personalizedMessage, result);
     }
     const sent = results.filter((result) => result.sent).length;
-    return json(200, { sent, failed: results.length - sent, results, to: targets[0].email, subject });
+    return json(200, { sent, failed: results.length - sent, results, audience, to: targets[0].email, subject });
   } catch (error) {
     return json(500, { error: error.message || "Email could not be sent." });
   }

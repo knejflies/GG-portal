@@ -5939,9 +5939,10 @@
         <div id="email-drafter-day-mode" class="status-box" hidden></div>
         <form id="email-drafter-form">
           <div class="two">
-            <div><label for="email-drafter-to">To</label><input id="email-drafter-to" type="email" placeholder="customer@example.com" /></div>
+            <div><label for="email-drafter-audience">Send to</label><select id="email-drafter-audience"><option value="single">One email address</option><option value="all">Everyone opted into email</option><option value="blowout">Blowout customers opted into email</option><option value="giveaway">Giveaway entrants opted into email</option></select></div>
             <div><label for="email-drafter-subject">Subject</label><input id="email-drafter-subject" maxlength="180" required placeholder="Your Green Grin update" /></div>
           </div>
+          <div id="email-drafter-single-wrap"><label for="email-drafter-to">To</label><input id="email-drafter-to" type="email" placeholder="customer@example.com" /></div>
           <div><label for="email-drafter-message">Message</label><textarea id="email-drafter-message" rows="12" maxlength="20000" required placeholder="Type and edit your message here..."></textarea></div>
           <div class="admin-actions"><button class="button" type="submit">Send Email</button><button id="email-drafter-clear" class="button ghost" type="button">Clear</button></div>
         </form>
@@ -13514,10 +13515,15 @@
       $("#email-drafter-to").value = "";
       $("#email-drafter-subject").value = "";
       $("#email-drafter-message").value = "";
+      $("#email-drafter-audience").value = "single";
+      $("#email-drafter-single-wrap").hidden = false;
       $("#email-drafter-result").innerHTML = "";
       sessionStorage.removeItem("gg-email-drafter-recipients");
       sessionStorage.removeItem("gg-email-drafter-day-meta");
       $("#email-drafter-day-mode").hidden = true;
+    });
+    $("#email-drafter-audience").addEventListener("change", () => {
+      $("#email-drafter-single-wrap").hidden = $("#email-drafter-audience").value !== "single";
     });
     function loadDayEmailDraft() {
       let recipients = null;
@@ -13567,15 +13573,17 @@
         try { recipients = JSON.parse(sessionStorage.getItem("gg-email-drafter-recipients") || "null"); } catch (_error) { recipients = null; }
         try { dayMeta = JSON.parse(sessionStorage.getItem("gg-email-drafter-day-meta") || "null"); } catch (_error) { dayMeta = null; }
         const to = $("#email-drafter-to").value.trim();
-        if (!recipients?.length && !to) throw new Error("Enter a recipient email.");
+        const audience = $("#email-drafter-audience").value;
+        if (!recipients?.length && audience === "single" && !to) throw new Error("Enter a recipient email.");
         if (recipients?.length) {
           const groupMode = dayMeta?.mode === "fertilizer-group";
           const description = groupMode ? (dayMeta.label || "the selected fertilizer group") : `the customers currently scheduled for ${new Date(`${dayMeta?.scheduled_date}T12:00:00`).toLocaleDateString()}`;
           if (!confirm(`Send ${recipients.length} separate email${recipients.length === 1 ? "" : "s"} to ${description}?`)) return;
         }
+        if (!recipients?.length && audience !== "single" && !confirm(`Send this email to everyone currently opted into the selected audience?`)) return;
         const fertilizerGroupMode = recipients?.length && dayMeta?.mode === "fertilizer-group";
-        const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, recipients: fertilizerGroupMode ? recipients : undefined, scheduled_date: recipients?.length && !fertilizerGroupMode ? dayMeta?.scheduled_date : undefined, recipient_ids: recipients?.length && !fertilizerGroupMode ? recipients.map((recipient) => recipient.id) : undefined, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
-        if (recipients?.length) {
+        const data = await requestJson("portal-email-drafter", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ to, audience: recipients?.length ? "single" : audience, recipients: fertilizerGroupMode ? recipients : undefined, scheduled_date: recipients?.length && !fertilizerGroupMode ? dayMeta?.scheduled_date : undefined, recipient_ids: recipients?.length && !fertilizerGroupMode ? recipients.map((recipient) => recipient.id) : undefined, subject: $("#email-drafter-subject").value, message: $("#email-drafter-message").value }) });
+        if (recipients?.length || audience !== "single") {
           const failedRows = (data.results || []).filter((row) => !row.sent);
           const failedDetails = failedRows.length ? `<details style="margin-top:8px"><summary>Show failed recipients</summary><ul>${failedRows.map((row) => `<li>${cleanText(row.email || "Unknown email")}: ${cleanText(row.error || row.reason || "Provider did not accept the message.")}</li>`).join("")}</ul></details>` : "";
           result.innerHTML = notice(`${data.sent || 0} sent. ${data.failed || 0} failed.${failedDetails}`);
