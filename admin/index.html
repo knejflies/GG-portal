@@ -3507,6 +3507,9 @@
       gap: 8px;
       margin-top: 16px;
     }
+    .status-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid rgba(210,232,204,.14); }
+    .status-row:last-child { border-bottom:0; }
+    .status-row span { display:block; margin-top:2px; }
     .inline-field { display:flex; align-items:center; gap:8px; }
     .inline-field input { flex:1; min-width:0; }
     .estimate-flow-hint { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 16px; padding:10px 12px; border:1px solid rgba(142,210,62,.22); border-radius:10px; background:rgba(142,210,62,.06); color:var(--muted); font-size:.82rem; font-weight:800; }
@@ -6141,11 +6144,17 @@
       </div>
       <div class="expense-switch owner-only" role="tablist" aria-label="Expense tools">
         <button class="button active" data-expense-view-button="receipts" type="button">Receipts</button>
+        <button class="button ghost" data-expense-view-button="income" type="button">Income</button>
         <button class="button ghost" data-expense-view-button="mileage" type="button">Mileage</button>
         <button class="button ghost" data-expense-view-button="fertilizer" type="button">Fertilizer Records</button>
         <button class="button ghost" data-expense-view-button="mileage-maps" type="button">Mileage Maps</button>
       </div>
       <div class="grid">
+        <div class="card owner-only expense-view" data-expense-view="income" hidden>
+          <div class="message-head"><div><span class="admin-eyebrow">Money received</span><h2>Income record</h2></div><strong id="records-income-total" class="badge">$0.00</strong></div>
+          <p class="muted">Paid invoices recorded in the system. Use Invoices &amp; Payments for the full invoice and receipt.</p>
+          <div id="records-income-list" class="status-box">No paid income recorded yet.</div>
+        </div>
         <div class="card owner-only expense-view" data-expense-view="receipts">
           <h2>Expense scanner</h2>
           <form id="expense-form">
@@ -10287,8 +10296,18 @@
         : notice(search ? "No paid invoices match that search." : "No paid invoices yet.");
     }
 
+    function renderIncomeRecords() {
+      const paid = invoiceDrafts.filter(isPaidInvoice).sort((a, b) => String(b.paid_at || b.updated_at || b.created_at || "").localeCompare(String(a.paid_at || a.updated_at || a.created_at || "")));
+      const total = paid.reduce((sum, invoice) => sum + Number(invoice.amount || invoice.total || 0), 0);
+      if ($("#records-income-total")) $("#records-income-total").textContent = money(total);
+      if ($("#records-income-list")) $("#records-income-list").innerHTML = paid.length
+        ? paid.map((invoice) => `<div class="status-row"><div><strong>${cleanText(invoice.customer_name || invoice.customer || "Customer")}</strong><span class="muted">${cleanText(invoice.invoice_number || "Invoice")} · ${cleanText(invoice.paid_at || invoice.updated_at || invoice.created_at || "")}</span></div><strong>${cleanText(money(invoice.amount || invoice.total || 0))}</strong></div>`).join("")
+        : "No paid income recorded yet.";
+    }
+
     function renderBookkeepingSummary() {
       if (!$("#books-net-cash") || !window.GreenGrinBookkeeping) return;
+      renderIncomeRecords();
       const period = $("#bookkeeping-period")?.value || "month";
       const summary = window.GreenGrinBookkeeping.summarize(invoiceDrafts, expenseRows, { period });
       $("#books-total-billed").textContent = money(summary.billed);
