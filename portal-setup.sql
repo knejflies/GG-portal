@@ -674,6 +674,12 @@ alter table public.green_grin_estimates add column if not exists discount_amount
 alter table public.green_grin_estimates add column if not exists lead_source text;
 alter table public.green_grin_estimates add column if not exists lead_campaign text;
 alter table public.green_grin_estimates add column if not exists lead_source_entry_id uuid;
+alter table public.green_grin_customers add column if not exists lead_source text;
+alter table public.green_grin_customers add column if not exists lead_campaign text;
+alter table public.green_grin_customers add column if not exists lead_source_entry_id uuid;
+alter table public.green_grin_jobs add column if not exists lead_source text;
+alter table public.green_grin_jobs add column if not exists lead_campaign text;
+alter table public.green_grin_jobs add column if not exists lead_source_entry_id uuid;
 alter table public.green_grin_estimates add column if not exists proposal_token_hash text;
 alter table public.green_grin_estimates add column if not exists proposal_code_hash text;
 alter table public.green_grin_estimates add column if not exists proposal_code_expires_at timestamptz;

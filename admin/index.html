@@ -10843,6 +10843,7 @@
           <div class="customer-collapse" hidden>
             <p class="muted">${cleanText(customer.email || "")}${customer.phone ? ` | ${cleanText(customer.phone)}` : ""}</p>
             <p>${cleanText(property.address || "No property address saved yet.")}</p>
+            ${customer.lead_source ? `<p class="badge">Source: ${cleanText(customer.lead_source)}${customer.lead_campaign ? ` · ${cleanText(customer.lead_campaign)}` : ""}</p>` : ""}
             <p class="muted">${cleanText(plan)} | ${cleanText(price)}${monthBilling.weeks === null ? "" : ` for ${monthBilling.weeks} scheduled week${monthBilling.weeks === 1 ? "" : "s"}`}</p>
             ${customer.requested_plan ? `<p class="plan-request-banner"><strong>Requested plan:</strong> ${cleanText(customer.requested_plan)}${customer.requested_plan_at ? ` on ${cleanText(new Date(customer.requested_plan_at).toLocaleDateString())}` : ""}</p>` : ""}
             <p class="muted">${cleanText(preferenceLine(customer))}</p>

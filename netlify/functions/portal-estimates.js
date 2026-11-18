@@ -184,6 +184,9 @@ function jobPayloadFromEstimate(estimate) {
     schedule_frequency: "One-time",
     recurring_weekly: false,
     annual_price: moneyNumber(estimate?.total) || null,
+    lead_source: clean(estimate?.lead_source, 120),
+    lead_campaign: clean(estimate?.lead_campaign, 160),
+    lead_source_entry_id: estimate?.lead_source_entry_id || null,
     monthly_price: null,
     notes: clean(notes, 4000),
     status: "New"
@@ -212,7 +215,11 @@ exports.handler = async (event) => {
       if (!payload.line_items.length) return json(400, { error: "Add at least one priced estimate item." });
       const rows = await supabase("green_grin_estimates", { method: "POST", body: JSON.stringify(payload) });
       const estimate = rows?.[0] || payload;
-      if (discount?.entryId && estimate.id) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: new Date().toISOString(), offer_redeemed_estimate_id: estimate.id, conversion_status: "estimate_created", converted_estimate_id: estimate.id, converted_customer_user_id: estimate.customer_user_id || null, converted_at: new Date().toISOString() }) });
+      if (discount?.entryId && estimate.id) {
+        const now = new Date().toISOString();
+        await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: now, offer_redeemed_estimate_id: estimate.id, conversion_status: "estimate_created", converted_estimate_id: estimate.id, converted_customer_user_id: estimate.customer_user_id || null, converted_at: now }) });
+        if (estimate.customer_user_id) await supabase(`green_grin_customers?id=eq.${encodeURIComponent(estimate.customer_user_id)}`, { method: "PATCH", body: JSON.stringify({ lead_source: "giveaway", lead_campaign: discount.campaign, lead_source_entry_id: discount.entryId }) }).catch(() => null);
+      }
       return json(200, { estimate });
     }
 
@@ -258,7 +265,11 @@ exports.handler = async (event) => {
       if (!payload.line_items.length) return json(400, { error: "Add at least one priced estimate item." });
       const rows = await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(body.id)}`, { method: "PATCH", body: JSON.stringify(payload) });
       const estimate = rows?.[0] || payload;
-      if (discount?.entryId && estimate.id) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: new Date().toISOString(), offer_redeemed_estimate_id: estimate.id, conversion_status: "estimate_created", converted_estimate_id: estimate.id, converted_customer_user_id: estimate.customer_user_id || null, converted_at: new Date().toISOString() }) });
+      if (discount?.entryId && estimate.id) {
+        const now = new Date().toISOString();
+        await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: now, offer_redeemed_estimate_id: estimate.id, conversion_status: "estimate_created", converted_estimate_id: estimate.id, converted_customer_user_id: estimate.customer_user_id || null, converted_at: now }) });
+        if (estimate.customer_user_id) await supabase(`green_grin_customers?id=eq.${encodeURIComponent(estimate.customer_user_id)}`, { method: "PATCH", body: JSON.stringify({ lead_source: "giveaway", lead_campaign: discount.campaign, lead_source_entry_id: discount.entryId }) }).catch(() => null);
+      }
       return json(200, { estimate });
     }
 
