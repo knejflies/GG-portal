@@ -10839,7 +10839,7 @@
               <button class="job-toggle" data-customer-list-action="toggle" type="button" aria-label="Expand customer" aria-expanded="false">&gt;</button>
             </span>
           </div>
-          <p class="muted customer-summary">${cleanText(customer.phone || customer.email || "No contact saved")} | ${cleanText(price)}</p>
+          <p class="muted customer-summary">${cleanText(customer.phone || customer.email || "No contact saved")} | ${cleanText(price)}${customer.lead_source ? ` | Source: ${cleanText(customer.lead_source)}${customer.lead_campaign ? ` · ${cleanText(customer.lead_campaign)}` : ""}` : ""}</p>
           <div class="customer-collapse" hidden>
             <p class="muted">${cleanText(customer.email || "")}${customer.phone ? ` | ${cleanText(customer.phone)}` : ""}</p>
             <p>${cleanText(property.address || "No property address saved yet.")}</p>

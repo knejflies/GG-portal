@@ -203,6 +203,14 @@ exports.handler = async (event) => {
       const properties = await supabase("green_grin_properties?select=*&active=eq.true&order=created_at.desc&limit=500");
       const jobs = await supabase("green_grin_jobs?select=*&order=created_at.desc&limit=500");
       const devices = await supabase("green_grin_push_subscriptions?select=owner_email,customer_user_id,customer_code,updated_at&active=eq.true&owner_type=eq.customer&limit=1000").catch(() => []);
+      // Some legacy customers were created from a signup before lead attribution
+      // columns existed. Resolve those sources at read time so the Customers view
+      // still shows where the relationship came from without changing old records.
+      const giveawayEntries = await supabase("green_grin_giveaway_entries?select=id,email,competition_slug,conversion_status,converted_customer_user_id&limit=5000").catch(() => []);
+      const blowoutLeads = await supabase("green_grin_blowout_leads?select=id,email,phone&limit=5000").catch(() => []);
+      const giveawayByEmail = new Map((giveawayEntries || []).filter((row) => row.email).map((row) => [String(row.email).trim().toLowerCase(), row]));
+      const blowoutByEmail = new Map((blowoutLeads || []).filter((row) => row.email).map((row) => [String(row.email).trim().toLowerCase(), row]));
+      const blowoutByPhone = new Map((blowoutLeads || []).filter((row) => row.phone).map((row) => [String(row.phone).replace(/\D/g, ""), row]));
       const propertyByUser = new Map();
       for (const property of properties || []) {
         if (!propertyByUser.has(property.customer_user_id)) propertyByUser.set(property.customer_user_id, []);
@@ -245,6 +253,13 @@ exports.handler = async (event) => {
           .filter(Boolean)
           .sort()
           .pop() || null;
+        const emailKey = String(customer.email || "").trim().toLowerCase();
+        const phoneKey = String(customer.phone || "").replace(/\D/g, "");
+        const giveawaySource = giveawayByEmail.get(emailKey) || (giveawayEntries || []).find((row) => row.converted_customer_user_id && row.converted_customer_user_id === customer.id);
+        const blowoutSource = blowoutByEmail.get(emailKey) || blowoutByPhone.get(phoneKey);
+        const leadSource = customer.lead_source || (giveawaySource ? "giveaway" : blowoutSource ? "blowout" : "");
+        const leadCampaign = customer.lead_campaign || (giveawaySource?.competition_slug || blowoutSource?.competition_slug || (blowoutSource ? "sprinkler-blowout" : ""));
+        const leadSourceEntryId = customer.lead_source_entry_id || giveawaySource?.id || blowoutSource?.id || "";
         byKey.set(key, {
           id: customer.id || "",
           customer_user_id: customer.id || "",
@@ -252,6 +267,9 @@ exports.handler = async (event) => {
           name: customer.full_name || customer.email || customer.phone || "Customer",
           phone: customer.phone || "",
           email: customer.email || "",
+          lead_source: leadSource,
+          lead_campaign: leadCampaign,
+          lead_source_entry_id: leadSourceEntryId,
           active: customer.active !== false,
           plan: customer.billing_plan || newestJob.service_type || "",
           requested_plan_id: customer.requested_plan_id || "",
