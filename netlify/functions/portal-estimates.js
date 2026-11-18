@@ -47,7 +47,7 @@ function clean(value, maximum = 180) {
 async function resolveDiscountCode(code, estimateId = "") {
   const normalized = clean(code, 80).toLowerCase();
   if (!normalized) return null;
-  const rows = await supabase(`green_grin_giveaway_entries?select=id,offer_code,offer_discount_amount,offer_redeemed_estimate_id,offer_redeemed_at,status&offer_code=eq.${encodeURIComponent(clean(code, 80))}&limit=1`);
+  const rows = await supabase(`green_grin_giveaway_entries?select=id,offer_code,competition_slug,offer_discount_amount,offer_redeemed_estimate_id,offer_redeemed_at,status&offer_code=eq.${encodeURIComponent(clean(code, 80))}&limit=1`);
   const entry = rows?.[0];
   if (!entry) throw new Error("That applicant code was not found.");
   if (["archived", "not_selected"].includes(String(entry.status || "").toLowerCase())) throw new Error("That applicant code is no longer active.");
@@ -55,7 +55,8 @@ async function resolveDiscountCode(code, estimateId = "") {
   return {
     code: entry.offer_code,
     amount: moneyNumber(entry.offer_discount_amount || 50),
-    entryId: entry.id
+    entryId: entry.id,
+    campaign: entry.competition_slug || "seasonal-giveaway"
   };
 }
 
@@ -138,6 +139,9 @@ function estimatePayload(body, current = {}) {
     discount_code: clean(body.discount_code !== undefined ? body.discount_code : current.discount_code, 80),
     discount_source_entry_id: body.discount_source_entry_id !== undefined ? (body.discount_source_entry_id || null) : (current.discount_source_entry_id || null),
     discount_amount: discount,
+    lead_source: clean(body.lead_source !== undefined ? body.lead_source : current.lead_source, 120),
+    lead_campaign: clean(body.lead_campaign !== undefined ? body.lead_campaign : current.lead_campaign, 160),
+    lead_source_entry_id: body.lead_source_entry_id !== undefined ? (body.lead_source_entry_id || null) : (current.lead_source_entry_id || null),
     tax_rate: taxRate,
     tax_amount: taxAmount,
     total,
@@ -204,11 +208,11 @@ exports.handler = async (event) => {
     }
     if (event.httpMethod === "POST") {
       const discount = body.discount_code ? await resolveDiscountCode(body.discount_code, body.id || "") : null;
-      const payload = estimatePayload(discount ? { ...body, discount: discount.amount, discount_source_entry_id: discount.entryId, discount_code: discount.code } : body);
+      const payload = estimatePayload(discount ? { ...body, discount: discount.amount, discount_source_entry_id: discount.entryId, discount_code: discount.code, lead_source: "giveaway", lead_campaign: discount.campaign, lead_source_entry_id: discount.entryId } : body);
       if (!payload.line_items.length) return json(400, { error: "Add at least one priced estimate item." });
       const rows = await supabase("green_grin_estimates", { method: "POST", body: JSON.stringify(payload) });
       const estimate = rows?.[0] || payload;
-      if (discount?.entryId && estimate.id) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: new Date().toISOString(), offer_redeemed_estimate_id: estimate.id }) });
+      if (discount?.entryId && estimate.id) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: new Date().toISOString(), offer_redeemed_estimate_id: estimate.id, conversion_status: "estimate_created", converted_estimate_id: estimate.id, converted_customer_user_id: estimate.customer_user_id || null, converted_at: new Date().toISOString() }) });
       return json(200, { estimate });
     }
 
@@ -250,11 +254,11 @@ exports.handler = async (event) => {
         return json(200, { estimate: updated?.[0] || estimate, job, duplicate: false });
       }
       const discount = body.discount_code ? await resolveDiscountCode(body.discount_code, body.id) : null;
-      const payload = estimatePayload(discount ? { ...body, discount: discount.amount, discount_source_entry_id: discount.entryId, discount_code: discount.code } : body, existing[0]);
+      const payload = estimatePayload(discount ? { ...body, discount: discount.amount, discount_source_entry_id: discount.entryId, discount_code: discount.code, lead_source: "giveaway", lead_campaign: discount.campaign, lead_source_entry_id: discount.entryId } : body, existing[0]);
       if (!payload.line_items.length) return json(400, { error: "Add at least one priced estimate item." });
       const rows = await supabase(`green_grin_estimates?id=eq.${encodeURIComponent(body.id)}`, { method: "PATCH", body: JSON.stringify(payload) });
       const estimate = rows?.[0] || payload;
-      if (discount?.entryId && estimate.id) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: new Date().toISOString(), offer_redeemed_estimate_id: estimate.id }) });
+      if (discount?.entryId && estimate.id) await supabase(`green_grin_giveaway_entries?id=eq.${encodeURIComponent(discount.entryId)}`, { method: "PATCH", body: JSON.stringify({ offer_redeemed_at: new Date().toISOString(), offer_redeemed_estimate_id: estimate.id, conversion_status: "estimate_created", converted_estimate_id: estimate.id, converted_customer_user_id: estimate.customer_user_id || null, converted_at: new Date().toISOString() }) });
       return json(200, { estimate });
     }
 
