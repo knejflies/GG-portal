@@ -1251,6 +1251,11 @@
       }
     }
 
+    .quick-access-form { display: grid; gap: 10px; margin-top: 12px; }
+    .quick-access-form textarea { width: 100%; }
+    .quick-access-form .row-actions { margin-top: 4px; }
+    .quick-access-card h3 { margin-top: 4px; }
+
     /* Portal shell */
     :root {
       --night: #07110c;
@@ -4764,7 +4769,38 @@
           </div>
         </div>
 
-        <div class="card">
+                <div class="card quick-access-card" id="quick-access-card">
+          <span class="admin-eyebrow">Quick access</span>
+          <h2>Caller capture</h2>
+          <p class="muted">Save a caller as a customer now. This does not create a job unless you do that later.</p>
+          <form id="quick-access-customer-form" class="quick-access-form">
+            <div class="two">
+              <div><label for="quick-customer-name">Name</label><input id="quick-customer-name" required autocomplete="name" placeholder="Customer name" /></div>
+              <div><label for="quick-customer-phone">Phone</label><input id="quick-customer-phone" type="tel" autocomplete="tel" placeholder="(208) 555-0199" /></div>
+              <div><label for="quick-customer-email">Email</label><input id="quick-customer-email" type="email" autocomplete="email" placeholder="Optional" /></div>
+              <div><label for="quick-customer-address">Property address</label><input id="quick-customer-address" autocomplete="street-address" placeholder="Optional — no job is created" /></div>
+            </div>
+            <div><label for="quick-customer-notes">Call notes</label><textarea id="quick-customer-notes" rows="2" placeholder="What they called about"></textarea></div>
+            <div class="row-actions"><button class="button" type="submit">Save customer</button><button class="button ghost" type="button" data-home-go="customers">Open customer list</button></div>
+            <div id="quick-customer-result" aria-live="polite"></div>
+          </form>
+          <hr style="border:0;border-top:1px solid rgba(255,255,255,.12);margin:18px 0" />
+          <h3>Add to Google Calendar</h3>
+          <p class="muted">This opens a pre-filled Google Calendar event. Tap Save in Google Calendar and it syncs to your account.</p>
+          <form id="quick-access-calendar-form" class="quick-access-form">
+            <div class="two">
+              <div><label for="quick-calendar-title">Event title</label><input id="quick-calendar-title" required placeholder="Call back — customer name" /></div>
+              <div><label for="quick-calendar-date">Date</label><input id="quick-calendar-date" type="date" required /></div>
+              <div><label for="quick-calendar-start">Start time</label><input id="quick-calendar-start" type="time" value="09:00" required /></div>
+              <div><label for="quick-calendar-end">End time</label><input id="quick-calendar-end" type="time" value="09:30" required /></div>
+              <div><label for="quick-calendar-location">Location</label><input id="quick-calendar-location" placeholder="Address or phone call" /></div>
+            </div>
+            <div><label for="quick-calendar-notes">Notes</label><textarea id="quick-calendar-notes" rows="2" placeholder="Details for the calendar event"></textarea></div>
+            <button class="button secondary" type="submit">Add to Google Calendar</button>
+          </form>
+        </div>
+
+<div class="card">
           <span class="admin-eyebrow">Android tool</span>
           <h2>Mileage widget</h2>
           <p class="muted">Install the home-screen tracker with Start, Stop, live miles, and elapsed time.</p>
@@ -7694,7 +7730,62 @@
       const popup = window.open("", "_blank", "width=900,height=950");
       if (!popup) { $("#mowing-contract-result").innerHTML = notice("Allow pop-ups to preview the contract.", true); return; }
       const terms = (contract.sections || []).map((section) => `<section><h2>${cleanText(section.title)}</h2>${(section.paragraphs || []).map((paragraph) => `<p>${cleanText(paragraph)}</p>`).join("")}${(section.bullets || []).length ? `<ul>${section.bullets.map((bullet) => `<li>${cleanText(bullet)}</li>`).join("")}</ul>` : ""}</section>`).join("");
-      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Mowing Contract Preview</title><style>*{box-sizing:border-box}body{font:16px/1.5 Arial;color:#102419;background:#edf3eb;margin:0}.toolbar{padding:12px;text-align:center;background:#07351d}.toolbar button{padding:12px 18px;background:#8ed23e;border:0;border-radius:5px;font-weight:800}.doc{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff}h1,h2{color:#07351d}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:24px}.field{display:inline-block;min-width:280px;border-bottom:1px solid #78907d;padding:4px 8px}.price{font-size:24px;font-weight:800}.term{padding:14px 0;border-bottom:1px solid #d3ded1}.terms-page{margin-top:34px}.signatures{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:28px}.line{border-bottom:1px solid #78907d;height:38px}@page{size:Letter;margin:.4in}@media print{body{background:#fff;font-size:9px;line-height:1.2}.toolbar{display:none}.doc{width:auto;margin:0;padding:0}.terms-page{break-before:page;margin-top:0}.terms-page section{padding:4px 0;border-bottom:1px solid #d3ded1}.terms-page h2{font-size:12px;margin:3px 0}.terms-page p{margin:2px 0}.signatures{gap:18px;margin-top:8px}.line{height:22px}}@media(max-width:600px){.doc{padding:22px}.signatures{grid-template-columns:1fr}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="doc"><header><h1>GREEN GRIN LAWNS</h1><strong>${cleanText(contract.title || title)}</strong><br>Caldwell, Idaho | 208-614-2515</header><h2>Client &amp; Property Information</h2><p>Client name: <span class="field"></span></p><p>Service address: <span class="field"></span></p><p>Billing address: <span class="field"></span></p><p>Phone / Email: <span class="field"></span></p><p>Property type: <strong>${cleanText(propertyType)}</strong></p><h2>Price &amp; Payment</h2><p>Rate per visit: <span class="price">${cleanText(money(rate))}</span></p><p>Starting frequency: <strong>${cleanText(frequency)}</strong></p><p>Billing option: Customer selects monthly or per-service billing when completing the agreement.</p><div class="terms-page"><h2>Terms &amp; Policies</h2>${terms}</div><div class="signatures"><div>Authorized Representative<div class="line"></div>Date<div class="line"></div></div><div>${cleanText(clientSignatureLabel)} Signature<div class="line"></div>Date<div class="line"></div></div></div></main></body></html>`);
+      popup.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Mowing Contract Preview</title><style>*{box-sizing:border-box}body{font:16px/1.5 Arial;color:#102419;background:#edf3eb;margin:0}.toolbar{padding:12px;text-align:center;background:#07351d}.toolbar button{padding:12px 18px;background:#8ed23e;border:0;border-radius:5px;font-weight:800}.doc{width:min(850px,calc(100% - 28px));margin:24px auto;padding:42px;background:#fff}h1,h2{color:#07351d}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:24px}.field{display:inline-block;min-width:280px;border-bottom:1px solid #78907d;padding:4px 8px}.price{font-size:24px;font-weight:800}.term{padding:14px 0;border-bottom:1px solid #d3ded1}.terms-page{margin-top:34px}.signatures{display:grid;grid-template-columns:1fr 1fr;gap:36px;margin-top:28px}.line{border-bottom:1px solid #78907d;height:38px}@page{size:Letter;margin:.4in}@media print{body{background:#fff;font-size:9px;line-height:1.2}.toolbar{display:none}.doc{width:auto;margin:0;padding:0}.terms-page{break-before:page;margin-top:0}.terms-page section{padding:4px 0;border-bottom:1px solid #d3ded1}.terms-page h2{font-size:12px;margin:3px 0}.terms-page p{margin:2px 0}.signatures{gap:18px;margin-top:8px}.line{height:22px}}@media(max-width:600px){.doc{padding:22px}.signatures{grid-template-columns:1fr}}</style></head><body><div class="toolbar"><button onclick="window.print()">Print / Save as PDF</button></div><main class="doc"><header><h1>GREEN GRIN LAWNS</h1><strong>${cleanText(contract.title || title)}</strong><br>Caldwell, Idaho | 208-614-2515</header><h2>Client &amp; Property Information</h2><p>Client name: <span class="field"></span></p><p>Service address: <span class="field"></span></p><p>Billing address: <span class="field"></span></p><p>Phone / Email: <span class="field"></span></p><p>Property type: <strong>${cleanText(propertyType)}</strong></p><h2>Price &amp; Payment</h2><p>Rate per visit: <span class="price">${cleanText(money(rate))}</span></p><p>Starting frequency: <strong>${cleanText(frequency)}</strong></p><p>Billing option: Customer selects monthly or per-service billing when completing the agreement.</p><div class="terms-page"><h2>Terms &amp; Policies</h2>${terms}</div><div class="signatures"><div>Authorized Representative<div class="line"></div>Date<div class="line"></div></div><div>${cleanText(clientSignatureLabel)} Signature<div class="line"></div>Date<div class="line"></div></div></div></main>
+<script>
+(() => {
+  const quickForm = document.getElementById("quick-access-customer-form");
+  const quickResult = document.getElementById("quick-customer-result");
+  if (quickForm && !quickForm.dataset.ready) {
+    quickForm.dataset.ready = "1";
+    quickForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = quickForm.querySelector("button[type=submit]");
+      const name = document.getElementById("quick-customer-name").value.trim();
+      const phone = document.getElementById("quick-customer-phone").value.trim();
+      const email = document.getElementById("quick-customer-email").value.trim();
+      const address = document.getElementById("quick-customer-address").value.trim();
+      const notes = document.getElementById("quick-customer-notes").value.trim();
+      if (!phone && !email) {
+        quickResult.innerHTML = '<div class="notice error">Add a phone number or email so this caller can be found later.</div>';
+        return;
+      }
+      button.disabled = true;
+      quickResult.innerHTML = '<div class="notice">Saving customer…</div>';
+      try {
+        const data = await requestJson("portal-customers", { method: "POST", headers: adminHeaders(), body: JSON.stringify({ action: "create-standalone-customer", full_name: name, phone, email, address, notes }) });
+        quickResult.innerHTML = '<div class="notice">' + (data.existing ? "Existing customer updated." : "Customer saved.") + ' No job was created.</div>';
+        quickForm.reset();
+        if (typeof loadCustomers === "function") loadCustomers();
+        if (typeof renderOwnerHome === "function") renderOwnerHome();
+      } catch (error) {
+        quickResult.innerHTML = '<div class="notice error">' + (typeof cleanText === "function" ? cleanText(error.message) : error.message) + '</div>';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+  const calendarForm = document.getElementById("quick-access-calendar-form");
+  if (calendarForm && !calendarForm.dataset.ready) {
+    calendarForm.dataset.ready = "1";
+    calendarForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const date = document.getElementById("quick-calendar-date").value;
+      const start = document.getElementById("quick-calendar-start").value;
+      const end = document.getElementById("quick-calendar-end").value;
+      const title = document.getElementById("quick-calendar-title").value.trim();
+      const location = document.getElementById("quick-calendar-location").value.trim();
+      const notes = document.getElementById("quick-calendar-notes").value.trim();
+      if (!date || !start || !end || !title) return;
+      const toCalendarStamp = (value) => value.replace(/[-:]/g, "") + "00";
+      const dates = toCalendarStamp(date + "T" + start) + "/" + toCalendarStamp(date + "T" + end);
+      const url = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + encodeURIComponent(title) + "&dates=" + encodeURIComponent(dates) + "&details=" + encodeURIComponent(notes) + "&location=" + encodeURIComponent(location);
+      window.open(url, "_blank", "noopener");
+    });
+  }
+})();
+</script>
+
+</body></html>`);
       popup.document.close();
       popup.focus();
       } catch (error) {
