@@ -3431,6 +3431,36 @@
     /* Customer billing keeps invoices and history, while plan selection stays owner-managed. */
     [data-tab="plans"], #plans, #customer-billing-plans { display: none !important; }
   </style>
+  <style>
+    /* Compact left drawer keeps navigation out of the way on phones and desktop. */
+    .portal-menu-toggle { display:inline-flex; gap:8px; align-items:center; }
+    .portal-menu-scrim { position:fixed; inset:0; z-index:19; background:rgba(4,14,8,.52); backdrop-filter:blur(2px); }
+    .portal-menu-scrim[hidden] { display:none; }
+    .service-nav-label { margin-top:6px; }
+    .service-tab { border-color:rgba(120,198,83,.36); }
+    .service-page-hero { padding:clamp(20px,4vw,42px); background:linear-gradient(135deg,rgba(18,51,36,.98),rgba(28,78,45,.82)); color:#fff; }
+    .service-page-hero h2 { color:#dfffcc; font-size:clamp(2rem,5vw,3.5rem); margin:8px 0 12px; }
+    .service-page-hero p { max-width:760px; color:rgba(255,255,255,.86); font-size:1.05rem; }
+    .service-feature-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin:24px 0; }
+    .service-feature-grid div { padding:16px; border:1px solid rgba(255,255,255,.18); border-radius:14px; background:rgba(255,255,255,.08); }
+    .service-feature-grid strong,.service-feature-grid span { display:block; }
+    .service-feature-grid span { margin-top:6px; color:rgba(255,255,255,.74); font-size:.92rem; }
+    @media (min-width: 900px) {
+      .portal-menu-toggle { order:2; margin-left:auto; }
+      .nav-actions { order:3; }
+      .portal-layout { grid-template-columns:1fr; }
+      .tabs { position:fixed; left:18px; top:92px; bottom:18px; z-index:20; width:250px; max-height:none; overflow:auto; transform:translateX(calc(-100% - 30px)); transition:transform 180ms ease; box-shadow:0 20px 50px rgba(0,0,0,.28); }
+      body.portal-menu-open .tabs { transform:translateX(0); }
+      .portal-content { width:min(980px,100%); margin:0 auto; }
+    }
+    @media (max-width: 899px) {
+      .portal-menu-toggle { position:fixed; left:12px; top:84px; z-index:21; box-shadow:0 10px 24px rgba(0,0,0,.22); }
+      .tabs { position:fixed; left:12px; top:136px; bottom:12px; z-index:20; width:min(286px,calc(100vw - 24px)); max-height:none; overflow:auto; transform:translateX(calc(-100% - 24px)); transition:transform 180ms ease; box-shadow:0 20px 50px rgba(0,0,0,.3); }
+      body.portal-menu-open .tabs { transform:translateX(0); }
+      .portal-content { width:100%; }
+      .service-feature-grid { grid-template-columns:1fr; }
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -3438,6 +3468,9 @@
       <a class="brand" href="/">
         <img src="/assets/green-grin-logo.png" alt="Green Grin Lawns" />
       </a>
+      <button id="portal-menu-toggle" class="portal-menu-toggle button ghost" type="button" aria-expanded="false" aria-controls="portal-side-menu">
+        <span aria-hidden="true">☰</span><span>Menu</span>
+      </button>
       <div class="nav-actions">
         <span id="account-pill" class="account-pill">Signed in</span>
         <button id="sign-out" class="button ghost" type="button" hidden>Sign Out</button>
@@ -3445,6 +3478,7 @@
       </div>
     </div>
   </header>
+  <div id="portal-menu-scrim" class="portal-menu-scrim" hidden></div>
 
   <aside id="install-prompt" class="install-prompt" role="dialog" aria-labelledby="install-title" aria-describedby="install-copy" hidden>
     <img src="/assets/green-grin-tab-icon.png" alt="" aria-hidden="true" />
@@ -3574,6 +3608,9 @@
     <div class="portal-layout">
     <div class="tabs" role="tablist">
       <button class="tab active customer-only" data-tab="dashboard" type="button">Dashboard</button>
+      <span class="tab-section-label service-nav-label">Services</span>
+      <button class="tab service-tab" data-tab="christmas-lights" type="button">Christmas Lights</button>
+      <button class="tab service-tab" data-tab="permanent-lighting" type="button">Permanent Lighting</button>
       <button class="tab customer-only" data-tab="plans" type="button">Plans</button>
       <button class="tab customer-only" data-tab="messages" type="button">Messages</button>
       <button class="tab customer-only" data-tab="billing" type="button">Billing</button>
@@ -3640,6 +3677,40 @@
             <button class="button ghost go-tab" data-go="property" type="button">Update Yard Notes</button>
             <button class="button secondary go-tab" data-go="messages" type="button">Message Green Grin</button>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="christmas-lights" class="panel service-page">
+      <div class="card service-page-hero">
+        <span class="admin-eyebrow">Seasonal lighting</span>
+        <h2>Christmas lights</h2>
+        <p>Make your home or business shine without climbing ladders. We plan the layout, install clean lines, handle timers, and can return for removal and storage.</p>
+        <div class="service-feature-grid">
+          <div><strong>Design &amp; install</strong><span>Clean rooflines, trees, entries, and commercial displays.</span></div>
+          <div><strong>Maintenance</strong><span>We take care of bulbs, timers, and mid-season fixes.</span></div>
+          <div><strong>Removal</strong><span>Schedule takedown and ask about seasonal storage.</span></div>
+        </div>
+        <div class="row-actions service-cta">
+          <button class="button go-tab" data-go="messages" type="button">Request a Christmas light quote</button>
+          <a class="button ghost" href="tel:2086142515">Call 208-614-2515</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="permanent-lighting" class="panel service-page">
+      <div class="card service-page-hero">
+        <span class="admin-eyebrow">Year-round curb appeal</span>
+        <h2>Permanent lighting</h2>
+        <p>Low-profile, programmable lighting designed for holidays, parties, game days, and everyday curb appeal. We can help plan the look and prepare a property-specific quote.</p>
+        <div class="service-feature-grid">
+          <div><strong>Hidden daytime look</strong><span>Track-mounted lighting blends into the roofline when off.</span></div>
+          <div><strong>Programmable scenes</strong><span>Change colors and schedules from your phone.</span></div>
+          <div><strong>Built to last</strong><span>Professional installation with service support.</span></div>
+        </div>
+        <div class="row-actions service-cta">
+          <button class="button go-tab" data-go="messages" type="button">Request a permanent-lighting quote</button>
+          <a class="button ghost" href="tel:2086142515">Call 208-614-2515</a>
         </div>
       </div>
     </section>
@@ -7131,7 +7202,25 @@
       const address = invoice.service_address ? `<p><strong>Project address:</strong> ${cleanText(invoice.service_address)}</p>` : "";
       const scope = invoice.project_scope ? `<section class="scope"><h2>Project scope</h2><p>${cleanText(invoice.project_scope)}</p></section>` : "";
       const approval = invoice.accepted_at ? `<p class="approval"><strong>Approved by ${cleanText(invoice.accepted_by || "Customer")}</strong> on ${cleanText(new Date(invoice.accepted_at).toLocaleString())}</p>` : "";
-      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}.scope{margin:22px 0;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.scope p{white-space:pre-wrap}.approval{padding:12px;border:1px solid #78c653;background:#f4faef}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawns</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p>${address}<p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p>${scope}<table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${approval}${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button></body></html>`);
+      popup.document.write(`<!doctype html><html><head><title>${invoiceNumber(invoice)}</title><style>body{font-family:Arial,sans-serif;color:#102419;margin:40px}header{border-bottom:4px solid #78c653;padding-bottom:18px;margin-bottom:26px}h1{color:#07351d}table{width:100%;border-collapse:collapse;margin:24px 0}th,td{padding:10px;border-bottom:1px solid #ccd8c9;text-align:left}th:last-child,td:last-child{text-align:right}.total{text-align:right;font-size:22px;font-weight:bold}.muted{color:#637267}.scope{margin:22px 0;padding:16px;background:#f2f8ef;border-left:4px solid #78c653}.scope p{white-space:pre-wrap}.approval{padding:12px;border:1px solid #78c653;background:#f4faef}@media print{button{display:none}}</style></head><body><header><h1>Green Grin Lawns</h1><p>Invoice ${invoiceNumber(invoice)}</p></header><h2>${cleanText(invoice.customer_name || "Customer")}</h2><p>${cleanText(invoice.email || "")} ${cleanText(invoice.phone || "")}</p>${address}<p><strong>Due:</strong> ${cleanText(invoice.due_date ? displayScheduleDate(invoice.due_date) : "Upon receipt")}</p>${scope}<table><thead><tr><th>Description</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows || `<tr><td>${cleanText(invoice.service_line || invoice.notes || "Service")}</td><td>1 each</td><td>${cleanText(money(invoice.amount))}</td><td>${cleanText(money(invoice.amount))}</td></tr>`}</tbody></table><p class="total">Total: ${cleanText(money(invoice.amount))}</p>${approval}${invoice.notes ? `<p><strong>Notes:</strong> ${cleanText(invoice.notes)}</p>` : ""}<button onclick="window.print()">Print Invoice</button><script>
+(() => {
+  const toggle = document.getElementById("portal-menu-toggle");
+  const scrim = document.getElementById("portal-menu-scrim");
+  const tabs = document.querySelector(".tabs");
+  const setMenu = (open) => {
+    document.body.classList.toggle("portal-menu-open", open);
+    toggle?.setAttribute("aria-expanded", String(open));
+    if (scrim) scrim.hidden = !open;
+  };
+  toggle?.addEventListener("click", () => setMenu(!document.body.classList.contains("portal-menu-open")));
+  scrim?.addEventListener("click", () => setMenu(false));
+  tabs?.addEventListener("click", (event) => {
+    if (event.target.closest(".tab")) setMenu(false);
+  });
+})();
+</script>
+
+</body></html>`);
       popup.document.close();
       popup.focus();
     }
