@@ -340,7 +340,7 @@ exports.handler = async (event) => {
       if (orParts.length) matches = await supabase("green_grin_customers?select=*&or=(" + orParts.join(",") + ")&limit=1");
       let customer = matches?.[0] || null;
       let created = false;
-      const customerCodeNumber = (value) => Number(String(value || "").match(/GG-(\\d+)$/)?.[1] || 0);
+      const customerCodeNumber = (value) => Number(String(value || "").match(/GG-(\d+)$/)?.[1] || 0);
       const latestCustomers = await supabase("green_grin_customers?select=customer_code&customer_code=not.is.null&order=created_at.desc&limit=200").catch(() => []);
       const latestJobs = await supabase("green_grin_jobs?select=customer_code&customer_code=not.is.null&order=created_at.desc&limit=200").catch(() => []);
       const nextCode = "GG-" + String(Math.max(0, ...(latestCustomers || []).map((row) => customerCodeNumber(row.customer_code)), ...(latestJobs || []).map((row) => customerCodeNumber(row.customer_code))) + 1).padStart(4, "0");
