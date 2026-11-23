@@ -325,6 +325,58 @@ exports.handler = async (event) => {
       }
       return json(200, { located, needs_correction: needsCorrection, skipped, schema_update_required: skipped > 0 && located === 0 && needsCorrection === 0 });
     }
+    if (event.httpMethod === "POST" && body.action === "create-standalone-customer") {
+      const fullName = clean(body.full_name || body.name, 160);
+      const normalizedPhone = String(body.phone || "").replace(/\D/g, "").slice(0, 20);
+      const normalizedEmail = clean(body.email, 200).toLowerCase();
+      const address = clean(body.address, 300);
+      const notes = clean(body.notes, 2000);
+      if (!fullName) return json(400, { error: "Customer name is required." });
+      if (!normalizedPhone && !normalizedEmail) return json(400, { error: "Add a phone number or email so the customer can be found later." });
+      const orParts = [];
+      if (normalizedEmail) orParts.push("email.eq." + encodeURIComponent(normalizedEmail));
+      if (normalizedPhone) orParts.push("phone.eq." + encodeURIComponent(normalizedPhone));
+      let matches = [];
+      if (orParts.length) matches = await supabase("green_grin_customers?select=*&or=(" + orParts.join(",") + ")&limit=1");
+      let customer = matches?.[0] || null;
+      let created = false;
+      const customerCodeNumber = (value) => Number(String(value || "").match(/GG-(\\d+)$/)?.[1] || 0);
+      const latestCustomers = await supabase("green_grin_customers?select=customer_code&customer_code=not.is.null&order=created_at.desc&limit=200").catch(() => []);
+      const latestJobs = await supabase("green_grin_jobs?select=customer_code&customer_code=not.is.null&order=created_at.desc&limit=200").catch(() => []);
+      const nextCode = "GG-" + String(Math.max(0, ...(latestCustomers || []).map((row) => customerCodeNumber(row.customer_code)), ...(latestJobs || []).map((row) => customerCodeNumber(row.customer_code))) + 1).padStart(4, "0");
+      const customerPayload = {
+        full_name: fullName,
+        phone: normalizedPhone || customer?.phone || "",
+        email: normalizedEmail || customer?.email || "",
+        active: true,
+        billing_status: customer?.billing_status || "Active",
+        customer_code: customer?.customer_code || nextCode
+      };
+      if (customer) {
+        const updated = await supabase("green_grin_customers?id=eq." + encodeURIComponent(customer.id), { method: "PATCH", body: JSON.stringify(customerPayload) });
+        customer = updated?.[0] || customer;
+      } else {
+        const inserted = await supabase("green_grin_customers", { method: "POST", body: JSON.stringify(customerPayload) });
+        customer = inserted?.[0] || null;
+        created = true;
+      }
+      if (!customer?.id) return json(500, { error: "Customer could not be saved." });
+      let property = null;
+      if (address) {
+        const existingProperties = await supabase("green_grin_properties?select=*&customer_user_id=eq." + encodeURIComponent(customer.id) + "&address=eq." + encodeURIComponent(address) + "&limit=1").catch(() => []);
+        if (existingProperties?.[0]) {
+          property = existingProperties[0];
+        } else {
+          const insertedProperty = await supabase("green_grin_properties", { method: "POST", body: JSON.stringify({ customer_user_id: customer.id, address, active: true, notes: notes || null }) }).catch(async (error) => {
+            if (/notes/i.test(error.message || "")) return supabase("green_grin_properties", { method: "POST", body: JSON.stringify({ customer_user_id: customer.id, address, active: true }) });
+            throw error;
+          });
+          property = insertedProperty?.[0] || null;
+        }
+      }
+      return json(200, { ok: true, created, existing: !created, customer, property, message: created ? "Customer saved without creating a job." : "Existing customer updated; no job was created." });
+    }
+
     const customerUserId = body.customer_user_id || null;
     const phone = body.phone || "";
     const email = body.email || "";
