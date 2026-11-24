@@ -9,7 +9,7 @@ exports.handler = async () => {
     headers,
     body: JSON.stringify({
       supabaseUrl: process.env.SUPABASE_URL || "",
-      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
       vapidPublicKey: process.env.GREEN_GRIN_VAPID_PUBLIC_KEY || "",
       zelleRecipientName: process.env.GREEN_GRIN_ZELLE_RECIPIENT_NAME || "Green Grin Lawns",
       zellePhone: process.env.GREEN_GRIN_ZELLE_PHONE || "2087408837",
