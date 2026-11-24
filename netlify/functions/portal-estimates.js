@@ -201,7 +201,16 @@ exports.handler = async (event) => {
   try {
     if (event.httpMethod === "GET") {
       const estimates = await supabase("green_grin_estimates?select=*&order=updated_at.desc&limit=500");
-      return json(200, { estimates });
+      const jobIds = (estimates || []).map((estimate) => estimate.project_job_id).filter(Boolean);
+      const jobs = jobIds.length
+        ? await supabase("green_grin_jobs?select=id,status,completed_at&id=in.(" + jobIds.map((id) => encodeURIComponent(id)).join(",") + ")").catch(() => [])
+        : [];
+      const jobById = new Map((jobs || []).map((job) => [String(job.id), job]));
+      const enrichedEstimates = (estimates || []).map((estimate) => {
+        const job = estimate.project_job_id ? jobById.get(String(estimate.project_job_id)) : null;
+        return job ? { ...estimate, job_status: job.status || "", job_completed_at: job.completed_at || null } : estimate;
+      });
+      return json(200, { estimates: enrichedEstimates });
     }
 
     const body = JSON.parse(event.body || "{}");
