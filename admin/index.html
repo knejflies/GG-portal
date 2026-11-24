@@ -9095,7 +9095,7 @@
 
     function renderSavedEstimates() {
       const query = $("#estimate-search")?.value.trim().toLowerCase() || "";
-      const rows = savedEstimates.filter((estimate) => !["Declined", "Archived"].includes(String(estimate.status || "")) && (!query || [estimate.estimate_number, estimate.customer_code, estimate.customer_name, estimate.project_title, estimate.service_address].join(" ").toLowerCase().includes(query)));
+      const rows = savedEstimates.filter((estimate) => !["Declined", "Archived"].includes(String(estimate.status || "")) && !["completed", "paid", "archived", "cancelled"].includes(String(estimate.job_status || "").trim().toLowerCase()) && (!query || [estimate.estimate_number, estimate.customer_code, estimate.customer_name, estimate.project_title, estimate.service_address].join(" ").toLowerCase().includes(query)));
       $("#estimate-list").innerHTML = rows.length ? rows.map((estimate) => `
         <div class="estimate-card" data-estimate-id="${cleanText(estimate.id)}" data-invoiced="${estimate.invoice_id ? "true" : "false"}">
           <div class="estimate-card-head"><strong>${cleanText(estimate.estimate_number)}</strong><span class="badge">${cleanText(estimate.status)}</span></div>
@@ -10856,7 +10856,11 @@
 
     function adminCustomerCard(customer, index) {
       const property = customer.property || {};
-      const job = newestJob(customer.jobs || []);
+      const allCustomerJobs = customer.jobs || [];
+      const activeCustomerJobs = allCustomerJobs
+        .filter((item) => !["completed", "paid", "archived", "cancelled"].includes(String(item.status || "").trim().toLowerCase()))
+        .sort((a, b) => String(a.scheduled_date || a.preferred_date || a.schedule_start_date || "9999-12-31").localeCompare(String(b.scheduled_date || b.preferred_date || b.schedule_start_date || "9999-12-31")));
+      const job = newestJob(activeCustomerJobs) || newestJob(allCustomerJobs);
       const monthBilling = job ? jobBillingForMonth(job) : { amount: 0, weeks: null, weeklyPrice: 0 };
       const monthlyAmount = monthBilling.weeks !== null
         ? monthBilling.amount
@@ -10888,7 +10892,7 @@
               <button class="button small secondary" data-customer-list-action="save-service-day" type="button">Save Service Day</button>
             </div>
             <div class="status-box">
-              ${(customer.jobs || []).length ? (customer.jobs || []).slice(0, 4).map((item) => upcomingStep(item)).join("") : notice("No jobs created for this customer yet.")}
+              ${activeCustomerJobs.length ? activeCustomerJobs.slice(0, 4).map((item) => upcomingStep(item)).join("") : notice("No upcoming jobs for this customer.")}
             </div>
             <div class="admin-actions">
               <button class="button small secondary" data-customer-list-action="details" type="button">View Details</button>
@@ -11523,10 +11527,21 @@
     function renderAdminJobList() {
       const category = $("#job-category-filter")?.value || "All";
       const frequency = $("#job-frequency-filter")?.value || "All";
-      const visible = adminJobRows.filter((job) => (category === "All" || jobCategory(job) === category) && (frequency === "All" || jobFrequency(job) === frequency));
+      const terminalStatuses = new Set(["completed", "paid", "archived", "cancelled"]);
+      const visible = adminJobRows
+        .filter((job) => !terminalStatuses.has(String(job.status || "").trim().toLowerCase()))
+        .filter((job) => (category === "All" || jobCategory(job) === category) && (frequency === "All" || jobFrequency(job) === frequency))
+        .sort((a, b) => {
+          const dateA = String(a.scheduled_date || a.preferred_date || a.schedule_start_date || "").slice(0, 10);
+          const dateB = String(b.scheduled_date || b.preferred_date || b.schedule_start_date || "").slice(0, 10);
+          if (!dateA && !dateB) return String(a.customer_name || "").localeCompare(String(b.customer_name || ""));
+          if (!dateA) return 1;
+          if (!dateB) return -1;
+          return dateA.localeCompare(dateB) || String(a.customer_name || "").localeCompare(String(b.customer_name || ""));
+        });
       $("#admin-result").innerHTML = visible.length
         ? visible.map((job) => jobCard(job, true)).join("")
-        : notice("No jobs match those filters.");
+        : notice("No upcoming jobs match those filters.");
     }
 
     function renderMarketingEmployeeOptions() {
