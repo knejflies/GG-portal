@@ -25,6 +25,17 @@ function requireAdmin(event) {
 }
 
 function clean(value, max = 300) { return String(value || "").trim().slice(0, max); }
+function isCurrentUpcomingJob(job, today = new Date().toISOString().slice(0, 10)) {
+  const status = String(job?.status || "").trim().toLowerCase();
+  if (["completed", "paid", "archived", "cancelled"].includes(status)) return false;
+  const endDate = String(job?.schedule_end_date || job?.end_date || "").slice(0, 10);
+  if (endDate && endDate < today) return false;
+  const frequency = String(job?.schedule_frequency || job?.frequency || "").trim().toLowerCase();
+  const recurring = job?.recurring_weekly === true || ["weekly", "bi-weekly", "biweekly"].includes(frequency);
+  const serviceDate = String(job?.scheduled_date || job?.preferred_date || job?.schedule_start_date || "").slice(0, 10);
+  if (recurring) return Boolean(endDate >= today || (!endDate && serviceDate));
+  return Boolean(serviceDate && serviceDate >= today);
+}
 const DEFAULT_GEOCODER_REGION = String(process.env.GREEN_GRIN_GEOCODER_DEFAULT_REGION || "Caldwell, Idaho").trim();
 function geocodeDecision(result, requestedAddress) {
   if (!result) return { status: "Needs Correction", latitude: null, longitude: null, display_name: null };
@@ -222,10 +233,11 @@ exports.handler = async (event) => {
         const key = customer.customer_code || customer.id || customer.email || customer.phone;
         const customerProperties = propertyByUser.get(customer.id) || [];
         const customerJobs = (jobs || []).filter((job) =>
-          (customer.id && job.customer_user_id === customer.id) ||
+          ((customer.id && job.customer_user_id === customer.id) ||
           (customer.customer_code && job.customer_code === customer.customer_code) ||
           (customer.email && job.email === customer.email) ||
-          (customer.phone && job.phone === customer.phone)
+          (customer.phone && job.phone === customer.phone)) &&
+          isCurrentUpcomingJob(job)
         );
         const blowoutOnly = !customerJobs.length && customerProperties.length > 0 && customerProperties.every((row) => String(row.property_name || "").trim().toLowerCase() === "sprinkler blowout property");
         if (blowoutOnly) continue;
