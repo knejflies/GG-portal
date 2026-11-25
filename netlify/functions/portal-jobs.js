@@ -30,6 +30,19 @@ function requireAdmin(event) {
   return requireOwner(event, "Wrong admin PIN.");
 }
 
+function isCurrentUpcomingJob(job, today = new Date().toISOString().slice(0, 10)) {
+  const status = String(job?.status || "").trim().toLowerCase();
+  if (["completed", "paid", "archived", "cancelled"].includes(status)) return false;
+  const endDate = String(job?.schedule_end_date || job?.end_date || "").slice(0, 10);
+  if (endDate && endDate < today) return false;
+  const frequency = String(job?.schedule_frequency || job?.frequency || "").trim().toLowerCase();
+  const recurring = job?.recurring_weekly === true || ["weekly", "bi-weekly", "biweekly"].includes(frequency);
+  const serviceDate = String(job?.scheduled_date || job?.preferred_date || job?.schedule_start_date || "").slice(0, 10);
+  if (recurring) return Boolean(endDate >= today || (!endDate && serviceDate));
+  return Boolean(serviceDate && serviceDate >= today);
+}
+
+
 async function supabase(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     ...options,
@@ -317,7 +330,9 @@ exports.handler = async (event) => {
       if (params.get("admin") === "1") {
         const adminError = requireAdmin(event);
         if (adminError) return json(401, { error: adminError });
-        const jobs = await supabase("green_grin_jobs?select=*&order=created_at.desc&limit=500");
+        const allJobs = await supabase("green_grin_jobs?select=*&order=created_at.desc&limit=500");
+        const today = new Date().toISOString().slice(0, 10);
+        const jobs = (allJobs || []).filter((job) => isCurrentUpcomingJob(job, today)).sort((a, b) => String(a.scheduled_date || a.preferred_date || a.schedule_start_date || "9999-12-31").localeCompare(String(b.scheduled_date || b.preferred_date || b.schedule_start_date || "9999-12-31")));
         const dailyRoutes = await supabase("green_grin_daily_route_assignments?select=*&order=route_date.asc,stop_order.asc&limit=1000").catch(() => []);
         return json(200, { jobs, daily_routes: dailyRoutes });
       }
